@@ -9,12 +9,25 @@ class Misc {
     async initialize() {
         this.setListener();
 
+        const dpr = window.devicePixelRatio;
         {
             let s = '';
             s += `${window.innerWidth}`;
             s += `x${window.innerHeight}`;
             const el = window.innerview;
             el.textContent = s;
+        }
+
+        {
+            const canvas = document.getElementById('main');
+            canvas.width = 640 * dpr;
+            canvas.height = 360 * dpr;
+            const c = canvas.getContext('2d');
+            let fam = 'BIZ UDPゴシック';
+            c.font = `normal 32px ${fam}`;
+            c.fillStyle = '#000000';
+            let s = `五王国`;
+            c.fillText(s, 64, 64);
         }
 
         this.enumVoice();
@@ -43,6 +56,17 @@ class Misc {
     }
 
     setListener() {
+        window.addEventListener('message', ev => {
+            switch(ev.data.type) {
+            case 'a':
+                break;
+            case 'b':
+                break;
+            case 'c':
+                break;
+            }
+        });
+
         {
             const el = document.getElementById('enumvoice');
             el?.addEventListener('click', () => {
@@ -63,40 +87,6 @@ class Misc {
                 this.openWindow();
             });
         }
-
-        {
-            const el = document.getElementById('cap');
-            el?.addEventListener('click', () => {
-                this.startCapture();
-            });
-        }
-    }
-
-    async startCapture() {
-        const opt = {
-            audio: true,
-            video: true,
-        };
-        const stream = await navigator.mediaDevices.getDisplayMedia(opt);
-        window.mainvideo.srcObject = stream;
-        await window.mainvideo.play();
-    }
-
-    openWindow() {
-        let width = 640;
-        let height = 360;
-        let hOffset = -1;
-        let url = '../player/index.html';
-        let feats = [
-            //`popup`,
-            `width=${width}`,
-            `height=${height + hOffset}`,
-        ];
-        const win = window.open(url,
-            //'_blank',
-            'corge',
-            feats.join(','));
-        this.win = win;
     }
 
 }
