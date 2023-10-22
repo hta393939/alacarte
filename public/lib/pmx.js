@@ -1,17 +1,19 @@
 /**
  * @file pmxwriter.js
  */
-// 2023-10-14 1
+// 2023-10-21 1
 
 (function(_global) {
 
-class PMXVertex {
+class Vertex {
 /**
  * BDEF1
+ * @default 0
  */
     static DEFORM_BDEF1 = 0;
 /**
  * BDEF2
+ * @default 1
  */
     static DEFORM_BDEF2 = 1;
 /**
@@ -24,6 +26,11 @@ class PMXVertex {
  * @default 3
  */
     static DEFORM_SDEF = 3;
+/**
+ * quaternion deform
+ * @default 4
+ */
+    static DEFORM_QDEF = 4;
 
 /**
  * 共用のトゥーン
@@ -37,6 +44,11 @@ class PMXVertex {
     static TOONTYPE_TEXTURE = 0;
 
     constructor() {
+/**
+ * インデックス
+ */
+        this._index = 0;
+
         this.p = [0, 0,  0];
         this.n = [0, 0, -1];
 /**
@@ -44,9 +56,14 @@ class PMXVertex {
  */
         this.uv = [0.5, 0.5];
 
-        this.deformType = PMXVertex.DEFORM_BDEF2;
+        this.deformType = Vertex.DEFORM_BDEF2;
         this.weights = [1, 0, 0, 0];
         this.joints  = [0, 1, 0, 0];
+
+/**
+ * ボーン名
+ */
+        this._boneName = ['', '', '', ''];
 /**
  * エッジ倍率
  */
@@ -56,9 +73,37 @@ class PMXVertex {
         this.r0 = [0, 0, 0];
         this.r1 = [0, 0, 0];
     }
+
+    toCSV() {
+        const ss = [
+            'PmxVertex',
+            this._index,
+            ...this.p,
+            ...this.n,
+            this.edgeRate,
+            ...this.uv,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            this.deformType,
+            `"${this._boneName[0]}"`,
+            this.weights[0],
+            `"${this._boneName[1]}"`,
+            this.weights[1],
+            `"${this._boneName[2]}"`,
+            this.weights[2],
+            `"${this._boneName[3]}"`,
+            this.weights[3],
+            ...this.c,
+            ...this.r0,
+            ...this.r1,
+        ];
+        return ss.join(',');
+    }
 }
 
-class PMXIKLink {
+class IKLink {
     constructor() {
 /**
  * リンクボーンのボーンインデックス
@@ -79,7 +124,7 @@ class PMXIKLink {
     }
 }
 
-class PMXBone {
+class Bone {
 /**
  * 接続先、bone で指定
  */
@@ -101,8 +146,12 @@ class PMXBone {
  */
     static BIT_CONTROL = 0x0010;
     static BIT_IK = 0x0020;
+    static BIT_LOCALAPPLY = 0x0080;
     static BIT_ROTAPPLY = 0x0100;
     static BIT_MOVAPPLY = 0x0200;
+/**
+ * 軸固定
+ */
     static BIT_FIXAXIS = 0x0400;
     static BIT_LOCALAXIS = 0x0800;
     static BIT_AFTERPHY = 0x1000;
@@ -112,7 +161,7 @@ class PMXBone {
         this.nameJa = 'boon000';
         this.nameEn = 'bone000';
 /**
- * 16bit 値
+ * ボーン 16bit 値
  */
         this.bits = 0;
 /**
@@ -124,6 +173,8 @@ class PMXBone {
  * @default -1
  */
         this.parent = -1;
+
+        this._parentName = '';
 /**
  * 変形階層
  * @default 0
@@ -141,6 +192,10 @@ class PMXBone {
  * 付与親ボーン
  */
         this.applyParent = -1;
+/**
+ * 付与親ボーン名
+ */
+        this._applyParentName = '';
 /**
  * 付与率
  */
@@ -163,19 +218,85 @@ class PMXBone {
         this.externalParentKey = -1;
 
         this.ikTargetBone = -1;
+/**
+ * IKターゲット名
+ */
+        this._ikTargetBoneName = '';
+
         this.ikLoopCount = 255;
 /**
  * ラジアン値
  */
         this.ikLimitation = 0;
 /**
- * @type {PMXIKLink[]}
+ * @type {IKLink[]}
  */
         this.ikLinks = [];
     }
+
+    toCSV() {
+        const ss = [
+            'PmxBone',
+            `"${this.nameJa}"`,
+            `"${this.nameEn}"`,
+            this.layer,
+            (this.bits & Bone.BIT_AFTERPHY) ? 1 : 0,
+            ...this.p,
+            (this.bits & Bone.BIT_ROT) ? 1 : 0,
+            (this.bits & Bone.BIT_MOVE) ? 1 : 0,
+            (this.bits & Bone.BIT_IK) ? 1 : 0,
+            (this.bits & Bone.BIT_VISIBLE) ? 1 : 0,
+            (this.bits & Bone.BIT_CONTROL) ? 1 : 0,
+            `"${this._parentName}"`, // 親ボーン名
+            this.boneConnect, // 接続先
+            `"${this._endBoneName}"`,
+            ...this.endOffset,
+            (this.bits & Bone.BIT_ROTAPPLY) ? 1 : 0,
+            (this.bits & Bone.BIT_MOVAPPLY) ? 1 : 0,
+            this.applyRate,
+            `"${this._applyParentName}"`, // 付与親名
+            (this.bits & Bone.BIT_FIXAXIS) ? 1 : 0, // 軸制限
+            ...this.axisVector,
+            (this.bits & Bone.BIT_LOCALAXIS) ? 1 : 0,
+            ...this.xLocalVector,
+            ...this.zLocalVector,
+            (this.bits & Bone.BIT_EXTERNALPARENT) ? 1 : 0,
+            `"${this.externalParentKey}"`,
+            `"${this._ikTargetBoneName}"`, // IKTarget名
+            this.ikLoopCount,
+            this.ikLimitation * 180 / Math.PI, // deg
+        ];
+        return ss.join(',');
+    }
 }
 
-class PMXMaterial {
+/**
+ * 1面分
+ */
+class Face {
+    constructor() {
+        this._index = 0;
+        this._materialName = '';
+/**
+ * 3頂点のインデックス
+ */
+        this.indices = [0, 0, 0];
+    }
+    toCSV() {
+        const ss = [
+            'PMXFace',
+            this._index,
+            `"${this._materialName}"`,
+            ...this.indices,
+        ];
+        return ss.join(',');
+    }
+}
+
+/**
+ * 材質。面の管理どうしよう...
+ */
+class Material {
 /**
  * 両面
  */
@@ -208,7 +329,7 @@ class PMXMaterial {
         this.specular = [0.5, 0.5, 0.5];
         this.ambient = [0.2, 0.2, 0.2];
 /**
- * ビットフラッグ
+ * 材質ビットフラッグ 8bit
  */
         this.bitFlag = 0;
 /**
@@ -228,20 +349,52 @@ class PMXMaterial {
  */
         this.sphereIndex = -1;
 /**
- * 0: 無効、1: 乗算、2: 加算
+ * 0: 無効、1: 乗算、2: 加算、3: サブテクスチャ
  */
         this.sphereMode = 0;
 
         this.memo = 'メモ';
 /**
  * 面配列
+ * @type {number[][]}
  */
         this.faces = [];
+    }
+
+/**
+ * 未実装
+ * @returns {string}
+ */
+    toCSV() {
+        const ss = [
+            'PmxMaterial',
+            `"${this.nameJa}"`,
+            `"${this.nameEn}"`,
+            ...this.diffuse,
+            ...this.specular,
+            ...this.specPower,
+            ...this.ambient,
+            (this.bitFlag & Material.BIT_DOUBLE) ? 1 : 0,
+            (this.bitFlag & Material.BIT_GROUND) ? 1 : 0,
+            (this.bitFlag & Material.BIT_TOMAP) ? 1 : 0,
+            (this.bitFlag & Material.BIT_SELFSHADOW) ? 1 : 0,
+            0, //(this.bitFlag & Material.BIT_VERTEXCOLOR) ? 1 : 0, // 頂点色
+            0, // 描画 0: Tri, 1: Point, 2: Line
+            (this.bitFlag & Material.BIT_EDGE) ? 1 : 0,
+            this.edgeSize,
+            ...this.edgeColor,
+            `"${''}"`, //this.texIndex,
+            `"${''}"`, //this.sphereIndex,
+            this.sphereMode,
+            `"${''}"`, // this.sharetoonindex,
+            `"${this.memo}"`
+        ];
+        return ss.join(',');
     }
 }
 
 
-class PMXMorph {
+class Morph {
     static PANEL_SYSTEM = 0;
     static PANEL_B = 1;
     static PANEL_EYE = 2;
@@ -253,17 +406,27 @@ class PMXMorph {
     static TYPE_UV = 0;
     static TYPE_MATERIAL = 8;
     constructor() {
+        this._index = 0;
         this.nameJa = 'moruhu000';
         this.nameEn = 'morph000';
 
-        this.panel = PMXMorph.PANEL_ETC;
-        this.type = PMXMorph.TYPE_VERTEX;
+        this.panel = Morph.PANEL_ETC;
+        this.type = Morph.TYPE_VERTEX;
 
         this.ones = [];
     }
+
+    toCSV() {
+        const ss = [
+            'PMXMorph',
+            `"${this.nameJa}"`,
+            `"${this.nameEn}"`,
+        ];
+        return ss.join(',');
+    }
 }
 
-class PMXMaterialMorph {
+class MaterialMorph {
     constructor() {
         this.type = PMXMorph.TYPE_MATERIAL;
         
@@ -271,8 +434,9 @@ class PMXMaterialMorph {
     }
 }
 
-class PMXFrame {
+class Frame {
     constructor() {
+        this._index = 0;
 /**
  * 日本語名
  */
@@ -290,9 +454,16 @@ class PMXFrame {
  */
         this.bones = [];
     }
+
+    toCSV() {
+        console.warn('not implemented');
+    }
 }
 
-class PMXRigid {
+/**
+ * 物理剛体
+ */
+class Rigid {
     static SHAPE_SPHERE = 0;
     static SHAPE_BOX = 1;
     static SHAPE_CAPSULE = 2;
@@ -317,6 +488,10 @@ class PMXRigid {
  */
         this.bone = -1;
 /**
+ * 関連ボーン名。ボーン名
+ */
+        this._boneName = '';
+/**
  * 所属グループ #0～#15
  */
         this.group = 0;
@@ -340,8 +515,10 @@ class PMXRigid {
  * 回転
  */
         this.rot = [0, 0, 0];
-
-        this.weight = 2;
+/**
+ * 質量
+ */
+        this.mass = 2;
         this.moveDamping = 0;
 /**
  * 回転減衰。0だと減衰しない。
@@ -350,11 +527,49 @@ class PMXRigid {
         this.pong = 0;
         this.friction = 0;
 
-        this.type = PMXRigid.TYPE_STATIC;
+        this.type = Rigid.TYPE_STATIC;
+    }
+
+    not() {
+        let s = '';
+        for (let i = 0; i < 16; ++i) {
+            const bit = 1 << i;
+            if (this.groupFlags & bit) {
+                // Do nothing.
+            } else {
+                s += ` ${i+1}`;
+            }
+        }
+        return s;
+    }
+
+/**
+ * 22
+ */
+    toCSV() {
+        const ss = [
+            'PmxBody',
+            `"${this.nameJa}"`,
+            `"${this.nameEn}"`,
+            `"${this._boneName}"`,
+            this.type,
+            this.group,
+            `"${this.not()}"`, // 非衝突
+            this.shape,
+            ...this.size,
+            ...this.p,
+            ...this.rot.map(v => v * 180 / Math.PI),
+            this.mass,
+            this.moveDamping,
+            this.rotDamping,
+            this.pong,
+            this.friction,
+        ];
+        return ss.join(',');
     }
 }
 
-class PMXJoint {
+class Joint {
     constructor() {
         this.nameJa = 'ジョイント000';
         this.nameEn = 'joint000';
@@ -365,6 +580,10 @@ class PMXJoint {
  * A剛体、B剛体のインデックス
  */
         this.rigids = [-1, -1];
+/**
+ * 剛体名
+ */
+        this._rigidName = ['', ''];
 
         this.p = [0, 0, 0];
 /**
@@ -388,9 +607,30 @@ class PMXJoint {
  */
         this.springRot  = [0, 0, 0];
     }
+
+    toCSV() {
+        const ss = [
+            'PmxJoint',
+            // インデックスは無い。変更のときどうすんだろう...名前かな
+            `"${this.nameJa}"`,
+            `"${this.nameEn}"`,
+            `"${this._rigidName[0]}"`,
+            `"${this._rigidName[1]}"`,
+            this.type,
+            ...this.p,
+            ...this.rot.map(v => v * 180 / Math.PI),
+            ...this.moveLower,
+            ...this.moveUpper,
+            ...this.rotLower.map(v => v * 180 / Math.PI),
+            ...this.rotUpper.map(v => v * 180 / Math.PI),
+            ...this.springMove,
+            ...this.springRot,
+        ];
+        return ss.join(',');
+    }
 }
 
-class PMXSoftBody {
+class SoftBody {
     constructor() {
         this.nameJa = 'sohuto000';
         this.nameEn = 'softbody000';
@@ -412,11 +652,11 @@ class PMXObject {
             commentEn: '',
         };
 /**
- * @type {PMXVertex[]}
+ * @type {Vertex[]}
  */
         this.vts = [];
 /**
- * @type {PMXBone[]}
+ * @type {Bone[]}
  */
         this.bones = [];
 /**
@@ -424,28 +664,28 @@ class PMXObject {
  */
         this.textures = [];
 /**
- * @type {PMXMaterial[]}
+ * @type {Material[]}
  */
         this.materials = [];
 /**
- * @type {PMXMorph[]}
+ * @type {Morph[]}
  */
         this.morphs = [];
 /**
- * @type {PMXFrame[]}
+ * @type {Frame[]}
  */
         this.frames = [];
 /**
- * @type {PMXRigid[]}
+ * @type {Rigid[]}
  */
         this.rigids = [];
 /**
- * @type {PMXJoint[]}
+ * @type {Joint[]}
  */
         this.joints = [];
 /**
  * ソフト
- * @type {PMXSoftBody[]}
+ * @type {SoftBody[]}
  */
         this.softs = [];
 
@@ -478,7 +718,7 @@ class PMXObject {
     }
 }
 
-class PMXParser extends PMXObject {
+class Parser extends PMXObject {
     constructor() {
         super();
 
@@ -618,6 +858,7 @@ class PMXParser extends PMXObject {
 
         { // ヘッダ
             const fs = this.readf32s(p, 2);
+            this.version = fs[1];
             const num = this.readu8s(p, 1)[0];
             const heads = this.readu8s(p, num);
             {
@@ -648,7 +889,7 @@ class PMXParser extends PMXObject {
             const num = this.readu32s(p, 1)[0];
             console.log('vertex num', num);
             for (let i = 0; i < num; ++i) {
-                const vtx = new PMXVertex();
+                const vtx = new Vertex();
                 const fs = this.readf32s(p, 8);
                 vtx.p = [fs[0], fs[1], fs[2]];
                 vtx.n = [fs[3], fs[4], fs[5]];
@@ -658,11 +899,11 @@ class PMXParser extends PMXObject {
                 }
                 vtx.deformType = this.readu8s(p, 1)[0];
                 switch(vtx.deformType) {
-                case PMXVertex.DEFORM_BDEF1:
+                case Vertex.DEFORM_BDEF1:
                     vtx.joints[0] = this.readints(p, 1, this.bonbnum)[0];
                     vtx.weights[0] = 1;
                     break;
-                case PMXVertex.DEFORM_BDEF2:
+                case Vertex.DEFORM_BDEF2:
                     {
                         const its = this.readints(p, 2, this.bonbnum);
                         vtx.joints[0] = its[0];
@@ -671,11 +912,11 @@ class PMXParser extends PMXObject {
                         vtx.weights[1] = 1 - vtx.weights[0];
                     }
                     break;
-                case PMXVertex.DEFORM_BDEF4:
+                case Vertex.DEFORM_BDEF4:
                     vtx.joints = this.readints(p, 4, this.bonbnum);
                     vtx.weights = this.readf32s(p, 4);
                     break;
-                case PMXVertex.DEFORM_SDEF:
+                case Vertex.DEFORM_SDEF:
                     {
                         const its = this.readints(p, 2, this.bonbnum);
                         vtx.joints[0] = its[0];
@@ -714,7 +955,8 @@ class PMXParser extends PMXObject {
         { // material
             const num = this.readu32s(p, 1)[0];
             for (let i = 0; i < num; ++i) {
-                const m = new PMXMaterial();
+                const m = new Material();
+                m._index = i;
                 m.nameJa = this.readstr(p);
                 m.nameEn = this.readstr(p);
                 const fs = this.readf32s(p, 11);
@@ -750,39 +992,40 @@ class PMXParser extends PMXObject {
             const num = this.readu32s(p, 1)[0];
             for (let i = 0; i < num; ++i) {
                 const b = new PMXBone();
+                b._index = i;
                 b.nameJa = this.readstr(p);
                 b.nameEn = this.readstr(p);
                 b.p = this.readf32s(p, 3);
                 b.parent = this.readints(p, 1, this.bonbnum);
                 b.layer = this.readu32s(p, 1)[0];
                 b.bits = this.readu16s(p, 1)[0];
-                if (b.bits & PMXBone.BIT_BONECONNECT) {
+                if (b.bits & Bone.BIT_BONECONNECT) {
                     b.boneConnect = this.readints(p, 1, this.bonbnum);
                 } else {
                     b.endOffset = this.readf32s(p, 3);
                 }
-                if ((b.bits & PMXBone.BIT_ROTAPPLY)
-                    || (b.bits & PMXBone.BIT_MOVAPPLY)) {
+                if ((b.bits & Bone.BIT_ROTAPPLY)
+                    || (b.bits & Bone.BIT_MOVAPPLY)) {
                     b.applyParent = this.readints(p, 1, this.bonbnum)[0];
                     b.applyRate = this.readf32s(p, 1)[0];
                 }
-                if (b.bits & PMXBone.BIT_FIXAXIS) {
+                if (b.bits & Bone.BIT_FIXAXIS) {
                     b.axisVector = this.readf32s(p, 3);
                 }
-                if (b.bits & PMXBone.BIT_LOCALAXIS) {
+                if (b.bits & Bone.BIT_LOCALAXIS) {
                     b.xLocalVector = this.readf32s(p, 3);
                     b.zLocalVector = this.readf32s(p, 3);
                 }
-                if (b.bits & PMXBone.BIT_EXTERNALPARENT) {
+                if (b.bits & Bone.BIT_EXTERNALPARENT) {
                     b.externalParentKey = this.readu32s(p, 1)[0];
                 }
-                if (b.bits & PMXBone.BIT_IK) {
+                if (b.bits & Bone.BIT_IK) {
                     b.ikTargetBone = this.readints(p, 1, this.bonbnum)[0];
                     b.ikLoopCount = this.readu32s(p, 1)[0];
                     b.ikLimitation = this.readf32s(p, 1)[0];
                     const linknum = this.readu32s(p, 1)[0];
                     for (let j = 0; j < linknum; ++j) {
-                        const link = new PMXIKLink();
+                        const link = new IKLink();
                         link.linkBone = this.readints(p, 1, this.bonbnum)[0];
                         link.isLimitation = this.readu8s(p, 1)[0];
                         if (link.isLimitation) {
@@ -802,6 +1045,7 @@ class PMXParser extends PMXObject {
             console.log('morph num', num);
             for (let i = 0; i < num; ++i) {
                 const m = new PMXMorph();
+                m._index = i;
                 m.nameJa = this.readstr(p);
                 m.nameEn = this.readstr(p);
                 m.panel = this.readu8s(p, 1)[0];
@@ -810,23 +1054,23 @@ class PMXParser extends PMXObject {
                 for (let j = 0; j < morphnum; ++j) {
                     let one = null;
                     switch(m.type) {
-                    case PMXMorph.TYPE_GROUP: // グループ
+                    case Morph.TYPE_GROUP: // グループ
                         console.warn('skip only group');
                         this.readints(p, 1, this.mrpbnum)[0];
                         this.readf32s(p, 1)[0];
                         break;
-                    case PMXMorph.TYPE_VERTEX: // 頂点
+                    case Morph.TYPE_VERTEX: // 頂点
                         console.warn('skip only vertex', m.nameJa, `${i}/${num}`, `${j}/${morphnum}`);
                         this.readints(p, 1, this.vtxbnum)[0];
                         this.readf32s(p, 3);
                         break;
-                    case PMXMorph.TYPE_BONE: // ボーン
+                    case Morph.TYPE_BONE: // ボーン
                         console.warn('skip only bone', m.nameJa);
                         this.readints(p, 1, this.bonbnum)[0];
                         this.readf32s(p, 3);
                         this.readf32s(p, 4);
                         break;
-                    case PMXMorph.TYPE_UV: // UV
+                    case Morph.TYPE_UV: // UV
                         console.warn('skip only uv', m.nameJa);
                         this.readints(p, 1, this.vtxbnum)[0];
                         this.readf32s(p, 4);
@@ -851,13 +1095,19 @@ class PMXParser extends PMXObject {
             console.log('frame num', num);
             for (let i = 0; i < num; ++i) {
                 const f = new PMXFrame();
+                f._index = i;
                 f.nameJa = this.readstr(p);
                 f.nameEn = this.readstr(p);
                 f.specialFlag = this.readu8s(p, 1)[0];
                 const framenum = this.readu32s(p, 1)[0];
                 for (let j = 0; j < framenum; ++j) {
-                    //const a = new PMX();
-                    // not implemented
+                    const target = this.readu8s(p, 1)[0];
+                    if (target === 0) {
+                        this.readints(p, 1, this.bonbnum)[0];
+                    } else {
+                        this.readints(p, 1, this.mrpbnum)[0];
+                    }
+                    console.warn('skip only', f.nameJa);
                 }
                 this.frames.push(f);
             }
@@ -865,37 +1115,44 @@ class PMXParser extends PMXObject {
 
         { // rigid
             const num = this.readu32s(p, 1)[0];
+            console.log('rigid num', num);
             for (let i = 0; i < num; ++i) {
-                const r = new PMXRigid();
+                const r = new Rigid();
+                r._index = i;
                 r.nameJa = this.readstr(p);
                 r.nameEn = this.readstr(p);
                 r.bone = this.readints(p, 1, this.bonbnum)[0];
                 r.group = this.readu8s(p, 1)[0];
-                r.shape = this.readu16s(p, 1)[0];
+                r.groupFlags = this.readu16s(p, 1);
+                r.shape = this.readu8s(p, 1)[0];
                 const fs = this.readf32s(p, 14);
                 r.size = fs.slice(0, 3);
                 r.p = fs.slice(3, 6);
                 r.rot = fs.slice(6, 9);
-                r.weight = fs[9];
+                r.mass = fs[9];
                 r.moveDamping = fs[10];
                 r.rotDamping = fs[11];
                 r.pong = fs[12];
                 r.friction = fs[13];               
                 r.type = this.readu8s(p, 1)[0];
                 this.rigids.push(r);
+
+                console.log('rigid', r.nameJa, i);
             }
         }
         { // joint
             const num = this.readu32s(p, 1)[0];
+            console.log('joint num', num);
             for (let i = 0; i < num; ++i) {
-                const j = new PMXJoint();
+                const j = new Joint();
+                j._index = i;
                 j.nameJa = this.readstr(p);
                 j.nameEn = this.readstr(p);
                 j.type = this.readu8s(p, 1)[0];
                 j.rigids = this.readints(p, 2, this.rgdbnum);
                 const fs = this.readf32s(p, 24);
-                j.p = fs.splice(0, 3);
-                j.rot = fs.splice(3, 6);
+                j.p = fs.slice(0, 3);
+                j.rot = fs.slice(3, 6);
                 j.moveLower = fs.slice(6, 9);
                 j.moveUpper = fs.slice(9, 12);
                 j.rotLower = fs.slice(12, 15);
@@ -903,10 +1160,12 @@ class PMXParser extends PMXObject {
                 j.springMove = fs.slice(18, 21);
                 j.springRot = fs.slice(21, 24);
                 this.joints.push(j);
+
+                console.log('joint', j.nameJa, i);
             }
         }
 // softbody
-        {
+        if (this.version > 2.0) {
             const num = this.readu32s(p, 1)[0];
             console.log('softbody num', num);
             for (let i = 0; i < num; ++i) {
@@ -915,7 +1174,7 @@ class PMXParser extends PMXObject {
         }
 
         { // face の分配
-
+            console.warn('face 分配は not implemented');
         }
 
         console.log('parse', this.c, p.byteLength);
@@ -926,7 +1185,7 @@ class PMXParser extends PMXObject {
 /**
  * バイナリ書き出しクラス
  */
-class PMXMaker extends PMXParser {
+class Maker extends Parser {
     constructor() {
         super();
     }
@@ -937,24 +1196,34 @@ class PMXMaker extends PMXParser {
  * @param {number} offset
  * @param {string} ins 
  */
-    setString(p, offset, ins) {
+    writestr(p, offset, ins) {
+        if (this.encoding === 'UTF-8') {
         // UTF-8 のとき 16LE 変換必要だったら入れる
-        const b8 = new TextEncoder().encode(ins);
-        const num = b8.byteLength;
-        p.setInt32(offset, num, true);
-        for (let i = 0; i < num; ++i) {
-            p.setUint8(offset + 4 + i, b8[i]);
+            const b8 = new TextEncoder().encode(ins);
+            const num = b8.byteLength;
+            p.setInt32(offset, num, true);
+            for (let i = 0; i < num; ++i) {
+                p.setUint8(offset + 4 + i, b8[i]);
+            }
+            return 4 + num;
+        }
+
+        const ss = Array.from(ins);
+        const num = ss.length * 2;
+        p.setUint32(offset, num, true);
+        for (let i = 0; i < ss.length; ++i) {
+            p.setUint16(offset + 4 + i * 2, ss[i].codePointAt(0));
         }
         return 4 + num;
     }
 
 /**
-* 
-* @param {DataView} p 
-* @param {number} inoffset 
-* @param {number[]} fs 
-* @returns {number} 進んだバイト数
-*/
+ * 
+ * @param {DataView} p 
+ * @param {number} inoffset 
+ * @param {number[]} fs 
+ * @returns {number} 進んだバイト数
+ */
     writefs(p, inoffset, fs) {
         let offset = 0;
         for (const f of fs) {
@@ -965,12 +1234,12 @@ class PMXMaker extends PMXParser {
     }
 
 /**
-* 
-* @param {DataView} p 
-* @param {offset} inoffset 
-* @param {number[]} vs 
-* @returns 
-*/
+ * 
+ * @param {DataView} p 
+ * @param {offset} inoffset 
+ * @param {number[]} vs 
+ * @returns 
+ */
     write32s(p, inoffset, vs) {
         let offset = 0;
         for (const v of vs) {
@@ -1011,11 +1280,28 @@ class PMXMaker extends PMXParser {
         }
         return offset;
     }
+/**
+ * 
+ * @param {DataView} p 
+ * @param {number} inoffset 
+ * @param {number[]} vs 
+ * @param {number} byteNum 
+ */
+    writeints(p, inoffset, vs, byteNum) {
+        switch(byteNum) {
+        case 4:
+            return this.write32s(p, inoffset, vs);
+        case 2:
+            return this.write16s(p, inoffset, vs);
+        case 1:
+            return this.write8s(p, inoffset, vs);
+        }
+    }
 
 /**
-* 現在の状態でバッファを作成する
-* @returns {ArrayBuffer[]}
-*/
+ * 現在の状態でバッファを作成する
+ * @returns {ArrayBuffer[]}
+ */
     makeBuffer() {
         const bufs = [];
         { // ヘッダ
@@ -1028,17 +1314,25 @@ class PMXMaker extends PMXParser {
             }
             c += this.writefs(p, c, [2]);
             c += this.write8s(p, c, [8,
-                1,0, 4,4,4,4,4,4]);
+                (this.encoding === 'UTF-8') ? 1 : 0,
+                this.adduvnum,
+                this.vtxbnum,
+                this.texbnum,
+                this.mtlbnum,
+                this.bonbnum,
+                this.mrpbnum,
+                this.rgdbnum
+            ]);
             bufs.push(buf);
         }
         {
             const buf = new ArrayBuffer(65536);
             const p = new DataView(buf);
             let c = 0;
-            c += this.setString(p, c, this.head.nameJa);
-            c += this.setString(p, c, this.head.nameEn);
-            c += this.setString(p, c, this.head.commentJa);
-            c += this.setString(p, c, this.head.commentEn);
+            c += this.writestr(p, c, this.head.nameJa);
+            c += this.writestr(p, c, this.head.nameEn);
+            c += this.writestr(p, c, this.head.commentJa);
+            c += this.writestr(p, c, this.head.commentEn);
             bufs.push(buf.slice(0, c));
         }
 
@@ -1056,20 +1350,23 @@ class PMXMaker extends PMXParser {
                 ]);
                 c += this.write8s(p, c, [v.deformType]);
                 switch(v.deformType) {
-                case PMXVertex.DEFORM_BDEF1:
-                    c += this.write32s(p, c, [v.joints[0]]);
+                case Vertex.DEFORM_BDEF1:
+                    c += this.writeints(p, c, [v.joints[0]], this.bonbnum);
                     break;
-                case PMXVertex.DEFORM_BDEF2:
-                    c += this.write32s(p, c, [0, 1]);
+                case Vertex.DEFORM_BDEF2:
+                    c += this.writeints(p, c,
+                        [v.joints[0], v.joints[1]],
+                        this.bonbnum);
                     c += this.writefs(p, c, [v.weights[0]]);
                     break;
-                case PMXVertex.DEFORM_BDEF4:
-                    c += this.write32s(p, c, v.joints);
+                case Vertex.DEFORM_BDEF4:
+                    c += this.writeints(p, c, v.joints, this.bonbnum);
                     c += this.writefs(p, c, v.weights);
                     break;
-                case PMXVertex.DEFORM_SDEF:
-                    c += this.write32s(p, c,
-                        [v.joints[0], v.joints[1]]);
+                case Vertex.DEFORM_SDEF:
+                    c += this.writeints(p, c,
+                        [v.joints[0], v.joints[1]],
+                        this.bonbnum);
                     c += this.writefs(p, c, [
                         v.weights[0],
                         ...v.c,
@@ -1111,7 +1408,7 @@ class PMXMaker extends PMXParser {
             let c = 0;
             c += this.write32s(p, c, [num]);
             for (const v of this.textures) {
-                c += this.setString(p, c, v);
+                c += this.writestr(p, c, v);
             }
             bufs.push(buf.slice(0, c));
         }
@@ -1123,8 +1420,8 @@ class PMXMaker extends PMXParser {
             let c = 0;
             c += this.write32s(p, c, [num]);
             for (const m of this.materials) {
-                c += this.setString(p, c, m.nameJa);
-                c += this.setString(p, c, m.nameEn);
+                c += this.writestr(p, c, m.nameJa);
+                c += this.writestr(p, c, m.nameEn);
                 c += this.writefs(p, c, [
                     ...m.diffuse,
                     ...m.specular,
@@ -1136,38 +1433,42 @@ class PMXMaker extends PMXParser {
                 c += this.writefs(p, c, m.edgecolor);
                 c += this.writefs(p, c, [m.edgeSize]);
 
-                c += this.write32s(p, c, [m.texIndex, m.sphereIndex]);
+                c += this.writeints(p, c, [m.texIndex, m.sphereIndex],
+                    this.texbnum);
                 c += this.write8s(p, c, [m.sphereMode]); // sphere
 
                 c += this.write8s(p, c, [m.sharetoonflag]);
                 if (m.sharetoonflag) {
                     c += this.write8s(p, c, [m.sharetoonindex]); // 0～9 が 01～10
                 } else {
-                    c += this.write32s(p, c, [m.sharetoonindex]); // 個別テクスチャインデックス
+                    c += this.writeints(p, c,
+                        [m.sharetoonindex],
+                        this.texbnum); // 個別テクスチャインデックス
                 }
 
-                c += this.setString(p, c, m.memo); // メモ
-                c += this.write32s(p, c, [m.faces.length * 3]);
+                c += this.writestr(p, c, m.memo); // メモ
+                c += this.writeints(p, c, [m.faces.length * 3],
+                    this.vtxbnum);
             }
             bufs.push(buf.slice(0, c));
         }
 
-        { // ボーン *
+        { // ボーン * ここ
             const num = this.bones.length;
             const buf = new ArrayBuffer(65536 * 16);
             const p = new DataView(buf);
             let c = 0;
             c += this.write32s(p, c, [num]);
             for (const b of this.bones) {
-                c += this.setString(p, c, b.nameJa);
-                c += this.setString(p, c, b.nameEn);
+                c += this.writestr(p, c, b.nameJa);
+                c += this.writestr(p, c, b.nameEn);
                 c += this.writefs(p, c, b.p);
                 c += this.write32s(p, c, [b.parent]);
                 c += this.write32s(p, c, [b.layer]);
 
                 c += this.write16s(p, c, [b.bits]);
 
-                if (b.bits & PMXBone.BIT_BONECONNECT) {
+                if (b.bits & PMX.Bone.BIT_BONECONNECT) {
                     c += this.write32s(p, c, [1]);
                 } else {
                     c += this.writefs(p, c, [0, -1, 0]);
@@ -1194,8 +1495,8 @@ class PMXMaker extends PMXParser {
             let c = 0;
             c += this.write32s(p, c, [num]);
             for (const f of this.frames) {
-                c += this.setString(p, c, f.nameJa);
-                c += this.setString(p, c, f.nameEn);
+                c += this.writestr(p, c, f.nameJa);
+                c += this.writestr(p, c, f.nameEn);
                 c += this.write8s(p, c, [f.specialFlag]); // 0: 通常、1: 特殊(rootとPMD互換)
                 c += this.write32s(p, c, [f.bones.length]);
                 for (const v of f.bones) {
@@ -1214,8 +1515,8 @@ class PMXMaker extends PMXParser {
             let c = 0;
             c += this.write32s(p, c, [num]);
             for (const r of this.rigids) {
-                c += this.setString(p, c, r.nameJa);
-                c += this.setString(p, c, r.nameEn);
+                c += this.writestr(p, c, r.nameJa);
+                c += this.writestr(p, c, r.nameEn);
                 c += this.write32s(p, c, [r.bone]);
                 c += this.write8s(p, c, [r.group]);
                 c += this.write16s(p, c, [r.groupFlags]);
@@ -1224,7 +1525,7 @@ class PMXMaker extends PMXParser {
                     ...r.size,
                     ...r.p,
                     ...r.rot,
-                    r.weight,
+                    r.mass,
                     r.moveDamping,
                     r.rotDamping,
                     r.pong,
@@ -1242,8 +1543,8 @@ class PMXMaker extends PMXParser {
             let c = 0;
             c += this.write32s(p, c, [num]);
             for (const j of this.joints) {
-                c += this.setString(p, c, j.nameJa);
-                c += this.setString(p, c, j.nameEn);
+                c += this.writestr(p, c, j.nameJa);
+                c += this.writestr(p, c, j.nameEn);
                 c += this.write8s(p, c, [j.type]);
                 c += this.write32s(p, c, j.rigids);
                 c += this.writefs(p, c, [
@@ -1299,9 +1600,19 @@ class PMXMaker extends PMXParser {
 
 _global.PMX = {};
 Object.assign(_global.PMX, {
+    Vertex,
+    Face,
+    Bone,
+    Material,
+    Morph,
+    Frame,
+    Rigid,
+    Joint,
+    SoftBody,
+
     PMXObject,
-    PMXParser,
-    PMXMaker,
+    Parser,
+    Maker,
 });
 
 })(globalThis);
