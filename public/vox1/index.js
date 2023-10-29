@@ -6,6 +6,7 @@ class Misc {
     static CTYPE = 'application/json;charset=UTF-8';
 
     constructor() {
+        this.speakerid = 3;
         this.base = 'http://127.0.0.1:50021';
     }
 
@@ -49,22 +50,34 @@ class Misc {
             header: {}
         };
         let c = 0;
-        ret.header.riff = _readfourcc(p, c);
+        ret.header.RIFF = _readfourcc(p, c);
         ret.header.riffbodybyte = p.getUint32(c + 4, true);
-        ret.header.fmts = _readfourcc(p, c + 8);
-        ret.header.fmtbodybyte = p.getUint32(c + 12, true);
-        c += 16;
+        ret.header.WAVE = _readfourcc(p, c + 8);
+        ret.header.fmts = _readfourcc(p, c + 12);
+        ret.header.fmtbodybyte = p.getUint32(c + 16, true);
+        c += 20;
         ret.header.format = p.getUint16(c, true);
         ret.header.channelnum = p.getUint16(c + 2, true);
-        ret.header.foo = p.getUint32(c + 4, true);
-        ret.header.bar = p.getUint16(c + 6, true);
-        c += 48;
+        ret.header.samplingrate = p.getUint32(c + 4, true);
+// 48000 など
+        ret.header.bytepersec = p.getUint32(c + 8, true);
+// 2 など
+        ret.header.bytepertick = p.getUint16(c + 12, true);
+// 16 など
+        ret.header.bitnum = p.getUint16(c + 14, true);
+        c += 16;
 
         ret.header.data = _readfourcc(p, c);
         ret.header.databodybyte = p.getUint32(c + 4, true);
         c += 8;
 
         ret.offset = c;
+
+        const byteNum = ret.header.databodybyte;
+        ret.len = {
+            sec: byteNum / ret.header.bytepersec,
+        };
+
         console.log('ret', ret);
         return ret;
     }
@@ -77,7 +90,7 @@ class Misc {
     async say(text) {
         let param = {};
         const sp = new URLSearchParams();
-        sp.append('speaker', 3);
+        sp.append('speaker', this.speakerid);
         sp.append('text', text);
         {
             const sendobj = {
@@ -126,7 +139,9 @@ class Misc {
         {
             const el = document.getElementById('saytext');
             el?.addEventListener('click', () => {
-                this.say(window.text.value);
+                this.speakerid = Number.parseInt(window.speakerid.value);
+                this.say('こんにちなのだ');
+//                this.say(window.text.value);
             });
         }
 
@@ -137,22 +152,6 @@ class Misc {
             });
         }
 
-        {
-            const el = document.getElementById('cap');
-            el?.addEventListener('click', () => {
-                this.startCapture();
-            });
-        }
-    }
-
-    async startCapture() {
-        const opt = {
-            audio: true,
-            video: true,
-        };
-        const stream = await navigator.mediaDevices.getDisplayMedia(opt);
-        window.mainvideo.srcObject = stream;
-        await window.mainvideo.play();
     }
 
     openWindow() {
