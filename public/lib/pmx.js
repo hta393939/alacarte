@@ -284,9 +284,9 @@ class Face {
     }
     toCSV() {
         const ss = [
-            'PMXFace',
-            this._index,
+            'PmxFace',
             `"${this._materialName}"`,
+            this._index,
             ...this.indices,
         ];
         return ss.join(',');

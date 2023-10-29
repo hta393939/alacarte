@@ -2,11 +2,15 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>vectorview</title>
+        <title>voicevox と通信してみるのだ</title>
         <link rel="stylesheet" href="./index.css" />
 
     </head>
     <body>
+
+        <div></div>
+        <div>chrome または edge でのみ使用可能</div>
+
         <div>
             <div>
                 <div id="innerview"></div>
@@ -25,6 +29,7 @@
                 <input type="number" min="0" max="50" value="3" id="speakerid" />
                 <button id="saytext">発音する</button>
                 <button id="openwindow">開く</button>
+                <button id="opendir">ワーキングフォルダを指定する</button>
                 <audio id="audioelement" controls></audio>
             </div>
             <div>
@@ -35,6 +40,7 @@
             </div>
         </div>
 
+        <script src="../third_party/encoding.min.js"></script>
         <script src="./index.js"></script>
     </body>
 </html>

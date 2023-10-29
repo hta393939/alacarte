@@ -114,7 +114,7 @@ class Misc {
         if (!res.ok) {
             const json = await res.json();
             console.log('json', json);
-            return;
+            return null;
         }
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -126,6 +126,8 @@ class Misc {
         console.log('result', result);
 
         audio.play();
+
+        return ab;
     }
 
     setListener() {
@@ -151,6 +153,14 @@ class Misc {
                 this.openWindow();
             });
         }
+        {
+            const el = document.getElementById('opendir');
+            el?.addEventListener('click', async () => {
+                const dirHandle = await this.openDir();
+                this.dirHandle = dirHandle;
+                await this.processDir(dirHandle);
+            });
+        }
 
     }
 
@@ -169,6 +179,145 @@ class Misc {
             'corge',
             feats.join(','));
         this.win = win;
+    }
+
+/**
+ * zndml.txt をパースする
+ * @param {string} instr 
+ */
+    parseZndml(instr) {
+        const ret = {
+            says: []
+        };
+
+        const reyomi = /(?<fw>[^\<]*)<(?<display>[^\<\>]*)\|(?<yomi>[^\<\>]*)\>(?<bw>.*)/;
+
+        const lines = instr.split('\n');
+        for (let line of lines) {
+            line = line.trim();
+            if (line.length === 0) {
+                continue; // 空行は無視する
+            }
+
+            const top = line.substring(0, 1);
+            if (top === '#') {
+                continue; // コメントであり無視する
+            }
+            if (top === '@') {
+                const ss = lines.split(',');
+                switch(ss[0]) {
+                case '@speaker':
+                    break;
+                case '@margin':
+                    break;
+                default:
+                    console.warn('unknown command');
+                    break;
+                }
+                continue;
+            }
+
+            const obj = {
+                text: '',
+                yomi: '',
+                keep: line,
+            };
+
+            while(true) {
+                const m = reyomi.exec(obj.keep);
+                if (!m) {
+                    obj.text += obj.keep;
+                    obj.yomi += obj.keep;
+                    break;
+                }
+                obj.text += m.groups['fw'] + m.groups['display'];
+                obj.yomi += m.groups['fw'] + m.groups['yomi'];
+                obj.keep = m.groups['bw'];
+            }
+
+            ret.says.push(obj);
+        }
+        return ret;
+    }
+
+/**
+ * readwrite でディレクトリを指定する
+ * @returns {FileSystemDirectoryHandle}
+ */
+    async openDir() {
+        const diropt = {
+            mode: 'readwrite'
+        };
+        const dirHandle = await window.showDirectoryPicker(diropt);
+        console.log('openDir', dirHandle);
+        return dirHandle;
+    }
+
+/**
+ * ディレクトリに対して処理を実施する
+ * @param {FileSystemDirectoryHandle} dirHandle 
+ * @returns {}
+ */
+    async processDir(dirHandle) {
+        console.log('processDir', dirHandle.name);
+/**
+ * zndml.txt を探す
+ * @type {FileSystemFileHandle}
+ */
+        let mlfh = null;
+        for await (let [name, handle] of dirHandle) {
+            if (handle.kind === 'file') {
+                console.log('file', name);
+
+                const fileHandle = await dirHandle.getFileHandle(name);
+                console.log('fileHandle', fileHandle);
+
+                if (name === 'zndml.txt') {
+                    mlfh = handle;
+                    console.log('found', name);
+                }
+            } else { // 'directory' Media
+                console.log('not file', name, handle.kind);
+            }
+        }
+
+        if (!mlfh) {
+            return;
+        }
+
+        {
+            const file = await mlfh.getFile();
+            const text = await file.text();
+            const result = this.parseZndml(text);
+
+            for (const say of result.says) {
+                const ab = await this.say(say.yomi);
+                if (!ab) {
+                    continue;
+                }
+                let name = `${Date.now()}.wav`;
+// 書き込む
+                const fileHandle = await dirHandle.getFileHandle(name, { create: true });
+                const writer = await fileHandle.createWritable();
+                await writer.write(ab);
+                await writer.close();               
+            }
+
+// 書き込む
+            const fileHandle = await dirHandle.getFileHandle('a.txt', { create: true });
+            const writer = await fileHandle.createWritable();
+            {
+                const ss = [
+                    '[0]',
+                    '[1]',
+                ];
+                await writer.write(ss.join('\r\n'));
+                await writer.close();
+            }
+            
+        }
+
+        console.log('processDir 終わり');
     }
 
 }
