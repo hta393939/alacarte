@@ -6,6 +6,9 @@ class Misc {
     static CTYPE = 'application/json;charset=UTF-8';
 
     constructor() {
+/**
+ * ずんだもんノーマル
+ */
         this.speakerid = 3;
 /**
  * VOICEVOX ベースアドレス
@@ -159,48 +162,7 @@ class Misc {
                 await this.processDir(dirHandle);
             });
         }
-        { // ファイルを指定してそのフォルダを使いたいが
-            // フォルダピッカーの初期値にすら指定できなさそう
-            const el = document.getElementById('openfile');
-            el?.addEventListener('click', async () => {
-                const fileHandle = await this.openFile();
-                this.fileHandle = fileHandle;
-                await this.processFile(fileHandle);
-            });
-        }
 
-        { // File からはさすがに FileSystemFileHandle にはいかなそう...
-            // 見かけた気がしないでもないのだが..
-            window.addEventListener('dragover', ev => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                ev.dataTransfer.dropEffect = 'none';
-            });
-            const el = document.querySelector('.drop');
-            el?.addEventListener('dragover', ev => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                ev.dataTransfer.dropEffect = 'copy';
-            });
-            el?.addEventListener('drop', ev => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                ev.dataTransfer.dropEffect = 'copy';
-                this.openText(ev.dataTransfer.files[0]);
-            });
-        }
-
-    }
-
-/**
- * 未実装
- * @param {File} file 
- */
-    async openText(file) {
-        console.log('openText called');
-        const text = await file.text();
-
-        console.log('openText');
     }
 
     openWindow() {
@@ -277,6 +239,7 @@ class Misc {
 // 継続なので obj は消さずに残す
                 obj.text += '\r\n';
                 line = line.trim();
+                obj.keep = line;
             } else {
                 if (obj) {
                     ret.says.push(obj);
@@ -325,32 +288,6 @@ class Misc {
         return dirHandle;
     }
 
-    async openFile() {
-        const fileopt = {
-            mode: 'readwrite',
-        };
-        const fileHandle = await window.showOpenFilePicker(fileopt);
-        console.log('openFile', fileHandle);
-        return fileHandle;
-    }
-
-/**
- * 
- * @param {FileSystemFileHandle} fileHandle 
- */
-    async processFile(fileHandle) {
-        console.log('processFile called');
-        
-        const diropt = {
-            mode: 'readwrite',
-            startIn: fileHandle, // unknown 言われた;;
-        };
-        const dirHandle = await window.showDirectoryPicker(diropt);
-        console.log('show', dirHandle);
-
-        console.log('processFile 終わり');
-    }
-
 /**
  * ディレクトリに対して処理を実施する
  * @param {FileSystemDirectoryHandle} dirHandle 
@@ -392,6 +329,7 @@ class Misc {
 
         const project = new AVIUTL.Project();
         let counter = 0;
+        let timeCounter = 0;
         {
             const file = await mlfh.getFile();
             const text = await file.text();
@@ -400,18 +338,25 @@ class Misc {
             for (const say of result.says) {
                 counter += 1;
                 const mod = counter & 1;
+                const len = 2 * 30;
                 {
                     const te = new AVIUTL.AUText();
                     te.setText(say.text);
                     te.data.layer = 7 + mod; // 7 or 8
+                    te.data.start = timeCounter + 1;
+                    te.data.end = te.data.start + len - 1;
                     project.elements.push(te);
                 }
 
                 let name = `${say.text.substring(0, 4)}_${Date.now()}.wav`;
                 const ae = new AVIUTL.AUAudio();
-                ae.data0.file = `${ret.pathprefix}${name}`;
+                ae.data0.file = `${result.pathprefix}${name}`;
                 ae.data.layer = 3 + mod; // 3 or 4
+                ae.data.start = timeCounter + 1;
+                ae.data.end = ae.data.start + len - 1;
                 project.elements.push(ae);
+
+                timeCounter += len;
 
                 try {
                     const ab = await this.say(say.yomi);

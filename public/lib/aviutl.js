@@ -65,6 +65,39 @@ class AUElement {
  * テキスト
  */
 class AUText extends AUElement {
+/**
+ * 縁取り文字影など無し
+ */
+    static TYPE_NORMAL = 0;
+/**
+ * 影つき
+ */
+    static TYPE_SHADOW = 1;
+/**
+ * 影付き薄い
+ */
+    static TYPE_SHADOW2 = 2;
+/**
+ * 縁取り
+ */
+    static TYPE_EDGE = 3;
+/**
+ * 縁取り細い
+ */
+    static TYPE_EDGETHIN = 4;
+
+/**
+ * 左上
+ */
+    static ALIGN_LEFTTOP = 0;
+/**
+ * 中央揃え中
+ */
+    static ALIGN_CENTERMIDDLE = 4;
+/**
+ * 中央揃え下
+ */
+    static ALIGN_CENTERBOTTOM = 7;
 
 /**
  * UTF-16 little endian をテキスト化
@@ -102,17 +135,17 @@ class AUText extends AUElement {
             ['自動スクロール']: 0,
             B: 1,
             I: 0,
-            type: 0,
+            type: AUText.TYPE_EDGE,
             autoadjust: 0,
             soft: 1,
             monospace: 0,
-            align: 0,
+            align: AUText.ALIGN_CENTERBOTTOM,
             spacing_x: 4,
             spacing_y: 0,
             precision: 1,
             color: 'ffffff',
             color2: '000000',
-            font: 'BIZ UD ゴシック',
+            font: 'BIZ UDPゴシック',
             text: '0000',
         };
         this.data1 = {
@@ -129,7 +162,7 @@ class AUText extends AUElement {
 
     setText(instr) {
         this._text = instr;
-        this.text = AUText.Make4096(instr);
+        this.data0.text = AUText.Make4096(instr);
     }
 
 }
@@ -188,7 +221,7 @@ class Project {
             height: 540,
             rate: 30,
             scale: 1,
-            length: 301,
+            length: 61,
             audio_rate: 48000,
             audio_ch: 2,
         };

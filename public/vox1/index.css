@@ -4,14 +4,6 @@
     width: 6em;
 }
 
-.drop {
-    margin: 1em;
-    border: dashed 4px black;
-    font-weight: bold;
-    text-align: center;
-    padding: 1em;    
-}
-
 #numberselement {
     width: 50vw;
     height: 6rem;
