@@ -342,7 +342,7 @@ class Misc {
                 {
                     const te = new AVIUTL.AUText();
                     te.setText(say.text);
-                    te.data.layer = 7 + mod; // 7 or 8
+                    te.data.layer = 8 + mod; // 8 or 9
                     te.data.start = timeCounter + 1;
                     te.data.end = te.data.start + len - 1;
                     project.elements.push(te);
@@ -373,6 +373,15 @@ class Misc {
                 } catch(ec) {
                     console.warn('catch', ec.message);
                 }
+            }
+
+            {
+                const ge = new AVIUTL.AUGroup();
+                ge.data.start = 1;
+                ge.data.end = ge.data.start + timeCounter - 1;
+                ge.data.layer = 7;
+                ge.data0.range = 2;
+                project.elements.push(ge);
             }
 
 // .exo ファイルを書き込む
