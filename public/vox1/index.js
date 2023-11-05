@@ -13,15 +13,10 @@ class Misc {
     async initialize() {
         this.setListener();
 
-        {
-            let s = '';
-            s += `${window.innerWidth}`;
-            s += `x${window.innerHeight}`;
-            const el = window.innerview;
-            el.textContent = s;
-        }
-
         this.enumVoice();
+
+        const buf = this.strToSJIS('漢字abc');
+        console.log('buf', buf);
     }
 
     async enumVoice() {
@@ -153,7 +148,7 @@ class Misc {
                 this.openWindow();
             });
         }
-        {
+        { // ワーキングディレクトリで指定するタイプ。うまくいく。
             const el = document.getElementById('opendir');
             el?.addEventListener('click', async () => {
                 const dirHandle = await this.openDir();
@@ -161,7 +156,48 @@ class Misc {
                 await this.processDir(dirHandle);
             });
         }
+        { // ファイルを指定してそのフォルダを使いたいが
+            // フォルダピッカーの初期値にすら指定できなさそう
+            const el = document.getElementById('openfile');
+            el?.addEventListener('click', async () => {
+                const fileHandle = await this.openFile();
+                this.fileHandle = fileHandle;
+                await this.processFile(fileHandle);
+            });
+        }
 
+        { // File からはさすがに FileSystemFileHandle にはいかなそう...
+            // 見かけた気がしないでもないのだが..
+            window.addEventListener('dragover', ev => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                ev.dataTransfer.dropEffect = 'none';
+            });
+            const el = document.querySelector('.drop');
+            el?.addEventListener('dragover', ev => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                ev.dataTransfer.dropEffect = 'copy';
+            });
+            el?.addEventListener('drop', ev => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                ev.dataTransfer.dropEffect = 'copy';
+                this.openText(ev.dataTransfer.files[0]);
+            });
+        }
+
+    }
+
+/**
+ * 未実装
+ * @param {File} file 
+ */
+    async openText(file) {
+        console.log('openText called');
+        const text = await file.text();
+
+        console.log('openText');
     }
 
     openWindow() {
@@ -253,6 +289,32 @@ class Misc {
         return dirHandle;
     }
 
+    async openFile() {
+        const fileopt = {
+            mode: 'readwrite',
+        };
+        const fileHandle = await window.showOpenFilePicker(fileopt);
+        console.log('openFile', fileHandle);
+        return fileHandle;
+    }
+
+/**
+ * 
+ * @param {FileSystemFileHandle} fileHandle 
+ */
+    async processFile(fileHandle) {
+        console.log('processFile called');
+        
+        const diropt = {
+            mode: 'readwrite',
+            startIn: fileHandle, // unknown 言われた;;
+        };
+        const dirHandle = await window.showDirectoryPicker(diropt);
+        console.log('show', dirHandle);
+
+        console.log('processFile 終わり');
+    }
+
 /**
  * ディレクトリに対して処理を実施する
  * @param {FileSystemDirectoryHandle} dirHandle 
@@ -318,6 +380,37 @@ class Misc {
         }
 
         console.log('processDir 終わり');
+    }
+
+/**
+ * 文字列から Shift_JIS のバイナリ配列を返す
+ * @param {string} instr 
+ * @returns {number[]} バイナリ(0-255)のための配列
+ */
+    strToSJIS(instr) {
+        const unicodeArray = Encoding.stringToCode(instr);
+        const sjisArray = Encoding.convert(unicodeArray,
+            { to: 'SJIS', from: 'UNICODE' });
+// ArrayBuffer のコンストラクタに指定してもダメ
+        const buf = new Uint8Array(sjisArray);
+        return buf;
+    }
+
+/**
+ * UTF-16 little endian をテキスト化
+ * @param {string} instr 
+ * @returns {string} 4096 文字(0-9a-f)
+ */
+    make4096(instr) {
+        const _pad = (v, n = 2) => String(v).padStart(n, '0');
+        const cs = Array.from(instr);
+        let ss = [];
+        for (let i = 0; i < cs.length; ++i) {
+            const code = cs[i].charCodeAt(0);
+            ss.push(_pad((code & 0xff).toString(16)));
+            ss.push(_pad((code >> 8).toString(16)));
+        }
+        return _pad(ss.join(''), 4096);
     }
 
 }

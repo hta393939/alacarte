@@ -80,7 +80,12 @@ declare class FileSystemDirectoryHandle extends FileSystemHandle {
  * 
  * @param {{mode?: string}} opt mode: 'readwrite' にすると読み書きできる 
  * @param {string?} opt.mode 'readwrite' にすると読み書きできる
+ * @param {string|FileSystemHandle} opt.startIn 初期位置指定
+ * string の場合は、"music", "pictures", "videos" など
  */
 declare function showDirectoryPicker(opt: {mode?: string}): Promise<FileSystemDirectoryHandle>;
+
+
+declare function showOpenFilePicker(opt: {}): Promise<FileSystemFileHandle[]>;
 
 
