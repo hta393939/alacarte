@@ -7,6 +7,9 @@ class Misc {
 
     constructor() {
         this.speakerid = 3;
+/**
+ * VOICEVOX ベースアドレス
+ */
         this.base = 'http://127.0.0.1:50021';
     }
 
@@ -218,7 +221,7 @@ class Misc {
     }
 
 /**
- * zndml.txt をパースする
+ * ～znd.txt をパースする
  * @param {string} instr 
  */
     parseZndml(instr) {
@@ -323,7 +326,7 @@ class Misc {
     async processDir(dirHandle) {
         console.log('processDir', dirHandle.name);
 /**
- * zndml.txt を探す
+ * znd.txt を探す
  * @type {FileSystemFileHandle}
  */
         let mlfh = null;
@@ -334,7 +337,7 @@ class Misc {
                 const fileHandle = await dirHandle.getFileHandle(name);
                 console.log('fileHandle', fileHandle);
 
-                if (name === 'zndml.txt') {
+                if (name.endsWith === 'znd.txt') {
                     mlfh = handle;
                     console.log('found', name);
                 }
@@ -344,6 +347,7 @@ class Misc {
         }
 
         if (!mlfh) {
+            console.warn('not found ～znd.txt');
             return;
         }
 
