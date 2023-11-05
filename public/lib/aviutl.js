@@ -16,7 +16,7 @@ class AUElement {
 /**
  * 1-1 の場合、1フレーム分の長さ
  */
-        this.data.end = 1;
+        this.data.end = 61;
 /**
  * 配置するレイヤー番号
  */
@@ -26,7 +26,6 @@ class AUElement {
 
 //        this.camera = 1;
 //        this.audio = 1;
-
 
         this.data0 = null;
         this.data1 = null;
@@ -62,26 +61,87 @@ class AUElement {
     }
 }
 
+/**
+ * テキスト
+ */
 class AUText extends AUElement {
+
+/**
+ * UTF-16 little endian をテキスト化
+ * @param {string} instr 
+ * @returns {string} 4096 文字(0-9a-f)
+ */
+    static Make4096(instr) {
+        const _pad = (v, n = 2) => String(v).padStart(n, '0');
+        const cs = Array.from(instr);
+        let ss = [];
+        for (let i = 0; i < cs.length; ++i) {
+            const code = cs[i].charCodeAt(0);
+            ss.push(_pad((code & 0xff).toString(16))); // 下位
+            ss.push(_pad((code >> 8).toString(16))); // 上位
+        }
+        return ss.join('').padEnd(4096, '0');
+    }
+
     constructor() {
         super();
 
+        this.data.camera = 0;
+
+/**
+ * 変換元
+ */
+        this._text = '';
+
         this.data0 = {
             ['_name']: 'テキスト',
-            ['サイズ']: 34,
+            ['サイズ']: 30,
             ['表示速度']: 0,
-            ['text']: '0000'
+            ['文字毎に個別オブジェクト']: 0,
+            ['移動座標上に表示する']: 0,
+            ['自動スクロール']: 0,
+            B: 1,
+            I: 0,
+            type: 0,
+            autoadjust: 0,
+            soft: 1,
+            monospace: 0,
+            align: 0,
+            spacing_x: 4,
+            spacing_y: 0,
+            precision: 1,
+            color: 'ffffff',
+            color2: '000000',
+            font: 'BIZ UD ゴシック',
+            text: '0000',
         };
         this.data1 = {
             ['_name']: '標準描画',
+            X: 0,
+            Y: 0,
+            Z: 0,
+            ['拡大率']: 100,
+            ['透明度']: 0,
+            ['回転']: 0,
+            blend: 0,
         };
+    }
+
+    setText(instr) {
+        this._text = instr;
+        this.text = AUText.Make4096(instr);
     }
 
 }
 
-class AUAudio {
+/**
+ * 音声ファイル
+ */
+class AUAudio extends AUElement {
     constructor() {
         super();
+
+        this.data.audio = 1;
 
         this.data0 = {
             ['_name']: '音声ファイル',

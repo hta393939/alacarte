@@ -226,25 +226,42 @@ class Misc {
  */
     parseZndml(instr) {
         const ret = {
-            says: []
+            says: [],
+            pathprefix: '',
         };
 
         const reyomi = /(?<fw>[^\<]*)<(?<display>[^\<\>]*)\|(?<yomi>[^\<\>]*)\>(?<bw>.*)/;
 
         const lines = instr.split('\n');
+        let obj = null;
         for (let line of lines) {
-            line = line.trim();
+            line = line.trimEnd();
             if (line.length === 0) {
                 continue; // 空行は無視する
             }
-
+/**
+ * 先頭の1文字
+ */
             const top = line.substring(0, 1);
             if (top === '#') {
                 continue; // コメントであり無視する
             }
+
             if (top === '@') {
-                const ss = lines.split(',');
+                const ss = line.split(',');
                 switch(ss[0]) {
+                case '@version':
+                    {
+                        const version = Number.parseInt(ss[1]);
+                        if (version >= 20000) {
+                            console.warn('非対応の未来のバージョンです');
+                        }
+                        console.log('version', version);
+                    }
+                    break;
+                case '@pathprefix':
+                    ret.pathprefix = ss[1];
+                    break;
                 case '@speaker':
                     break;
                 case '@margin':
@@ -256,11 +273,24 @@ class Misc {
                 continue;
             }
 
-            const obj = {
-                text: '',
-                yomi: '',
-                keep: line,
-            };
+            if (top == ' ') {
+// 継続なので obj は消さずに残す
+                obj.text += '\r\n';
+                line = line.trim();
+            } else {
+                if (obj) {
+                    ret.says.push(obj);
+                }
+                obj = null;
+            }
+
+            if (!obj) {
+                obj = {
+                    text: '',
+                    yomi: '',
+                    keep: line,
+                };
+            }
 
             while(true) {
                 const m = reyomi.exec(obj.keep);
@@ -273,9 +303,12 @@ class Misc {
                 obj.yomi += m.groups['fw'] + m.groups['yomi'];
                 obj.keep = m.groups['bw'];
             }
+        }
 
+        if (obj) {
             ret.says.push(obj);
         }
+
         return ret;
     }
 
@@ -330,6 +363,7 @@ class Misc {
  * @type {FileSystemFileHandle}
  */
         let mlfh = null;
+        let basename = 'znd';
         for await (let [name, handle] of dirHandle) {
             if (handle.kind === 'file') {
                 console.log('file', name);
@@ -337,9 +371,14 @@ class Misc {
                 const fileHandle = await dirHandle.getFileHandle(name);
                 console.log('fileHandle', fileHandle);
 
-                if (name.endsWith === 'znd.txt') {
+                if (name.endsWith('znd.txt')) {
                     mlfh = handle;
                     console.log('found', name);
+                    const re = /(?<basename>.+)\.txt$/;
+                    const m = re.exec(name);
+                    if (m) {
+                        basename = m.groups['basename'];
+                    }
                 }
             } else { // 'directory' Media
                 console.log('not file', name, handle.kind);
@@ -351,35 +390,58 @@ class Misc {
             return;
         }
 
+        const project = new AVIUTL.Project();
+        let counter = 0;
         {
             const file = await mlfh.getFile();
             const text = await file.text();
             const result = this.parseZndml(text);
 
             for (const say of result.says) {
-                const ab = await this.say(say.yomi);
-                if (!ab) {
-                    continue;
+                counter += 1;
+                const mod = counter & 1;
+                {
+                    const te = new AVIUTL.AUText();
+                    te.setText(say.text);
+                    te.data.layer = 7 + mod; // 7 or 8
+                    project.elements.push(te);
                 }
-                let name = `${Date.now()}.wav`;
-// 書き込む
-                const fileHandle = await dirHandle.getFileHandle(name, { create: true });
-                const writer = await fileHandle.createWritable();
-                await writer.write(ab);
-                await writer.close();               
-            }
+
+                let name = `${say.text.substring(0, 4)}_${Date.now()}.wav`;
+                const ae = new AVIUTL.AUAudio();
+                ae.data0.file = `${ret.pathprefix}${name}`;
+                ae.data.layer = 3 + mod; // 3 or 4
+                project.elements.push(ae);
+
+                try {
+                    const ab = await this.say(say.yomi);
+                    if (!ab) {
+                        continue;
+                    }
 
 // 書き込む
-            const fileHandle = await dirHandle.getFileHandle('a.txt', { create: true });
+                    const fileHandle = await dirHandle.getFileHandle(name,
+                        { create: true });
+                    const writer = await fileHandle.createWritable();
+                    await writer.write(ab);
+                    await writer.close();               
+                } catch(ec) {
+                    console.warn('catch', ec.message);
+                }
+            }
+
+// .exo ファイルを書き込む
+            const fileHandle = await dirHandle.getFileHandle(`${basename}.exo`,
+                { create: true });
             const writer = await fileHandle.createWritable();
             {
-                const project = new AVIUTL.Project();
-                {
-                    
+                for (let i = 0; i < project.elements.length; ++i) {
+                    const el = project.elements[i];
+                    el._index = i;
                 }
 
                 const ss = project.getLines();
-                await writer.write(ss.join('\r\n'));
+                await writer.write(this.strToSJIS(ss.join('\r\n')));
                 await writer.close();
             }
             
@@ -400,23 +462,6 @@ class Misc {
 // ArrayBuffer のコンストラクタに指定してもダメ
         const buf = new Uint8Array(sjisArray);
         return buf;
-    }
-
-/**
- * UTF-16 little endian をテキスト化
- * @param {string} instr 
- * @returns {string} 4096 文字(0-9a-f)
- */
-    make4096(instr) {
-        const _pad = (v, n = 2) => String(v).padStart(n, '0');
-        const cs = Array.from(instr);
-        let ss = [];
-        for (let i = 0; i < cs.length; ++i) {
-            const code = cs[i].charCodeAt(0);
-            ss.push(_pad((code & 0xff).toString(16)));
-            ss.push(_pad((code >> 8).toString(16)));
-        }
-        return _pad(ss.join(''), 4096);
     }
 
 }
