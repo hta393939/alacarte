@@ -373,10 +373,12 @@ class Misc {
             const fileHandle = await dirHandle.getFileHandle('a.txt', { create: true });
             const writer = await fileHandle.createWritable();
             {
-                const ss = [
-                    '[0]',
-                    '[1]',
-                ];
+                const project = new AVIUTL.Project();
+                {
+                    
+                }
+
+                const ss = project.getLines();
                 await writer.write(ss.join('\r\n'));
                 await writer.close();
             }
