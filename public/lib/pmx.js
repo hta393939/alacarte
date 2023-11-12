@@ -1,7 +1,7 @@
 /**
- * @file pmxwriter.js
+ * @file pmx.js
  */
-// 2023-10-21 1
+// 2023-11-12 1
 
 (function(_global) {
 
@@ -355,6 +355,10 @@ class Material {
 
         this.memo = 'メモ';
 /**
+ * この材質の面の全頂点数。3の倍数であること。
+ */
+        this._faceIndexNum = 0;
+/**
  * 面配列
  * @type {number[][]}
  */
@@ -394,16 +398,73 @@ class Material {
 }
 
 
+
+/**
+ * 材質モーフ1要素分
+ */
+class MaterialMorph {
+    constructor() {        
+        this._index = 0;
+    }
+
+    toCSV() {
+        // not implemented
+    }
+}
+
+/**
+ * 頂点モーフ1要素
+ */
+class VertexMorph {
+    constructor() {
+        this._parentName = '';
+        this._index = 0;
+/**
+ * 頂点インデックス
+ */
+        this.target = 0;
+/**
+ * 座標オフセット
+ */
+        this.offset = [0, 0, 0];
+    }
+/**
+ * 1行返す
+ * @returns {string}
+ */
+    toCSV() {
+        const ss = [
+            'PmxVertexMorph',
+            `"${this._parentName}"`,
+            this._index,
+            this.target,
+            ...this.offset,
+        ];
+        return ss.join(',');
+    }
+}
+
+/**
+ * モーフ
+ */
 class Morph {
     static PANEL_SYSTEM = 0;
+/**
+ * まゆげ
+ */
     static PANEL_B = 1;
     static PANEL_EYE = 2;
     static PANEL_MOUTH = 3;
     static PANEL_ETC = 4;
+
     static TYPE_GROUP = 0;
     static TYPE_VERTEX = 1;
     static TYPE_BONE = 2;
-    static TYPE_UV = 0;
+    static TYPE_UV = 3;
+    static TYPE_UV1 = 4;
+    static TYPE_UV2 = 5;
+    static TYPE_UV3 = 6;
+    static TYPE_UV4 = 7;
     static TYPE_MATERIAL = 8;
     constructor() {
         this._index = 0;
@@ -414,25 +475,66 @@ class Morph {
         this.type = Morph.TYPE_VERTEX;
 
         this.ones = [];
+
+
+        this.groupMorphs = [];
+
+/**
+ * @type {VertexMorph[]}
+ */
+        this.vertexMorphs = [];
+
+        this.boneMorphs = [];
+
+        this.uvMorphs = [];
+
+        this.materialMorphs = [];
     }
 
+/**
+ * 1行だけ返す
+ * @returns 
+ */
     toCSV() {
         const ss = [
-            'PMXMorph',
+            'PmxMorph',
             `"${this.nameJa}"`,
             `"${this.nameEn}"`,
+            this.panel,
+            this.type,
         ];
         return ss.join(',');
     }
-}
 
-class MaterialMorph {
-    constructor() {
-        this.type = PMXMorph.TYPE_MATERIAL;
-        
-        
+/**
+ * 複数行で返す
+ * @returns {string[]}
+ */
+    toLines() {
+        const ss = [
+            'PmxMorph',
+            `"${this.nameJa}"`,
+            `"${this.nameEn}"`,
+            this.panel,
+            this.type,
+        ];
+        const lines = [
+            ss.join(','),
+        ];
+        for (const gm of this.groupMorphs) {
+            lines.push(gm.toCSV());
+        }
+        for (const vm of this.vertexMorphs) {
+            lines.push(vm.toCSV());
+        }
+        for (const bm of this.boneMorphs) {
+            lines.push(bm.toCSV());
+        }
+        return lines;
     }
 }
+
+
 
 class Frame {
     constructor() {
@@ -655,6 +757,11 @@ class PMXObject {
  * @type {Vertex[]}
  */
         this.vts = [];
+/**
+ * 面頂点が1次元配列で並んでいる
+ * @type {number[]} 3の倍数個
+ */
+        this.faceIndices = [];
 /**
  * @type {Bone[]}
  */
@@ -890,6 +997,7 @@ class Parser extends PMXObject {
             console.log('vertex num', num);
             for (let i = 0; i < num; ++i) {
                 const vtx = new Vertex();
+                vtx._index = i;
                 const fs = this.readf32s(p, 8);
                 vtx.p = [fs[0], fs[1], fs[2]];
                 vtx.n = [fs[3], fs[4], fs[5]];
@@ -942,7 +1050,7 @@ class Parser extends PMXObject {
         { // face
             const num = this.readu32s(p, 1)[0];
             console.log('face num', num);
-            this.faces = this.readints(p, num, this.vtxbnum);
+            this.faceIndices = this.readints(p, num, this.vtxbnum);
         }
         { // texture
             const num = this.readu32s(p, 1)[0];
@@ -981,8 +1089,10 @@ class Parser extends PMXObject {
                 }
 
                 m.memo = this.readstr(p);
+// 頂点全数(3の倍数)が格納されている
                 const num = this.readu32s(p, 1)[0];
-                m.faces = new Array(num);              
+                m._faceIndexNum = num;
+                m.faces = new Array(num / 3);
 
                 this.materials.push(m);
             }
@@ -991,7 +1101,7 @@ class Parser extends PMXObject {
         { // bone
             const num = this.readu32s(p, 1)[0];
             for (let i = 0; i < num; ++i) {
-                const b = new PMXBone();
+                const b = new Bone();
                 b._index = i;
                 b.nameJa = this.readstr(p);
                 b.nameEn = this.readstr(p);
@@ -1044,7 +1154,7 @@ class Parser extends PMXObject {
             const num = this.readu32s(p, 1)[0];
             console.log('morph num', num);
             for (let i = 0; i < num; ++i) {
-                const m = new PMXMorph();
+                const m = new Morph();
                 m._index = i;
                 m.nameJa = this.readstr(p);
                 m.nameEn = this.readstr(p);
@@ -1060,7 +1170,7 @@ class Parser extends PMXObject {
                         this.readf32s(p, 1)[0];
                         break;
                     case Morph.TYPE_VERTEX: // 頂点
-                        console.warn('skip only vertex', m.nameJa, `${i}/${num}`, `${j}/${morphnum}`);
+                        //console.warn('skip only vertex', m.nameJa, `${i}/${num}`, `${j}/${morphnum}`);
                         this.readints(p, 1, this.vtxbnum)[0];
                         this.readf32s(p, 3);
                         break;
@@ -1094,7 +1204,7 @@ class Parser extends PMXObject {
             const num = this.readu32s(p, 1)[0];
             console.log('frame num', num);
             for (let i = 0; i < num; ++i) {
-                const f = new PMXFrame();
+                const f = new Frame();
                 f._index = i;
                 f.nameJa = this.readstr(p);
                 f.nameEn = this.readstr(p);
@@ -1107,7 +1217,7 @@ class Parser extends PMXObject {
                     } else {
                         this.readints(p, 1, this.mrpbnum)[0];
                     }
-                    console.warn('skip only', f.nameJa);
+                    //console.warn('skip only', f.nameJa);
                 }
                 this.frames.push(f);
             }
@@ -1604,6 +1714,8 @@ Object.assign(_global.PMX, {
     Face,
     Bone,
     Material,
+    MaterialMorph,
+    VertexMorph,
     Morph,
     Frame,
     Rigid,
