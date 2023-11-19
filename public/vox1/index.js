@@ -84,11 +84,12 @@ class Misc {
     }
 
 /**
- * 
+ * VOICEVOX へ要求して結果を受け取る
  * @param {string} text 
+ * @param {boolean} replay 
  * @returns 
  */
-    async say(text) {
+    async say(text, replay = true) {
         let param = {};
         const sp = new URLSearchParams();
         sp.append('speaker', this.speakerid);
@@ -117,18 +118,25 @@ class Misc {
             console.log('json', json);
             return null;
         }
+
         const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const audio = window.audioelement;
-        audio.src = url;
+        if (replay) {
+            const url = URL.createObjectURL(blob);
+            const audio = window.audioelement;
+            audio.src = url;
+            try {
+                audio.play();
+            } catch(e) {
+                console.warn('play', e.message);
+            }
+        }
 
         const ab = await blob.arrayBuffer();
         const result = this.parseWav(ab);
         console.log('result', result);
+        result.arrayBuffer = ab;
 
-        audio.play();
-
-        return ab;
+        return result;
     }
 
     setListener() {
@@ -143,7 +151,7 @@ class Misc {
             const el = document.getElementById('saytext');
             el?.addEventListener('click', () => {
                 this.speakerid = Number.parseInt(window.speakerid.value);
-                this.say('こんにちなのだ');
+                this.say('こんにちなのだ', true);
 //                this.say(window.text.value);
             });
         }
@@ -338,39 +346,48 @@ class Misc {
             for (const say of result.says) {
                 counter += 1;
                 const mod = counter & 1;
-                const len = 2 * 30;
-                {
-                    const te = new AVIUTL.AUText();
-                    te.setText(say.text);
-                    te.data.layer = 8 + mod; // 8 or 9
-                    te.data.start = timeCounter + 1;
-                    te.data.end = te.data.start + len - 1;
-                    project.elements.push(te);
-                }
 
-                //let name = `${say.text.substring(0, 4)}_${1}.wav`;
-                let name = `${say.text.substring(0, 4)}_${Date.now()}.wav`;
-
-                const ae = new AVIUTL.AUAudio();
-                ae.data0.file = `${result.pathprefix}${name}`;
-                ae.data.layer = 3 + mod; // 3 or 4
-                ae.data.start = timeCounter + 1;
-                ae.data.end = ae.data.start + len - 1;
-                project.elements.push(ae);
-
-                timeCounter += len;
+                let name = `${say.text.substring(0, 6)}_${1}.wav`;
+                //let name = `${say.text.substring(0, 4)}_${Date.now()}.wav`;
 
                 try {
-                    const ab = await this.say(say.yomi);
-                    if (!ab) {
+                    const waveBinary = await this.say(say.yomi, false);
+                    if (!waveBinary) {
                         continue;
                     }
+
+// 秒数を決定する
+                    let sec = Math.ceil(waveBinary.len.sec);
+                    const secmod = waveBinary.len.sec - Math.floor(waveBinary.len.sec);
+                    if (secmod >= 0.9 || secmod == 0.0) {
+                        sec += 1;
+                    }
+                    const len = sec * 30;
+
+                    {
+                        const te = new AVIUTL.AUText();
+                        te.setText(say.text);
+                        te.data.layer = 8 + mod; // 8 or 9
+                        te.data.start = timeCounter + 1;
+                        te.data.end = te.data.start + len - 1;
+                        project.elements.push(te);
+                    }
+
+                    const ae = new AVIUTL.AUAudio();
+                    ae.data0.file = `${result.pathprefix}${name}`;
+                    ae.data.layer = 3 + mod; // 3 or 4
+                    ae.data.start = timeCounter + 1;
+                    ae.data.end = ae.data.start + len - 1;
+                    project.elements.push(ae);
+    
+                    timeCounter += len;
+    
 
 // 書き込む
                     const fileHandle = await dirHandle.getFileHandle(name,
                         { create: true });
                     const writer = await fileHandle.createWritable();
-                    await writer.write(ab);
+                    await writer.write(waveBinary.arrayBuffer);
                     await writer.close();               
                 } catch(ec) {
                     console.warn('catch', ec.message);

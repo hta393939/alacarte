@@ -145,7 +145,8 @@ class AUText extends AUElement {
             precision: 1,
             color: 'ffffff',
             color2: '000000',
-            font: 'BIZ UDPゴシック',
+            //font: 'BIZ UDPゴシック',
+            font: 'メイリオ',
             text: '0000',
         };
         this.data1 = {
@@ -224,6 +225,8 @@ class Project {
             length: 61,
             audio_rate: 48000,
             audio_ch: 2,
+            alpha: 1,
+            name: 'znd',
         };
     }
 
