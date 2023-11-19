@@ -348,7 +348,9 @@ class Misc {
                     project.elements.push(te);
                 }
 
+                //let name = `${say.text.substring(0, 4)}_${1}.wav`;
                 let name = `${say.text.substring(0, 4)}_${Date.now()}.wav`;
+
                 const ae = new AVIUTL.AUAudio();
                 ae.data0.file = `${result.pathprefix}${name}`;
                 ae.data.layer = 3 + mod; // 3 or 4
