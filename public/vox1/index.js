@@ -89,7 +89,7 @@ class Misc {
  * @param {boolean} replay 
  * @returns 
  */
-    async say(text, replay = true) {
+    async say(text, replay) {
         let param = {};
         const sp = new URLSearchParams();
         sp.append('speaker', this.speakerid);
@@ -151,8 +151,8 @@ class Misc {
             const el = document.getElementById('saytext');
             el?.addEventListener('click', () => {
                 this.speakerid = Number.parseInt(window.speakerid.value);
-                this.say('こんにちなのだ', true);
-//                this.say(window.text.value);
+                //this.say('こんにちなのだ', true);
+                this.say(window.text.value, true);
             });
         }
 
@@ -168,6 +168,12 @@ class Misc {
                 const dirHandle = await this.openDir();
                 this.dirHandle = dirHandle;
                 await this.processDir(dirHandle);
+            });
+        }
+        { // リトライ
+            const el = document.getElementById('retry');
+            el?.addEventListener('click', async () => {
+                await this.processDir(this.dirHandle);
             });
         }
 
@@ -298,7 +304,7 @@ class Misc {
 
 /**
  * ディレクトリに対して処理を実施する
- * @param {FileSystemDirectoryHandle} dirHandle 
+ * @param {FileSystemDirectoryHandle} dirHandle ディレクトリハンドル指定
  * @returns {}
  */
     async processDir(dirHandle) {
@@ -308,10 +314,12 @@ class Misc {
  * @type {FileSystemFileHandle}
  */
         let mlfh = null;
+        const _filenames = [];
         let basename = 'znd';
         for await (let [name, handle] of dirHandle) {
             if (handle.kind === 'file') {
                 console.log('file', name);
+                _filenames.push(name);
 
                 const fileHandle = await dirHandle.getFileHandle(name);
                 console.log('fileHandle', fileHandle);
@@ -335,6 +343,14 @@ class Misc {
             return;
         }
 
+/**
+ * @type {HTMLElement}
+ */
+        const viewel = document.getElementById('processingview');
+
+/**
+ * 1シーン分
+ */
         const project = new AVIUTL.Project();
         let counter = 0;
         let timeCounter = 0;
@@ -347,8 +363,14 @@ class Misc {
                 counter += 1;
                 const mod = counter & 1;
 
-                let name = `${say.text.substring(0, 6)}_${1}.wav`;
-                //let name = `${say.text.substring(0, 4)}_${Date.now()}.wav`;
+                let name = '';
+                for (let i = 0; i < 10; ++i) {
+                    name = `${say.text.substring(0, 6)}_${i}.wav`;
+                    if (!_filenames.includes(name)) {
+                        break;
+                    }
+                }
+                viewel.textContent = `process... ${name}`;
 
                 try {
                     const waveBinary = await this.say(say.yomi, false);
@@ -420,6 +442,7 @@ class Misc {
             
         }
 
+        viewel.textContent = `processDir 終わり ${new Date().toLocaleTimeString()}`;
         console.log('processDir 終わり');
     }
 
