@@ -1,0 +1,20 @@
+@charset "UTF-8";
+
+.num6 {
+    width: 6em;
+}
+
+#numberselement {
+    width: 50vw;
+    height: 6rem;
+}
+
+.drop {
+    margin: 1em;
+    border: dashed 4px black;
+    padding: 1em;
+    text-align: center;
+    font-weight: bold;
+}
+
+
