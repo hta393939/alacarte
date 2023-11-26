@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>voicevox と通信してみるのだ</title>
+        <link rel="stylesheet" href="./index.css" />
+
+    </head>
+    <body>
+
+        <div></div>
+        <div>chrome または edge でのみ使用可能</div>
+
+        <div>
+            <div>
+                <div id="innerview"></div>
+                <div id="element"></div>
+            </div>
+            <div>
+                <textarea id="text">
+我々は新たに、世界をおびやかす敵が到来した時に備え、
+国境を超え利害を排除し、
+国同士が一丸となって敵を打ち倒すため、
+新たな組織を結成した。
+五王国、&lt;異様|ことさま>事案対策用、戦略救命部隊。通称は守護神の名に由来し、
+王様戦隊キングオージャーとする。
+                </textarea>
+                <button id="enumvoice">列挙する</button>
+                <input type="number" min="0" max="50" value="3" id="speakerid" />
+                <button id="saytext">発音する</button>
+                <button id="openwindow">開く</button>
+                <button id="opendir">ワーキングフォルダを指定する</button>
+                <button id="retry">リトライする</button>
+                <div>
+                    <div id="processingview"></div>
+                </div>
+                <audio id="audioelement" controls></audio>
+            </div>
+            <div>
+                <div id="imelement"></div>
+            </div>
+            <div>
+                <div id="resultelement"></div>
+            </div>
+        </div>
+
+        <hr />
+
+        <script src="../third_party/encoding.min.js"></script>
+        <script src="../third_party/md5.js"></script>
+        <script src="../lib/aviutl.js"></script>
+        <script src="./index.js"></script>
+    </body>
+</html>
+
+
+
