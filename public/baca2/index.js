@@ -49,7 +49,7 @@ var createScene = async function() {
     const ground = BABYLON.MeshBuilder.CreateGround('ground',
         { width: 6, height: 6 }, scene);
     return scene;
-}
+};
 
 const initialize = async () => {
     const _scene = await createScene();
