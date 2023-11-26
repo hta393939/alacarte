@@ -1,17 +1,13 @@
 @charset "UTF-8";
 
-.num6 {
-    width: 6em;
-}
-
-#canvas1 {
-    border: solid 1px red;
+#renderCanvas {
+    border: solid 4px red;
     width: 320px;
     height: 180px;
 }
 
 #canvas2 {
-    border: solid 1px green;
+    border: solid 4px green;
     width: 320px;
     height: 180px;
 }

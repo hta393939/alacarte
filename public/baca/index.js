@@ -3,8 +3,7 @@
  */
 
 var engine = null;
-var canvas = document.getElementById('canvas1');
-var canvas2 = document.getElementById('canvas2');
+var canvas = document.getElementById('renderCanvas');
 
 var createScene = async function() {
     const scene = new BABYLON.Scene(engine);
@@ -13,82 +12,37 @@ var createScene = async function() {
         0, 0, 1,
         new BABYLON.Vector3(0, 0, 0),
         scene);
+    camera.wheelPrecision = 0.04;
+    camera.wheelDeltaPercentage = 0.04;
     camera.position = new BABYLON.Vector3(1, 1, 5);
+
+
+//    camera.attachControl();
+    engine.inputElement = document.getElementById('canvas2');
     camera.attachControl();
 
+
+    const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
+    light.intensity = 0.7;
+
     const sphere = BABYLON.MeshBuilder.CreateSphere('sphere',
-        { diameter: 2 },
-        scene);
-    sphere.setAbsolutePosition(new BABYLON.Vector3(0, 2, 0));
+        { diameter: 2 }, scene);
+    sphere.setAbsolutePosition(new BABYLON.Vector3(0, 1.5, 0));
 
     const ground = BABYLON.MeshBuilder.CreateGround('ground',
-        { width: 5, height: 5 },
-        scene);
+        { width: 6, height: 6 }, scene);
 
     return scene;
 };
 
-class Misc {
-    constructor() {
-    }
+const initialize = async () => {
+    engine = new BABYLON.Engine(canvas);
+    const _scene = await createScene();
 
-    async initialize() {
-        this.setListener();
+    engine.runRenderLoop(() => {
+        _scene.render();
+    });
+};
 
-        engine = new BABYLON.Engine(canvas);
-        const _scene = await createScene();
-
-        engine.runRenderLoop(() => {
-            _scene.render();
-        });
-    }
-
-    setListener() {
-        {
-            const el = document.getElementById('enumvoice');
-            el?.addEventListener('click', () => {
-                this.enumVoice();
-            });
-        }
-
-        {
-            const el = document.getElementById('saytext');
-            el?.addEventListener('click', () => {
-                this.speakerid = Number.parseInt(window.speakerid.value);
-                //this.say('こんにちなのだ', true);
-                this.say(window.text.value, true);
-            });
-        }
-
-        {
-            const el = document.getElementById('openwindow');
-            el?.addEventListener('click', () => {
-                this.openWindow();
-            });
-        }
-        { // ワーキングディレクトリで指定するタイプ。うまくいく。
-            const el = document.getElementById('opendir');
-            el?.addEventListener('click', async () => {
-                const dirHandle = await this.openDir();
-                this.dirHandle = dirHandle;
-                await this.processDir(dirHandle);
-            });
-        }
-        { // リトライ
-            const el = document.getElementById('retry');
-            el?.addEventListener('click', async () => {
-                await this.processDir(this.dirHandle);
-            });
-        }
-
-    }
-
-}
-
-const misc = new Misc();
-misc.initialize();
-
-
-
-
+initialize();
 
