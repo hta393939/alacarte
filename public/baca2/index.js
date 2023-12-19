@@ -10,9 +10,9 @@ var createScene = async function() {
     const camera1 = new BABYLON.FreeCamera('camera1',
         new BABYLON.Vector3(0, 10, 0),
         scene);
-    camera1.upVector = new BABYLON.Vector3(0, 0, 1);
+//    camera1.upVector = new BABYLON.Vector3(0, 0, 1);
     camera1.setTarget(new BABYLON.Vector3(0, 0, 0));
-    camera1.position = new BABYLON.Vector3(0, 10, 0);
+    camera1.setPosition = new BABYLON.Vector3(0, 10, -0.002);
     camera1.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
     camera1.orthoLeft = -8;
     camera1.orthoRight = 8;
@@ -31,8 +31,15 @@ var createScene = async function() {
 
     engine.inputElement = canvas2;
     camera2.wheelPrecision = 0.04;
-    camera2.wheelDeltaPercentage = 0.04;
+//    camera2.wheelDeltaPercentage = 0.04;
     camera2.attachControl();
+
+    scene.onAfterCameraRenderObservable.add(camera => {
+        if (camera.name === 'camera2') {
+            camera1.alpha = camera.alpha;
+            camera1.update();
+        }
+    });
 
 // ライト
     const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);

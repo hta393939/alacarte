@@ -12,7 +12,7 @@ class Misc {
 
     setListener() {
         {
-            const el = document.getElementById('cap');
+            const el = document.getElementById('startcapture');
             el?.addEventListener('click', () => {
                 this.startCapture();
             });
@@ -21,10 +21,13 @@ class Misc {
 
     async startCapture() {
         const opt = {
-            audio: true,
+            audio: false,
             video: true,
         };
         const stream = await navigator.mediaDevices.getDisplayMedia(opt);
+        window.mainvideo.addEventListener('canplay', () => {
+            this.detect();
+        }, { once: true });
         window.mainvideo.srcObject = stream;
         await window.mainvideo.play();
     }
@@ -45,37 +48,51 @@ class Misc {
             { width: 5, height: 7 }, 0.5, 0.3, dict, bmat,
         );
 
-        const charucoCorners = new cv.Mat();
-        const charucoCornerIds = new cv.Mat();
-
         const multiDetector = new cv.aruco_CharucoDetector(
             board, charucoParam, detectParam, refineParam,
         );
+        this.multiDetector = multiDetector;
 
         const singleDetector = new cv.aruco_ArucoDetector(
             dict, detectParam, refineParam,
         );
+        this.singleDetector = singleDetector;
+    }
 
-        const image = cv.imread('mainvideo');
+    detect() {
+        const video = document.getElementById('mainvideo');
+        const canvas = document.getElementById('canvas');
+        const width = video.videoWidth;
+        const height = video.videoHeight;
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0);
+
+        const image = cv.imread('canvas');
         const rgb = new cv.Mat();
         cv.cvtColor(image, rgb, cv.COLOR_RGBA2RGB, 0);
 
         {
+            const charucoCorners = new cv.Mat();
+            const charucoCornerIds = new cv.Mat();   
             const markerCorners = new cv.MatVector();
             const markerIds = new cv.Mat();            
-            multiDetector.detectBoard(rgb,
+            this.multiDetector.detectBoard(rgb,
                 charucoCorners, charucoCornerIds,
                 markerCorners, markerIds,
             );
+            console.log(markerCorners.size());
         }
 
         {
             const markerCorners = new cv.MatVector();
             const markerIds = new cv.Mat();
-            singleDetector.detectMarkers(rgb,
+            this.singleDetector.detectMarkers(rgb,
                 markerCorners,
                 markerIds,
             );
+            console.log(markerIds.matSize);
         }
 
     }
