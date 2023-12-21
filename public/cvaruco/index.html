@@ -2,22 +2,13 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>aruco</title>
-        <link rel="stylesheet" href="./index.css" />
+        <title>charuco</title>
+        <style>canvas { max-height: 45dvh; }</style>
     </head>
     <body>
-        <div>
-            <div>
-                <button id="startcapture">キャプチャ開始</button>
-                <video id="mainvideo" autoplay controls playsinline muted></video>
-                <canvas id="canvas"></canvas>
-            </div>
-        </div>
+        <canvas id="result"></canvas>
 
-        <script src="./index.js"></script>
-        <script async src="https://docs.opencv.org/4.8.0/opencv.js"></script>
+        <script src="index.js"></script>
+        <script async src="opencv.js"></script>
     </body>
 </html>
-
-
-

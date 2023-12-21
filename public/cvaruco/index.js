@@ -1,110 +1,54 @@
-/**
- * @file index.js
- */
+const act = (image) => {
+    const dict = cv.getPredefinedDictionary(cv.DICT_6X6_1000);
+    const charucoParam = new cv.aruco_CharucoParameters();
+    const detectParam = new cv.aruco_DetectorParameters();
+    const refineParam = new cv.aruco_RefineParameters(10, 3, true);
 
-class Misc {
-    constructor() {
-    }
+    const squareNum = new cv.Size(5, 7);
+    const squareLength = 34.7 * 0.001;
+    const markerLength = squareLength * 120 / 200;
+    const ids = new cv.Mat();
+    const board = new cv.aruco_CharucoBoard(squareNum, squareLength, markerLength, dict, ids);
+    const multiDetector = new cv.aruco_CharucoDetector(board, charucoParam, detectParam, refineParam);
 
-    async initialize() {
-        this.setListener();
-    }
+    const src = cv.imread(image);
 
-    setListener() {
-        {
-            const el = document.getElementById('startcapture');
-            el?.addEventListener('click', () => {
-                this.startCapture();
-            });
-        }
-    }
+    const rgb = new cv.Mat();
+    cv.cvtColor(src, rgb, cv.COLOR_RGBA2RGB, 0);
+// ボートの検出
+    const charucoCorners = new cv.Mat();
+    const charucoCornerIds = new cv.Mat();   
+    const markerCorners = new cv.MatVector();
+    const markerIds = new cv.Mat();            
+    multiDetector.detectBoard(rgb, charucoCorners, charucoCornerIds, markerCorners, markerIds);
 
-    async startCapture() {
-        const opt = {
-            audio: false,
-            video: true,
-        };
-        const stream = await navigator.mediaDevices.getDisplayMedia(opt);
-        window.mainvideo.addEventListener('canplay', () => {
-            this.detect();
-        }, { once: true });
-        window.mainvideo.srcObject = stream;
-        await window.mainvideo.play();
-    }
-
-/**
- * https://docs.opencv.org/4.8.0/de/d67/group__objdetect__aruco.html
- */
-    initializeAruco() {
-        const dict = cv.getPredefinedDictionary(cv.DICT_6X6_1000);
-        const charucoParam = new cv.aruco_CharucoParameters();
-        const detectParam = new cv.aruco_DetectorParameters();
-        const refineParam = new cv.aruco_RefineParameters(
-            0.02, 0.02, true,
-        );
-
-        const bmat = new cv.Mat();
-        const board = new cv.aruco_CharucoBoard(
-            { width: 5, height: 7 }, 0.5, 0.3, dict, bmat,
-        );
-
-        const multiDetector = new cv.aruco_CharucoDetector(
-            board, charucoParam, detectParam, refineParam,
-        );
-        this.multiDetector = multiDetector;
-
-        const singleDetector = new cv.aruco_ArucoDetector(
-            dict, detectParam, refineParam,
-        );
-        this.singleDetector = singleDetector;
-    }
-
-    detect() {
-        const video = document.getElementById('mainvideo');
-        const canvas = document.getElementById('canvas');
-        const width = video.videoWidth;
-        const height = video.videoHeight;
-        canvas.width = width;
-        canvas.height = height;
-        const context = canvas.getContext('2d');
-        context.drawImage(video, 0, 0);
-
-        const image = cv.imread('canvas');
-        const rgb = new cv.Mat();
-        cv.cvtColor(image, rgb, cv.COLOR_RGBA2RGB, 0);
-
-        {
-            const charucoCorners = new cv.Mat();
-            const charucoCornerIds = new cv.Mat();   
-            const markerCorners = new cv.MatVector();
-            const markerIds = new cv.Mat();            
-            this.multiDetector.detectBoard(rgb,
-                charucoCorners, charucoCornerIds,
-                markerCorners, markerIds,
-            );
-            console.log(markerCorners.size());
-        }
-
-        {
-            const markerCorners = new cv.MatVector();
-            const markerIds = new cv.Mat();
-            this.singleDetector.detectMarkers(rgb,
-                markerCorners,
-                markerIds,
-            );
-            console.log(markerIds.matSize);
-        }
-
-    }
-
-}
-
-const misc = new Misc();
-misc.initialize();
+    cv.drawDetectedMarkers(rgb, markerCorners, markerIds);
+// チェックコーナーを描画する
+    const col = new cv.Scalar(255, 128, 0);
+    cv.drawDetectedCornersCharuco(rgb, charucoCorners, charucoCornerIds, col);
+// カメラキャリブレーション
+    const cameraMatrix = new cv.Mat();
+    const distCoeffs = new cv.Mat();
+    const rvecs = new cv.MatVector();
+    const tvecs = new cv.MatVector();
+    const intrinsics = new cv.MatVector();
+    const extrinsics = new cv.MatVector();
+    const errs = new cv.Mat();
+    cv.calibrateCameraExtended(rgb, pointobjs, charucoCorners,
+        cameraMatrix, distCoeffs, rvecs, tvecs, intrinsics, extrinsics, errs);
+// キャリブレーション結果で原点に軸を描画
+    const index = 0;
+    cv.drawFrameAxes(rgb, cameraMatrix, distCoeffs, rvecs.get(index), tvecs.get(index), 3);
+// 可視化
+    cv.imshow('canvas', rgb);
+};
 
 var Module = {
     onRuntimeInitialized: () => {
-        misc.initializeAruco();
+        const img = new Image();
+        img.addEventListener('load', () => {
+            act(img);
+        });
+        img.src = 'board1.jpg';
     }
 };
-
