@@ -30,6 +30,10 @@
                 <button id="saytext">発音する</button>
                 <button id="openwindow">開く</button>
                 <button id="opendir">ワーキングフォルダを指定する</button>
+                <div class="toright">
+                    <input type="range" id="startlayer" value="11" min="1" max="20" />
+                    <div id="startlayerview"></div>
+                </div>
                 <button id="retry">リトライする</button>
                 <div>
                     <div id="processingview"></div>
@@ -45,6 +49,18 @@
         </div>
 
         <hr />
+        <div id="speakers"></div>
+        <hr />
+
+        <templates>
+            <template id="speakertemplate">
+                <div>
+                    <div class="name"></div>
+                    <div class="version"></div>
+                    <div class="speaker_uuid"></div>
+                </div>
+            </template>
+        </templates>
 
         <script src="../third_party/encoding.min.js"></script>
         <script src="../third_party/md5.js"></script>

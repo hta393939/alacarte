@@ -16,6 +16,9 @@ class Misc {
         this.base = 'http://127.0.0.1:50021';
     }
 
+/**
+ * 初期化する
+ */
     async initialize() {
         this.setListener();
 
@@ -25,12 +28,36 @@ class Misc {
         console.log('buf', buf);
     }
 
+/**
+ * VOICEVOX のスピーカ列挙要求
+ */
     async enumVoice() {
         const res = await fetch(`${this.base}/speakers`);
         const speakers = await res.json();
         console.log('speakers', speakers);
+
+        const parent = document.getElementById('speakers');
+        const el = document.getElementById('speakertemplate');
+        for (const speaker of speakers) {
+            const clone = document.importNode(el.content, true);
+            //parent.appendChild(clone);
+            for (const k of ['name', 'version', 'speaker_uuid']) {
+                const q = clone.querySelector(`.${k}`);
+                if (!q) {
+                    console.log('not found', k, clone);
+                    continue;
+                }
+                q.textContent = speaker[k];
+            }
+            parent.appendChild(clone);
+        }
     }
 
+/**
+ * .wav バイナリをパースして情報を得る
+ * @param {ArrayBuffer} ab 
+ * @returns 
+ */
     parseWav(ab) {
 /**
  * 
@@ -145,6 +172,19 @@ class Misc {
             el?.addEventListener('click', () => {
                 this.enumVoice();
             });
+        }
+        {
+            const el = document.getElementById('startlayer');
+            const _apply = () => {
+                const viewel = document.getElementById('startlayerview');
+                viewel.textContent = `${el.value}`;
+
+                this.startLayer = Number.parseInt(el.value);
+            };
+            el?.addEventListener('input', () => {
+                _apply();
+            });
+            _apply();
         }
 
         {
@@ -307,8 +347,8 @@ class Misc {
  * @param {FileSystemDirectoryHandle} dirHandle ディレクトリハンドル指定
  * @returns {}
  */
-    async processDir(dirHandle) {
-        console.log('processDir', dirHandle.name);
+    async processDir(dirHandle, startLayer) {
+        console.log('processDir', dirHandle.name, startLayer);
 /**
  * znd.txt を探す
  * @type {FileSystemFileHandle}
@@ -389,7 +429,7 @@ class Misc {
                     {
                         const te = new AVIUTL.AUText();
                         te.setText(say.text);
-                        te.data.layer = 8 + mod; // 8 or 9
+                        te.data.layer = startLayer + 3 + mod; // +3, +4
                         te.data.start = timeCounter + 1;
                         te.data.end = te.data.start + len - 1;
                         project.elements.push(te);
@@ -397,7 +437,7 @@ class Misc {
 
                     const ae = new AVIUTL.AUAudio();
                     ae.data0.file = `${result.pathprefix}${name}`;
-                    ae.data.layer = 3 + mod; // 3 or 4
+                    ae.data.layer = startLayer + mod; // +0, +1
                     ae.data.start = timeCounter + 1;
                     ae.data.end = ae.data.start + len - 1;
                     project.elements.push(ae);

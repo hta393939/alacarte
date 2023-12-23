@@ -4,6 +4,11 @@
     width: 6em;
 }
 
+.toright {
+    display: flex;
+    flex-direction: row;
+}
+
 #numberselement {
     width: 50vw;
     height: 6rem;
