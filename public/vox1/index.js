@@ -2,10 +2,15 @@
  * @file index.js
  */
 
+const _pad = (v, n = 2) => {
+    return String(v).padStart(n, '0');
+};
+
 class Misc {
     static CTYPE = 'application/json;charset=UTF-8';
 
     constructor() {
+        this.startLayer = 10;
 /**
  * ずんだもんノーマル
  */
@@ -207,13 +212,13 @@ class Misc {
             el?.addEventListener('click', async () => {
                 const dirHandle = await this.openDir();
                 this.dirHandle = dirHandle;
-                await this.processDir(dirHandle);
+                await this.processDir(dirHandle, this.startLayer);
             });
         }
         { // リトライ
             const el = document.getElementById('retry');
             el?.addEventListener('click', async () => {
-                await this.processDir(this.dirHandle);
+                await this.processDir(this.dirHandle, this.startLayer);
             });
         }
 
@@ -405,7 +410,7 @@ class Misc {
 
                 let name = '';
                 for (let i = 0; i < 10; ++i) {
-                    name = `${say.text.substring(0, 6)}_${i}.wav`;
+                    name = `${say.text.substring(0, 6)}_${_pad(counter, 3)}_${i}.wav`;
                     if (!_filenames.includes(name)) {
                         break;
                     }
@@ -429,7 +434,7 @@ class Misc {
                     {
                         const te = new AVIUTL.AUText();
                         te.setText(say.text);
-                        te.data.layer = startLayer + 3 + mod; // +3, +4
+                        te.data.layer = startLayer + 5 + mod; // +5, +6
                         te.data.start = timeCounter + 1;
                         te.data.end = te.data.start + len - 1;
                         project.elements.push(te);
@@ -437,7 +442,7 @@ class Misc {
 
                     const ae = new AVIUTL.AUAudio();
                     ae.data0.file = `${result.pathprefix}${name}`;
-                    ae.data.layer = startLayer + mod; // +0, +1
+                    ae.data.layer = startLayer + 2 + mod; // +2, +3
                     ae.data.start = timeCounter + 1;
                     ae.data.end = ae.data.start + len - 1;
                     project.elements.push(ae);
