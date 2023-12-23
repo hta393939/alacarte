@@ -15,7 +15,7 @@ const act = (image) => {
 
     const rgb = new cv.Mat();
     cv.cvtColor(src, rgb, cv.COLOR_RGBA2RGB, 0);
-// ボートの検出
+// ボードの検出
     const charucoCorners = new cv.Mat();
     const charucoCornerIds = new cv.Mat();   
     const markerCorners = new cv.MatVector();
@@ -27,20 +27,44 @@ const act = (image) => {
     const col = new cv.Scalar(255, 128, 0);
     cv.drawDetectedCornersCharuco(rgb, charucoCorners, charucoCornerIds, col);
 // カメラキャリブレーション
+    const obj3ds = new cv.MatVector();
+    const foundNum = charucoCornerIds.rows;
+    const corner3d = new cv.Mat(foundNum, 1, cv.CV_32FC3);
+    for (let i = 0; i < foundNum; ++i) {
+        const index = charucoCornerIds.intPtr(i, 0)[0];
+        let x = 1 + (index % (squareNum.width - 1));
+        let y = 1 + Math.floor(index / (squareNum.width - 1));
+
+        const cell = corner3d.floatPtr(i, 0);
+        cell[0] = x * 2 - squareNum.width;
+        cell[1] = y * 2 - squareNum.height;
+        cell[2] = 0;
+    }
+    obj3ds.push_back(corner3d); // ビュー1個だけ
+
+    const obj2ds = new cv.MatVector();
+    obj2ds.push_back(charucoCorners);
+
+    const size = new cv.Size(rgb.cols, rgb.rows);
+
     const cameraMatrix = new cv.Mat();
     const distCoeffs = new cv.Mat();
     const rvecs = new cv.MatVector();
     const tvecs = new cv.MatVector();
-    const intrinsics = new cv.MatVector();
-    const extrinsics = new cv.MatVector();
+    const intrinsics = new cv.Mat();
+    const extrinsics = new cv.Mat();
     const errs = new cv.Mat();
-    cv.calibrateCameraExtended(rgb, pointobjs, charucoCorners,
+    cv.calibrateCameraExtended(obj3ds, obj2ds, size,
         cameraMatrix, distCoeffs, rvecs, tvecs, intrinsics, extrinsics, errs);
 // キャリブレーション結果で原点に軸を描画
     const index = 0;
     cv.drawFrameAxes(rgb, cameraMatrix, distCoeffs, rvecs.get(index), tvecs.get(index), 3);
 // 可視化
-    cv.imshow('canvas', rgb);
+    cv.imshow('result', rgb);
+
+    const rot = new cv.Mat(); // 変換後回転行列の受け取り先
+    cv.Rodrigues(rvecs.get(0), rot);
+
 };
 
 var Module = {
@@ -49,6 +73,6 @@ var Module = {
         img.addEventListener('load', () => {
             act(img);
         });
-        img.src = 'board1.jpg';
+        img.src = 'board3.jpg';
     }
 };
