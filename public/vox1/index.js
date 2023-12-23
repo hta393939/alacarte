@@ -28,7 +28,7 @@ class Misc {
         this.setListener();
 
         this.enumVoice();
-
+// テスト
         const buf = this.strToSJIS('漢字abc');
         console.log('buf', buf);
     }
@@ -461,12 +461,12 @@ class Misc {
                 }
             }
 
-            {
+            { // グループ制御
                 const ge = new AVIUTL.AUGroup();
                 ge.data.start = 1;
                 ge.data.end = ge.data.start + timeCounter - 1;
-                ge.data.layer = 7;
-                ge.data0.range = 2;
+                ge.data.layer = startLayer;
+                ge.data0.range = 6;
                 project.elements.push(ge);
             }
 
