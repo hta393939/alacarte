@@ -201,18 +201,19 @@ class Misc {
             });
         }
 
-        {
-            const el = document.getElementById('openwindow');
-            el?.addEventListener('click', () => {
-                this.openWindow();
-            });
-        }
         { // ワーキングディレクトリで指定するタイプ。うまくいく。
             const el = document.getElementById('opendir');
             el?.addEventListener('click', async () => {
                 const dirHandle = await this.openDir();
                 this.dirHandle = dirHandle;
-                await this.processDir(dirHandle, this.startLayer);
+                try {
+                    await this.processDir(dirHandle, this.startLayer);
+                } catch(e) {
+                    console.warn('processDir catch', e);
+                } finally {
+                    const retryel = document.getElementById('retry');
+                    retryel.removeAttribute('disabled');
+                }
             });
         }
         { // リトライ
@@ -222,23 +223,6 @@ class Misc {
             });
         }
 
-    }
-
-    openWindow() {
-        let width = 640;
-        let height = 360;
-        let hOffset = -1;
-        let url = '../player/index.html';
-        let feats = [
-            //`popup`,
-            `width=${width}`,
-            `height=${height + hOffset}`,
-        ];
-        const win = window.open(url,
-            //'_blank',
-            'corge',
-            feats.join(','));
-        this.win = win;
     }
 
 /**
