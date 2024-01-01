@@ -100,45 +100,114 @@ class Misc {
                 });
             }
             console.log('names', ret.names);
-        }
-        { // bone
-            this.poslog('bones');
-            //const buf = this.r32s(1);
-            //const num = buf[0];
-            const num = 0;
+        } // ok----
+
+        {
+            this.poslog('unknown');
+            const obj = {
+                keys: []
+            };
+            ret.unknown = obj;
+
+            obj.reserved0 = this.r8s(2);
+            obj.reserved1 = this.r32s(1)[0];
+
+            obj.header = this.r32s(5);
+            const num = obj.header[1];
             for (let i = 0; i < num; ++i) {
-                const obj = {};
-                ret.bones.push(obj);
+                const val = {
+                    f2s: []
+                };
+                val.reserved0 = this.rfs(3);
+                val.reserved1 = this.r32s(1)[0];
+                val.reserved2 = this.rfs(2);
+                val.reserved3 = this.r32s(1)[0];
+                val.num = this.r32s(1)[0];
+                for (let j = 0; j < val.num; ++j) {
+                    val.f2s.push(this.rfs(2));
+                }
+                obj.keys.push(val);
+                // 64バイト(0x40) 0x44 は 68バイト
+            }
+            console.log('unknown', ret.unknown);
+        }
+
+        { // bone
+            //this.c = 0xd6;
+            this.poslog('bones');
+            const obj = {
+                keys: []
+            };
+            ret.bones = obj;
+
+            obj.reserved0 = this.r8s(2);
+            obj.reserved1 = this.r32s(1)[0];
+
+            obj.header = this.r32s(5);
+            const num = obj.header[1];
+            //const num = 0;
+            for (let i = 0; i < num; ++i) {
+                const val = {};
+
+                val.frame = this.r32s(1)[0];
+                val.reserved0 = this.r32s(1)[0];
+                val.position = this.rfs(3);
+                val.quaternion = this.rfs(4);
+                val.r = this.r8s(4); // 0-127
+                val.x = this.r8s(4);
+                val.y = this.r8s(4);
+                val.z = this.r8s(4);
+
+                val.reserved1 = this.r8s(8);
+// 60バイト
+
+                obj.keys.push(val);
             }
             console.log('bones', ret.bones);
         }
-        { // morph
+        if (false) { // morph
             this.poslog('morphs');
-            //const buf = this.r32s(1);
-            //const num = buf[0];
-            const num = 0;
+            const obj = {
+                keys: []
+            };
+            ret.morphs = obj;
+            obj.reserved0 = this.r8s(2);
+            obj.reserved1 = this.r32s(1)[0];
+
+            obj.header = this.r32s(5);
+            const num = obj.header[1];
+            //const num = 0;
             for (let i = 0; i < num; ++i) {
-                const obj = {};
-                ret.morphs.push(obj);
+                const val = {};
+
+                obj.keys.push(val);
             }
             console.log('morphs', ret.morphs);
         }
         { // info
-            this.c = 0x222;
+//            this.c = 0x222;
             this.poslog('infos');
-            const buf = this.r32s(5);
-            const num = buf[1];
-            for (let i = 0; i < num; ++i) {
-                const obj = {};
-                obj.frame = this.r32s(1)[0];
-                obj.reserved0 = this.r32s(1)[0];
-                obj.flags = this.r8s(8);
-                obj.edgeWidth = this.rfs(1)[0];
-                obj.argb = this.r8s(4);
-                obj.scale = this.rfs(1)[0];
-                obj.reserved1 = this.r32s(3);
+            const obj = {
+                keys: []
+            };
+            ret.infos = obj;
 
-                ret.infos.push(obj);
+            obj.reserved0 = this.r8s(2);
+            obj.reserved1 = this.r32s(1)[0];
+
+            obj.header = this.r32s(5);
+            const num = obj.header[1];
+            for (let i = 0; i < num; ++i) {
+                const val = {};
+                val.frame = this.r32s(1)[0];
+                val.reserved0 = this.r32s(1)[0];
+                val.flags = this.r8s(8);
+                val.edgeWidth = this.rfs(1)[0];
+                val.argb = this.r8s(4);
+                val.scale = this.rfs(1)[0];
+                val.reserved1 = this.r32s(3);
+
+                obj.keys.push(val);
             }
             console.log('infos', ret.infos);
         }
