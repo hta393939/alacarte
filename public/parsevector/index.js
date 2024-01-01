@@ -3,6 +3,12 @@
  */
 
 class Misc {
+    static TAG_CLIP = 0x0128;
+    static TAG_BONE = 0x0310;
+    static TAG_MORPH = 0x0120;
+    static TAG_INFO = 0x0340;
+    static TAG_END = 0x00ff;
+
     constructor() {
         this.c = 0;
 /**
@@ -51,6 +57,15 @@ class Misc {
         return buf;
     }
 
+    r16s(num) {
+        const buf = new Uint16Array(num);
+        for (let i = 0; i < num; ++i) {
+            buf[i] = this.p.getUint16(this.c, true);
+            this.c += 2;
+        }
+        return buf;        
+    }
+
     r8s(num) {
         const buf = new Uint8Array(num);
         for (let i = 0; i < num; ++i) {
@@ -60,97 +75,57 @@ class Misc {
         return buf;
     }
 
-/**
- * 
- * @param {File} file 
- */
-    async parseVector(file) {
-        const ab = await file.arrayBuffer();
-        const p = new DataView(ab);
-        this.c = 0;
-        this.p = p;
-        const ret = {
-            header: {},
-            names: [],
-            bones: [],
-            morphs: [],
-            infos: [],
+    parseClip() {
+        this.poslog('clip');
+        const obj = {
+            keys: []
         };
-        { // header
-            this.poslog('header');
-            this.r8s(30);
-            ret.header.version = this.rfs(1)[0];
-            ret.header.reserved0_1 = this.r8s(1)[0];
-            ret.header.nameJa = this.rs();
-            ret.header.nameEn = this.rs();
-            ret.header.fps = this.rfs(1)[0];
-            ret.header.reserved1 = this.r8s(14);
-            ret.header.num = this.r32s(1)[0];
-            ret.header.reserved2 = this.r32s(1);
-            console.log('header', ret.header);
-        }
-        { // names
-            this.poslog('names');
-            const num = ret.header.num;
-            for (let i = 0; i < num; ++i) {
-                const index = this.r32s(1)[0];
-                const name = this.rs();
-                ret.names.push({
-                    index, name,
-                });
-            }
-            console.log('names', ret.names);
-        } // ok----
+        obj.index = this.r32s(1)[0]; // 0
 
-        {
-            this.poslog('unknown');
-            const obj = {
-                keys: []
+        obj.header = this.r32s(5); // 68, 1, 8, -1, 0
+        obj.bytefactor = obj.header[0];
+        const num = obj.header[1];
+        console.log('%cunknown', `color:${obj.bytefactor === 68 ? 'green' : 'red'}`);
+        for (let i = 0; i < num; ++i) {
+            const val = {
+                f2s: []
             };
-            ret.unknown = obj;
-
-            obj.reserved0 = this.r8s(2);
-            obj.reserved1 = this.r32s(1)[0];
-
-            obj.header = this.r32s(5);
-            const num = obj.header[1];
-            for (let i = 0; i < num; ++i) {
-                const val = {
-                    f2s: []
-                };
-                val.reserved0 = this.rfs(3);
-                val.reserved1 = this.r32s(1)[0];
-                val.reserved2 = this.rfs(2);
-                val.reserved3 = this.r32s(1)[0];
-                val.num = this.r32s(1)[0];
-                for (let j = 0; j < val.num; ++j) {
-                    val.f2s.push(this.rfs(2));
-                }
-                obj.keys.push(val);
-                // 64バイト(0x40) 0x44 は 68バイト
+            val.reserved0 = this.rfs(3); // 0, 0, -1
+            val.reserved1 = this.r32s(1)[0]; // 1
+            val.reserved2 = this.rfs(2); // 1, 1
+            val.reserved3 = this.r32s(1)[0]; // 1
+            val.num = this.r32s(1)[0];
+            for (let j = 0; j < val.num; ++j) {
+                val.f2s.push(this.rfs(2));
             }
-            console.log('unknown', ret.unknown);
+            obj.keys.push(val);
+            // 64バイト(0x40) 0x44 は 68バイト
         }
-
+        return obj;
+    }
+    parseBone() {
         { // bone
-            //this.c = 0xd6;
-            this.poslog('bones');
+            this.poslog('bone');
             const obj = {
                 keys: []
             };
-            ret.bones = obj;
 
-            obj.reserved0 = this.r8s(2);
-            obj.reserved1 = this.r32s(1)[0];
+            obj.index = this.r32s(1)[0];
 
-            obj.header = this.r32s(5);
+            obj.header = this.r32s(5); // 60, 5, 8, 1, 0 same
+            obj.bytefactor = obj.header[0];
             const num = obj.header[1];
-            //const num = 0;
+            console.log('%cbone', `color:${obj.bytefactor === 60 ? 'green' : 'red'}`);
+
+            if (true) {
+                //val.reserved01 = this.r32s(1)[0];
+            }
+
             for (let i = 0; i < num; ++i) {
                 const val = {};
 
-                val.frame = this.r32s(1)[0];
-                val.reserved0 = this.r32s(1)[0];
+                val.frame = this.r32s(1)[0]; // 0 IV 0
+                val.reserved0 = this.r32s(1)[0]; // 0 IV 0
                 val.position = this.rfs(3);
                 val.quaternion = this.rfs(4);
                 val.r = this.r8s(4); // 0-127
@@ -159,44 +134,53 @@ class Misc {
                 val.z = this.r8s(4);
 
                 val.reserved1 = this.r8s(8);
-// 60バイト
+// 60バイト(4x15)
 
                 obj.keys.push(val);
             }
-            console.log('bones', ret.bones);
+            console.log('bone', obj);
+            return obj;
         }
-        if (false) { // morph
-            this.poslog('morphs');
+    }
+    parseMorph() {
+        { // morph
+            this.poslog('morph');
             const obj = {
                 keys: []
             };
-            ret.morphs = obj;
-            obj.reserved0 = this.r8s(2);
-            obj.reserved1 = this.r32s(1)[0];
+            obj.index = this.r32s(1)[0];
 
             obj.header = this.r32s(5);
             const num = obj.header[1];
-            //const num = 0;
+            obj.bytefactor = obj.header[0]; // 16
+            console.log('%cmorph', `color:${obj.bytefactor === 16 ? 'green' : 'red'}`);
             for (let i = 0; i < num; ++i) {
                 const val = {};
-
+                val.frame = this.r32s(1)[0];
+                val.reserved = this.rfs(1)[0];
+                val.weight = this.rfs(1)[0];
+                val.curve = this.r8s(4);
                 obj.keys.push(val);
             }
-            console.log('morphs', ret.morphs);
+            console.log('morph', obj);
+            return obj;
         }
+    }
+    parseInfo() {
         { // info
 //            this.c = 0x222;
-            this.poslog('infos');
+            this.poslog('info');
             const obj = {
                 keys: []
             };
-            ret.infos = obj;
 
-            obj.reserved0 = this.r8s(2);
-            obj.reserved1 = this.r32s(1)[0];
+            obj.index = this.r32s(1)[0];
 
             obj.header = this.r32s(5);
+            obj.bytefactor = obj.header[0]; // 36
             const num = obj.header[1];
+            console.log('%cinfo', `color:${obj.header[0] === 36 ? 'green' : 'red'}`);
+
             for (let i = 0; i < num; ++i) {
                 const val = {};
                 val.frame = this.r32s(1)[0];
@@ -209,12 +193,94 @@ class Misc {
 
                 obj.keys.push(val);
             }
-            console.log('infos', ret.infos);
+            console.log('info', obj);
+            return obj;
         }
-        {
-            const buf = this.r8s(2);
-            console.log('last2', buf[0]);
+    }
+
+/**
+ * 
+ * @param {File} file 
+ */
+    async parseVector(file) {
+        const ab = await file.arrayBuffer();
+        const p = new DataView(ab);
+        this.c = 0;
+        this.p = p;
+        const ret = {
+            header: {
+                names: []
+            },
+            clips: [],
+            bones: [],
+            morphs: [],
+            infos: [],
+        };
+        { // header
+            this.poslog('header');
+            this.r8s(30);
+            ret.header.version = this.rfs(1)[0];
+            ret.header.reserved0_1 = this.r8s(1)[0]; // 1
+            ret.header.nameJa = this.rs();
+            ret.header.nameEn = this.rs();
+            ret.header.fps = this.rfs(1)[0];
+            ret.header.reserved1 = this.r8s(14); // all 0
+            ret.header.num = this.r32s(1)[0];
+            ret.header.reserved2 = this.r32s(1); // 0
+
+            this.poslog('names');
+            const num = ret.header.num;
+            for (let i = 0; i < num; ++i) {
+                const index = this.r32s(1)[0];
+                const name = this.rs();
+                ret.header.names.push({
+                    index, name,
+                });
+            }
+            console.log('names', ret.header.names);
+            console.log('header', ret.header);
         }
+
+        while(this.c + 2 <= this.p.byteLength) {
+            this.poslog('tag start');
+            const tag = this.r16s(1)[0];
+            if (tag === Misc.TAG_END) {
+                break;
+            }
+            switch(tag) {
+            case Misc.TAG_CLIP:
+                {
+                    const clip = this.parseClip();
+                    ret.clips.push(clip);
+                }
+                break;
+
+            case Misc.TAG_BONE:
+                {
+                    const bone = this.parseBone();
+                    ret.bones.push(bone);
+                }
+                break;
+
+            case Misc.TAG_MORPH:
+                {
+                    const morph = this.parseMorph();
+                    ret.morphs.push(morph);
+                }
+                break;
+            case Misc.TAG_INFO:
+                {
+                    const info = this.parseInfo();
+                    ret.infos.push(info);
+                }
+                break;
+
+            default:
+                console.warn('unknown tag', tag.toString(16));
+                break;
+            }
+        }
+
         console.log('end', this.c, this.p.byteLength, ret);
         return ret;
     }
@@ -235,26 +301,6 @@ class Misc {
             });
         }
 
-        {
-            const el = document.getElementById('enumvoice');
-            el?.addEventListener('click', () => {
-                this.enumVoice();
-            });
-        }
-
-        {
-            const el = document.getElementById('saytext');
-            el?.addEventListener('click', () => {
-                this.say(window.text.value);
-            });
-        }
-
-        {
-            const el = document.getElementById('openwindow');
-            el?.addEventListener('click', () => {
-                this.openWindow();
-            });
-        }
     }
 
 }
