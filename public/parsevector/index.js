@@ -9,6 +9,8 @@ class Misc {
     static TAG_INFO = 0x0340;
     static TAG_END = 0x00ff;
 
+    static BOLD = 'font-weight:bold;';
+
     constructor() {
         this.c = 0;
 /**
@@ -85,7 +87,7 @@ class Misc {
         obj.header = this.r32s(5); // 68, 1, 8, -1, 0
         obj.bytefactor = obj.header[0];
         const num = obj.header[1];
-        console.log('%cunknown', `color:${obj.bytefactor === 68 ? 'green' : 'red'}`);
+        console.log('%cclip', `${Misc.BOLD}color:${obj.bytefactor === 68 ? 'green' : 'red'}`);
         for (let i = 0; i < num; ++i) {
             const val = {
                 f2s: []
@@ -101,6 +103,7 @@ class Misc {
             obj.keys.push(val);
             // 64バイト(0x40) 0x44 は 68バイト
         }
+        console.log('clip', obj);
         return obj;
     }
     parseBone() {
@@ -118,11 +121,13 @@ class Misc {
             console.log('%cbone', `color:${obj.bytefactor === 60 ? 'green' : 'red'}`);
 
             if (true) {
-                //val.reserved01 = this.r32s(1)[0];
+//                obj.reserved0 = this.r32s(1)[0];
             }
 
             for (let i = 0; i < num; ++i) {
                 const val = {};
+
+                val.reserved0 = this.r32s(1)[0];
 
                 val.frame = this.r32s(1)[0]; // 0 IV 0
                 val.reserved0 = this.r32s(1)[0]; // 0 IV 0
@@ -132,8 +137,11 @@ class Misc {
                 val.x = this.r8s(4);
                 val.y = this.r8s(4);
                 val.z = this.r8s(4);
+                {
+                    console.log('%cr', `${Misc.BOLD}color:${val.r[3] === 0x6b ? 'green' : 'red'}`);
+                }
 
-                val.reserved1 = this.r8s(8);
+                val.reserved1 = this.r8s(4);
 // 60バイト(4x15)
 
                 obj.keys.push(val);
@@ -150,10 +158,10 @@ class Misc {
             };
             obj.index = this.r32s(1)[0];
 
-            obj.header = this.r32s(5);
+            obj.header = this.r32s(5-1);
             const num = obj.header[1];
             obj.bytefactor = obj.header[0]; // 16
-            console.log('%cmorph', `color:${obj.bytefactor === 16 ? 'green' : 'red'}`);
+            console.log('%cmorph', `${Misc.BOLD}color:${obj.bytefactor === 16 ? 'green' : 'red'}`);
             for (let i = 0; i < num; ++i) {
                 const val = {};
                 val.frame = this.r32s(1)[0];
