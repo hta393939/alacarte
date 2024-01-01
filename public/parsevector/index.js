@@ -5,42 +5,29 @@
 class Misc {
     constructor() {
         this.c = 0;
-        this.p = new DataView();
+/**
+ * @type {DataView}
+ */
+        this.p = null;
     }
 
     async initialize() {
         this.setListener();
-
-        const dpr = window.devicePixelRatio;
-        {
-            let s = '';
-            s += `${window.innerWidth}`;
-            s += `x${window.innerHeight}`;
-            const el = window.innerview;
-            el.textContent = s;
-        }
-
-        {
-            const canvas = document.getElementById('main');
-            canvas.width = 640 * dpr;
-            canvas.height = 360 * dpr;
-            const c = canvas.getContext('2d');
-            let fam = 'BIZ UDPゴシック';
-            c.font = `normal 32px ${fam}`;
-            c.fillStyle = '#000000';
-            let s = `五王国`;
-            c.fillText(s, 64, 64);
-        }
     }
 
-    poslog() {
-        console.log(`0x${this.c.toString(16)}`, this.c);
+    poslog(...args) {
+        console.log(`0x${this.c.toString(16)}`, this.c, ...args);
     }
 
     rs() {
+        this.poslog('rs');
         const len = this.p.getUint32(this.c, true);
         this.c += 4;
-        const buf = this.p.slice(this.c, this.c + len);
+
+        const buf = new Uint8Array(len);
+        for (let i = 0; i < len; ++i) {
+            buf[i] = this.p.getUint8(this.c + i);
+        }
         let s = new TextDecoder().decode(buf);
         this.c += len;
         return s;
@@ -67,7 +54,7 @@ class Misc {
     r8s(num) {
         const buf = new Uint8Array(num);
         for (let i = 0; i < num; ++i) {
-            buf[i] = this.p.getUint(this.c);
+            buf[i] = this.p.getUint8(this.c);
             this.c += 1;
         }
         return buf;
@@ -90,13 +77,21 @@ class Misc {
             infos: [],
         };
         { // header
-            this.poslog();
-
+            this.poslog('header');
+            this.r8s(30);
+            ret.header.version = this.rfs(1)[0];
+            ret.header.reserved0_1 = this.r8s(1)[0];
+            ret.header.nameJa = this.rs();
+            ret.header.nameEn = this.rs();
+            ret.header.fps = this.rfs(1)[0];
+            ret.header.reserved1 = this.r8s(14);
+            ret.header.num = this.r32s(1)[0];
+            ret.header.reserved2 = this.r32s(1);
+            console.log('header', ret.header);
         }
         { // names
-            this.poslog();
-            const buf = this.r32s(1);
-            const num = buf[0];
+            this.poslog('names');
+            const num = ret.header.num;
             for (let i = 0; i < num; ++i) {
                 const index = this.r32s(1)[0];
                 const name = this.rs();
@@ -104,41 +99,54 @@ class Misc {
                     index, name,
                 });
             }
+            console.log('names', ret.names);
         }
         { // bone
-            this.poslog();
-            const buf = this.r32s(1);
-            const num = buf[0];
+            this.poslog('bones');
+            //const buf = this.r32s(1);
+            //const num = buf[0];
+            const num = 0;
             for (let i = 0; i < num; ++i) {
                 const obj = {};
                 ret.bones.push(obj);
             }
+            console.log('bones', ret.bones);
         }
         { // morph
-            this.poslog();
-            const buf = this.r32s(1);
-            const num = buf[0];
+            this.poslog('morphs');
+            //const buf = this.r32s(1);
+            //const num = buf[0];
+            const num = 0;
             for (let i = 0; i < num; ++i) {
                 const obj = {};
                 ret.morphs.push(obj);
             }
+            console.log('morphs', ret.morphs);
         }
         { // info
-            this.poslog();
-            const buf = this.r32s(4);
-            const num = buf[0];
+            this.c = 0x222;
+            this.poslog('infos');
+            const buf = this.r32s(5);
+            const num = buf[1];
             for (let i = 0; i < num; ++i) {
                 const obj = {};
+                obj.frame = this.r32s(1)[0];
+                obj.reserved0 = this.r32s(1)[0];
+                obj.flags = this.r8s(8);
+                obj.edgeWidth = this.rfs(1)[0];
                 obj.argb = this.r8s(4);
+                obj.scale = this.rfs(1)[0];
+                obj.reserved1 = this.r32s(3);
 
                 ret.infos.push(obj);
             }
+            console.log('infos', ret.infos);
         }
         {
             const buf = this.r8s(2);
-            console.log(buf[0], buf[1]);
+            console.log('last2', buf[0]);
         }
-        console.log('end', this.c, this.p.byteLength);
+        console.log('end', this.c, this.p.byteLength, ret);
         return ret;
     }
 
