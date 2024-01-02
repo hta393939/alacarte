@@ -86,9 +86,7 @@ class Misc {
         obj.bytefactor = this.r32s(1)[0];
         obj.keynum = this.r32s(1)[0];
         obj.additivebyte = this.r32s(1)[0];
-        obj.additivedata = this.r8s(obj.additivebyte);
-
-        //obj.header = this.r32s(3); // 68, 1, 8, -1, 0
+        obj.additivedata = this.r32s(obj.additivebyte / 4);
 
         const num = obj.keynum;
         console.log('%cclip', `${Misc.BOLD}color:${obj.bytefactor === 68 ? 'green' : 'red'}`);
@@ -121,7 +119,7 @@ class Misc {
             obj.bytefactor = this.r32s(1)[0];
             obj.keynum = this.r32s(1)[0];
             obj.additivebyte = this.r32s(1)[0];
-            obj.additivedata = this.r8s(obj.additivebyte);
+            obj.additivedata = this.r32s(obj.additivebyte / 4);
 
             const num = obj.keynum;
             console.log('%cbone', `${Misc.BOLD}color:${obj.bytefactor === 60 ? 'green' : 'red'}`);
@@ -163,7 +161,7 @@ class Misc {
             obj.bytefactor = this.r32s(1)[0];
             obj.keynum = this.r32s(1)[0];
             obj.additivebyte = this.r32s(1)[0];
-            obj.additivedata = this.r8s(obj.additivebyte);
+            obj.additivedata = this.r32s(obj.additivebyte / 4);
 
             const num = obj.keynum;
             console.log('%cmorph', `${Misc.BOLD}color:${obj.bytefactor === 16 ? 'green' : 'red'}`);
@@ -173,7 +171,7 @@ class Misc {
                 val.reserved = this.rfs(1)[0];
                 val.weight = this.rfs(1)[0];
                 val.curve = this.r8s(4);
-                // 16バイト
+                // 16バイト ok
                 obj.keys.push(val);
             }
             console.log('morph', obj);
@@ -181,8 +179,7 @@ class Misc {
         }
     }
     parseInfo() {
-        { // info
-//            this.c = 0x222;
+        {
             this.poslog('info');
             const obj = {
                 keys: []
@@ -194,7 +191,7 @@ class Misc {
             obj.keynum = this.r32s(1)[0];
 
             obj.additivebyte = this.r32s(1)[0];
-            obj.additivedata = this.r8s(obj.additivebyte);
+            obj.additivedata = this.r32s(obj.additivebyte / 4);
 
             // 36, 3, 8, 0, 1 
             // IK4つ分 40, 1, 24, 「4個, (4, 5, 6, 7) 1」
@@ -217,7 +214,7 @@ class Misc {
                 if (obj.bytefactor === 40) {
                     val.reserved2 = this.r32s(1)[0];
                 }
-
+// 36か40
                 obj.keys.push(val);
             }
             console.log('info', obj);
