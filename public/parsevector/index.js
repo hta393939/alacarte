@@ -83,10 +83,14 @@ class Misc {
             keys: []
         };
         obj.index = this.r32s(1)[0]; // 0
+        obj.bytefactor = this.r32s(1)[0];
+        obj.keynum = this.r32s(1)[0];
+        obj.additivebyte = this.r32s(1)[0];
+        obj.additivedata = this.r8s(obj.additivebyte);
 
-        obj.header = this.r32s(5); // 68, 1, 8, -1, 0
-        obj.bytefactor = obj.header[0];
-        const num = obj.header[1];
+        //obj.header = this.r32s(3); // 68, 1, 8, -1, 0
+
+        const num = obj.keynum;
         console.log('%cclip', `${Misc.BOLD}color:${obj.bytefactor === 68 ? 'green' : 'red'}`);
         for (let i = 0; i < num; ++i) {
             const val = {
@@ -114,10 +118,12 @@ class Misc {
             };
 
             obj.index = this.r32s(1)[0];
+            obj.bytefactor = this.r32s(1)[0];
+            obj.keynum = this.r32s(1)[0];
+            obj.additivebyte = this.r32s(1)[0];
+            obj.additivedata = this.r8s(obj.additivebyte);
 
-            obj.header = this.r32s(5); // 60, 5, 8, 1, 0 same
-            obj.bytefactor = obj.header[0];
-            const num = obj.header[1];
+            const num = obj.keynum;
             console.log('%cbone', `${Misc.BOLD}color:${obj.bytefactor === 60 ? 'green' : 'red'}`);
 
             for (let i = 0; i < num; ++i) {
@@ -154,9 +160,12 @@ class Misc {
             };
             obj.index = this.r32s(1)[0];
 
-            obj.header = this.r32s(4);
-            const num = obj.header[1];
-            obj.bytefactor = obj.header[0]; // 16
+            obj.bytefactor = this.r32s(1)[0];
+            obj.keynum = this.r32s(1)[0];
+            obj.additivebyte = this.r32s(1)[0];
+            obj.additivedata = this.r8s(obj.additivebyte);
+
+            const num = obj.keynum;
             console.log('%cmorph', `${Misc.BOLD}color:${obj.bytefactor === 16 ? 'green' : 'red'}`);
             for (let i = 0; i < num; ++i) {
                 const val = {};
@@ -181,11 +190,17 @@ class Misc {
 
             obj.index = this.r32s(1)[0];
 
-            obj.header = this.r32s(5); // IK4つ分 40, 1, 24, 「4個, (4, 5, 6, 7)
-                                       // と 1」
-            obj.bytefactor = obj.header[0]; // 36
-            const num = obj.header[1];
-            console.log('%cinfo', `${Misc.BOLD}color:${obj.header[0] === 36 ? 'green' : 'red'}`);
+            obj.bytefactor = this.r32s(1)[0];
+            obj.keynum = this.r32s(1)[0];
+
+            obj.additivebyte = this.r32s(1)[0];
+            obj.additivedata = this.r8s(obj.additivebyte);
+
+            // 36, 3, 8, 0, 1 
+            // IK4つ分 40, 1, 24, 「4個, (4, 5, 6, 7) 1」
+            const num = obj.keynum;
+            console.log('%cinfo', `${Misc.BOLD}`,
+                obj.bytefactor);
 
             for (let i = 0; i < num; ++i) {
                 const val = {};
@@ -199,7 +214,10 @@ class Misc {
                 }
                 val.scale = this.rfs(1)[0];
                 val.reserved1 = this.r32s(3);
-// 4 * 10
+                if (obj.bytefactor === 40) {
+                    val.reserved2 = this.r32s(1)[0];
+                }
+
                 obj.keys.push(val);
             }
             console.log('info', obj);
@@ -254,6 +272,7 @@ class Misc {
             this.poslog('tag start');
             const tag = this.r16s(1)[0];
             if (tag === Misc.TAG_END) {
+                console.log('end tag found');
                 break;
             }
             switch(tag) {
@@ -290,7 +309,7 @@ class Misc {
             }
         }
 
-        console.log('end', this.c, this.p.byteLength, ret);
+        console.log('terminate', this.c, this.p.byteLength, ret);
         return ret;
     }
 
