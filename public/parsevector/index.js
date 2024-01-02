@@ -118,11 +118,7 @@ class Misc {
             obj.header = this.r32s(5); // 60, 5, 8, 1, 0 same
             obj.bytefactor = obj.header[0];
             const num = obj.header[1];
-            console.log('%cbone', `color:${obj.bytefactor === 60 ? 'green' : 'red'}`);
-
-            if (true) {
-//                obj.reserved0 = this.r32s(1)[0];
-            }
+            console.log('%cbone', `${Misc.BOLD}color:${obj.bytefactor === 60 ? 'green' : 'red'}`);
 
             for (let i = 0; i < num; ++i) {
                 const val = {};
@@ -130,7 +126,7 @@ class Misc {
                 val.reserved0 = this.r32s(1)[0];
 
                 val.frame = this.r32s(1)[0]; // 0 IV 0
-                val.reserved0 = this.r32s(1)[0]; // 0 IV 0
+                val.reserved1 = this.r32s(1)[0]; // 0 IV 0
                 val.position = this.rfs(3);
                 val.quaternion = this.rfs(4);
                 val.r = this.r8s(4); // 0-127
@@ -158,7 +154,7 @@ class Misc {
             };
             obj.index = this.r32s(1)[0];
 
-            obj.header = this.r32s(5-1);
+            obj.header = this.r32s(4);
             const num = obj.header[1];
             obj.bytefactor = obj.header[0]; // 16
             console.log('%cmorph', `${Misc.BOLD}color:${obj.bytefactor === 16 ? 'green' : 'red'}`);
@@ -168,6 +164,7 @@ class Misc {
                 val.reserved = this.rfs(1)[0];
                 val.weight = this.rfs(1)[0];
                 val.curve = this.r8s(4);
+                // 16バイト
                 obj.keys.push(val);
             }
             console.log('morph', obj);
@@ -184,10 +181,11 @@ class Misc {
 
             obj.index = this.r32s(1)[0];
 
-            obj.header = this.r32s(5);
+            obj.header = this.r32s(5); // IK4つ分 40, 1, 24, 「4個, (4, 5, 6, 7)
+                                       // と 1」
             obj.bytefactor = obj.header[0]; // 36
             const num = obj.header[1];
-            console.log('%cinfo', `color:${obj.header[0] === 36 ? 'green' : 'red'}`);
+            console.log('%cinfo', `${Misc.BOLD}color:${obj.header[0] === 36 ? 'green' : 'red'}`);
 
             for (let i = 0; i < num; ++i) {
                 const val = {};
@@ -196,9 +194,12 @@ class Misc {
                 val.flags = this.r8s(8);
                 val.edgeWidth = this.rfs(1)[0];
                 val.argb = this.r8s(4);
+                {
+                    console.log('%cargb', `${Misc.BOLD}color:${val.argb[0] === 0xff ? 'green' : 'red'}`)
+                }
                 val.scale = this.rfs(1)[0];
                 val.reserved1 = this.r32s(3);
-
+// 4 * 10
                 obj.keys.push(val);
             }
             console.log('info', obj);
