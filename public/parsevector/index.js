@@ -89,19 +89,19 @@ class Misc {
         const num = obj.keynum;
         console.log('%cclip', `${Misc.BOLD}color:${obj.bytefactor === 68 ? 'green' : 'red'}`);
         for (let i = 0; i < num; ++i) {
-            const val = { f2s: [] };
+            const val = { timeWarps: [] };
 
-            val.reserved0 = this.rfs(1)[0]; // 0
+            val.track = this.r32s(1)[0]; // トラック番号 0 とか 1
             val.startFrame = this.rfs(1)[0]; // 0 とか 1.44
-            val.frameLength = this.rfs(1)[0]; // -1 とか 9
-            val.repeatNum = this.r32s(1)[0]; // 1 とか 4
+            val.frameLength = this.rfs(1)[0]; // -1 とか 9, 0xffffffff
+            val.repeatNum = this.r32s(1)[0]; // 1 とか 4, 0xffffffff
             val.weight = this.rfs(1)[0]; // 1
-            val.scale = this.rfs(1)[0]; // 1
+            val.scale = this.rfs(1)[0]; // 1 大きいと間延びする
             val.reserved3 = this.r32s(1)[0]; // 1
-            val.num = this.r32s(1)[0];
+            val.num = this.r32s(1)[0]; // 4
             for (let j = 0; j < val.num; ++j) {
-                val.f2s.push(this.rfs(2));
-            }
+                val.timeWarps.push(this.rfs(2));
+            } // frameLength が無限でない場合のタイムワープ点
             obj.keys.push(val);
             // 64バイト(0x40), 0x44 は 68バイト
         }
