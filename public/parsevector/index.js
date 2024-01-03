@@ -79,9 +79,7 @@ class Misc {
 
     parseClip() {
         this.poslog('clip');
-        const obj = {
-            keys: []
-        };
+        const obj = { keys: [] };
         obj.index = this.r32s(1)[0]; // 0
         obj.bytefactor = this.r32s(1)[0];
         obj.keynum = this.r32s(1)[0];
@@ -91,29 +89,29 @@ class Misc {
         const num = obj.keynum;
         console.log('%cclip', `${Misc.BOLD}color:${obj.bytefactor === 68 ? 'green' : 'red'}`);
         for (let i = 0; i < num; ++i) {
-            const val = {
-                f2s: []
-            };
-            val.reserved0 = this.rfs(3); // 0, 0, -1
-            val.reserved1 = this.r32s(1)[0]; // 1
-            val.reserved2 = this.rfs(2); // 1, 1
+            const val = { f2s: [] };
+
+            val.reserved0 = this.rfs(1)[0]; // 0
+            val.startFrame = this.rfs(1)[0]; // 0 とか 1.44
+            val.frameLength = this.rfs(1)[0]; // -1 とか 9
+            val.repeatNum = this.r32s(1)[0]; // 1 とか 4
+            val.weight = this.rfs(1)[0]; // 1
+            val.scale = this.rfs(1)[0]; // 1
             val.reserved3 = this.r32s(1)[0]; // 1
             val.num = this.r32s(1)[0];
             for (let j = 0; j < val.num; ++j) {
                 val.f2s.push(this.rfs(2));
             }
             obj.keys.push(val);
-            // 64バイト(0x40) 0x44 は 68バイト
+            // 64バイト(0x40), 0x44 は 68バイト
         }
         console.log('clip', obj);
         return obj;
     }
     parseBone() {
-        { // bone
+        {
             this.poslog('bone');
-            const obj = {
-                keys: []
-            };
+            const obj = { keys: [] };
 
             obj.index = this.r32s(1)[0];
             obj.bytefactor = this.r32s(1)[0];
@@ -151,11 +149,9 @@ class Misc {
         }
     }
     parseMorph() {
-        { // morph
+        {
             this.poslog('morph');
-            const obj = {
-                keys: []
-            };
+            const obj = { keys: [] };
             obj.index = this.r32s(1)[0];
 
             obj.bytefactor = this.r32s(1)[0];
@@ -181,9 +177,7 @@ class Misc {
     parseInfo() {
         {
             this.poslog('info');
-            const obj = {
-                keys: []
-            };
+            const obj = { keys: [] };
 
             obj.index = this.r32s(1)[0];
 
@@ -193,8 +187,8 @@ class Misc {
             obj.additivebyte = this.r32s(1)[0];
             obj.additivedata = this.r32s(obj.additivebyte / 4);
 
-            // 36, 3, 8, 0, 1 
-            // IK4つ分 40, 1, 24, 「4個, (4, 5, 6, 7) 1」
+            // 36, 3, 8, "0, 1" 
+            // IK4つ分 40, 1, 24, 「4個, (4, 5, 6, 7), 1」
             const num = obj.keynum;
             console.log('%cinfo', `${Misc.BOLD}`,
                 obj.bytefactor);
@@ -232,15 +226,13 @@ class Misc {
         this.c = 0;
         this.p = p;
         const ret = {
-            header: {
-                names: []
-            },
+            header: { names: [] },
             clips: [],
             bones: [],
             morphs: [],
             infos: [],
         };
-        { // header
+        {
             this.poslog('header');
             this.r8s(30);
             ret.header.version = this.rfs(1)[0];
