@@ -19,4 +19,12 @@
     flex-direction: row;
 }
 
+#maincanvas {
+    border: solid 1px blue;
+}
+
+#subcanvas {
+    border: solid 1px red;
+}
+
 

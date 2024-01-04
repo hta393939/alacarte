@@ -19,7 +19,8 @@ class Misc {
 
         const cellx = this.cellx;
         const celly = this.celly;
-        const cellsize = this.cellw;
+        const cellw = this.cellw;
+        const cellh = cellw;
 
 /**
  * 入力画像の幅
@@ -28,15 +29,17 @@ class Misc {
 //        const h = src.height;
         const context = src.getContext('2d');
 /**
+ * 書き出し先
  * @type {HTMLCanvasElement}
  */
         const canvas = document.getElementById('subcanvas');
         const c = canvas.getContext('2d');
-        canvas.width = cellx * scale;
-        canvas.height = celly * scale;
+        canvas.width = cellw * scale;
+        canvas.height = cellh * scale;
         const cx = cellx * cellw;
-        const cy = celly * cellw;
-        const dat = context.getImageData(cx, cy, cellsize, cellsize);
+        const cy = celly * cellh;
+        console.log(cx, cy, cellw, cellh);
+        const dat = context.getImageData(cx, cy, cellw, cellh);
 
         let backs = [-1, -1, -1];
         if (true) {
