@@ -15,30 +15,40 @@ class Misc {
  * @param {HTMLCanvasElement} src 
  */
     scaleImage(src) {
-        const scale = 4;
-        const w = src.width;
-        const h = src.height;
+        const scale = this.scale;
+
+        const cellx = this.cellx;
+        const celly = this.celly;
+        const cellsize = this.cellw;
+
+/**
+ * 入力画像の幅
+ */
+//        const w = src.width;
+//        const h = src.height;
         const context = src.getContext('2d');
 /**
  * @type {HTMLCanvasElement}
  */
         const canvas = document.getElementById('subcanvas');
         const c = canvas.getContext('2d');
-        canvas.width = w * scale;
-        canvas.height = h * scale;
-        const dat = context.getImageData(0, 0, w, h);
+        canvas.width = cellx * scale;
+        canvas.height = celly * scale;
+        const cx = cellx * cellw;
+        const cy = celly * cellw;
+        const dat = context.getImageData(cx, cy, cellsize, cellsize);
 
         let backs = [-1, -1, -1];
         if (true) {
-            let ft = (0 + 0 * w) * 4;
+            let ft = (0 + 0 * 0) * 4;
             backs[0] = dat.data[ft];
             backs[1] = dat.data[ft+1];
             backs[2] = dat.data[ft+2];
         }
 
-        for (let i = 0; i < h; ++i) {
-            for (let j = 0; j < w; ++j) {
-                let ft = (j + i * w) * 4;
+        for (let i = 0; i < cellw; ++i) {
+            for (let j = 0; j < cellw; ++j) {
+                let ft = (j + i * cellw) * 4;
                 let x = j * scale;
                 let y = i * scale;
                 let r = dat.data[ft];
@@ -88,6 +98,21 @@ class Misc {
                 ev.dataTransfer.dropEffect = 'copy';
                 this.parseImage(ev.dataTransfer.files[0]);
             });
+        }
+
+        for (const k of [
+            'scale', 'cellx', 'celly', 'cellw',
+        ]) {
+            const el = document.getElementById(`${k}`);
+            const viewel = document.getElementById(`${k}view`);
+            const _update = () => {
+                this[k] = Number.parseFloat(el.value);
+                viewel.textContent = this[k];
+            };
+            el?.addEventListener('input', () => {
+                _update();
+            });
+            _update();
         }
 
     }
