@@ -118,6 +118,11 @@ class Misc {
             obj.keynum = this.r32s(1)[0];
             obj.additivebyte = this.r32s(1)[0];
             obj.additivedata = this.r32s(obj.additivebyte / 4);
+            {
+                if (obj.additivedata.length >= 2) {
+                    obj._parent = obj.additivedata[1];
+                }
+            }
 
             const num = obj.keynum;
             console.log('%cbone', `${Misc.BOLD}color:${obj.bytefactor === 60 ? 'green' : 'red'}`);
@@ -186,6 +191,11 @@ class Misc {
 
             obj.additivebyte = this.r32s(1)[0];
             obj.additivedata = this.r32s(obj.additivebyte / 4);
+            {
+                if (obj.additivedata.length >= 1) {
+                    obj._iks = obj.additivedata.slice(1, 1 + obj.additivedata[0]);
+                }
+            }
 
             // 36, 3, 8, "0, 1" 
             // IK4つ分 40, 1, 24, 「4個, (4, 5, 6, 7), 1」
