@@ -8,29 +8,6 @@ class Misc {
 
     async initialize() {
         this.setListener();
-
-        const dpr = window.devicePixelRatio;
-        {
-            let s = '';
-            s += `${window.innerWidth}`;
-            s += `x${window.innerHeight}`;
-            const el = window.innerview;
-            el.textContent = s;
-        }
-
-        {
-            const canvas = document.getElementById('main');
-            canvas.width = 640 * dpr;
-            canvas.height = 360 * dpr;
-            const c = canvas.getContext('2d');
-            let fam = 'BIZ UDPゴシック';
-            c.font = `normal 32px ${fam}`;
-            c.fillStyle = '#000000';
-            let s = `五王国`;
-            c.fillText(s, 64, 64);
-        }
-
-        this.enumVoice();
     }
 
     async initCapture() {
@@ -94,14 +71,14 @@ class Misc {
         {
             const el = document.getElementById('saytext');
             el?.addEventListener('click', () => {
-                this.say(window.text.value);
+                
             });
         }
 
         {
             const el = document.getElementById('openwindow');
             el?.addEventListener('click', () => {
-                this.openWindow();
+                
             });
         }
     }

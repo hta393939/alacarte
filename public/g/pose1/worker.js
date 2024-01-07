@@ -2,6 +2,14 @@
  * @file worker.js
  */
 
+// module の外では import できない
+
+// failed to load;;
+//importScripts('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/vision_bundle.mjs');
+
+// application/node はあかんらしい
+importScripts('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/vision_bundle.cjs');
+
 class Misc {
     constructor() {
     }
@@ -22,12 +30,26 @@ class Misc {
         }
     }
 
-    onInitialize(ev) {
+    async onInitialize(ev) {
         console.log('onInitialize');
         this.offscreen = ev.data.offscreen;
         this.width = ev.data.width;
         this.height = ev.data.height;
         this.drawDummy(this.offscreen);
+
+        const vision = await self.FilesetResolver.forVisionTasks(
+            // path/to/wasm/root
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+          );
+        const poseLandmarker = await poseLandmarker.createFromOptions(
+            vision,
+            {
+                //baseOptions: {
+                //modelAssetPath: "path/to/model"
+                //},
+                runningMode: 'VIDEO'
+            });
+        console.log('onInitialize success');
     }
 
     onDetect(ev) {
