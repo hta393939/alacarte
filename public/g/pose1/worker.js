@@ -49,17 +49,32 @@ class Misc {
                 //},
                 runningMode: 'VIDEO'
             });
+        this.poseLandmarker = poseLandmarker;
+
+        self.postMessage({
+            type: 'ready',
+        });
+
         console.log('onInitialize success');
     }
 
     onDetect(ev) {
         console.log('onDetect');
-    }
 
-    sendResult() {
+        const frame = ev.data.frame;
+        if (!frame) {
+            self.postMessage({
+                type: 'detect',
+                result: null,
+            });
+            return;
+        }
+
+        const result = this.poseLandmarker.detectForVideo(frame);
+
         const obj = {
             type: 'detect',
-            result: {},
+            result,
         };
         self.postMessage(obj);
     }

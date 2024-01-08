@@ -4,6 +4,11 @@
 
 class Misc {
     constructor() {
+        this.detecting = false;
+/**
+ * 全終了する
+ */
+        this.isTerminate = false;
     }
 
     async initialize() {
@@ -19,12 +24,72 @@ class Misc {
         return stream;
     }
 
+    onResult(ev) {
+        const result = ev.data.result;
+        const landmarks = result.landmarks;
+        if (!Array.isArray(landmarks)) {
+            this.detecting = false;
+            return;
+        }
+
+
+        this.detecting = false;
+    }
+
     onMessage(ev) {
         console.log('receive message', ev);
+        switch(ev.data.type) {
+        case 'result':
+            this.onResult(ev);
+            break;
+        case 'ready':
+            this.startDetect();
+            break;
+        }
+    }
+
+    async runDetect() {
+        const video = document.getElementById('camera');
+        const w = video.videoWidth;
+        const h = video.videoHeight;
+        if (!w || !h) {
+            return;
+        }
+/**
+ * @type {HTMLCanvasElement}
+ */
+        const canvas = document.getElementById('copy');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+        const bitmap = await window.createImageBitmap(canvas);
+
+// 検知中フラグ立てる
+
+        this.worker.postMessage({
+            type: 'detect',
+            image: bitmap,
+        }, [bitmap]);
+    }
+
+    async loop() {
+        if (this.isTerminate) {
+            return;
+        }
+
+        if (!this.detecting) {
+            await this.runDetect();
+        }
+
+        requestAnimationFrame(() => {
+            this.loop();
+        });
     }
 
     startDetect() {
-        this.isDetect = true;
+        this.detecting = false;
+        this.loop();     
     }
 
     async initDetect() {
@@ -60,6 +125,10 @@ class Misc {
         video.srcObject = stream;
     }
 
+    terminate() {
+        this.isTerminate = true;
+    }
+
     setListener() {
         {
             const el = document.getElementById('start');
@@ -69,9 +138,9 @@ class Misc {
         }
 
         {
-            const el = document.getElementById('saytext');
+            const el = document.getElementById('stop');
             el?.addEventListener('click', () => {
-                
+                this.terminate();                
             });
         }
 
