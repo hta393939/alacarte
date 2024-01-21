@@ -447,10 +447,22 @@ class Misc {
 
             { // グループ制御
                 const ge = new AVIUTL.AUGroup();
+
                 ge.data.start = 1;
                 ge.data.end = ge.data.start + timeCounter - 1;
                 ge.data.layer = startLayer;
                 ge.data0.range = 6;
+                ge.data0.Y = 240;
+                project.elements.push(ge);
+            }
+
+            { // グループ制御
+                const ge = new AVIUTL.AUGroup();
+                ge.data.start = 1;
+                ge.data.end = ge.data.start + timeCounter - 1;
+                ge.data.layer = startLayer + 8;
+                ge.data0.range = 4;
+                ge.data0.Y = 50;
                 project.elements.push(ge);
             }
 

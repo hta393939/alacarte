@@ -6,9 +6,11 @@
 
 // failed to load;;
 //importScripts('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/vision_bundle.mjs');
+//importScripts('vision_bundle.mjs');
 
 // application/node はあかんらしい
-importScripts('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/vision_bundle.cjs');
+//importScripts('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/vision_bundle.cjs');
+importScripts('vision_bundle.cjs');
 
 class Misc {
     constructor() {

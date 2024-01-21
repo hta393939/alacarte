@@ -194,13 +194,22 @@ class AUAudio extends AUElement {
 }
 
 
-
+/**
+ * グループ制御
+ */
 class AUGroup extends AUElement {
     constructor() {
         super();
 
         this.data0 = {
             ['_name']: 'グループ制御',
+            ['X']: 0,
+            ['Y']: 0,
+            ['Z']: 0,
+            ['拡大率']: 100,
+            ['X軸回転']: 0,
+            ['Y軸回転']: 0,
+            ['Z軸回転']: 0,
             ['上位グループ制御の影響を受ける']: 0,
             ['同じグループのオブジェクトを対象にする']: 1,
             range: 0,
