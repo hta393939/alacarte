@@ -1,0 +1,483 @@
+/**
+ * @file ikcapsule.js
+ */
+// make() で生成
+// sdef
+
+(function(_global) {
+
+/**
+ * @param {number} v 値
+ */
+const _pad = (v, n = 2) => {
+    return String(v).padStart(n, '0');
+};
+
+const _lerp = (a, b, t) => {
+    return a + (b - a) * t;
+};
+/**
+ * 度からradへ
+ * @param {*} deg 
+ * @returns 
+ */
+const _rad = (deg) => {
+    return deg * Math.PI / 180;
+};
+
+class IKCapsule extends PMX.Maker {
+    constructor() {
+        super();
+    }
+
+/**
+ * 破壊
+ * @param {number[]} vs 
+ */
+    normalize(vs) {
+        let sum = vs.reduce((p, c) => p + c * c, 0);
+        if (sum === 0) {
+            return vs;
+        }
+        const k = 1 / Math.sqrt(sum);
+        for (let i = 0; i < vs.length; ++i) {
+            vs[i] *= k;
+        }
+        return vs;
+    }
+
+/**
+ * 
+ * @param {number[]} vs 
+ * @param {number} deg 
+ */
+    rotate(vs, deg) {
+        const ang = deg * Math.PI / 180;
+        const cs = Math.cos(ang);
+        const sn = Math.sin(ang);
+        let x = vs[0] * cs - vs[1] * sn;
+        let y = vs[0] * sn + vs[1] * cs;
+        vs[0] = x;
+        vs[1] = y;
+        return vs;
+    }
+
+/**
+ * 物理 SDEF してみたい。一旦できた。まんなかを動かす。
+ */
+    make(param) {
+        const d = new Date();
+/**
+ * 最終位置とサイズへの倍率
+ */
+        const scale = 1.0;
+        this.debug = 1;
+
+        this.head.nameEn = param.nameEn;
+        this.head.nameJa = this.head.nameEn;
+        this.head.commentEn = `${d.toLocaleString()} IKCapsule.make`;
+        this.head.commentJa = this.head.commentEn;
+
+        let div = 16;
+
+/**
+ * すべての親 0 メッシュ無し
+ * 操作中心 1 メッシュ無し
+ * センター 2 多分メッシュ無し
+ */
+
+
+/**
+ * ベースボーンインデックス
+ * 下の半球
+ */
+        const baseBoneIndex = 3;
+
+        //const capsuleR = 1 / (2 * Math.PI);
+        const capsuleR = 1;
+/**
+ * ベルト1個分
+ */
+        const beltHeight = capsuleR * 2;
+
+        const capV = 92 / 512;
+        //const capV = 0.25;
+        const beltV = 1 - capV * 2;
+
+/**
+ * 増えていくボーンインデックス
+ */
+        let boneIndex = baseBoneIndex;
+
+        for (let i = 0; i < 1; ++i) { // 材質
+            const m = new PMX.Material();
+            m._index = i;
+            m.nameEn = `mtl${_pad(i, 3)}`;
+            m.nameJa = m.nameJa;
+            m.texIndex = 0;
+            m.diffuse = [1, 1, 1, 1];
+            m.specular = [0.2, 0.2, 0.2];
+            m.specPower = 0.5;
+            m.ambient = [0.7, 0.7, 0.7];
+            m.edgecolor = [156/255, 130/255, 48/255, 1];
+            let bits = 0
+                //PMX.Material.BIT_GROUND
+                | PMX.Material.BIT_TOMAP
+                | PMX.Material.BIT_SELFSHADOW
+            m.bitFlag = bits;
+            m.sharetoonflag = 0;
+            m.sharetoonindex = -1;
+            this.materials.push(m);
+        }
+
+        let vertexOffset = 0;
+        let m = this.materials[0];
+        {
+            vertexOffset = this.vts.length;
+            for (let i = 0; i <= div / 4; ++i) { // 下半球 -Y
+                for (let j = 0; j <= div; ++j) {
+                    const v = new PMX.Vertex();
+                    let vang = Math.PI * 2 * i / div;
+                    let hang = Math.PI * 2 * j / div;
+                    const cs = Math.cos(hang);
+                    const sn = Math.sin(hang);
+                    let rr = Math.sin(vang) * capsuleR;
+                    let x = -cs * rr;
+                    let z = sn * rr;
+                    let y = -capsuleR * Math.cos(vang);
+
+                    v.n = this.normalize([x, y, z]);
+                    v.p = [x * scale, y * scale, z * scale];
+                    v.uv = [ (j / div),
+                        i / div * 4 * capV];
+                    v.deformType = PMX.Vertex.DEFORM_BDEF1;
+                    v.joints = [baseBoneIndex, 0, 0, 0];
+                    v.weights = [1, 0, 0, 0];
+
+                    this.vts.push(v);
+                }
+            }
+            for (let i = 0; i < div / 4; ++i) {
+                for (let j = 0; j < div; ++j) {
+                    let v0 = vertexOffset + (div + 1) * i + j;
+                    let v1 = v0 + 1;
+                    let v2 = v0 + (div + 1);
+                    let v3 = v2 + 1;
+                    m.faces.push([v0, v1, v2]);
+                    m.faces.push([v2, v1, v3]);
+                }
+            }
+
+            const beltNum = 3;
+
+
+            console.log('boneIndex', boneIndex);
+            let by = 0;
+            for (let h = 0; h < beltNum; ++h) {
+                vertexOffset = this.vts.length;
+                for (let i = 0; i <= div; ++i) { // まんなか
+                    for (let j = 0; j <= div; ++j) {
+                        const v = new PMX.Vertex();
+                        const rr = capsuleR;
+                        let hang = Math.PI * 2 * j / div;
+                        const cs = Math.cos(hang);
+                        const sn = Math.sin(hang);
+                        let x = -sn * rr;
+                        let y = by + i * beltHeight / div;
+                        let z = cs * rr;
+
+                        v.n = this.normalize([x, 0, z]);
+                        v.p = [x * scale, y * scale, z * scale];
+                        v.uv = [(j / div),
+                            i / div * beltV + capV];
+                        v.deformType = PMX.Vertex.DEFORM_SDEF;
+                        v.joints = [boneIndex, boneIndex + 2, 0, 0];
+                        v.weights = [1 - i / div,
+                            0, 0, 0];
+                        v.weights[1] = 1 - v.weights[0];
+                        v.r0 = [0, 0, 0.25 * scale]; // +Z は奥
+                        v.r1 = [0, 0, -0.25 * scale]; // -Z は手前
+                        v.c = [0, y, 0];
+
+                        this.vts.push(v);
+                    }
+                }
+                boneIndex += 2;
+                by += beltHeight;
+
+                for (let i = 0; i < div; ++i) {
+                    for (let j = 0; j < div; ++j) {
+                        let v0 = vertexOffset + (div + 1) * i + j;
+                        let v1 = v0 + 1;
+                        let v2 = v0 + (div + 1);
+                        let v3 = v2 + 1;
+                        m.faces.push([v0, v2, v1]);
+                        m.faces.push([v2, v3, v1]);
+                    }
+                }
+            }
+
+            vertexOffset = this.vts.length;
+            console.log('上半分', 'by', by, 'vertexOffset', vertexOffset);
+            for (let i = 0; i <= div/4; ++i) { // 上半球 +Y
+                for (let j = 0; j <= div; ++j) {
+                    const v = new PMX.Vertex();
+                    const vang = Math.PI * 2 * i / div;
+                    const hang = Math.PI * 2 * j / div;
+                    const cs = Math.cos(hang);
+                    const sn = Math.sin(hang);
+                    let rr = Math.cos(vang) * capsuleR;
+                    let x = -cs * rr;
+                    let z = sn * rr;
+                    let y = Math.sin(vang);
+
+                    v.n = this.normalize([x, y, z]);
+                    y = (y * capsuleR) + by;
+                    v.p = [x * scale, y * scale, z * scale];
+                    v.uv = [ (j / div),
+                        i / div * 4 * beltV + (1 - capV),
+                    ];
+                    v.deformType = PMX.Vertex.DEFORM_BDEF1;
+                    v.joints = [boneIndex, 0, 0, 0];
+                    v.weights = [1, 0, 0, 0];
+
+                    this.vts.push(v);
+                }          
+            }
+            for (let i = 0; i < div / 4; ++i) {
+                for (let j = 0; j < div; ++j) {
+                    let v0 = vertexOffset + (div + 1) * i + j;
+                    let v1 = v0 + 1;
+                    let v2 = v0 + (div + 1);
+                    let v3 = v2 + 1;
+                    m.faces.push([v0, v1, v2]);
+                    m.faces.push([v2, v1, v3]);
+                }
+            } // 上の半球
+
+        }
+
+        {
+            let name = 'tex/a007.png';
+            this.textures.push(name);
+            //name = `tex/a007.png`;
+            //this.textures.push(name);
+        }
+
+
+
+/**
+ * 一切衝突しないグループ(0-origin)
+ */
+        const RIGID_IGNORE_GROUP = 13;
+
+/**
+    * 普通の衝突グループ(0-origin)
+    * 自分にはぶつからないが 9(0-origin) にはぶつかる
+    * 0x0f0f
+ * グループUI2(1, 0-origin)
+ */
+        const RIGID_DEFAULT_GROUP = 5;
+
+//        const ikTargetIndex = boneIndex + 1;
+/**
+ * IKボーン
+ */
+//        const ikIndex = ikTargetIndex + 1;
+        const ikIndex = boneIndex + 1;
+
+        for (let i = 0; i <= ikIndex; ++i) { // ボーン
+            const rr = capsuleR;
+/**
+ * ボーン
+ */
+            let b = new PMX.Bone();
+/**
+ * 剛体
+ */
+            let r = new PMX.Rigid();
+            r.bone = i;
+            r.type = PMX.Rigid.TYPE_STATIC;
+
+            let x = 0;
+            let y = 0;
+            let z = 0;
+            r.p = [x * scale, y * scale, z * scale];
+            r.size = [rr * scale, 0.5 * scale, 1 * scale];
+
+            let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
+                | PMX.Bone.BIT_VISIBLE;
+            bits |= PMX.Bone.BIT_CONTROL;
+            b.bits = bits;
+// even が ik
+            let opt = ((i & 1) === 0) ? 'ik' : 'effleaf';
+            b.nameJa = `bone${_pad(i, 3)}${opt}`;
+            b.nameEn = b.nameJa;
+            r.nameJa = `rb${_pad(i, 3)}`;
+            r.nameEn = r.nameJa;
+
+            b.parent = i - 1;
+            b.layer = 0;
+
+            switch(i) {
+            case 0:
+                b.nameJa = '全ての親';
+                b.nameEn = 'root';
+                r.group = RIGID_IGNORE_GROUP;
+                r.groupFlags = 0x0000;
+                r.shape = PMX.Rigid.SHAPE_BOX;
+                r.size = [0.1, 0.05, 0.05];
+                break;
+            case 1:
+                b.nameJa = '操作中心'; // 視点基準
+                b.nameEn = 'view cnt bone';
+                b.parent = -1;
+                r.group = RIGID_IGNORE_GROUP;
+                r.groupFlags = 0x0000;
+                r.shape = PMX.Rigid.SHAPE_BOX;
+                r.size = [0.05, 0.05, 0.1];
+                r.rot = [0, 0, Math.PI * 30 / 180];
+                break;
+            case 2:
+                b.parent = 0;
+                b.nameJa = 'センター';
+                b.nameEn = 'center';
+                r.group = RIGID_IGNORE_GROUP;
+                r.groupFlags = 0x0000;
+                r.shape = PMX.Rigid.SHAPE_BOX;
+                r.size = [0.05, 0.1, 0.05];
+                r.rot = [Math.PI * 30 / 180, 0, 0];
+                break;
+/*
+            case ikTargetIndex:
+                b.nameEn = 'iktarget';
+                b.nameJa = b.nameEn;
+                b.parent = boneIndex - 1;
+                b.p = [0, 0, this.bones[b.paremt].p[2] + beltHeight];
+                b.endOffset = [0, 0, 0];
+                r = null;
+                break;
+*/
+            case ikIndex:
+                b.layer = 1;
+                b.nameJa = 'ik';
+                b.nameEn = 'ik';
+                b.parent = 0; // 全ての親
+                r = null;
+                b.bits |= PMX.Bone.BIT_IK;
+                b.ikTargetBone = boneIndex - 1;
+                b.p = [...this.bones[b.ikTargetBone].p];
+                b.ikLoopCount = 40;
+                b.ikLimitation = 2; // 約114度
+                // ターゲットボーンを含まない
+                for (let j = 4; j <= boneIndex - 3; j += 2) {
+                    const ik = new PMX.IKLink();
+                    ik.linkBone = j;
+                    ik.isLimitation = 1;
+                    const deg = 179;
+                    ik.upper = [_rad(deg), _rad(deg), _rad(deg)];
+                    ik.lower = [-_rad(deg), -_rad(deg), -_rad(deg)];
+                    b.ikLinks.push(ik);
+                }
+                break;
+
+            default:
+
+                b.layer = 0;
+                b.p = [0,
+                    (i - baseBoneIndex) * beltHeight * 0.5 * scale,
+                    0];
+                r.friction = 1000;
+                r.mass = 0.002; // 重量
+                r.group = RIGID_DEFAULT_GROUP;
+                r.groupFlags = 0x0f0f;
+                if ((i & 1) !== 0) { // odd がエフェクト
+                    b.parent = i - 1;
+                    b.layer = 3;
+                } else { // even が IK
+                    b.parent = i - 2;
+                    if (i + 2 <= boneIndex) {
+                        b.bits |= PMX.Bone.BIT_BONECONNECT;
+                        b.endBoneIndex = i + 2;
+                    }
+                    if (i == baseBoneIndex + 1) {
+                        b.parent = baseBoneIndex;
+                        console.log('match first ik', i, b.parent);
+                    }
+                }
+                if (i == baseBoneIndex) {
+                    b.nameJa += '根っこ';
+                }
+
+    /*
+                r.shape = PMXRigid.SHAPE_SPHERE;
+                // 半径、高さ、不使用
+                r.size = [capsuleR * scale, 0.5 * scale, 1 * scale];
+                r.p = [...b.p];
+                */
+                r.shape = PMX.Rigid.SHAPE_CAPSULE;
+                // 半径、高さ、不使用
+                r.size = [capsuleR * scale, 0.5 * scale * 0.5, 1 * scale];
+                r.p = [...b.p];
+                break;
+            }
+
+            if (b) {
+                this.bones.push(b);
+            }
+            if (r) {
+                this.rigids.push(r);
+            }
+        }
+
+        { // モーフ 0個
+            for (let i = 0; i < 0; ++i) {
+                const m = new PMX.Morph();
+                m.nameJa = 'morph000';
+                m.nameEn = 'morph000';
+                m.type = 1;
+                this.morphs.push(m);
+            }
+        }
+
+        { // ボーングループフレーム
+            for (let i = 0; i < 3; ++i) {
+                const f = new PMX.Frame();
+                f.nameJa = 'その他のボーンたち';
+                f.nameEn = `frame00${i}`;
+                f.specialFlag = 0;
+                f.bones = [];
+
+                if (i === 0) {
+                    f.nameJa = 'Root';
+                    f.specialFlag = 1;
+                    f.bones.push(0);
+                } else if (i === 1) {
+                    f.nameJa = '表情';
+                    f.specialFlag = 1;
+                } else {
+                    for (let j = 1; j < this.bones.length; ++j) {
+                        f.bones.push(j);
+                    }
+                }
+                this.frames.push(f);
+            }
+        }
+
+    }
+
+}
+
+
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+        exports.module = exports = IKCapsule;
+    }
+    exports.IKCapsule = IKCapsule;
+} else {
+    _global.IKCapsule = IKCapsule;
+}
+
+})(globalThis);
+
+
