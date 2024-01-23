@@ -2,12 +2,34 @@
  * @file index.js
  */
 
+/**
+ * 
+ * @param {*} a 
+ * @param {*} b 
+ * @param {number} t b側の重み
+ * @param {*} is255 
+ * @returns 
+ */
+const _lerp = (a, b, t, is255) => {
+    const num = Math.min(a.length, b.length);
+    const ret = new Array(num);
+    for (let i = 0; i < num; ++i) {
+        ret[i] = a[i] * (1 - t) + b[i] * t;
+        if (is255) {
+            ret[i] = Math.round(ret[i]);
+        }
+    }
+    return ret;
+};
+
 class Misc {
     constructor() {
     }
 
     async initialize() {
         this.setListener();
+
+        this.drawCap(window.maincanvas);
     }
 
 /**
@@ -156,6 +178,102 @@ class Misc {
             });
         }
 
+    }
+
+/**
+ * 
+ * @param {HTMLCanvasElement} canvas 
+ */
+    drawCap(canvas, /*objs*/) {
+        console.log('drawCap called');
+        const c = canvas.getContext('2d');
+
+        const w = 512;
+        const h = 512;
+        //const w = 64;
+        //const h = 64;
+        const rate = 512 / 64;
+// 1: (1/PI) のとき
+        //const offsetY = h * 0.5 - 512 / Math.PI * 0.5;
+
+// 1: (2/PI) のとき
+        const offsetY = h * 0.5 - 512 / Math.PI;
+
+        canvas.width = w;
+        canvas.height = h;
+        //c.fillStyle = 'rgba(51, 153, 51, 1)';
+        c.fillStyle = 'rgba(51, 176, 51, 1)';
+        c.fillRect(0, 0, w, h);
+
+        let c0 = [0, 153, 0];
+        let c1 = [51, 255, 51];
+
+        const img = c.getImageData(0, 0, w, h);
+        //const capV = 0.25;
+        const capV = 92 / 512;
+        for (let y = 0; y < h; ++y) {
+            for (let x = 0; x < w; ++x) {
+                const nx = x / w;
+                const ny = y / h;
+                if (ny > capV) {
+                    continue;
+                }
+                const longi = nx * Math.PI * 2;
+                const lati = (capV - ny) / capV * Math.PI * 0.5;
+                const rr = Math.cos(lati);
+                const sph = [
+                    -Math.sin(longi) * rr,
+                    Math.sin(lati),
+                    Math.cos(longi) * rr
+                ];
+                let r = 51;
+                let g = 176;
+                let b = 51;
+                let a = 255;
+                let lv = 0;
+                const q3 = 1 / Math.sqrt(3);
+                const objs = [
+                    { x: 0, y: 1, z: 0, top: 1, radius: 0.2 },
+                    { x: q3, y: q3, z: q3, top: 1, radius: 0.5 },
+                    { x: -q3, y: q3, z: q3, top: 1, radius: 0.2 },
+                    { x: q3, y: q3, z: -q3, top: 1, radius: 0.3 },
+                    { x: -q3, y: q3, z: -q3, top: 1, radius: 0.4 },                  
+                ];
+                for (const obj of objs) {
+                    const dist = Math.sqrt(
+                        (obj.x - sph[0]) ** 2
+                        + (obj.y - sph[1]) ** 2
+                        + (obj.z - sph[2]) ** 2
+                    );
+                    const diff = 1 - dist / obj.radius;
+                    if (diff > 1 || diff <= 0) {
+                        continue;
+                    }
+                    
+                    const col = _lerp(c0,
+                        c1,
+                        Math.min(1, Math.max(0, diff)),
+                        true);
+                    r = col[0];
+                    g = col[1];
+                    b = col[2];
+                }
+                let ft = (x + w * y) * 4;
+
+                img.data[ft] = r;
+                img.data[ft+1] = g;
+                img.data[ft+2] = b;
+                img.data[ft+3] = a;
+
+                ft = (x + w * (h - 1 - y)) * 4;
+                img.data[ft] = r;
+                img.data[ft+1] = g;
+                img.data[ft+2] = b;
+                img.data[ft+3] = a;
+            }
+        }
+        c.putImageData(img, 0, 0);
+        console.log('drawCap leave');
     }
 
 }

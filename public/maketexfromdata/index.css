@@ -12,9 +12,14 @@
 .drop {
     margin: 1em;
     border: dashed 4px black;
+    border-radius: 2rem;
     padding: 1em;
     text-align: center;
     font-weight: bold;
+}
+
+#maincanvas {
+    max-height: 128px;
 }
 
 
