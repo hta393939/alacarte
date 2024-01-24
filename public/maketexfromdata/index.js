@@ -205,8 +205,61 @@ class Misc {
         c.fillStyle = 'rgba(51, 176, 51, 1)';
         c.fillRect(0, 0, w, h);
 
+        {
+            const img = document.getElementById('baseimage');
+            if (img.naturalWidth > 0) {
+                c.drawImage(img, 0, 0);
+            }
+        }
+
         let c0 = [0, 153, 0];
         let c1 = [51, 255, 51];
+
+        const objs = [
+//            { x: 0, y: 1, z: 0, top: 1, radius: 0.2 },
+        ];
+        for (let i = 0; i < 8; ++i) {
+            if (i === 4 || i === 6) {
+                continue;
+            }
+            const longi = (i * 2 + 1) / 16 * Math.PI * 2;
+            const lati = (0.8 + 0.2 * (Math.random() - 0.5)) * Math.PI * 0.5;
+            const rr = Math.cos(lati);
+            const obj = {
+                x: - rr * Math.sin(longi),
+                y: Math.sin(lati),
+                z: rr * Math.cos(longi),
+                radius: 0.1 + Math.random() * 0.01,
+            };
+            objs.push(obj);
+        }
+        for (let i = 0; i < 10; ++i) {
+            if (i === 0 || i === 4) {
+                continue;
+            }
+            const longi = (i * 2 + 1) / 20 * Math.PI * 2;
+            const lati = (0.74 + 0.02 * Math.random() * Math.PI * 0.5);
+            const rr = Math.cos(lati);
+            const obj = {
+                x: - rr * Math.sin(longi),
+                y: Math.sin(lati),
+                z: rr * Math.cos(longi),
+                radius: 0.2 + Math.random() * 0.01,
+            };
+            objs.push(obj);
+        }
+        for (let i = 0; i < 9; ++i) {
+            const longi = (i * 2 + 1 + 0.2) / 18 * Math.PI * 2;
+            const lati = (0.2 + 0.05 * (Math.random() - 0.5)) * Math.PI * 0.5;
+            const rr = Math.cos(lati);
+            const obj = {
+                x: - rr * Math.sin(longi),
+                y: Math.sin(lati),
+                z: rr * Math.cos(longi),
+                radius: 0.18 + Math.random() * 0.03,
+            };
+            objs.push(obj);
+        }
 
         const img = c.getImageData(0, 0, w, h);
         //const capV = 0.25;
@@ -231,14 +284,8 @@ class Misc {
                 let b = 51;
                 let a = 255;
                 let lv = 0;
-                const q3 = 1 / Math.sqrt(3);
-                const objs = [
-                    { x: 0, y: 1, z: 0, top: 1, radius: 0.2 },
-                    { x: q3, y: q3, z: q3, top: 1, radius: 0.5 },
-                    { x: -q3, y: q3, z: q3, top: 1, radius: 0.2 },
-                    { x: q3, y: q3, z: -q3, top: 1, radius: 0.3 },
-                    { x: -q3, y: q3, z: -q3, top: 1, radius: 0.4 },                  
-                ];
+
+
                 for (const obj of objs) {
                     const dist = Math.sqrt(
                         (obj.x - sph[0]) ** 2
