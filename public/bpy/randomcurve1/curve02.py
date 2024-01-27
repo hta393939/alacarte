@@ -4,52 +4,72 @@ import datetime
 import math
 
 def mes(label, val):
-    print(f'{label}\n{val}')
-
-v1 = mathutils.Vector((1.0, 2.0, 3.0))
+    print(f'>> {label}\n{val}')
 
 
 curvedata = bpy.data.curves.new("my curve", type='CURVE')    
 curvedata.dimensions = '3D'    
 
-num = 10
+div = 16
+rootr = 0.5
+
+pre = [0, 0, 0]
+v2 = mathutils.noise.random_unit_vector(size=2)
+# destroy
+head = mathutils.Vector((v2[0], v2[1], 1)).normalized()
+head_len = 0.25
+mes('head', head)
+round_num = div / 4
+num = 15
 
 polyline = curvedata.splines.new('BEZIER')
 polyline.bezier_points.add(num - 1)
 
-div = 16
-
-pre = [0, 0, 0]
-head = mathutils.noise.random_unit_vector()
-if head[2] < 0:
-    head[2] *= -1
-mes('head', head)
-round_num = 3
 for i in range(num):
+
+    v2 = mathutils.noise.random_unit_vector(size=2)
+    x, y, z = v2[0] * 0.25, v2[1] * 0.25, i - round_num
+    
     polyline.bezier_points[i].handle_left_type = 'AUTO'
     polyline.bezier_points[i].handle_right_type = 'AUTO'
-    v2 = mathutils.noise.random_unit_vector(size=2)
-    x, y, z = v2[0] * 0.25, v2[1] * 0.25, i + 1 - (div / 4)
+    polyline.bezier_points[i].handle_right = x, y, z + 0.01
+    polyline.bezier_points[i].handle_left = x, y, z - 0.01
+    
     r = 1
-    if i <= div / 4:
-        rootr = 0.5
+    if i <= round_num:
         ang = math.pi * 2 * i / div
-        x, y, z = 0, 0, math.sin(ang) * rootr
-        r = math.cos(ang) * rootr + 1
+        x, y, z = 0, 0, (1 - math.cos(ang)) * rootr * head_len
+        r = (1 - math.sin(ang)) * rootr + 1
+        '''
         polyline.bezier_points[i].handle_left_type = 'FREE'
         polyline.bezier_points[i].handle_right_type = 'FREE'
-        polyline.bezier_points[i].handle_left = 0, 0, z + 0.1
-        polyline.bezier_points[i].handle_right = 0, 0, z - 0.1
+        polyline.bezier_points[i].handle_right = x, y, z + 0.01
+        polyline.bezier_points[i].handle_left = x, y, z - 0.01
+        '''
+        if i == 0:
+            polyline.bezier_points[i].handle_left = x, y, z
+
     if i >= num - round_num:
-        c = i - (num - round_num)
+        c = i - (num - round_num) + 1
         ang = math.pi * 2 * c / div
-        len = math.sin(ang)
+        len = math.sin(ang) * head_len
         x, y, z = pre[0] + head[0] * len, pre[1] + head[1] * len, pre[2] + head[2] * len
         r = math.cos(ang)
+        '''
+        polyline.bezier_points[i].handle_left_type = 'FREE'
+        polyline.bezier_points[i].handle_right_type = 'FREE'
+        polyline.bezier_points[i].handle_right = x, y, z + 0.01
+        polyline.bezier_points[i].handle_left = x, y, z - 0.01
+        '''
+        if i == num - 1:
+            polyline.bezier_points[i].handle_right_type = 'FREE'
+            polyline.bezier_points[i].handle_right = x, y, z
+            
+            polyline.bezier_points[i].handle_left_type = 'FREE'
+            polyline.bezier_points[i].handle_left = x, y, z            
     else:
         pre = [x, y, z]
     polyline.bezier_points[i].co = x, y, z
-
     polyline.bezier_points[i].radius = r
 
 
