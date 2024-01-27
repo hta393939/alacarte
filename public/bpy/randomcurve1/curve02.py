@@ -14,9 +14,8 @@ div = 16
 rootr = 0.5
 
 pre = [0, 0, 0]
-v2 = mathutils.noise.random_unit_vector(size=2)
-# destroy
-head = mathutils.Vector((v2[0], v2[1], 1)).normalized()
+diff = mathutils.Vector((0, 0, 1))
+head = mathutils.Vector((0, 0, 1))
 head_len = 0.25
 mes('head', head)
 round_num = div / 4
@@ -32,8 +31,8 @@ for i in range(num):
     
     polyline.bezier_points[i].handle_left_type = 'AUTO'
     polyline.bezier_points[i].handle_right_type = 'AUTO'
-    polyline.bezier_points[i].handle_right = x, y, z + 0.01
-    polyline.bezier_points[i].handle_left = x, y, z - 0.01
+    #polyline.bezier_points[i].handle_right = x, y, z + 0.01
+    #polyline.bezier_points[i].handle_left = x, y, z - 0.01
     
     r = 1
     if i <= round_num:
@@ -47,9 +46,14 @@ for i in range(num):
         polyline.bezier_points[i].handle_left = x, y, z - 0.01
         '''
         if i == 0:
+            polyline.bezier_points[i].handle_right_type = 'FREE'
+            polyline.bezier_points[i].handle_right = x, y, z
+            polyline.bezier_points[i].handle_left_type = 'FREE'
             polyline.bezier_points[i].handle_left = x, y, z
 
     if i >= num - round_num:
+        if i == num - round_num:
+            head = diff.normalized()
         c = i - (num - round_num) + 1
         ang = math.pi * 2 * c / div
         len = math.sin(ang) * head_len
@@ -68,6 +72,7 @@ for i in range(num):
             polyline.bezier_points[i].handle_left_type = 'FREE'
             polyline.bezier_points[i].handle_left = x, y, z            
     else:
+        diff = mathutils.Vector((x - pre[0], y - pre[1], z - pre[2])).normalized()
         pre = [x, y, z]
     polyline.bezier_points[i].co = x, y, z
     polyline.bezier_points[i].radius = r
