@@ -29,7 +29,7 @@ for i in range(num):
     polyline.bezier_points[i].handle_left_type = 'AUTO'
     polyline.bezier_points[i].handle_right_type = 'AUTO'
     v2 = mathutils.noise.random_unit_vector(size=2)
-    x, y, z = v2[0] * 0.25, v2[1] * 0.25, i - (div / 4)
+    x, y, z = v2[0] * 0.25, v2[1] * 0.25, i + 1 - (div / 4)
     r = 1
     if i <= div / 4:
         rootr = 0.5
