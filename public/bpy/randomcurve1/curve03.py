@@ -15,7 +15,7 @@ curvedata = bpy.data.curves.new("my curve", type='CURVE')
 curvedata.dimensions = '3D'    
 
 div = 16
-root_r = 0.5
+root_r = 1
 
 pre = [0, 0, 0]
 diff = mathutils.Vector((0, 0, 1))
@@ -31,13 +31,12 @@ polyline.bezier_points.add(num - 1)
 for i in range(num):
 
     v2 = mathutils.noise.random_unit_vector(size=2)
-    x, y, z = v2[0] * 0.25, v2[1] * 0.25, i - round_num
+    # 根半径1のとき
+    x, y, z = v2[0] * 0.25, v2[1] * 0.25, i - round_num + 1
     
     polyline.bezier_points[i].handle_left_type = 'AUTO'
     polyline.bezier_points[i].handle_right_type = 'AUTO'
-    #polyline.bezier_points[i].handle_right = x, y, z + 0.01
-    #polyline.bezier_points[i].handle_left = x, y, z - 0.01
-    
+
     r = 1
     if i <= round_num:
         ang = math.pi * 2 * i / div
@@ -46,7 +45,7 @@ for i in range(num):
 
         #if i == 0:
         if True:
-            offset = _near(math.pi * 2 / div * 0.5)
+            offset = _near(math.pi * 2 / div * 0.5) * math.sin(ang)
             polyline.bezier_points[i].handle_right_type = 'FREE'
             polyline.bezier_points[i].handle_right = x, y, z + offset
             polyline.bezier_points[i].handle_left_type = 'FREE'
@@ -63,7 +62,7 @@ for i in range(num):
 
         #if i == num - 1:
         if True:
-            sup = _near(math.pi * 2 / div * 0.5)
+            sup = _near(math.pi * 2 / div * 0.5) * math.cos(ang)
             ft = head[0] * sup, head[1] * sup, head[2] * sup
             polyline.bezier_points[i].handle_right_type = 'FREE'
             polyline.bezier_points[i].handle_right = x + ft[0], y + ft[1], z + ft[2]
