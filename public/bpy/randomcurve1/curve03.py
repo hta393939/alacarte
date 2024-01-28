@@ -3,6 +3,8 @@ import mathutils
 import datetime
 import math
 
+# 全計算
+
 def mes(label, val):
     print(f'>> {label}\n{val}')
 

@@ -233,6 +233,7 @@ class Misc {
         const ret = {
             says: [],
             pathprefix: '',
+            postpadding: 0,
         };
 
         const reyomi = /(?<fw>[^\<]*)<(?<display>[^\<\>]*)\|(?<yomi>[^\<\>]*)\>(?<bw>.*)/;
@@ -269,7 +270,11 @@ class Misc {
                     break;
                 case '@speaker':
                     break;
-                case '@margin':
+                case '@postpadding':
+                    {
+                        const sec = Number.parseFloat(ss[1]);
+                        ret.postpadding = sec;
+                    }
                     break;
                 default:
                     console.warn('unknown command');
@@ -383,10 +388,15 @@ class Misc {
         const project = new AVIUTL.Project();
         let counter = 0;
         let timeCounter = 0;
+        const _fps = 30;
         {
             const file = await mlfh.getFile();
             const text = await file.text();
             const result = this.parseZndml(text);
+/**
+ * 全体グループパディングフレーム数
+ */
+            const postPaddingFrame = Math.floor(result.postpadding * _fps);
 
             for (const say of result.says) {
                 counter += 1;
@@ -413,7 +423,7 @@ class Misc {
                     if (secmod >= 0.9 || secmod == 0.0) {
                         sec += 1;
                     }
-                    const len = sec * 30;
+                    const len = sec * _fps;
 
                     {
                         const te = new AVIUTL.AUText();
@@ -447,9 +457,14 @@ class Misc {
 
             { // グループ制御
                 const ge = new AVIUTL.AUGroup();
-
                 ge.data.start = 1;
-                ge.data.end = ge.data.start + timeCounter - 1;
+/**
+ * end に指定する値
+ */
+                let wholeEnd = ge.data.start + timeCounter - 1;
+                wholeEnd += postPaddingFrame;
+
+                ge.data.end = wholeEnd;
                 ge.data.layer = startLayer;
                 ge.data0.range = 6;
                 ge.data0.Y = 240;
@@ -459,7 +474,13 @@ class Misc {
             { // グループ制御
                 const ge = new AVIUTL.AUGroup();
                 ge.data.start = 1;
-                ge.data.end = ge.data.start + timeCounter - 1;
+/**
+ * end に指定する値
+ */
+                let wholeEnd = ge.data.start + timeCounter - 1;
+                wholeEnd += postPaddingFrame;
+
+                ge.data.end = wholeEnd;
                 ge.data.layer = startLayer + 8;
                 ge.data0.range = 4;
                 ge.data0.Y = 50;
