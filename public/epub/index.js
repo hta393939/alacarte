@@ -7,18 +7,32 @@ const _pad = (v, n = 2) => {
 };
 
 class Misc {
-    static CTYPE = 'application/json;charset=UTF-8';
+    static XMLDOC = '<?xml version="1.0" encoding="UTF-8"?>';
 
     constructor() {
         this.startLayer = 10;
 /**
- * ずんだもんノーマル
+ * ファイルネーム
  */
-        this.speakerid = 3;
+        this.filename = 'content.opf';
 /**
  * VOICEVOX ベースアドレス
  */
         this.base = 'http://127.0.0.1:50021';
+
+/**
+ * 拡張子と mime
+ */
+        this.mimeMap = {
+            'xhtml': 'application/xhtml+xml',
+            'ncx': 'text/xml',
+            'css': 'text/css',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'mp4': 'video/mp4',
+        };
     }
 
 /**
@@ -26,6 +40,8 @@ class Misc {
  */
     async initialize() {
         this.setListener();
+        const s = this.makeList();
+        console.log('content.opf', s);
     }
 
     setListener() {
@@ -80,6 +96,84 @@ class Misc {
             });
         }
 
+    }
+
+    getMime(name) {
+        let mime = 'application/octet-stream';
+        const re = /\.(?<extwo>[^.]+)$/;
+        const m = re.exec(name);
+        if (m) {
+            const extwo = m.groups['extwo'];
+            if (extwo in this.mimeMap) {
+                mime = this.mimeMap[extwo];
+            }
+        }
+        return mime;
+    }
+
+    makeList() {
+        const div = document.createElement('div');
+        {
+            div.innerHTML = `
+<package version="2.0" xmlns="http://www.idpf.org/2007/opf"
+unique-identifier="BookId">
+    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"
+xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:creator opf:role="aut">no name</dc:creator>
+    <dc:language>ja</dc:language>
+    <dc:rights>Public Domain</dc:rights>
+    </metadata>
+    <manifest>
+    </manifest>
+    <spine toc="ncx">
+    </spine>
+</package>
+`;
+        }
+        //for (const s of ss) {
+
+        //}
+
+        const obj = {
+            metadata: {
+                'dc:title': 'title',
+                'dc:date': new Date().toLocaleDateString(),
+                'dc:identifier': `urn:uuid:example.com.${new MediaStream().id}`,
+            }
+        };
+        { // metadata
+            const metadata = div.querySelector('metadata');
+            for (const key in obj.metadata) {
+                const val = obj.metadata[key];
+                const el = document.createElement(key);
+                el.textContent = val;
+                if (key === 'dc:identifier') {
+                    el.setAttribute('id', 'BookId');
+                }
+                metadata.appendChild(el);
+            }
+        }
+
+        { // item
+            const manifest = div.querySelector('manifest');
+            {
+                const name = 'a.xhtml';
+                const item = document.createElement('item');
+                item.setAttribute('id', name);
+                item.setAttribute('href', name);
+                item.setAttribute('media-type', this.getMime(name));
+                manifest.appendChild(item);
+            }
+        }
+        { // spine
+            const spine = div.querySelector('spine');
+            {
+                const itemref = document.createElement('itemref');
+                itemref.setAttribute('idref', 'top page');
+                spine.appendChild(itemref);
+            }
+        }
+        return Misc.XMLDOC + div.innerHTML;
     }
 
 /**
