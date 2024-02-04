@@ -113,7 +113,7 @@ class Misc {
 
         const lines = [];
         for (const name of names) {
-            let line = `<img src="${prefix}${name}" class="tbmargin fullwidth"></img>`;
+            let line = `<img src="${prefix}${name}" class="fullwidth tbmargin"></img>`;
             lines.push(line);
         }
         return `${Misc.XMLDOC}${fw}${lines.join('\n')}${bw}`;
