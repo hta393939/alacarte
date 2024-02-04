@@ -41,18 +41,10 @@ class Misc {
  */
     async initialize() {
         this.setListener();
-        
-        this.downloadList();
-        console.log('content.opf');
+        console.log('initialize end');
     }
 
     setListener() {
-        {
-            const el = document.getElementById('enumvoice');
-            el?.addEventListener('click', () => {
-                this.enumVoice();
-            });
-        }
         {
             const el = document.getElementById('startlayer');
             const _apply = () => {
@@ -67,22 +59,13 @@ class Misc {
             _apply();
         }
 
-        {
-            const el = document.getElementById('saytext');
-            el?.addEventListener('click', () => {
-                this.speakerid = Number.parseInt(window.speakerid.value);
-                //this.say('こんにちなのだ', true);
-                this.say(window.text.value, true);
-            });
-        }
-
         { // ワーキングディレクトリで指定するタイプ。うまくいく。
             const el = document.getElementById('opendir');
             el?.addEventListener('click', async () => {
                 const dirHandle = await this.openDir();
                 this.dirHandle = dirHandle;
                 try {
-                    await this.processDir(dirHandle, this.startLayer);
+                    await this.processDir(dirHandle);
                 } catch(e) {
                     console.warn('processDir catch', e);
                 } finally {
@@ -94,7 +77,7 @@ class Misc {
         { // リトライ
             const el = document.getElementById('retry');
             el?.addEventListener('click', async () => {
-                await this.processDir(this.dirHandle, this.startLayer);
+                await this.processDir(this.dirHandle);
             });
         }
 
@@ -130,7 +113,7 @@ class Misc {
 
         const lines = [];
         for (const name of names) {
-            let line = `<img src="${prefix}${name}"></img>`;
+            let line = `<img src="${prefix}${name}" class="tbmargin fullwidth"></img>`;
             lines.push(line);
         }
         return `${Misc.XMLDOC}${fw}${lines.join('\n')}${bw}`;
@@ -237,104 +220,6 @@ xmlns:opf="http://www.idpf.org/2007/opf">
     }
 
 /**
- * ～znd.txt をパースする
- * @param {string} instr 
- */
-    parseZndml(instr) {
-        const ret = {
-            says: [],
-            pathprefix: '',
-            postpadding: 0,
-        };
-
-        const reyomi = /(?<fw>[^\<]*)<(?<display>[^\<\>]*)\|(?<yomi>[^\<\>]*)\>(?<bw>.*)/;
-
-        const lines = instr.split('\n');
-        let obj = null;
-        for (let line of lines) {
-            line = line.trimEnd();
-            if (line.length === 0) {
-                continue; // 空行は無視する
-            }
-/**
- * 先頭の1文字
- */
-            const top = line.substring(0, 1);
-            if (top === '#') {
-                continue; // コメントであり無視する
-            }
-
-            if (top === '@') {
-                const ss = line.split(',');
-                switch(ss[0]) {
-                case '@version':
-                    {
-                        const version = Number.parseInt(ss[1]);
-                        if (version >= 20000) {
-                            console.warn('非対応の未来のバージョンです');
-                        }
-                        console.log('version', version);
-                    }
-                    break;
-                case '@pathprefix':
-                    ret.pathprefix = ss[1];
-                    break;
-                case '@speaker':
-                    break;
-                case '@postpadding':
-                    {
-                        const sec = Number.parseFloat(ss[1]);
-                        ret.postpadding = sec;
-                    }
-                    break;
-                default:
-                    console.warn('unknown command');
-                    break;
-                }
-                continue;
-            }
-
-            if (top == ' ') {
-// 継続なので obj は消さずに残す
-                obj.text += '\r\n';
-                line = line.trim();
-                obj.keep = line;
-            } else {
-                if (obj) {
-                    ret.says.push(obj);
-                }
-                obj = null;
-            }
-
-            if (!obj) {
-                obj = {
-                    text: '',
-                    yomi: '',
-                    keep: line,
-                };
-            }
-
-            while(true) {
-                const m = reyomi.exec(obj.keep);
-                if (!m) {
-                    obj.text += obj.keep;
-                    obj.yomi += obj.keep;
-                    break;
-                }
-                obj.text += m.groups['fw'] + m.groups['display'];
-                obj.yomi += m.groups['fw'] + m.groups['yomi'];
-                obj.keep = m.groups['bw'];
-            }
-        }
-
-        if (obj) {
-            ret.says.push(obj);
-        }
-
-        return ret;
-    }
-
-/**
  * readwrite でディレクトリを指定する
  * @returns {FileSystemDirectoryHandle}
  */
@@ -348,11 +233,120 @@ xmlns:opf="http://www.idpf.org/2007/opf">
     }
 
 /**
+ * 指定ディレクトリの中からディレクトリを見つける
+ * @param {FileHandle} dirHandle 
+ * @param {RegExp} re  
+ */
+    async getDir(dirHandle, re) {
+        const ret = {
+            handle: null,
+            name: ''
+        };
+        for await (let [name, handle] of dirHandle) {
+            if (handle.kind === 'file') {
+                console.log('file', name);
+                continue;
+            } else { // 'directory'
+                console.log('not file', name, handle.kind);
+                const m = re.exec(name);
+                if (m) {
+                    ret.handle = handle;
+                    ret.name = name;
+                    break;
+                }
+            }
+        }
+        return ret;
+    }
+
+/**
+ * OEBPS ディレクトリに対して処理を実施する
+ * @param {FileSystemDirectoryHandle} dirHandle ディレクトリハンドル指定
+ */
+    async processDir(dirHandle) {
+        console.log('processDir', dirHandle.name);
+/**
+ * @type {HTMLElement}
+ */
+        const viewel = document.getElementById('processingview');
+
+        const oebps = await this.getDir(dirHandle,
+            /^OEBPS$/);
+        if (!oebps.handle) {
+            viewel.textContent = 'not found OEBPS';
+            return;
+        }
+        const res = await this.getDir(oebps.handle,
+            /^resources$/);
+        if (!res.handle) {
+            viewel.textContent = 'not found res';
+            return;
+        }
+
+        const _subfh = res.handle;
+/**
+ * メディアファイル用
+ */
+        const _prefix = `${res.name}/`;
+
+        const _filenames = [];
+        for await (let [name, handle] of _subfh) {
+            if (handle.kind === 'file') {
+                console.log('file', name);
+                _filenames.push(name);
+            } else { // 'directory' Media
+                console.log('not file', name, handle.kind);
+            }
+        }
+
+        {
+            const text = this.makeList(_filenames, _prefix);
+            await this.writeTextFile(text, oebps.handle, this.filename);
+        }
+        {
+            const text = this.makeOnePage(_filenames, _prefix);
+            await this.writeTextFile(text, oebps.handle, this.onepagename);
+        }
+
+        if (false) {
+            const file = await mlfh.getFile();
+
+            { // .exo ファイルを書き込む
+                const fileHandle = await dirHandle.getFileHandle(`${basename}.exo`,
+                    { create: true });
+                const writer = await fileHandle.createWritable();
+                {
+                    await writer.write(ss.join('\r\n'));
+                    await writer.close();
+                }
+            }
+            
+        }
+
+        viewel.textContent = `processDir 終わり ${new Date().toLocaleTimeString()}`;
+        console.log('processDir 終わり');
+    }
+
+/**
+ * テキストファイルをディレクトリハンドルの中に書き出す
+ * @param {string} text 
+ * @param {FileHandle} dirHandle 
+ * @param {string} filename 
+ */
+    async writeTextFile(text, dirHandle, filename) {
+        const fileHandle = await dirHandle.getFileHandle(filename,
+        { create: true });
+        const writer = await fileHandle.createWritable();
+        await writer.write(text);
+        await writer.close();
+    }
+
+/**
  * ディレクトリに対して処理を実施する
  * @param {FileSystemDirectoryHandle} dirHandle ディレクトリハンドル指定
  * @returns {}
  */
-    async processDir(dirHandle, startLayer) {
+    async processDir_keep(dirHandle, startLayer) {
         console.log('processDir', dirHandle.name, startLayer);
 /**
  * znd.txt を探す
