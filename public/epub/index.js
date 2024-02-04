@@ -10,11 +10,12 @@ class Misc {
     static XMLDOC = '<?xml version="1.0" encoding="UTF-8"?>';
 
     constructor() {
-        this.startLayer = 10;
 /**
  * ファイルネーム
  */
         this.filename = 'content.opf';
+
+        this.onepagename = 'chapter01.xhtml';
 /**
  * VOICEVOX ベースアドレス
  */
@@ -40,8 +41,9 @@ class Misc {
  */
     async initialize() {
         this.setListener();
-        const s = this.makeList();
-        console.log('content.opf', s);
+        
+        this.downloadList();
+        console.log('content.opf');
     }
 
     setListener() {
@@ -111,7 +113,36 @@ class Misc {
         return mime;
     }
 
-    makeList() {
+    makeOnePage(names, prefix) {
+        const fw = `
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta char="UTF-8"></meta>
+    <title></title>
+    <link href="default.css" type="text/css" rel="stylesheet"></link>
+</head>
+<body>
+`;
+        const bw = `
+</body>
+</html>
+`;
+
+        const lines = [];
+        for (const name of names) {
+            let line = `<img src="${prefix}${name}"></img>`;
+            lines.push(line);
+        }
+        return `${Misc.XMLDOC}${fw}${lines.join('\n')}${bw}`;
+    }
+
+/**
+ * content.opf を生成する
+ * @param {string[]} names ファイル部分
+ * @param {string} prefix '' や 'res/' など
+ * @returns 
+ */
+    makeList(names, prefix) {
         const div = document.createElement('div');
         {
             div.innerHTML = `
@@ -124,12 +155,21 @@ xmlns:opf="http://www.idpf.org/2007/opf">
     <dc:rights>Public Domain</dc:rights>
     </metadata>
     <manifest>
+        <item id="ncx" href="toc.ncx" media-type="text/xml"></item>
+        <item id="style" href="default.css" media-type="text/css"></item>
+        <item id="title_page" href="title_page.xhtml" media-type="application/xhtml+xml"></item>
+        <item id="chapter01" href="chapter01.xhtml" media-type="application/xhtml+xml"></item>
+        <item id="end_page" href="end_page.xhtml" media-type="application/xhtml+xml"></item>
     </manifest>
     <spine toc="ncx">
+        <itemref idref="title_page"></itemref>
+        <itemref idref="chapter01"></itemref>
+        <itemref idref="end_page"></itemref>
     </spine>
 </package>
 `;
         }
+
         //for (const s of ss) {
 
         //}
@@ -138,9 +178,10 @@ xmlns:opf="http://www.idpf.org/2007/opf">
             metadata: {
                 'dc:title': 'title',
                 'dc:date': new Date().toLocaleDateString(),
-                'dc:identifier': `urn:uuid:example.com.${new MediaStream().id}`,
-            }
+                'dc:identifier': `urn:uuid:${new MediaStream().id}`,
+            },
         };
+
         { // metadata
             const metadata = div.querySelector('metadata');
             for (const key in obj.metadata) {
@@ -156,24 +197,43 @@ xmlns:opf="http://www.idpf.org/2007/opf">
 
         { // item
             const manifest = div.querySelector('manifest');
-            {
-                const name = 'a.xhtml';
+            for (const name of names) {
                 const item = document.createElement('item');
                 item.setAttribute('id', name);
-                item.setAttribute('href', name);
+                item.setAttribute('href', `${prefix}${name}`);
                 item.setAttribute('media-type', this.getMime(name));
                 manifest.appendChild(item);
             }
         }
-        { // spine
+        /* { // spine
             const spine = div.querySelector('spine');
             {
                 const itemref = document.createElement('itemref');
                 itemref.setAttribute('idref', 'top page');
                 spine.appendChild(itemref);
             }
-        }
+        } */
+
         return Misc.XMLDOC + div.innerHTML;
+    }
+
+    download(blob, name) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+    }
+
+    downloadList() {
+        const names = [
+            'i010.jpg'
+        ];
+        const prefix = 'res/';
+        const content = this.makeList(names, prefix);
+        const page = this.makeOnePage(names, prefix);
+
+        this.download(new Blob([content]), this.filename);
+        this.download(new Blob([page]), this.onepagename);
     }
 
 /**
