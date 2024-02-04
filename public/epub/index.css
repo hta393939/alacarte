@@ -1,0 +1,24 @@
+@charset "UTF-8";
+
+.num6 {
+    width: 6em;
+}
+
+.toright {
+    display: flex;
+    flex-direction: row;
+}
+
+#numberselement {
+    width: 50vw;
+    height: 6rem;
+}
+
+#mainvideo {
+    border: solid 1px black;
+    width: 320px;
+    height: 180px;
+    padding: 0;
+}
+
+

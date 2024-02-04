@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>epub にファイルを指定したい</title>
+        <link rel="stylesheet" href="./index.css" />
+
+    </head>
+    <body>
+
+        <div></div>
+        <div>chrome または edge でのみ使用可能</div>
+
+        <div>
+            <div>
+                <div id="innerview"></div>
+                <div id="element"></div>
+            </div>
+            <div>
+                <button id="enumvoice">列挙する</button>
+                <input type="number" min="0" max="50" value="3" id="speakerid" />
+
+                <button id="opendir">ワーキングフォルダを指定する</button>
+                <div class="toright">
+                    <input type="range" id="startlayer" value="10" min="1" max="20" />
+                    <div id="startlayerview"></div>
+                </div>
+                <button disabled id="retry">リトライする</button>
+                <div>
+                    <div id="processingview"></div>
+                </div>
+                <audio id="audioelement" controls></audio>
+            </div>
+            <div>
+                <div id="imelement"></div>
+            </div>
+            <div>
+                <div id="resultelement"></div>
+            </div>
+        </div>
+
+        <hr />
+        <div id="speakers"></div>
+        <hr />
+
+        <script src="../third_party/md5.js"></script>
+        <script src="./index.js"></script>
+    </body>
+</html>
+
