@@ -1,6 +1,10 @@
 /**
  * @file index.js
  */
+// [ ] sony reader のタイトルはどこを参照しているのだろう
+// title と title22
+// あと最上位ディレクトリハンドルにネームがあるかどうか
+// あったら，タイトルに挿入する??
 
 const _pad = (v, n = 2) => {
     return String(v).padStart(n, '0');
@@ -16,10 +20,6 @@ class Misc {
         this.filename = 'content.opf';
 
         this.onepagename = 'chapter01.xhtml';
-/**
- * VOICEVOX ベースアドレス
- */
-        this.base = 'http://127.0.0.1:50021';
 
 /**
  * 拡張子と mime
@@ -123,9 +123,10 @@ class Misc {
  * content.opf を生成する
  * @param {string[]} names ファイル部分
  * @param {string} prefix '' や 'res/' など
+ * @param {string} title タイトル
  * @returns 
  */
-    makeList(names, prefix) {
+    makeList(names, prefix, title) {
         const div = document.createElement('div');
         {
             div.innerHTML = `
@@ -133,9 +134,8 @@ class Misc {
 unique-identifier="BookId">
     <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"
 xmlns:opf="http://www.idpf.org/2007/opf">
-    <dc:creator opf:role="aut">no name</dc:creator>
-    <dc:language>ja</dc:language>
-    <dc:rights>Public Domain</dc:rights>
+        <dc:creator opf:role="aut">no name</dc:creator>
+        <dc:language>ja</dc:language>
     </metadata>
     <manifest>
         <item id="ncx" href="toc.ncx" media-type="text/xml"></item>
@@ -153,13 +153,9 @@ xmlns:opf="http://www.idpf.org/2007/opf">
 `;
         }
 
-        //for (const s of ss) {
-
-        //}
-
         const obj = {
             metadata: {
-                'dc:title': 'title',
+                'dc:title': title,
                 'dc:date': new Date().toLocaleDateString(),
                 'dc:identifier': `urn:uuid:${new MediaStream().id}`,
             },
@@ -205,18 +201,6 @@ xmlns:opf="http://www.idpf.org/2007/opf">
         a.href = URL.createObjectURL(blob);
         a.download = name;
         a.click();
-    }
-
-    downloadList() {
-        const names = [
-            'i010.jpg'
-        ];
-        const prefix = 'res/';
-        const content = this.makeList(names, prefix);
-        const page = this.makeOnePage(names, prefix);
-
-        this.download(new Blob([content]), this.filename);
-        this.download(new Blob([page]), this.onepagename);
     }
 
 /**
@@ -277,7 +261,7 @@ xmlns:opf="http://www.idpf.org/2007/opf">
             return;
         }
         const res = await this.getDir(oebps.handle,
-            /^resources$/);
+            /^res|resources?$/);
         if (!res.handle) {
             viewel.textContent = 'not found res';
             return;
@@ -300,31 +284,15 @@ xmlns:opf="http://www.idpf.org/2007/opf">
         }
 
         {
-            const text = this.makeList(_filenames, _prefix);
+            const text = this.makeList(_filenames, _prefix, dirHandle.name);
             await this.writeTextFile(text, oebps.handle, this.filename);
         }
         {
             const text = this.makeOnePage(_filenames, _prefix);
             await this.writeTextFile(text, oebps.handle, this.onepagename);
         }
-
-        if (false) {
-            const file = await mlfh.getFile();
-
-            { // .exo ファイルを書き込む
-                const fileHandle = await dirHandle.getFileHandle(`${basename}.exo`,
-                    { create: true });
-                const writer = await fileHandle.createWritable();
-                {
-                    await writer.write(ss.join('\r\n'));
-                    await writer.close();
-                }
-            }
-            
-        }
-
-        viewel.textContent = `processDir 終わり ${new Date().toLocaleTimeString()}`;
-        console.log('processDir 終わり');
+        viewel.textContent = `${dirHandle.name}, processDir 終わり ${new Date().toLocaleTimeString()}`;
+        console.log(dirHandle.name, 'processDir 終わり');
     }
 
 /**
