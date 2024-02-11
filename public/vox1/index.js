@@ -403,8 +403,9 @@ class Misc {
                 const mod = counter & 1;
 
                 let name = '';
+                let filehead = (`${say.text}`).replace(/[\r\n\s\t]/g, '');
                 for (let i = 0; i < 10; ++i) {
-                    name = `${say.text.substring(0, 6)}_${_pad(counter, 3)}_${i}.wav`;
+                    name = `${filehead.substring(0, 6)}_${_pad(counter, 3)}_${i}.wav`;
                     if (!_filenames.includes(name)) {
                         break;
                     }
@@ -451,7 +452,7 @@ class Misc {
                     await writer.write(waveBinary.arrayBuffer);
                     await writer.close();               
                 } catch(ec) {
-                    console.warn('catch', ec.message);
+                    console.warn('catch', ec.message, 'name', name);
                 }
             }
 
