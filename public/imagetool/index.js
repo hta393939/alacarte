@@ -12,75 +12,52 @@ class Misc {
 
 /**
  * 
- * @param {HTMLCanvasElement} src 
+ * @param {HTMLCanvasElement} canvas
  */
-    convColor(src) {
-        const scale = 1;
-
-        const cellx = this.cellx;
-        const celly = this.celly;
-        const cellw = this.cellw;
-        const cellh = cellw;
-
-/**
- * 入力画像の幅
- */
-//        const w = src.width;
-//        const h = src.height;
-        const context = src.getContext('2d');
-/**
- * 書き出し先
- * @type {HTMLCanvasElement}
- */
-        const canvas = document.getElementById('subcanvas');
+    convColor(canvas) {
+        console.log('convColor called');
         const c = canvas.getContext('2d');
-        canvas.width = cellw * scale;
-        canvas.height = cellh * scale;
-        const cx = cellx * cellw;
-        const cy = celly * cellh;
-        console.log(cx, cy, cellw, cellh);
-        const dat = context.getImageData(cx, cy, cellw, cellh);
+        const w = canvas.width;
+        const h = canvas.height;
+        const dat = c.getImageData(0, 0, w, h);
 
-        let backs = [-1, -1, -1];
-        if (true) {
-            let ft = (0 + 0 * 0) * 4;
-            backs[0] = dat.data[ft];
-            backs[1] = dat.data[ft+1];
-            backs[2] = dat.data[ft+2];
-        }
-
-        for (let i = 0; i < cellw; ++i) {
-            for (let j = 0; j < cellw; ++j) {
-                let ft = (j + i * cellw) * 4;
-                let x = j * scale;
-                let y = i * scale;
+        for (let i = 0; i < h; ++i) {
+            for (let j = 0; j < w; ++j) {
+                let ft = (j + i * w) * 4;
                 let r = dat.data[ft];
                 let g = dat.data[ft+1];
                 let b = dat.data[ft+2];
                 let a = dat.data[ft+3];
-                if (r === backs[0] && g === backs[1] && b === backs[2]) {
-                    a = 0;
-                }
-                c.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
-                c.fillRect(x, y, scale, scale);
+
+                let cols = [
+                    g, // r
+                    g, // g
+                    g, // b
+                    a, // a
+                ];
+                cols = cols.map(v => {
+                    return Math.max(0, Math.min(255, Math.round(v)));
+                });
+
+                dat.data[ft] = cols[0];
+                dat.data[ft+1] = cols[1];
+                dat.data[ft+2] = cols[2];
+                dat.data[ft+3] = cols[3];
             }
         }
-
+        c.putImageData(dat, 0, 0);
     }
 
 /**
  * 
  * @param {File} file 
+ * @param {HTMLCanvasElement} canvas 
  * @returns {Promise<HTMLCanvasElement>}
  */
-    loadFileToCanvas(file) {
+    loadFileToCanvas(file, canvas) {
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.addEventListener('load', () => {
-        /**
-        * @type {HTMLCanvasElement}
-        */
-                const canvas = document.getElementById('maincanvas');
                 canvas.width = img.width;
                 canvas.height = img.height;
                 const c = canvas.getContext('2d');
@@ -183,7 +160,8 @@ class Misc {
                 ev.preventDefault();
                 ev.stopPropagation();
                 ev.dataTransfer.dropEffect = 'copy';
-                const canvas = await this.loadFileToCanvas(ev.dataTransfer.files[0]);
+                const canvas = document.getElementById('maincanvas');
+                await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
                 this.convColor(canvas);
             });
         }
