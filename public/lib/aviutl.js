@@ -57,6 +57,14 @@ class AUElement {
                 ss.push(`${k}=${this.data1[k]}`);
             }
         }
+
+        if (this.data2) {
+            ss.push(`[${this._index}.2]`);
+            for (const k in this.data2) {
+                ss.push(`${k}=${this.data2[k]}`);
+            }
+        }
+
         return ss;
     }
 }
@@ -144,12 +152,20 @@ class AUText extends AUElement {
             spacing_y: 0,
             precision: 1,
             color: 'ffffff',
-            color2: '000000',
+            color2: '1a1a1c',
             //font: 'BIZ UDPゴシック',
-            font: 'メイリオ',
+            //font: 'メイリオ',
+            font: 'Noto Sans JP Black',
             text: '0000',
         };
         this.data1 = {
+            ['_name']: '縁取り',
+            ['サイズ']: 3,
+            ['ぼかし']: 10,
+            color: 'ffffff',
+            file: '',
+        };
+        this.data2 = {
             ['_name']: '標準描画',
             X: 0,
             Y: 0,

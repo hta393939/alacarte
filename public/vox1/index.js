@@ -235,8 +235,10 @@ class Misc {
             pathprefix: '',
             postpadding: 0,
         };
-
-        const reyomi = /(?<fw>[^\<]*)<(?<display>[^\<\>]*)\|(?<yomi>[^\<\>]*)\>(?<bw>.*)/;
+/**
+ * 本家にあわせて {|}
+ */
+        const reyomi = /(?<fw>[^\{]*)<(?<display>[^\{\}]*)\|(?<yomi>[^\{\}]*)\>(?<bw>.*)/;
 
         const lines = instr.split('\n');
         let obj = null;
@@ -403,7 +405,7 @@ class Misc {
                 const mod = counter & 1;
 
                 let name = '';
-                let filehead = (`${say.text}`).replace(/[\r\n\s\t]/g, '');
+                let filehead = (`${say.text}`).replace(/[\r\n\s\t"]/g, '');
                 for (let i = 0; i < 10; ++i) {
                     name = `${filehead.substring(0, 6)}_${_pad(counter, 3)}_${i}.wav`;
                     if (!_filenames.includes(name)) {
