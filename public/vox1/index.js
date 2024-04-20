@@ -345,6 +345,7 @@ class Misc {
  */
     async processDir(dirHandle, startLayer) {
         console.log('processDir', dirHandle.name, startLayer);
+        const useVox = document.getElementById('idusevox')?.checked;
 /**
  * znd.txt を探す
  * @type {FileSystemFileHandle}
@@ -414,15 +415,19 @@ class Misc {
                 }
                 viewel.textContent = `process... ${name}`;
 
-                try {
-                    const waveBinary = await this.say(say.yomi, false);
-                    if (!waveBinary) {
-                        continue;
+                let waveBinary = null;
+                if (useVox) {
+                    try {
+                        waveBinary = await this.say(say.yomi, false);
+                    } catch(ec) {
+                        console.warn('catch', ec.message, 'name', name);
                     }
+                }
 
-// 秒数を決定する
-                    let sec = Math.ceil(waveBinary.len.sec);
-                    const secmod = waveBinary.len.sec - Math.floor(waveBinary.len.sec);
+                { // 秒数を決定する
+                    let rawsec = waveBinary ? waveBinary.len.sec : 7.5;
+                    let sec = Math.ceil(rawsec);
+                    const secmod = rawsec - Math.floor(rawsec);
                     if (secmod >= 0.9 || secmod == 0.0) {
                         sec += 1;
                     }
@@ -437,24 +442,24 @@ class Misc {
                         project.elements.push(te);
                     }
 
-                    const ae = new AVIUTL.AUAudio();
-                    ae.data0.file = `${result.pathprefix}${name}`;
-                    ae.data.layer = startLayer + 2 + mod; // +2, +3
-                    ae.data.start = timeCounter + 1;
-                    ae.data.end = ae.data.start + len - 1;
-                    project.elements.push(ae);
+                    if (useVox) {
+                        const ae = new AVIUTL.AUAudio();
+                        ae.data0.file = `${result.pathprefix}${name}`;
+                        ae.data.layer = startLayer + 2 + mod; // +2, +3
+                        ae.data.start = timeCounter + 1;
+                        ae.data.end = ae.data.start + len - 1;
+                        project.elements.push(ae);
+                    }
     
                     timeCounter += len;
-    
 
-// 書き込む
-                    const fileHandle = await dirHandle.getFileHandle(name,
-                        { create: true });
-                    const writer = await fileHandle.createWritable();
-                    await writer.write(waveBinary.arrayBuffer);
-                    await writer.close();               
-                } catch(ec) {
-                    console.warn('catch', ec.message, 'name', name);
+                    if (useVox) { // 書き込む
+                        const fileHandle = await dirHandle.getFileHandle(name,
+                            { create: true });
+                        const writer = await fileHandle.createWritable();
+                        await writer.write(waveBinary.arrayBuffer);
+                        await writer.close();
+                    }               
                 }
             }
 
