@@ -1,28 +1,28 @@
 @charset "UTF-8";
 
 .num6 {
-    width: 6em;
+  width: 6em;
 }
 
 .pt {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .toright {
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  flex-direction: row;
 }
 
 #numberselement {
-    width: 50vw;
-    height: 6rem;
+  width: 50vw;
+  height: 6rem;
 }
 
 #mainvideo {
-    border: solid 1px black;
-    width: 320px;
-    height: 180px;
-    padding: 0;
+  border: solid 1px black;
+  width: 320px;
+  height: 180px;
+  padding: 0;
 }
 
 

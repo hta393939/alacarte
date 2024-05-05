@@ -8,50 +8,50 @@
  * 1つのエフェクトインスタンス
  */
 declare class EffekseerHandle {
-    constructor(context, native);
-    stop(): void;
-    stopRoot(): void;
+  constructor(context, native);
+  stop(): void;
+  stopRoot(): void;
 /**
  * false のときは再生が終わっている
  */
-    get exists(): boolean;
-    setFrame(frame: number): void;
+  get exists(): boolean;
+  setFrame(frame: number): void;
 
-    setLocation(x, y, z);
+  setLocation(x, y, z);
 /**
  * オイラー角を指定する
  * @param x 
  * @param y 
  * @param z 
  */
-    setRotation(x: number, y: number, z: number): void;
-    setScale(x, y, z);
-    setMatrix(matrixArray);
-    setAllColor(r, g, b, a);
-    setTargetLocation(x, y, z);
-    getDynamicInput(index): number;
-    setDynamicInput(index, value);
+  setRotation(x: number, y: number, z: number): void;
+  setScale(x, y, z);
+  setMatrix(matrixArray);
+  setAllColor(r, g, b, a);
+  setTargetLocation(x, y, z);
+  getDynamicInput(index): number;
+  setDynamicInput(index, value);
 /**
  * トリガーを送信する
  * @param index 
  */
-    setTrigger(index: number): void;
-    setPause(paused: boolean): void;
+  setTrigger(index: number): void;
+  setPause(paused: boolean): void;
 /**
  * 
  * @param shown false を指定すると不可視になる
  */
-    setShown(shown: boolean): void;
+  setShown(shown: boolean): void;
 /**
  * 
  * @param speed 再生スピード率を指定する
  */
-    setSpeed(speed: number): void;
+  setSpeed(speed: number): void;
 /**
  * 
  * @param seed ランダムシードを指定する
  */
-    setRandomSeed(seed: number): void;
+  setRandomSeed(seed: number): void;
 }
 
 /**
@@ -62,7 +62,7 @@ declare class EffekseerEffect {
  * 
  * @param context EffekseerContext
  */
-    constructor(context);
+  constructor(context);
 }
 
 /**
@@ -74,26 +74,26 @@ declare class EffekseerContext {
  * @param {WebGLRenderingContext} webglContext 
  * @param {object} settings 
  */
-    init(webglContext, settings): void;
+  init(webglContext, settings): void;
 /**
  * フレームを進める
  * @param deltaFrames デフォルトは1
  */
-    update(deltaFrames: number): void;
-    beginUpdate(): void;
-    endUpdate(): void;
-    updateHandle(handle, deltaFrames): void;
+  update(deltaFrames: number): void;
+  beginUpdate(): void;
+  endUpdate(): void;
+  updateHandle(handle, deltaFrames): void;
 /**
  * レンダリングする
  */
-    draw(): void;
-    beginDraw(): void;
-    endDraw(): void;
-    drawHandle(handle): void;
+  draw(): void;
+  beginDraw(): void;
+  endDraw(): void;
+  drawHandle(handle): void;
 
-    loadEffect(data, scale, onload, onerror, redirect);
-    loadEffectPackage(data, Unzip, scale, onload, onerror);
-    releaseEffect(effect);
+  loadEffect(data, scale, onload, onerror, redirect);
+  loadEffectPackage(data, Unzip, scale, onload, onerror);
+  releaseEffect(effect);
 /**
  * エフェクトの再生を開始する
  * @param effect 
@@ -101,9 +101,9 @@ declare class EffekseerContext {
  * @param y 
  * @param z 
  */
-    play(effect: EffekseerEffect, x: number, y: number, z: number): EffekseerHandle;
-    stopAll(): void;
-    resetBackground();
+  play(effect: EffekseerEffect, x: number, y: number, z: number): EffekseerHandle;
+  stopAll(): void;
+  resetBackground();
 }
 
 declare class Effekseer {
@@ -113,20 +113,20 @@ declare class Effekseer {
  * @param onload 
  * @param onerror 
  */
-    initRuntime(path, onload, onerror): void;
+  initRuntime(path, onload, onerror): void;
 /**
  *
  */
-    createContext(): EffekseerContext;
+  createContext(): EffekseerContext;
 
-    setLogEnabled(flag: boolean): void;
+  setLogEnabled(flag: boolean): void;
 
-    setImageCrossOrigin(crossOrigin): void;
+  setImageCrossOrigin(crossOrigin): void;
 
 /**
  * @deprecated
  */
-    init(webglContext, settings);
+  init(webglContext, settings);
 }
 
 declare var effekseer: Effekseer;
