@@ -1,7 +1,7 @@
 /**
  * @file pmx.js
  */
-// 2023-11-12 1
+// 2024-01-14 1
 
 (function(_global) {
 
@@ -145,16 +145,37 @@ class Bone {
  * 操作可
  */
     static BIT_CONTROL = 0x0010;
+/**
+ * IK
+ */
     static BIT_IK = 0x0020;
-    static BIT_LOCALAPPLY = 0x0080;
+
+/**
+ * 回転付与
+ */
     static BIT_ROTAPPLY = 0x0100;
-    static BIT_MOVAPPLY = 0x0200;
+/**
+ * 移動付与
+ */
+    static BIT_MOVEAPPLY = 0x0200;
+
+    static BIT_LOCALAPPLY = Bone.BIT_ROTAPPLY | Bone.BIT_MOVEAPPLY;
+
 /**
  * 軸固定
  */
     static BIT_FIXAXIS = 0x0400;
+/**
+ * ローカル軸
+ */
     static BIT_LOCALAXIS = 0x0800;
+/**
+ * 物理演算の後
+ */
     static BIT_AFTERPHY = 0x1000;
+/**
+ * 外部親
+ */
     static BIT_EXTERNALPARENT = 0x2000;
 
     constructor() {
@@ -180,14 +201,17 @@ class Bone {
  * @default 0
  */
         this.layer = 0;
+
+        this._endBoneName = '';
 /**
  * 座標オフセット(接続先: 0)
  */
         this.endOffset = [0, 0, 1];
 /**
- * 接続先: 1
+ * (接続先: 1) のときのボーンインデックス
  */
-        this.boneConnect = -1;
+        this.endBoneIndex = -1;
+
 /**
  * 付与親ボーン
  */
@@ -198,6 +222,8 @@ class Bone {
         this._applyParentName = '';
 /**
  * 付与率
+ * @type {number}
+ * @default 0
  */
         this.applyRate = 0;
 /**
@@ -248,11 +274,11 @@ class Bone {
             (this.bits & Bone.BIT_VISIBLE) ? 1 : 0,
             (this.bits & Bone.BIT_CONTROL) ? 1 : 0,
             `"${this._parentName}"`, // 親ボーン名
-            this.boneConnect, // 接続先
+            (this.bits & Bone.BIT_BONECONNECT) ? 1 : 0, // 接続先
             `"${this._endBoneName}"`,
             ...this.endOffset,
             (this.bits & Bone.BIT_ROTAPPLY) ? 1 : 0,
-            (this.bits & Bone.BIT_MOVAPPLY) ? 1 : 0,
+            (this.bits & Bone.BIT_MOVEAPPLY) ? 1 : 0,
             this.applyRate,
             `"${this._applyParentName}"`, // 付与親名
             (this.bits & Bone.BIT_FIXAXIS) ? 1 : 0, // 軸制限
@@ -403,12 +429,81 @@ class Material {
  * 材質モーフ1要素分
  */
 class MaterialMorph {
-    constructor() {        
+/**
+ * 積
+ */
+    static CALC_MUL = 0;
+/**
+ * 和
+ */
+    static CALC_ADD = 1;
+    constructor() {
         this._index = 0;
+        this._parentName = 'morph000';
+        this._materialName = 'mtl000';
+/**
+ * -1 だと全材質らしい
+ */
+        this.materialIndex = -1;
+        this.calcType = MaterialMorph.CALC_MUL;
+/**
+ * RGBA
+ */
+        this.diffuse = [0, 0, 0, 0];
+/**
+ * no A
+ */
+        this.specular = [0, 0, 0];
+        this.power = 0;
+/**
+ * no A
+ */
+        this.ambient = [0, 0, 0];
+        this.edgeSize = 0;
+/**
+ * RGBA
+ */
+        this.edge = [0, 0, 0, 0];
+        this.tex = [0, 0, 0, 0];
+        this.sphere = [0, 0, 0, 0];
+        this.toon = [0, 0, 0, 0];
+    }
+
+/**
+ * 
+ * @param {number} val 0(add default) or 1(mul default) 
+ */
+    setValue(val) {
+        this.diffuse = [val, val, val, val];
+        this.specular = [val, val, val];
+        this.power = val;
+        this.ambient = [val, val, val];
+        this.edgeSize = val;
+        this.edge = [val, val, val, val];
+        this.tex = [val, val, val, val];
+        this.sphere = [val, val, val, val];
+        this.toon = [val, val, val, val];
     }
 
     toCSV() {
-        // not implemented
+        const ss = [
+            'PmxMaterialMorph',
+            `${this._parentName}`, // 空??
+            this._index, // 空??
+            `${this._materialName}`,
+            this.calcType,
+
+            ...this.diffuse,
+            ...this.specular,
+            this.power,
+            ...this.ambient,
+            this.edgeSize,
+            ...this.edge,
+            ...this.tex,
+            ...this.sphere,
+            ...this.toon,
+        ];
+        return ss.join(',');
     }
 }
 
@@ -465,6 +560,9 @@ class Morph {
     static TYPE_UV2 = 5;
     static TYPE_UV3 = 6;
     static TYPE_UV4 = 7;
+/**
+ * 材質モーフ
+ */
     static TYPE_MATERIAL = 8;
     constructor() {
         this._index = 0;
@@ -487,7 +585,9 @@ class Morph {
         this.boneMorphs = [];
 
         this.uvMorphs = [];
-
+/**
+ * @type {MaterialMorph[]}
+ */
         this.materialMorphs = [];
     }
 
@@ -552,15 +652,69 @@ class Frame {
  */
         this.specialFlag = 0;
 /**
+ * ボーンのインデックスの配列
  * @type {number[]}
  */
         this.bones = [];
+/**
+ * モーフのインデックスの配列
+ * @type {number[]}
+ */
+        this.morphs = [];
     }
 
     toCSV() {
         console.warn('not implemented');
     }
 }
+
+
+/**
+ * フレームの中のアイテム
+ */
+class NodeItem {
+/**
+ * ボーン
+ */
+    static TYPE_BONE = 0;
+/**
+ * 表情
+ */
+    static TYPE_EXPRESSION = 1;
+    constructor() {
+        this._parentName = 'node000';
+        this.type = NodeItem.TYPE_BONE;
+        this._itemName = 'bone000';
+    }
+    toCSV() {
+        const ss = [
+            'PmxNodeItem',
+            `"${this._parentName}"`,
+            this.type,
+            `"${this._itemName}"`
+        ];
+        return ss.join(',');
+    }
+}
+
+/**
+ * フレーム
+ */
+class PMXNode {
+    constructor() {
+        this.nameJa = 'node000';
+        this.nameEn = 'node000';
+    }
+    toCSV() {
+        const ss = [
+            'PmxNode',
+            `"${this.nameJa}"`,
+            `"${this.nameEn}"`
+        ];
+        return ss.join(',');
+    }
+}
+
 
 /**
  * 物理剛体
@@ -602,6 +756,8 @@ class Rigid {
  * 上のビットが#15で下のビットが#0
  */
         this.groupFlags = 0x7fff;
+
+        this.shape = Rigid.SHAPE_BOX;
 /**
  * サイズ
  * 球の場合、半径
@@ -621,6 +777,9 @@ class Rigid {
  * 質量
  */
         this.mass = 2;
+/**
+ * 移動減衰。0だと減衰しない。
+ */
         this.moveDamping = 0;
 /**
  * 回転減衰。0だと減衰しない。
@@ -632,6 +791,10 @@ class Rigid {
         this.type = Rigid.TYPE_STATIC;
     }
 
+/**
+ * GUI 数字で文字列を作成する
+ * @returns {string}
+ */
     not() {
         let s = '';
         for (let i = 0; i < 16; ++i) {
@@ -646,7 +809,32 @@ class Rigid {
     }
 
 /**
- * 22
+ * UI番号で指定する
+ * @param {number} ui 1～16
+ */
+    setUIGroup(ui) {
+        this.group = ui - 1;
+    }
+
+    getUIGroup() {
+        return this.group + 1;
+    }
+
+/**
+ * 非接触ビットを非接触UI番号列挙で上書きする
+ * @param  {...number} uis 1～16
+ */
+    setUINots(...uis) {
+        let bits = 0xffff;
+        for (const ui of uis) {
+            const bit = 1 << (ui - 1);
+            bits &= (0xffff ^ bit);
+        }
+        this.groupFlags = bits;
+    }
+
+/**
+ * 8 + 14
  */
     toCSV() {
         const ss = [
@@ -660,7 +848,7 @@ class Rigid {
             this.shape,
             ...this.size,
             ...this.p,
-            ...this.rot.map(v => v * 180 / Math.PI),
+            ...this.rot.map(v => v * 180 / Math.PI), // deg
             this.mass,
             this.moveDamping,
             this.rotDamping,
@@ -675,7 +863,9 @@ class Joint {
     constructor() {
         this.nameJa = 'ジョイント000';
         this.nameEn = 'joint000';
-
+/**
+ * 常に6DOVの0
+ */
         this.type = 0;
 
 /**
@@ -692,8 +882,8 @@ class Joint {
 * ラジアン角
 */
         this.rot = [0, 0, 0];
-        this.moveLower = [-999, -999, -999];
-        this.moveUpper = [ 999,  999,  999];
+        this.moveLower = [-9999, -9999, -9999];
+        this.moveUpper = [ 9999,  9999,  9999];
 /**
  * 上限。ラジアンで指定する。
  * "-360度"～"+360度"を指定すると回転しなくなるので注意。
@@ -708,6 +898,19 @@ class Joint {
  * 回転のバネ
  */
         this.springRot  = [0, 0, 0];
+    }
+
+    lockMove() {
+        this.moveUpper = [0, 0, 0];
+        this.moveLower = [0, 0, 0];
+    }
+
+/**
+ * 本当? 回転考慮しなくていいのだろうか?
+ */
+    lockRot() {
+        this.rotUpper = [0, 0, 0];
+        this.rotLower = [0, 0, 0];
     }
 
     toCSV() {
@@ -740,6 +943,46 @@ class SoftBody {
     }
 }
 
+class ModelInfo {
+    constructor() {
+        this.modelJa = '';
+        this.modelEn = '';
+/**
+ * 改行は \r\n
+ */
+        this.commentJa = '';
+        this.commentEn = '';
+    }
+    toCSV() {
+        const ss = [
+            'PmxModelInfo',
+            this.modelJa,
+            this.modelEn,
+            this.commentJa,
+            this.commentEn,
+        ];
+        return ss.join(',');
+    }
+}
+
+class Header {
+    static UTF16 = 0;
+    static UTF8 = 1;
+    constructor() {
+        this.ver = 2;
+        this.encoding = Header.UTF16;
+        this.adduvnum = 0;
+    }
+    toCSV() {
+        const ss = [
+            'PmxHeader',
+            this.ver,
+            this.encoding,
+            this.adduvnum,
+        ];
+        return ss.join(',');
+    }
+}
 
 
 /**
@@ -815,6 +1058,9 @@ class PMXObject {
  */
         this.vtxbnum = 4;
         this.texbnum = 4;
+/**
+ * 材質インデックスバイト数
+ */
         this.mtlbnum = 4;
 /**
  * ボーンインデックスバイト数
@@ -1115,7 +1361,7 @@ class Parser extends PMXObject {
                     b.endOffset = this.readf32s(p, 3);
                 }
                 if ((b.bits & Bone.BIT_ROTAPPLY)
-                    || (b.bits & Bone.BIT_MOVAPPLY)) {
+                    || (b.bits & Bone.BIT_MOVEAPPLY)) {
                     b.applyParent = this.readints(p, 1, this.bonbnum)[0];
                     b.applyRate = this.readf32s(p, 1)[0];
                 }
@@ -1165,31 +1411,43 @@ class Parser extends PMXObject {
                     let one = null;
                     switch(m.type) {
                     case Morph.TYPE_GROUP: // グループ
-                        console.warn('skip only group');
-                        this.readints(p, 1, this.mrpbnum)[0];
-                        this.readf32s(p, 1)[0];
+                        {
+                            console.warn('skip only group');
+                            this.readints(p, 1, this.mrpbnum)[0];
+                            this.readf32s(p, 1)[0];
+                        }
                         break;
                     case Morph.TYPE_VERTEX: // 頂点
+                        {
                         //console.warn('skip only vertex', m.nameJa, `${i}/${num}`, `${j}/${morphnum}`);
-                        this.readints(p, 1, this.vtxbnum)[0];
-                        this.readf32s(p, 3);
+                            this.readints(p, 1, this.vtxbnum)[0];
+                            this.readf32s(p, 3);
+                        }
                         break;
                     case Morph.TYPE_BONE: // ボーン
-                        console.warn('skip only bone', m.nameJa);
-                        this.readints(p, 1, this.bonbnum)[0];
-                        this.readf32s(p, 3);
-                        this.readf32s(p, 4);
+                        {
+                            console.warn('skip only bone', m.nameJa);
+                            this.readints(p, 1, this.bonbnum)[0];
+                            this.readf32s(p, 3);
+                            this.readf32s(p, 4);
+                        }
                         break;
                     case Morph.TYPE_UV: // UV
-                        console.warn('skip only uv', m.nameJa);
-                        this.readints(p, 1, this.vtxbnum)[0];
-                        this.readf32s(p, 4);
+                        {
+                            console.warn('skip only uv', m.nameJa);
+                            this.readints(p, 1, this.vtxbnum)[0];
+                            this.readf32s(p, 4);
+                        }
                         break;
-                    case 8:
-                        console.warn('skip only material morph', m.nameJa);
-                        this.readints(p, 1, this.mtlbnum)[0];
-                        this.readu8s(p, 1)[0];
-                        this.readf32s(p, 28);
+                    case Morph.TYPE_MATERIAL:
+                        {
+                            one = new PMX.MaterialMorph();
+                            console.warn('skip only material morph', m.nameJa);
+                            this.readints(p, 1, this.mtlbnum)[0];
+                            this.readu8s(p, 1)[0];
+                            this.readf32s(p, 28);
+                            m.materialMorphs.push(one);
+                        }
                         break;
                     default:
                         console.warn('not implemented', m.type, m.nameJa);
@@ -1378,8 +1636,8 @@ class Maker extends Parser {
 /**
 * 
 * @param {DataView} p 
-* @param {*} inoffset 
-* @param {*} vs 
+* @param {number} inoffset 
+* @param {number[]} vs 
 * @returns 
 */
     write8s(p, inoffset, vs) {
@@ -1579,9 +1837,40 @@ class Maker extends Parser {
                 c += this.write16s(p, c, [b.bits]);
 
                 if (b.bits & PMX.Bone.BIT_BONECONNECT) {
-                    c += this.write32s(p, c, [1]);
+                    c += this.write32s(p, c, [b.endBoneIndex]);
                 } else {
-                    c += this.writefs(p, c, [0, -1, 0]);
+                    c += this.writefs(p, c, b.endOffset);
+                }
+
+                if (b.bits & PMX.Bone.BIT_LOCALAPPLY) { // 回転付与移動付与
+                    c += this.write32s(p, c, b.applyParent);
+                    c += this.writefs(p, c, [b.applyRate]);
+                }
+                if (b.bits & PMX.Bone.BIT_FIXAXIS) { // 軸固定
+                    c += this.writefs(p, c, b.axisVector);
+                }
+                if (b.bits & PMX.Bone.BIT_LOCALAXIS) { // ローカル軸
+                    c += this.writefs(p, c, b.xLocalVector);
+                    c += this.writefs(p, c, b.zLocalVector);
+                }
+
+                if (b.bits & PMX.Bone.BIT_EXTERNALPARENT) {
+                    c += this.write32s(p, c, [b.externalParentKey]);
+                }
+
+                if (b.bits & PMX.Bone.BIT_IK) {
+                    c += this.write32s(p, c, [b.ikTargetBone]);
+                    c += this.write32s(p, c, [b.ikLoopCount]);
+                    c += this.writefs(p, c, [b.ikLimitation]);
+                    c += this.write32s(p, c, [b.ikLinks.length]);
+                    for (const ik of b.ikLinks) {
+                        c += this.write32s(p, c, [ik.linkBone]);
+                        c += this.write8s(p, c, [ik.isLimitation]);
+                        if (ik.isLimitation) {
+                            c += this.writefs(p, c, ik.lower);
+                            c += this.writefs(p, c, ik.upper);
+                        }
+                    }
                 }
 
             }
@@ -1589,12 +1878,50 @@ class Maker extends Parser {
         }
 
         { // モーフ
-    //            const num = this.morphs.length;
-            const num = 0;
-            const buf = new ArrayBuffer(65536);
+            const num = this.morphs.length;
+            const buf = new ArrayBuffer(65536 * 4);
             const p = new DataView(buf);
             let c = 0;
             c += this.write32s(p, c, [num]);
+            for (const m of this.morphs) {
+                c += this.writestr(p, c, m.nameJa);
+                c += this.writestr(p, c, m.nameEn);
+                c += this.write8s(p, c, [m.panel]);
+                c += this.write8s(p, c, [m.type]);
+                switch(m.type) {
+                case Morph.TYPE_GROUP:
+                    break;
+                case Morph.TYPE_VERTEX:
+                    break;
+                case Morph.TYPE_BONE:
+                    break;
+                case Morph.TYPE_UV:
+                case Morph.TYPE_UV1:
+                case Morph.TYPE_UV2:
+                case Morph.TYPE_UV3:
+                case Morph.TYPE_UV4:
+                    break;
+                case Morph.TYPE_MATERIAL:
+                    c += this.write32s(p, c, [m.materialMorphs.length]);
+                    for (const one of m.materialMorphs) {
+                        c += this.writeints(p, c, [one.materialIndex], this.mtlbnum);
+                        c += this.write8s(p, c, [one.calcType]);
+                        c += this.writefs(p, c,
+                            [ // 28個
+                                ...one.diffuse,
+                                ...one.specular, // no A
+                                one.power,
+                                ...one.ambient, // no A
+                                ...one.edge,
+                                one.edgeSize,
+                                ...one.tex,
+                                ...one.sphere,
+                                ...one.toon,
+                            ]);
+                    }
+                    break;
+                }
+            }
             bufs.push(buf.slice(0, c));
         }
 
@@ -1608,10 +1935,15 @@ class Maker extends Parser {
                 c += this.writestr(p, c, f.nameJa);
                 c += this.writestr(p, c, f.nameEn);
                 c += this.write8s(p, c, [f.specialFlag]); // 0: 通常、1: 特殊(rootとPMD互換)
-                c += this.write32s(p, c, [f.bones.length]);
+                const num = f.bones.length + f.morphs.length;
+                c += this.write32s(p, c, [num]);
                 for (const v of f.bones) {
                     c += this.write8s(p, c, [0]); // 0: ボーン、1: モーフ
-                    c += this.write32s(p, c, [v]);
+                    c += this.writeints(p, c, [v], this.bonbnum);
+                }
+                for (const v of f.morphs) {
+                    c += this.write8s(p, c, [1]); // 0: ボーン、1: モーフ
+                    c += this.writeints(p, c, [v], this.mrpbnum);
                 }
             }
             bufs.push(buf.slice(0, c));
@@ -1619,7 +1951,6 @@ class Maker extends Parser {
 
         { // 物理
             const num = this.rigids.length;
-    //            const num = 0;
             const buf = new ArrayBuffer(65536 * 16);
             const p = new DataView(buf);
             let c = 0;
@@ -1710,6 +2041,7 @@ class Maker extends Parser {
 
 _global.PMX = {};
 Object.assign(_global.PMX, {
+    IKLink,
     Vertex,
     Face,
     Bone,
@@ -1718,6 +2050,8 @@ Object.assign(_global.PMX, {
     VertexMorph,
     Morph,
     Frame,
+    NodeItem,
+    PMXNode,
     Rigid,
     Joint,
     SoftBody,
