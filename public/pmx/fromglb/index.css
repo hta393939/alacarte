@@ -1,27 +1,27 @@
 @charset "UTF-8";
 
 canvas {
-    width: 128px;
-    height: 128px;
+  width: 128px;
+  height: 128px;
 }
 
 summary, button, .pt {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .toright {
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  flex-direction: row;
 }
 
 .drop {
-    margin: 1em;
-    user-select: none;
-    border: dashed 4px black;
-    text-align: center;
-    font-weight: bold;
-    padding: 2em;
-    border-radius: 2em;
+  margin: 1em;
+  user-select: none;
+  border: dashed 4px black;
+  text-align: center;
+  font-weight: bold;
+  padding: 2em;
+  border-radius: 2em;
 }
 
 

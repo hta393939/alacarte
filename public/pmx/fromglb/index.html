@@ -1,51 +1,51 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8" />
-        <title>glb2pmx</title>
-        <link rel="stylesheet" href="./index.css" />
-    </head>
-    <body>
-        <div id="view"></div>
-        <div>
-            <button id="idtoclip1">クリップボード1 transobject</button>
-        </div>
-        <div>
-            <label class="pt">
-                <input class="pt" type="checkbox" id="usephy" checked />物理変形
-            </label>
-        </div>
-        <div>
-            <div id="drop" class="drop">ここに .glb をドロップ</div>
-        </div>
-        <div class="toright">
-            <details open>
-                <summary>maincanvas</summary>
-                <canvas id="maincanvas"></canvas>
-            </details>
-            <details open>
-                <summary>canvast3</summary>
-                <canvas id="canvast3"></canvas>
-            </details>
-        </div>
+  <head>
+    <meta charset="UTF-8" />
+    <title>glb2pmx</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div id="view"></div>
+    <div>
+      <button id="idtoclip1">クリップボード1 transobject</button>
+    </div>
+    <div>
+      <label class="pt">
+        <input class="pt" type="checkbox" id="usephy" checked />物理変形
+      </label>
+    </div>
+    <div>
+      <div id="drop" class="drop">ここに .glb をドロップ</div>
+    </div>
+    <div class="toright">
+      <details open>
+        <summary>maincanvas</summary>
+        <canvas id="maincanvas"></canvas>
+      </details>
+      <details open>
+        <summary>canvast3</summary>
+        <canvas id="canvast3"></canvas>
+      </details>
+    </div>
 
-        <script type="importmap">
+    <script type="importmap">
 {
-    "imports": {
-        "three": "../../third_party/three/three.module.min.js",
-        "three/jsm/": "../../third_party/three/jsm/"
-    }
+  "imports": {
+    "three": "../../third_party/three/three.module.min.js",
+    "three/jsm/": "../../third_party/three/jsm/"
+  }
 }
-        </script>
+    </script>
 
-        <script src="../../backup/miku34/matl.js"></script>
-        <script src="../../backup/miku34/pmx.js"></script>
-        <script src="../../backup/miku34/pmdwriter.js"></script>
-        <script src="../../backup/miku34/halfcapsule.js"></script>
-        <script src="../../backup/miku34/transobject.js"></script>
-        <script src="../../backup/miku34/applymaker.js"></script>
-        <script type="module" src="./index.js"></script>
+    <script src="../../backup/miku34/matl.js"></script>
+    <script src="../../backup/miku34/pmx.js"></script>
+    <script src="../../backup/miku34/pmdwriter.js"></script>
+    <script src="../../backup/miku34/halfcapsule.js"></script>
+    <script src="../../backup/miku34/transobject.js"></script>
+    <script src="../../backup/miku34/applymaker.js"></script>
+    <script type="module" src="./index.js"></script>
 
-    </body>
+  </body>
 </html>
 
