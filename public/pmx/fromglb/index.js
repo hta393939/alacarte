@@ -2,6 +2,10 @@
  * @file index.js
  */
 
+import * as THREE from 'three';
+import { OrbitControls } from 'three/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/jsm/loaders/GLTFLoader.js';
+
 /**
  * n次元線形補完
  * @param {number[]} a 
@@ -592,11 +596,74 @@ class Misc {
             el?.addEventListener('drop', ev => {
                 ev.stopPropagation();
                 ev.preventDefault();
-                this.makeApplyClip(ev.dataTransfer.files[0]);
-//                this.parseFile(ev.dataTransfer.files[0]);
+                this.loadFile(ev.dataTransfer.files[0]);
             });
         }
 
+        this.initGL(window.maincanvas);
+    }
+
+/**
+ * 
+ * @param {HTMLCanvasElement} canvas 
+ */
+    initGL(canvas) {
+        const renderer = new THREE.WebGLRenderer({
+            canvas,
+            preserveDrawingBuffer: true,
+        });
+        this.renderer = renderer;
+        const scene = new THREE.Scene();
+        this.scene = scene;
+
+        const camera = new THREE.PerspectiveCamera(45,
+            4 / 3,
+            0.02, 1000);
+        this.camera = camera;
+        {
+            camera.position.set(1, 1, 10);
+        }
+
+        const control = new OrbitControls(camera, canvas);
+        this.control = control;
+
+        {
+            const axes = new THREE.AxesHelper(10);
+            scene.add(axes);
+        }
+
+        this.update();
+    }
+
+    update() {
+        requestAnimationFrame(() => {
+            this.update();
+        });
+
+        this.control?.update();
+
+        this.renderer?.render(this.scene, this.camera);
+    }
+
+/**
+ * 
+ * @param {File} file 
+ */
+    loadFile(file) {
+        const loader = new GLTFLoader();
+        const url = URL.createObjectURL(file);
+        loader.load(url,
+            (gltf) => {
+                console.log('gltf', gltf);
+
+                this.scene.add(gltf.scene);
+            },
+            (progress) => {
+                console.log('progress', progress);
+            },
+            (err) => {
+                console.warn('err', err);
+            });
     }
 
 /**
