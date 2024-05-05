@@ -551,15 +551,6 @@ class Misc {
         window.idmake3?.addEventListener('click', () => {
             this.make3();
         });
-        window.idmake4?.addEventListener('click', () => {
-            this.make4();
-        });
-        window.idmake5?.addEventListener('click', () => {
-            this.make5();
-        });
-        window.idmake6?.addEventListener('click', () => {
-            this.make6();
-        });
 
         window.idmakeik?.addEventListener('click', () => {
             const param = {
@@ -577,40 +568,6 @@ class Misc {
             console.log('make ikcapsule offsets', offsets);            
         });
 
-        window.idmake8?.addEventListener('click', () => {
-            const param = {
-                nameEn: `a008_capsulesdef`,
-            };
-            const writer = new CapsuleBuilder8();
-            writer.make(param);
-            const bufs = writer.makeBuffer();
-            this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
-    
-            const offsets = writer.toOffsets(bufs);
-            for (const chunk of offsets.chunks) {
-                chunk.hex = `0x${chunk.offset.toString(16)}`;
-            }
-            console.log('make8 offsets', offsets);            
-        });
-
-        window.idmake11?.addEventListener('click', () => {
-            const param = {
-                nameEn: `a011_capsulesdef`,
-                scale: 0.25,
-                div: 16,
-            };
-            const writer = new CapsuleBuilder11();
-            writer.make(param);
-            const bufs = writer.makeBuffer();
-            this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
-    
-            const offsets = writer.toOffsets(bufs);
-            for (const chunk of offsets.chunks) {
-                chunk.hex = `0x${chunk.offset.toString(16)}`;
-            }
-            console.log('make11 offsets', offsets);            
-        });
-
         {
             const el = window.idtoclip1;
             el?.addEventListener('click', async () => {
@@ -621,11 +578,6 @@ class Misc {
                 await navigator.clipboard.writeText(s);
             });
         }
-
-        this.draw(window.canvast);
-        this.draw1(window.canvast1);
-        this.draw2(window.canvast2);
-        this.draw3(window.canvast3);
 
         {
 /**
