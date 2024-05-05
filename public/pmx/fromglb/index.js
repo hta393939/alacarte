@@ -667,9 +667,130 @@ class Misc {
       });
   }
 
-  geometryToPmx(geo) {
+  async geometryToPmx(geo, inmtl) {
     const maker = new PMX.Maker();
-    //
+    { /*
+      maker.vts = [];
+      maker.faceIndices = [];
+      maker.bones = [];
+      maker.textures = [];
+      maker.materials = [];
+      maker.morphs = [];
+      maker.frames = []; */
+    }
+    {
+      const fip = geo.index.array;
+      const fnum = fip.length / 3;
+      maker.faceIndices = new Array(fnum * 3);
+      for (let i = 0; i < fnum; ++i) {
+        const offset = i * 3;
+        maker.faceIndices[offset] = fip[offset];
+        // 逆回し?
+        maker.faceIndices[offset+1] = fip[offset+2];
+        maker.faceIndices[offset+2] = fip[offset+1];
+      }
+    }
+    {
+      const boneIndex = 1;
+      const pa = geo.attributes.position;
+      const na = geo.attributes.normal;
+      const vnum = pa.array.length / 3;
+      for (let i = 0; i < vnum; ++i) {
+        const vt = new PMX.Vertex();
+        maker.vts.push(vt);
+
+        vt.deform = PMX.Vertex.BDEF1;
+        vt.weights = [1, 0, 0, 0];
+        vt.joints = [boneIndex, 0, 0, 0];
+        vt.p = [pa.getX(i), pa.getY(i), - pa.getZ(i)];
+        vt.n = [na.getX(i), na.getY(i), - na.getZ(i)];
+      }
+    }
+    {
+      {
+        const b = new PMX.Bone();
+        b.nameJa = '全ての親';
+        b.nameEn = 'root';
+        b.bits = PMX.Bone.BIT_MOVE
+          | PMX.Bone.BIT_ROT
+          | PMX.Bone.BIT_CONTROL;
+        maker.bones.push(b);
+      }
+      {
+        const b = new PMX.Bone();
+        b.nameJa = 'センター';
+        b.nameEn = 'center';
+        b.parent = 0;
+        b.bits = PMX.Bone.BIT_MOVE
+          | PMX.Bone.BIT_ROT
+          | PMX.Bone.BIT_CONTROL;
+        maker.bones.push(b);
+      }
+    }
+    {
+      maker.textures.push('t000.png');
+    }
+    {
+      const m = new PMX.Material();
+      m.nameEn = 'm000';
+      m.nameJa = m.nameEn;
+// バグ!!! edgeColor が正しいが書き出しは edgeColor
+      m.edgecolor = [0, 0, 0, 1];
+      
+
+      maker.materials.push(m);
+    }
+    if (true) {
+      {
+        const f = new PMX.Frame();
+        f.nameEn = 'Root';
+        f.nameJa = f.nameEn;
+        f.specialFlag = true;
+        f.bones.push(0, 1);
+        maker.frames.push(f);
+      }
+      {
+        const f = new PMX.Frame();
+        f.nameEn = 'Exp';
+        f.nameJa = '表情';
+        f.specialFlag = true;
+        maker.frames.push(f);
+      }
+    }
+    {
+      maker.head.nameEn = 'corge';
+      maker.head.commentEn = 'grault';
+      maker.head.nameJa = maker.head.nameEn;
+      maker.head.commentJa = maker.head.commentEn;
+    }
+
+    const ret = {
+      textures: [],
+    };
+    {
+/**
+ * @type {ImageBitmap}
+ */
+      const bitmap = inmtl.map?.source?.data;
+      const blob = await new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const c = canvas.getContext('2d');
+        c.drawImage(bitmap, 0, 0);
+        canvas.toBlob(blob => {
+          resolve(blob);
+        }, 'image/png');
+      });
+      ret.textures.push(blob);
+    }
+    console.log('ret', ret);
+    {
+      const abs = maker.makeBuffer();
+      ret.pmx = new Blob(abs);
+    }
+
+    return ret;
   }
 
   analyzeGLB(gltf) {
@@ -679,6 +800,9 @@ class Misc {
       }
       console.log('obj', obj.type, obj.name, 'traverse');
       console.log('geometry', obj.geometry);
+
+      this.geometryToPmx(obj.geometry, obj.material);
+      return true;
     });
   }
 
