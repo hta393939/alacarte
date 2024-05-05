@@ -713,6 +713,7 @@ class Misc {
         b.nameEn = 'root';
         b.bits = PMX.Bone.BIT_MOVE
           | PMX.Bone.BIT_ROT
+          | PMX.Bone.BIT_VISIBLE
           | PMX.Bone.BIT_CONTROL;
         maker.bones.push(b);
       }
@@ -723,6 +724,7 @@ class Misc {
         b.parent = 0;
         b.bits = PMX.Bone.BIT_MOVE
           | PMX.Bone.BIT_ROT
+          | PMX.Bone.BIT_VISIBLE
           | PMX.Bone.BIT_CONTROL;
         maker.bones.push(b);
       }

@@ -426,7 +426,7 @@ class CenterCapsule extends PMX.Maker {
           r.friction = 1000;
           r.mass = 0.002; // 重量
           r.setUIGroup(RIGID_DEFAULT_GROUP);
-          r.setUINots(1, 2,
+          r.setUINots(1, 2, 4, // UI3 とは当たる
             5, 6, 7, 8,
             13, 14, 15, 16);
           if ((i & 1) === 0) { // even がエフェクト
