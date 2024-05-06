@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>image tool</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div class="drop">Drop file</div>
+
+    <div>
+      <div>色変換</div>
+
+      <div class="toright">
+        <div>スケール</div>
+        <input class="pointer" type="range" id="scale" value="4" min="1" max="16" />
+        <div id="scaleview"></div>
+      </div>
+      <div class="toright">
+        <div>セル横</div>
+        <input class="pointer" type="range" id="cellx" value="0" min="0" max="8" />
+        <div id="cellxview"></div>
+      </div>
+      <div class="toright">
+        <div>セル縦</div>
+        <input class="pointer" type="range" id="celly" value="0" min="0" max="8" />
+        <div id="cellyview"></div>
+      </div>
+      <div class="toright">
+        <div>pxサイズ</div>
+        <input class="pointer" type="range" id="fontpx" value="200" min="8" max="256" />
+        <div id="fontpxview"></div>
+      </div>
+    </div>
+
+    <canvas id="maincanvas"></canvas>
+    <canvas id="subcanvas"></canvas>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
+
