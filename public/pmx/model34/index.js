@@ -689,15 +689,15 @@ class Misc {
         const maker = new TransObjectBuilder();
         maker.make1();
         const s = maker.toString();
-        console.log('s', s);
+        console.log('transobjectbuilder idtoclip1 s', s);
         await navigator.clipboard.writeText(s);
       });
     }
 
-    this.draw(window.canvast);
-    this.draw1(window.canvast1);
-    this.draw2(window.canvast2);
-    this.draw3(window.canvast3);
+    //this.draw(window.canvast);
+    //this.draw1(window.canvast1);
+    //this.draw2(window.canvast2);
+    //this.draw3(window.canvast3);
 
     {
 /**
@@ -762,14 +762,6 @@ class Misc {
       chunk.hex = `0x${chunk.offset.toString(16)}`;
     }
     console.log('makePhyCapsule offsets', offsets);
-  }
-
-/**
- * その3の生成
- * capsule.js
- */
-  make3() {
-
   }
 
 /**

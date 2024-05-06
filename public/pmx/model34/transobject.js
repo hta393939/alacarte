@@ -1,8 +1,9 @@
 /**
  * @file transobject.js
  */
-// 変形を生成する
+// 変形文字列を生成する
 // make1() しかない
+// 単独?? 今使ってない?? idtoclip1 から使う
 
 (function(_global) {
 
@@ -203,8 +204,8 @@ class TransObjectBuilder extends PMX.Maker {
 
     for (let i = 0; i < 2; ++i) { // 材質
       const m = new PMX.Material();
-      m.nameJa = `材質00${i}`;
-      m.nameEn = `mtl00${i}`;
+      m.nameJa = `材質${_pad(i, 3)}`;
+      m.nameEn = `mtl${_pad(i, 3)}`;
       m.texIndex = 0;
       m.diffuse = [1, 1, 1, 1];
       m.specular = [0.2, 0.2, 0.2];
@@ -285,7 +286,7 @@ class TransObjectBuilder extends PMX.Maker {
       bits |= PMX.Bone.BIT_CONTROL;
       b.bits = bits;
 
-      b.nameJa = `bone${_pad(i, 3)}`;
+      b.nameJa = `b${_pad(i, 3)}`;
       b.nameEn = b.nameJa;
 
       b.parent = i - 1;
@@ -458,8 +459,8 @@ class TransObjectBuilder extends PMX.Maker {
     { // モーフ
       for (let i = 0; i < 0; ++i) {
         const m = new PMX.Morph();
-        m.nameJa = 'morph000';
-        m.nameEn = 'morph000';
+        m.nameJa = 'mr000';
+        m.nameEn = 'mr000';
         m.type = 1;
         this.morphs.push(m);
       }
