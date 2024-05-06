@@ -1,7 +1,7 @@
 /**
  * @file pmx.js
  */
-// 2024-01-14 1
+// 2024-05-06
 
 (function(_global) {
 
@@ -1798,7 +1798,7 @@ class Maker extends Parser {
                 ]);
                 c += this.write8s(p, c, [m.bitFlag]);
 
-                c += this.writefs(p, c, m.edgecolor);
+                c += this.writefs(p, c, m.edgeColor);
                 c += this.writefs(p, c, [m.edgeSize]);
 
                 c += this.writeints(p, c, [m.texIndex, m.sphereIndex],

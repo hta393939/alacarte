@@ -730,14 +730,13 @@ class Misc {
       }
     }
     {
-      maker.textures.push('t000.png');
+      maker.textures.push('tex/t000.png');
     }
     {
       const m = new PMX.Material();
       m.nameEn = 'm000';
       m.nameJa = m.nameEn;
-// バグ!!! edgeColor が正しいが書き出しは edgeColor
-      m.edgecolor = [0, 0, 0, 1];
+      m.edgeColor = [0, 0, 0, 1];
       
 
       maker.materials.push(m);

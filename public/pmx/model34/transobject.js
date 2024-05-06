@@ -210,7 +210,7 @@ class TransObjectBuilder extends PMX.Maker {
       m.specular = [0.2, 0.2, 0.2];
       m.specPower = 0.5;
       m.ambient = [0.7, 0.7, 0.7];
-      m.edgecolor = [156/255, 130/255, 48/255, 1];
+      m.edgeColor = [156/255, 130/255, 48/255, 1];
       let bits = PMX.Material.BIT_GROUND
         | PMX.Material.BIT_TOMAP
         | PMX.Material.BIT_SELFSHADOW

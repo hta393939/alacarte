@@ -179,7 +179,7 @@ class CapsuleBuilder extends PMX.Maker {
       m.specular = [0.2, 0.2, 0.2];
       m.specPower = 0.5;
       m.ambient = [0.7, 0.7, 0.7];
-      m.edgecolor = [156/255, 130/255, 48/255, 1];
+      m.edgeColor = [156/255, 130/255, 48/255, 1];
       let bits = PMX.Material.BIT_GROUND
         | PMX.Material.BIT_TOMAP
         | PMX.Material.BIT_SELFSHADOW
@@ -451,7 +451,7 @@ class CapsuleBuilder extends PMX.Maker {
     }
 
     for (let i = 0; i < 1; ++i) { // 材質 make5()
-      const m = new PMXMaterial();
+      const m = new PMX.Material();
       m.nameJa = `材質00${i}`;
       m.nameEn = `mtl00${i}`;
       m.texIndex = 0;
@@ -459,10 +459,10 @@ class CapsuleBuilder extends PMX.Maker {
       m.specular = [0.2, 0.2, 0.2];
       m.specPower = 0.5;
       m.ambient = [0.7, 0.7, 0.7];
-      m.edgecolor = [156/255, 130/255, 48/255, 1];
-      let bits = PMXMaterial.BIT_GROUND
-        | PMXMaterial.BIT_TOMAP
-        | PMXMaterial.BIT_SELFSHADOW
+      m.edgeColor = [156/255, 130/255, 48/255, 1];
+      let bits = PMX.Material.BIT_GROUND
+        | PMX.Material.BIT_TOMAP
+        | PMX.Material.BIT_SELFSHADOW
       m.bitFlag = bits;
       m.sharetoonflag = 0;
       m.sharetoonindex = -1;
@@ -824,7 +824,7 @@ class CapsuleBuilder extends PMX.Maker {
     }
 
     for (let i = 0; i < 1; ++i) { // 材質 make6()
-      const m = new PMXMaterial();
+      const m = new PMX.Material();
       m.nameJa = `材質00${i}`;
       m.nameEn = `mtl00${i}`;
       m.texIndex = 0;
@@ -832,10 +832,10 @@ class CapsuleBuilder extends PMX.Maker {
       m.specular = [0.2, 0.2, 0.2];
       m.specPower = 0.5;
       m.ambient = [0.7, 0.7, 0.7];
-      m.edgecolor = [156/255, 130/255, 48/255, 1];
-      let bits = PMXMaterial.BIT_GROUND
-        | PMXMaterial.BIT_TOMAP
-        | PMXMaterial.BIT_SELFSHADOW
+      m.edgeColor = [156/255, 130/255, 48/255, 1];
+      let bits = PMX.Material.BIT_GROUND
+        | PMX.Material.BIT_TOMAP
+        | PMX.Material.BIT_SELFSHADOW
       m.bitFlag = bits;
       m.sharetoonflag = 0;
       m.sharetoonindex = -1;
