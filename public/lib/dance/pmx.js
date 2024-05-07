@@ -345,7 +345,7 @@ class Material {
   static BIT_EDGE = 0x10;
 
   constructor() {
-    this.nameJa = 'mate000';
+    this.nameJa = 'm000';
     this.nameEn = 'mtl000';
 /**
  * rgba

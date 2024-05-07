@@ -529,31 +529,14 @@ class Misc {
   }
 
 
-
+/**
+ * 初期化
+ */
   init() {
     window.view.textContent = new Date().toLocaleTimeString();
 
-    window.idmakehalf?.addEventListener('click', () => {
-      const param = {
-        nameEn: `a001_halfcapsule`,
-      };
-      const writer = new HalfCapsule();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
-  
-      const offsets = writer.toOffsets(bufs);
-      for (const chunk of offsets.chunks) {
-        chunk.hex = `0x${chunk.offset.toString(16)}`;
-      }
-      console.log('makehalf offsets', offsets);
-    });
-
     window.idmakephycapsule?.addEventListener('click', () => {
       this.makePhyCapsule();
-    });
-    window.idmake3?.addEventListener('click', () => {
-      this.make3();
     });
 
     window.idmakeik?.addEventListener('click', () => {
@@ -667,7 +650,13 @@ class Misc {
       });
   }
 
-  async geometryToPmx(geo, inmtl) {
+/**
+ * 
+ * @param {THREE.BufferGeometry} geo 
+ * @param {THREE.Material} inmtl 
+ * @returns 
+ */
+  async geometryToPmx(geo, inmtl, param) {
     const maker = new PMX.Maker();
     { /*
       maker.vts = [];
@@ -730,18 +719,31 @@ class Misc {
       }
     }
     {
-      maker.textures.push('tex/t000.png');
+      maker.textures.push(param.texpath || 'tex/t000.png');
     }
     {
       const m = new PMX.Material();
       m.nameEn = 'm000';
       m.nameJa = m.nameEn;
       m.edgeColor = [0, 0, 0, 1];
-      
+      m.texIndex = 0;
 
       maker.materials.push(m);
+
+      const fip = geo.index.array;
+      const fnum = fip.length / 3;
+      for (let i = 0; i < fnum; ++i) {
+        const offset = i * 3;
+        m.faces.push([
+          fip[offset],
+        // 逆回し?
+          fip[offset+2],
+          fip[offset+1],
+        ]);
+      }
+
     }
-    if (true) {
+    {
       {
         const f = new PMX.Frame();
         f.nameEn = 'Root';
@@ -761,7 +763,7 @@ class Misc {
     {
       maker.head.nameEn = 'corge';
       maker.head.commentEn = 'grault';
-      maker.head.nameJa = maker.head.nameEn;
+      maker.head.nameJa = param.nameJa ?? maker.head.nameEn;
       maker.head.commentJa = maker.head.commentEn;
     }
 
@@ -795,14 +797,33 @@ class Misc {
   }
 
   analyzeGLB(gltf) {
-    gltf.scene.traverse((obj) => {
+    let _count = 0;
+    gltf.scene.traverse(async (obj) => {
       if (!obj.type.toLowerCase().includes('mesh')) {
         return;
       }
       console.log('obj', obj.type, obj.name, 'traverse');
       console.log('geometry', obj.geometry);
 
-      this.geometryToPmx(obj.geometry, obj.material);
+      const name = `t${_pad(_count, 3)}.png`;
+      const param = { texpath: `${name}`,
+        nameJa: `a${_pad(_count, 3)}`,
+      };
+      _count += 1;
+
+      const result = await this.geometryToPmx(
+        obj.geometry,
+        obj.material,
+        param);
+      {
+        if (result.pmx) {
+          console.log('download', result.pmx.size);
+          this.download(result.pmx, `${param.nameJa}.pmx`);
+          for (const t of result.textures) {
+            this.download(t, name);
+          }
+        }
+      }
       return true;
     });
   }
@@ -825,23 +846,6 @@ class Misc {
       chunk.hex = `0x${chunk.offset.toString(16)}`;
     }
     console.log('makePhyCapsule offsets', offsets);
-  }
-
-/**
- * その3の生成
- * capsule.js
- */
-  make3() {
-    const writer = new CapsuleBuilder();
-    writer.make3();
-    const bufs = writer.makeBuffer();
-    this.download(new Blob(bufs), `a003_${_dstr()}.pmx`);
-
-    const offsets = writer.toOffsets(bufs);
-    for (const chunk of offsets.chunks) {
-      chunk.hex = `0x${chunk.offset.toString(16)}`;
-    }
-    console.log('make3 offsets', offsets);
   }
 
 /**
