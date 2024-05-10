@@ -73,11 +73,11 @@ class ApplyMaker {
  * @type {boolean}
  */
     const _usePhy = document.getElementById('usephy')?.checked;
-    console.log('analyzeFileRoss', _usePhy);
+    console.log('analyzeFileRoss, 物理使用', _usePhy);
 /**
- * gui group
+ * gui group(1-origin)
  */
-    const RIGID_DEFAULT_GROUP = 2;
+    const RIGID_DEFAULT_GROUP = 3;
 
     let rc = 93;
     //const rce = 94; // 無い
@@ -105,7 +105,6 @@ class ApplyMaker {
 // 材質で絞るためのカウント
     let _ficount = 0;
     let mtl = null;
-    const mtlIndex = 10;
     for (let i = 0; i < parser.materials.length; ++i) {
       mtl = parser.materials[i];
       if (mtl.nameJa === '\u88f8') {
@@ -354,8 +353,8 @@ class ApplyMaker {
         rigid.nameJa = bone.nameJa;
         rigid.nameEn = bone.nameEn;
         rigid._boneName = bone.nameJa;
-        //rigid.type = _usePhy ? PMX.Rigid.TYPE_DYNAMIC_POS : PMX.Rigid.TYPE_STATIC;
-        rigid.type = _usePhy ? PMX.Rigid.TYPE_DYNAMIC : PMX.Rigid.TYPE_STATIC;
+        rigid.type = _usePhy ? PMX.Rigid.TYPE_DYNAMIC_POS : PMX.Rigid.TYPE_STATIC;
+        //rigid.type = _usePhy ? PMX.Rigid.TYPE_DYNAMIC : PMX.Rigid.TYPE_STATIC;
         //rigid.shape = PMX.Rigid.SHAPE_SPHERE;
         rigid.shape = PMX.Rigid.SHAPE_CAPSULE;
         rigid.p = [...bone.p];
@@ -366,12 +365,12 @@ class ApplyMaker {
         let capHeight = rr;
         rigid.size = [rr, capHeight, rr];
         rigid.setUIGroup(RIGID_DEFAULT_GROUP);
-        rigid.setUINots(2);
+        rigid.setUINots(1, 2, 3,
+          13, 14, 15, 16);
         rigid.moveDamping = 0;
         rigid.rotDamping = 0;
         //rigid.mass = 0.002;
         rigid.mass = 0.2;
-        //rigid.mass = 1;
         rigid.friction = 100;
         rigid.pong = 0;
 
@@ -399,14 +398,16 @@ class ApplyMaker {
             const dr = (j === 7) ? /*90*/ 10 : 10;
             joint.moveUpper = [dp, dp, dp];
             joint.moveLower = [-dp, -dp, -dp];
-            joint.rotUpper = [_deg2rad(dr), _deg2rad(dr), _deg2rad(10 * 0)];
-            joint.rotLower = [_deg2rad(-dr), _deg2rad(-dr), _deg2rad(-10 * 0)];
+            joint.rotUpper = [_deg2rad(dr), _deg2rad(dr), _deg2rad(dr * 1)];
+            joint.rotLower = [_deg2rad(-dr), _deg2rad(-dr), _deg2rad(-dr * 1)];
             joint.springMove = [0, 0, 0];
-            joint.springRot = [50, 50, 50];
-
+            joint.springRot = [0.5, 0.5, 0.5];
+            // 予め測定した方向ベクトル
+            const constDir = [0.42, 0.43, -0.8];
             rigid.rot = [
-              _deg2rad(-60),
-              _deg2rad((rigid.p[0] >= 0) ? -30 : 30),
+              - Math.acos(constDir[1]),
+              //_deg2rad(30 * ((rigid.p[0] >= 0) ? -1 : 1)),
+              Math.atan2(constDir[0], -constDir[2]) * ((rigid.p[0] >= 0) ? -1 : 1),
               0];
 
             if (_usePhy) {

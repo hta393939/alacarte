@@ -280,8 +280,7 @@ class IKCapsule extends PMX.Maker {
 /**
  * 普通の衝突グループ(1-origin)
  */
-//        const RIGID_DEFAULT_GROUP = 6;
-    const RIGID_DEFAULT_GROUP = 14;
+    const RIGID_DEFAULT_GROUP = 4;
 /**
  * IKボーン
  */
@@ -386,7 +385,9 @@ class IKCapsule extends PMX.Maker {
         r.friction = 1000;
         r.mass = 0.002; // 重量
         r.setUIGroup(RIGID_DEFAULT_GROUP);
-        r.setUINots(5, 6, 7, 8, 13, 14, 15, 16);
+        r.setUINots(1, 2, 4,
+          5, 6, 7, 8,
+          13, 14, 15, 16);
         if ((i & 1) !== 0) { // odd がエフェクト
           b.parent = i - 1;
           //b.layer = 3;
@@ -429,8 +430,8 @@ class IKCapsule extends PMX.Maker {
     { // モーフ 0個
       for (let i = 0; i < 0; ++i) {
         const m = new PMX.Morph();
-        m.nameJa = 'morph000';
-        m.nameEn = 'morph000';
+        m.nameJa = 'mr000';
+        m.nameEn = 'mr000';
         m.type = 1;
         this.morphs.push(m);
       }
