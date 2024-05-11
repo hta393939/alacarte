@@ -258,6 +258,12 @@ class Mat4 extends Mat {
  * 3次元ベクトル
  */
 class V3 {
+/**
+ * コンストラクタ
+ * @param {number} x 
+ * @param {number} y 
+ * @param {number} z 
+ */
   constructor(x = 0, y = 0, z = 0) {
     this.p = [x, y, z];
   }

@@ -942,6 +942,9 @@ class SoftBody {
   }
 }
 
+/**
+ * 名前とコメント
+ */
 class ModelInfo {
   constructor() {
     this.modelJa = '';
@@ -952,6 +955,14 @@ class ModelInfo {
     this.commentJa = '';
     this.commentEn = '';
   }
+
+  clear() {
+    this.modelJa = '';
+    this.modelEn = '';
+    this.commentJa = '';
+    this.commentEn = '';
+  }
+
   toCSV() {
     const ss = [
       'PmxModelInfo',
@@ -964,6 +975,9 @@ class ModelInfo {
   }
 }
 
+/**
+ * バイナリヘッダ
+ */
 class Header {
   static UTF16 = 0;
   static UTF8 = 1;
@@ -989,6 +1003,8 @@ class Header {
  */
 class PMXObject {
   constructor() {
+    //this.header = new Header();
+    this.modelInfo = new ModelInfo();
     this.head = {
       nameJa: '',
       nameEn: '',
@@ -1086,6 +1102,7 @@ class Parser extends PMXObject {
   clear() {
     this.c = 0;
 
+    this.modelInfo.clear();
     this.nameJa = '';
     this.nameEn = '';
     this.commentJa = '';
@@ -1230,11 +1247,17 @@ class Parser extends PMXObject {
 
       console.log('heads', heads);
     }
+
     { // 4名
-      this.nameJa = this.readstr(p);
-      this.nameEn = this.readstr(p);
-      this.commentJa = this.readstr(p);
-      this.commentEn = this.readstr(p);
+      this.modelInfo.nameJa = this.readstr(p);
+      this.modelInfo.nameEn = this.readstr(p);
+      this.modelInfo.commentJa = this.readstr(p);
+      this.modelInfo.commentEn = this.readstr(p);
+
+      this.nameJa = this.modelInfo.nameJa;
+      this.nameEn = this.modelInfo.nameEn;
+      this.commentJa = this.modelInfo.commentJa;
+      this.commentEn = this.modelInfo.commentEn;
     }
 
     { // vertex
@@ -1541,7 +1564,7 @@ class Parser extends PMXObject {
     }
 
     { // face の分配
-      console.warn('face 分配は not implemented');
+      //console.warn('face 分配は not implemented');
     }
 
     console.log('parse', this.c, p.byteLength);
@@ -2052,6 +2075,8 @@ Object.assign(_global.PMX, {
   Rigid,
   Joint,
   SoftBody,
+  ModelInfo,
+  Header,
 
   PMXObject,
   Parser,

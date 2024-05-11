@@ -2,8 +2,6 @@
  * @file applymaker.js
  */
 // clipboard にセットするための実行関数を持つ
-// 新しい方
-// 2024/1/6 17:58 分岐して更新するかも
 // 2024/2/12 14:23 分岐して使用中
 
 (function(_global) {
@@ -63,7 +61,7 @@ class ApplyMaker {
   }
 
 /**
- * 位置ベース。クリップボード用。
+ * API. 位置ベース。クリップボード用。
  * @param {PMX.Parser} parser 
  * @returns {string[]} 行ごとに返す
  */
@@ -238,6 +236,8 @@ class ApplyMaker {
       setset[L][i] = _settoarray(setset[L][i]);
     }
 
+    const modelInfo = new PMX.ModelInfo();
+
 // リングごとに算出する
 /**
  * 頂点トランスレートの場合
@@ -410,6 +410,20 @@ class ApplyMaker {
               Math.atan2(constDir[0], -constDir[2]) * ((rigid.p[0] >= 0) ? -1 : 1),
               0];
 
+            {
+              const adjust = new V3(
+                 0.42 * (bone.p[0] >= 0 ? 1 : -1),
+                 0.43,
+                -0.80,
+              );
+              adjust.scale(-0.2).add(new V3(...bone.p));
+              const p = adjust.asArray();
+
+              bone.p = p;
+              joint.p = p;
+              console.log(`${j} 物理サイズ`, [...rigid.size]);
+            }
+
             if (_usePhy) {
               rigids.push(rigid);
               joints.push(joint);
@@ -478,6 +492,13 @@ class ApplyMaker {
         lines.push(...morph.toLines());
       }
     } else { // 上書き更新と追加の場合
+
+      {
+        const mi = new ModelInfo();
+        mi.commentJa += ``;
+        //lines.push(mi.toCSV());
+      }
+
       // 0.2.7.5 で使えた
       for (const bone of bones) {
         lines.push(bone.toCSV());
