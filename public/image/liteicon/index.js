@@ -10,47 +10,7 @@ class Misc {
     this.setListener();
   }
 
-/**
- * 
- * @param {File} file 
- * @param {HTMLCanvasElement} canvas 
- * @returns {Promise<HTMLCanvasElement>}
- */
-  loadFileToCanvas(file, canvas) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.addEventListener('load', () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const c = canvas.getContext('2d');
-        c.drawImage(img, 0, 0);
-        resolve(canvas);
-      });
-      img.addEventListener('error', () => {
-        reject(`load error`);
-      });
-      img.src = URL.createObjectURL(file);
-    });
-  }
-
   setListener() {
-    {
-      const el = window;
-      el.addEventListener('dragover', ev => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        ev.dataTransfer.dropEffect = 'copy';
-      });
-      el.addEventListener('drop', async ev => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        ev.dataTransfer.dropEffect = 'copy';
-        const canvas = document.getElementById('maincanvas');
-        await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
-        this.convColor(canvas);
-      });
-    }
-
     const qs = document.querySelectorAll('.live');
     for (const el of qs) {
       const k = el.id;
@@ -65,6 +25,10 @@ class Misc {
       };
       el?.addEventListener('input', () => {
         _update();
+
+        if (el.id === 'u1') {
+          this.text1 = `${String.fromCodePoint(Number.parseInt(el.value, 16))}`;
+        }
 
         this.redraw();
       });
@@ -93,6 +57,7 @@ class Misc {
     c.fillText(this.text1, w * 0.5 + this.x1, h * 0.5 + this.y1);
 
     c.font = `normal ${this.px2}px Consolas`;
+    c.fillStyle = this.color2;
     c.fillText(this.text2, w * 0.5 + this.x2, h * 0.5 + this.y2);
   }
 
@@ -100,6 +65,4 @@ class Misc {
 
 const misc = new Misc();
 misc.initialize();
-
-
 
