@@ -8,6 +8,33 @@ class Misc {
 
   async initialize() {
     this.setListener();
+
+    this.draw();
+  }
+
+  draw() {
+    const w = 256;
+    const h = 256;
+    const size = 32;
+/**
+ * @type {HTMLCanvasElement}
+ */
+    const canvas = document.getElementById('subcanvas');
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    c.fillStyle = '#ddddcc';
+    c.fillRect(0, 0, w, h);
+    c.fillStyle = '#cccccc';
+    for (let i = 0; i < 16; ++i) {
+      for (let j = 0; j < 16; ++j) {
+        const val = (j & 1) + (i & 1);
+        if (val & 1) {
+          continue;
+        }
+        c.fillRect(i * size, j * size, size, size);
+      }
+    }
   }
 
   setListener() {
