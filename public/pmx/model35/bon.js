@@ -100,8 +100,8 @@ class BonMaker extends PMX.Maker {
           v.p = [x * scale, y * scale, z * scale];
 
           v.uv = [
-            0.5 + cs * 0.25, // 半分まで
-            0.5 + sn * 0.25,
+            0.5 + x / radius * 0.25, // 半分まで
+            0.5 + z / radius * 0.25,
           ];
 
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
@@ -156,9 +156,10 @@ class BonMaker extends PMX.Maker {
       m.specPower = 0.5;
       m.ambient = [0.7, 0.7, 0.7];
       m.edgeColor = [156/255, 130/255, 48/255, 1];
-      let bits = PMX.Material.BIT_GROUND
-        | PMX.Material.BIT_TOMAP
-        | PMX.Material.BIT_SELFSHADOW
+      let bits = 0;
+        //PMX.Material.BIT_GROUND
+        //| PMX.Material.BIT_TOMAP
+        //| PMX.Material.BIT_SELFSHADOW
       m.bitFlag = bits;
       m.sharetoonflag = 0;
       m.sharetoonindex = -1;
@@ -169,8 +170,10 @@ class BonMaker extends PMX.Maker {
             let v1 = v0 + 1;
             let v2 = v0 + (div + 1);
             let v3 = v2 + 1;
-            m.faces.push([v0, v1, v2]);
-            m.faces.push([v1, v3, v2]);
+            //m.faces.push([v0, v1, v2]);
+            //m.faces.push([v1, v3, v2]);
+            m.faces.push([v0, v3, v2]);
+            m.faces.push([v0, v1, v3]);
           }
         }
       } else {
