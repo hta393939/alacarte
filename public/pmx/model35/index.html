@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>model35</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div id="view"></div>
+    <div>
+      <button id="idbon">bon</button>
+      <button id="idmakehalf">makehalf 半分のシリンダー</button>
+
+      <button id="idmakephycapsule">make phycapsule</button>
+      <button id="idmakecentercapsule">make3 centercapsule</button>
+      <button id="idmake4">make4</button>
+      <button id="idmake5">make5 SDEF</button>
+      <button id="idmake6">make6 SDEF phys</button>
+
+      <button id="idmakeik">make IK7 SDEF</button>
+      <button id="idmake11">→ make11 SDEF phys static only</button>
+      <br />
+      <label class="pt">
+        <input class="pt" type="checkbox" id="usephyelement" aaachecked />物理変形
+      </label>
+      <label class="pt">
+        <input class="pt" type="checkbox" id="useikelement" />IK使用
+      </label>
+      <!--
+      <div class="toright">
+        <div>分母</div>
+        <input id="denom" type="range" min="1" max="32" value="8" />
+        <div id="denomview"></div>
+      </div>
+    -->
+      <div class="toright">
+        <div>スケール指数</div>
+        <input id="pow2element" type="range" min="-6" max="2" value="-3" step="0.5" />
+        <div class="toright">
+          <div>1/</div><div id="denomview"></div>
+        </div>
+        <div class="spacing"></div>
+        <div id="scaleview"></div>
+      </div>
+
+      <div class="toright">
+        <div>ベルト数</div>
+        <input id="belt" type="range" min="1" max="20" value="10" />
+        <div id="beltview"></div>
+      </div>
+      <div>
+        <select id="texprefix" class="pt">
+          <option value="a">無印a</option>
+          <option value="g">緑g</option>
+          <option value="b">青b</option>
+          <option value="r">赤r</option>
+          <option value="bv">青紫bv</option>
+          <option value="w" selected>白w</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <div id="drop" class="drop">ここに .pmx をドロップ</div>
+    </div>
+    <div class="toright">
+      <canvas id="idcanvas"></canvas>
+      <canvas id="canvast"></canvas>
+      <canvas id="canvast1"></canvas>
+      <details open>
+        <summary>canvast2</summary>
+        <canvas id="canvast2"></canvas>
+      </details>
+      <details open>
+        <summary>canvast3</summary>
+        <canvas id="canvast3"></canvas>
+      </details>
+    </div>
+
+    <script src="../../lib/dance/matl.js"></script>
+    <script src="../../lib/dance/pmx.js"></script>
+    <script src="../../lib/dance/pmdwriter.js"></script>
+    <script src="./capsule.js"></script>
+    <script src="./halfcapsule.js"></script>
+    <script src="./ikcapsule.js"></script>
+    <script src="./phycapsule.js"></script>
+    <script src="./bon.js"></script>
+    <script src="./centercapsule.js"></script>
+    <script src="./index.js"></script>
+
+  </body>
+</html>
