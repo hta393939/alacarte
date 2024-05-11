@@ -27,17 +27,22 @@ class Misc {
 
     const center = [440, 71]; // 1607, 71
     const router = 37;
-    const rinner = 0;
+    const rinner = 4;
     const ps = [
       [0, 0, 0, 255, 70], // 角度
       [0, 0, 0, 255, 130], // 角度
     ];
 
     for (let lr = 0; lr < 2; ++lr) {
+/**
+ * 度角度範囲
+ */
+      const range = [ps[0][4], ps[1][4]];
       if (lr === 1) {
         center[0] = 2047 - center[0];
-        ps[0][4] = 180 - ps[0][4];
-        ps[1][4] = 180 - ps[1][4];
+        const turn = [180 - range[0], 180 - range[1]];
+        range[0] = Math.min(...turn);
+        range[1] = Math.max(...turn);
       }
 
       for (let y = 0; y < h; ++y) {
@@ -47,7 +52,7 @@ class Misc {
           const d = Math.sqrt(dx * dx + dy * dy);
           const ang = Math.atan2(-dy, dx);
           const deg = ang * 180 / Math.PI;
-          if (deg < ps[0][4] || deg > ps[1][4]) {
+          if (deg < range[0] || deg > range[1]) {
             continue;
           }
           if (d > router || rinner > d) {
@@ -55,7 +60,7 @@ class Misc {
           }
 
           for (let i = 0; i < 2; ++i) {
-            const pang = ps[i][4] * Math.PI / 180;
+            const pang = range[i] * Math.PI / 180;
             let px = Math.round(center[0] + Math.cos(pang) * d);
             let py = Math.round(center[1] - Math.sin(pang) * d);
             const offset = (px + h * py) * 4;
@@ -66,7 +71,7 @@ class Misc {
 
           const offset = (x + h * y) * 4;
 
-          let t = (deg - 70) / (130 - 70);
+          let t = (deg - range[0]) / (range[1] - range[0]);
 
           let r = _lerp(ps[0][0], ps[1][0], t);
           let g = _lerp(ps[0][1], ps[1][1], t);
