@@ -2,6 +2,16 @@
  * @file index.js
  */
 
+const _lim = (a, x, b) => {
+  if (x < a) {
+    return a;
+  }
+  if (b < x) {
+    return b;
+  }
+  return x;
+};
+
 /**
  * n次元線形補完
  * @param {number[]} a 
@@ -389,11 +399,14 @@ class Misc {
         const deg = ang * 180 / Math.PI;
 
         if (d < 0.5) {
-          lv = 0.5 + 0.125 * Math.sin(d / 0.5 * Math.PI);
+          lv = 0.5 + 0.25 * (Math.cos(d / 0.5 * Math.PI) + 1) * 0.5;
         } else if (0.5 < d && d < 0.75) {
         } else {
-          d = (d - 0.75) / 0.25;
-          a = 1 - d * 2 - (Math.sin(ang * 17) + 0 * Math.sin(ang * 7) + 1) / 8;
+          const p4 = 4 / w;
+          d += Math.sin(ang * 17) / 32 + Math.sin(ang * 7) / 16;
+          let k = 0.125;
+          k = 0.25;
+          a = _lim(0, - k * 1 / p4 * (d - 0.875), 1);
         }
         a *= 256;
         lv *= 256;

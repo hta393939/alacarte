@@ -96,7 +96,12 @@ class BonMaker extends PMX.Maker {
           let z = sn * rr;
           let y = 0;
 
-          v.n = this.normalize([0, 1, 0]);
+          let t = i / (div * 2);
+          v.n = this.normalize([
+            _lerp(0, -x, t),
+            _lerp(1,  0, t),
+            _lerp(0, -z, t),
+          ]);
           v.p = [x * scale, y * scale, z * scale];
 
           v.uv = [
@@ -112,7 +117,7 @@ class BonMaker extends PMX.Maker {
         }
         ringnums[0] += 1;
       }
-      for (let i = 0; i <= div; ++i) { // まんなか
+      for (let i = 0; i <= div; ++i) { // ふち
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
           let hang = Math.PI * 2 * j / div;
@@ -122,7 +127,12 @@ class BonMaker extends PMX.Maker {
           let z = sn * radius;
           let y = i / div * height;
 
-          v.n = this.normalize([-x, 0, -z]);
+          let t = (i + div) / (div * 2);
+          v.n = this.normalize([
+            _lerp(0, -x, t),
+            _lerp(1,  0, t),
+            _lerp(0, -z, t),
+          ]);
           v.p = [x * scale, y * scale, z * scale];
 
           const rr = 0.25 + 0.25 * i / div;

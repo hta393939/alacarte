@@ -1,6 +1,7 @@
 @charset "UTF-8";
 
 canvas {
+  border: solid 1px green;
   width: 128px;
   height: 128px;
 }
@@ -28,4 +29,7 @@ summary, button, .pt, input[type="range"] {
   border-radius: 2em;
 }
 
+#canvast {
+  background-image: url('./check256_32.png');
+}
 
