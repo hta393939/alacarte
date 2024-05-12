@@ -963,13 +963,20 @@ class ModelInfo {
     this.commentEn = '';
   }
 
+  escape(text) {
+    // 改行を \r \n に置換する
+    let str = text.replace(/\r/g, '\\r');
+    str = str.replace(/\n/g, '\\n');
+    return `"${str}"`;
+  }
+
   toCSV() {
     const ss = [
       'PmxModelInfo',
-      this.modelJa,
-      this.modelEn,
-      this.commentJa,
-      this.commentEn,
+      `"${this.modelJa}"`,
+      `"${this.modelEn}"`,
+      this.escape(this.commentJa),
+      this.escape(this.commentEn),
     ];
     return ss.join(',');
   }
@@ -1248,14 +1255,14 @@ class Parser extends PMXObject {
       console.log('heads', heads);
     }
 
-    { // 4名
-      this.modelInfo.nameJa = this.readstr(p);
-      this.modelInfo.nameEn = this.readstr(p);
+    { // 4つ
+      this.modelInfo.modelJa = this.readstr(p);
+      this.modelInfo.modelEn = this.readstr(p);
       this.modelInfo.commentJa = this.readstr(p);
       this.modelInfo.commentEn = this.readstr(p);
 
-      this.nameJa = this.modelInfo.nameJa;
-      this.nameEn = this.modelInfo.nameEn;
+      this.nameJa = this.modelInfo.modelJa;
+      this.nameEn = this.modelInfo.modelEn;
       this.commentJa = this.modelInfo.commentJa;
       this.commentEn = this.modelInfo.commentEn;
     }
@@ -1723,6 +1730,12 @@ class Maker extends Parser {
       c += this.writestr(p, c, this.head.nameEn);
       c += this.writestr(p, c, this.head.commentJa);
       c += this.writestr(p, c, this.head.commentEn);
+/*
+      c += this.writestr(p, c, this.modelInfo.modelJa);
+      c += this.writestr(p, c, this.modelInfo.modelEn);
+      c += this.writestr(p, c, this.modelInfo.commentJa);
+      c += this.writestr(p, c, this.modelInfo.commentEn);
+*/
       bufs.push(buf.slice(0, c));
     }
 

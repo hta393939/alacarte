@@ -236,7 +236,15 @@ class ApplyMaker {
       setset[L][i] = _settoarray(setset[L][i]);
     }
 
-    const modelInfo = new PMX.ModelInfo();
+    const modelInfo = parser.modelInfo;
+    {
+      const comments = [
+        '',
+        `${_usePhy ? '物理使用' : '物理無し'}`,
+        `${'内中心'}`,
+      ];
+      modelInfo.commentJa += comments.join('\r\n');
+    }
 
 // リングごとに算出する
 /**
@@ -262,6 +270,24 @@ class ApplyMaker {
  */
     const joints = [];
 
+    let add = 0.02;
+    const _shapes = [
+      { rr: 1, delta: 0.00 }, // 0
+      { rr: 0.4, delta: -0.01 }, // 1
+      { rr: 0.8, delta: 0.02 }, // 2
+      { rr: 1.0, delta: 0.02 }, // 3
+      { rr: 1.1, delta: 0.02 + add }, // 4
+      { rr: 1.08, delta: 0.03 + add }, // 5
+      { rr: 1.05, delta: 0.03 + add }, // 6
+      { rr: 1, delta: 0.03 }, // 7 基準
+      { rr: 1, delta: 0.01 }, // 8
+      { rr: 1, delta: 0.01 }, // 9
+      { rr: 1, delta: 0.02 }, // 10
+      { rr: 1, delta: 0.02 }, // 11
+      { rr: 1, delta: 0.02 }, // 12
+      { rr: 1, delta: 0.02 }, // 13          
+    ];
+/*
     const _shapes = [
       { rr: 1, delta: 0.00 }, // 0
       { rr: 0.4, delta: -0.01 }, // 1
@@ -277,7 +303,7 @@ class ApplyMaker {
       { rr: 1, delta: 0.02 }, // 11
       { rr: 1, delta: 0.02 }, // 12
       { rr: 1, delta: 0.02 }, // 13          
-    ];
+    ]; */
 
     for (let i = 0; i < 2; ++i) {
       const morph = new PMX.Morph();
@@ -410,7 +436,7 @@ class ApplyMaker {
               Math.atan2(constDir[0], -constDir[2]) * ((rigid.p[0] >= 0) ? -1 : 1),
               0];
 
-            {
+            { // 内側に引き込む
               const adjust = new V3(
                  0.42 * (bone.p[0] >= 0 ? 1 : -1),
                  0.43,
@@ -494,9 +520,8 @@ class ApplyMaker {
     } else { // 上書き更新と追加の場合
 
       {
-        const mi = new ModelInfo();
-        mi.commentJa += ``;
-        //lines.push(mi.toCSV());
+        console.log('%cmodelInfo', 'color:green;font-weight:bold', modelInfo);
+        lines.push(modelInfo.toCSV());
       }
 
       // 0.2.7.5 で使えた
