@@ -217,15 +217,15 @@ class BonMaker extends PMX.Maker {
       let x = 0;
       let y = 0;
       let z = 0;
-  /**
-  * 剛体
-  */
+/**
+ * 剛体
+ */
       let r = new PMX.Rigid();
       r.bone = i;
       r.type = PMX.Rigid.TYPE_STATIC;
       r.p = [x * scale, -1 * scale, z * scale];
       r.rot = [0, 0, 0];
-      r.size = [radius * 2 * scale, 2 * scale, radius * 2 * scale];
+      r.size = [radius * scale, 1 * scale, radius * scale];
       r.setUIGroup(RIGID_DEFAULT_GROUP);
       r.shape = PMX.Rigid.SHAPE_BOX;
 
@@ -256,6 +256,7 @@ class BonMaker extends PMX.Maker {
         j = null;
         break;
       case 2:
+        b.parent = 0;
         b.nameJa = 'センター';
         j = null;
         break;

@@ -405,7 +405,9 @@ class Misc {
           const p4 = 4 / w;
           d += Math.sin(ang * 17) / 32 + Math.sin(ang * 7) / 16;
           let k = 0.125;
-          k = 0.25;
+          k = 0.25; // 生成した
+          k = 0.5;
+          k = 1;
           a = _lim(0, - k * 1 / p4 * (d - 0.875), 1);
         }
         a *= 256;
