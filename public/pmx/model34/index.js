@@ -531,7 +531,7 @@ class Misc {
       belt: Number.parseFloat(document.getElementById('belt')?.value ?? 1),
       pow2: Number.parseFloat(document.getElementById('pow2element')?.value ?? -3),
 //            denom: Number.parseFloat(document.getElementById('denom')?.value ?? 1),
-      usephy: document.getElementById('usephyelement')?.checked,
+      usephy: document.getElementById('usephy')?.checked,
 /**
  * ik 書き出しするかどうか
  */

@@ -71,7 +71,8 @@ class ApplyMaker {
  * @type {boolean}
  */
     const _usePhy = document.getElementById('usephy')?.checked;
-    console.log('analyzeFileRoss, 物理使用', _usePhy);
+    const _useChain = document.getElementById('usechain')?.checked;
+    console.log('applymaker.js analyzeFileRoss, 物理使用', _usePhy, _useChain);
 /**
  * gui group(1-origin)
  */
@@ -244,6 +245,7 @@ class ApplyMaker {
         `${'内中心'}`,
       ];
       modelInfo.commentJa += comments.join('\r\n');
+      modelInfo.modelJa += `${_usePhy ? (_useChain ? 'e' : 'd') : ''}`;
     }
 
 // リングごとに算出する
@@ -270,15 +272,14 @@ class ApplyMaker {
  */
     const joints = [];
 
-    let add = 0.02;
     const _shapes = [
       { rr: 1, delta: 0.00 }, // 0
       { rr: 0.4, delta: -0.01 }, // 1
       { rr: 0.8, delta: 0.02 }, // 2
       { rr: 1.0, delta: 0.02 }, // 3
-      { rr: 1.1, delta: 0.02 + add }, // 4
-      { rr: 1.08, delta: 0.03 + add }, // 5
-      { rr: 1.05, delta: 0.03 + add }, // 6
+      { rr: 1.1, delta: 0.04 }, // 4
+      { rr: 1.08, delta: 0.05 }, // 5
+      { rr: 1.05, delta: 0.05 }, // 6
       { rr: 1, delta: 0.03 }, // 7 基準
       { rr: 1, delta: 0.01 }, // 8
       { rr: 1, delta: 0.01 }, // 9
@@ -389,7 +390,8 @@ class ApplyMaker {
  */
         const rr = (newradius >= 0) ? newradius : result.radius;
         let capHeight = rr;
-        rigid.size = [rr, capHeight, rr];
+        //rigid.size = [rr, capHeight, rr];
+        rigid.size = [0.11, 0.29, 1];
         rigid.setUIGroup(RIGID_DEFAULT_GROUP);
         rigid.setUINots(1, 2, 3,
           13, 14, 15, 16);
@@ -408,7 +410,7 @@ class ApplyMaker {
         joint.nameJa = joint.nameEn;
         joint.p = [...rigid.p];
         joint._rigidName = [_preRigidName, rigid.nameJa];
-        _preRigidName = rigid.nameJa;
+        //_preRigidName = rigid.nameJa;
         joint.lockMove();
         joint.lockRot();
         {
@@ -421,7 +423,7 @@ class ApplyMaker {
 /**
  * 回転範囲
  */
-            const dr = (j === 7) ? /*90*/ 10 : 10;
+            const dr = (j === 7) ? /*90*/ 45 : 45;
             joint.moveUpper = [dp, dp, dp];
             joint.moveLower = [-dp, -dp, -dp];
             joint.rotUpper = [_deg2rad(dr), _deg2rad(dr), _deg2rad(dr * 1)];
@@ -457,21 +459,18 @@ class ApplyMaker {
           }
 
           if (j >= 8) { // より根本ボーンに近い方(j は逆進)       
-            //bone.layer = 1;
             _effectBoneName = bone.nameJa;
-            if (_usePhy) {
-              rigids.push(rigid);
-              joints.push(joint);
-            }
+            //if (_usePhy) {
+            //  rigids.push(rigid);
+            //  joints.push(joint);
+            //}
           } else if (j === 7) {
-            _effectBoneName = bone.nameJa;  
-            //bone.layer = 2;
+            _effectBoneName = bone.nameJa;
           } else if (j <= 6) { // より先端に近い方 endボーン
             _effectBoneName = bone.nameJa;
             if (_usePhy) {
               bone.bits |= PMX.Bone.BIT_AFTERPHY;
             }
-            //bone.layer = 3;
           }
         }
 

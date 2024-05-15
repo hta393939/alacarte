@@ -1534,7 +1534,7 @@ class Parser extends PMXObject {
         r.type = this.readu8s(p, 1)[0];
         this.rigids.push(r);
 
-        console.log('rigid', r.nameJa, i);
+        //console.log('rigid', r.nameJa, i);
       }
     }
     { // joint
@@ -1558,7 +1558,7 @@ class Parser extends PMXObject {
         j.springRot = fs.slice(21, 24);
         this.joints.push(j);
 
-        console.log('joint', j.nameJa, i);
+        //console.log('joint', j.nameJa, i);
       }
     }
 // softbody
