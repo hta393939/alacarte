@@ -315,15 +315,25 @@ class ApplyMaker {
       morph.type = PMX.Morph.TYPE_VERTEX;
 
 /**
- * 直接の親で更新していくボーン名
+ * 直前の親で更新していくボーン名
  */
       let _preBoneName = ((i === R) ? '右' : '左') + '胸';
+/**
+ * 親ボーン保持用
+ */
+      let _parentBoneName = '' + _preBoneName;
+/**
+ * 更新していく物理名
+ */
       let _preRigidName = '' + _preBoneName;
 /**
  * ウェイト影響ボーン．
  * 一番最初は局所ルート
  */
       let _effectBoneName = '' + _preBoneName;
+
+      const _sevenBoneName = `${lrname[i]}chest${7}`;
+
       let offsets = [0, 0, 0];
       let radius7 = -1;
       for (let j = ringNum - 1; j >= 0 ; --j) {
@@ -336,6 +346,10 @@ class ApplyMaker {
           radius7 = result.radius;
         }
         let newradius = radius7;
+/**
+ * 根本に近い方の重み
+ */
+        let vertexWeight = 1;
 
         // ここまでのオフセットを足す
 /**
@@ -364,8 +378,8 @@ class ApplyMaker {
         bone.xLocalVector = new V3(...result.normal).scale(-1).asArray();
         const basis = Util.MakeBasisLH(...bone.xLocalVector);
         bone.zLocalVector = new V3(...basis[0]).scale(-1).asArray();
-        bone._parentName = _preBoneName;
-        _preBoneName = bone.nameJa;
+        // 親ボーン
+        bone._parentName = _parentBoneName;
 /**
  * フレーム内アイテム
  */
@@ -396,9 +410,9 @@ class ApplyMaker {
         rigid.setUINots(1, 2, 3,
           13, 14, 15, 16);
         rigid.moveDamping = 0;
-        rigid.rotDamping = 0;
+        rigid.rotDamping = 1; // 全減衰でよい。joint ばねで戻す
         //rigid.mass = 0.002;
-        rigid.mass = 0.2;
+        rigid.mass = 0.02; // 質量0.2 ばね0.5 だと弱いかも
         rigid.friction = 100;
         rigid.pong = 0;
 
@@ -439,12 +453,13 @@ class ApplyMaker {
               0];
 
             { // 内側に引き込む
+              const rate = -0.2; // これより少なくて良さそう
               const adjust = new V3(
                  0.42 * (bone.p[0] >= 0 ? 1 : -1),
                  0.43,
                 -0.80,
               );
-              adjust.scale(-0.2).add(new V3(...bone.p));
+              adjust.scale(rate).add(new V3(...bone.p));
               const p = adjust.asArray();
 
               bone.p = p;
@@ -459,15 +474,21 @@ class ApplyMaker {
           }
 
           if (j >= 8) { // より根本ボーンに近い方(j は逆進)       
-            _effectBoneName = bone.nameJa;
-            //if (_usePhy) {
-            //  rigids.push(rigid);
-            //  joints.push(joint);
-            //}
+            //_effectBoneName = bone.nameJa;
+            _effectBoneName = _preBoneName;
+            // 13, 12～7
+            vertexWeight = (j - 7) / (12 - 7);
+            vertexWeight = Math.max(0, Math.min(1, vertexWeight));
           } else if (j === 7) {
             _effectBoneName = bone.nameJa;
+
+            // 格納後
+            _parentBoneName = bone.nameJa;
           } else if (j <= 6) { // より先端に近い方 endボーン
             _effectBoneName = bone.nameJa;
+            // 格納後
+            _parentBoneName = bone.nameJa;
+            
             if (_usePhy) {
               bone.bits |= PMX.Bone.BIT_AFTERPHY;
             }
@@ -496,9 +517,10 @@ class ApplyMaker {
           vm.offset = adjust.asArray();
           vtx.p = new V3(...vtx.p).add(adjust).asArray();
 // 頂点変形を足す
-          if (true) {
-            //vtx._boneName = [bone.nameJa, '', '', ''];
-            vtx._boneName = [_effectBoneName, '', '', ''];
+          {
+            vtx.deformType = PMX.Vertex.DEFORM_BDEF2;
+            vtx._boneName = [_effectBoneName, _sevenBoneName, '', ''];
+            vtx.weights = [vertexWeight, 1 - vertexWeight, 0, 0];
           }
           adjustvts.push(vtx);
         }
@@ -507,6 +529,26 @@ class ApplyMaker {
         offsets[0] += - result.normal[0] * delta;
         offsets[1] += - result.normal[1] * delta;
         offsets[2] += - result.normal[2] * delta;
+
+        _preBoneName = bone.nameJa;
+      }
+    }
+
+    if (_usePhy) { // 補正
+      for (const rigid of parser.rigids) {
+        if (rigid.nameJa === '右胸'
+          || rigid.nameJa === '左胸') {
+          rigid.setUINots(1, 2, 3, 4,
+            13, 14, 15, 16
+          );
+          if (_useChain) {
+            // Do nothing.
+          } else {
+            rigid.type = PMX.Rigid.TYPE_STATIC;
+            rigid._boneName = rigid.nameJa;
+          }
+          rigids.push(rigid);
+        }
       }
     }
 
