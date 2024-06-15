@@ -83,9 +83,20 @@ class Misc {
     c.font = `normal ${this.px1}px Consolas`;
     c.fillText(this.text1, w * 0.5 + this.x1, h * 0.5 + this.y1);
 
-    c.font = `normal ${this.px2}px Consolas`;
+    const style = window.bold2.checked ? 'bold' : 'normal';
+
+    if (true) {
+      c.lineWidth = Number.parseFloat(window.l2.value);
+      c.font = `${style} ${this.px2}px Consolas`;
+      c.strokeStyle = this.color3;
+      c.strokeText(this.text2, w * 0.5 + this.x2, h * 0.5 + this.y2);
+    }
+
+    c.font = `${style} ${this.px2}px Consolas`;
     c.fillStyle = this.color2;
     c.fillText(this.text2, w * 0.5 + this.x2, h * 0.5 + this.y2);
+
+
   }
 
 }
