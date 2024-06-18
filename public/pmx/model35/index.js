@@ -166,7 +166,6 @@ class Misc {
     });
 
     window.idmakehalf?.addEventListener('click', () => {
-
       const param = {
         nameEn: `a001_halfcapsule`,
       };
@@ -174,12 +173,7 @@ class Misc {
       writer.make(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
-  
-      const offsets = writer.toOffsets(bufs);
-      for (const chunk of offsets.chunks) {
-        chunk.hex = `0x${chunk.offset.toString(16)}`;
-      }
-      console.log('makehalf offsets', offsets);
+      console.log('makehalf offsets');
     });
 
     window.idmakephycapsule?.addEventListener('click', () => {
@@ -337,26 +331,21 @@ class Misc {
   }
 
 /**
- * カプセルの生成
+ * ここでは物理カプセルの生成
  * phycapsule.js
  */
   makePhyCapsule() {
     const param = this.getCommonOptions();
 
     const writer = new PhyCapsule();
-    let top = 'a'; // param.texprefix
+    let top = 'a';
     Object.assign(param, {
-      nameEn: `${top}002_phycapsule_${param.belt}_d${param.denom.toFixed(0)}`,
+      nameEn: `${top}012_phycapsule_${param.belt}_d${param.denom.toFixed(0)}`,
     });
     writer.make(param);
     const bufs = writer.makeBuffer();
     this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-
-    const offsets = writer.toOffsets(bufs);
-    for (const chunk of offsets.chunks) {
-      chunk.hex = `0x${chunk.offset.toString(16)}`;
-    }
-    console.log('makePhyCapsule offsets', offsets);
+    console.log('makePhyCapsule offsets');
   }
 
 /**
