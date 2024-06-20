@@ -385,7 +385,8 @@ class PhyCapsule extends PMX.Maker {
           }
           b.parent = i - 1;
         } else { // even が tree
-          rb.type = PMX.Rigid.TYPE_DYNAMIC;
+          //rb.type = PMX.Rigid.TYPE_DYNAMIC;
+          rb.type = PMX.Rigid.TYPE_DYNAMIC_POS;
           rb.setUIGroup(RIGID_DEFAULT_GROUP);
           b.parent = i - 2;
 
@@ -424,17 +425,36 @@ class PhyCapsule extends PMX.Maker {
     }
 
     { // モーフ 0個
-      for (let i = 0; i < 0; ++i) {
+      for (let i = 0; i < 3; ++i) {
         const m = new PMX.Morph();
-        m.nameJa = 'morph000';
-        m.nameEn = 'morph000';
-        m.type = 1;
+        m.panel = PMX.Morph.PANEL_ETC; // その他
+        m.type = PMX.Morph.TYPE_MATERIAL;
         this.morphs.push(m);
+
+        const mm = new PMX.MaterialMorph();
+        m.materialMorphs.push(mm);
+        mm.setValue(1);
+
+        switch (i) {
+        case 0:
+          m.nameEn = 'rmul';
+          mm.tex = [0, 1, 1, 1];
+          break;
+        case 1:
+          m.nameEn = 'gmul';
+          mm.tex = [1, 0, 1, 1];
+          break;
+        case 2:
+          m.nameEn = 'bmul';
+          mm.tex = [0, 0, 1, 1];
+          break;
+        }
+        m.nameJa = m.nameEn;
       }
     }
 
     { // ボーングループフレーム
-      for (let i = 0; i < 3; ++i) {
+      for (let i = 0; i < 4; ++i) {
         const f = new PMX.Frame();
         f.nameJa = 'その他のボーンたち';
         f.nameEn = `frame00${i}`;
@@ -448,6 +468,11 @@ class PhyCapsule extends PMX.Maker {
         } else if (i === 1) {
           f.nameJa = '表情';
           f.specialFlag = 1;
+        } else if (i === 2) {
+          f.nameJa = '色';
+          for (let j = 0; j < 3; ++j) {
+            f.morphs.push(j);
+          }
         } else {
           for (let j = 1; j < this.bones.length; ++j) {
             f.bones.push(j);

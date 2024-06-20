@@ -464,6 +464,9 @@ class MaterialMorph {
  * RGBA
  */
     this.edge = [0, 0, 0, 0];
+/**
+ * よく使う．RGBA
+ */
     this.tex = [0, 0, 0, 0];
     this.sphere = [0, 0, 0, 0];
     this.toon = [0, 0, 0, 0];

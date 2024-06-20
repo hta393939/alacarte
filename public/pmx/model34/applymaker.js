@@ -451,6 +451,7 @@ class ApplyMaker {
               //_deg2rad(30 * ((rigid.p[0] >= 0) ? -1 : 1)),
               Math.atan2(constDir[0], -constDir[2]) * ((rigid.p[0] >= 0) ? -1 : 1),
               0];
+            joint.rot = [...rigid.rot]; // [ ] 未確認
 
             { // 内側に引き込む
               const rate = -0.2; // これより少なくて良さそう
@@ -538,6 +539,7 @@ class ApplyMaker {
       for (const rigid of parser.rigids) {
         if (rigid.nameJa === '右胸'
           || rigid.nameJa === '左胸') {
+          rigid._boneName = rigid.nameJa;
           rigid.setUINots(1, 2, 3, 4,
             13, 14, 15, 16
           );
@@ -545,7 +547,6 @@ class ApplyMaker {
             // Do nothing.
           } else {
             rigid.type = PMX.Rigid.TYPE_STATIC;
-            rigid._boneName = rigid.nameJa;
           }
           rigids.push(rigid);
         }
