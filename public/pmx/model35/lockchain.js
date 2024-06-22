@@ -388,6 +388,11 @@ class LockChain extends PMX.Maker {
           (beltNum - 1) * beltHeight * scale,
           0];
         rb.p = [...b.p];
+        rb.setUIGroup(RIGID_DEFAULT_GROUP);
+        rb.setUINots(1, 2, 3,
+          5, 6,
+          13, 14, 15, 16,
+        );
         break;
 
       case 4:
@@ -412,6 +417,11 @@ class LockChain extends PMX.Maker {
           beltNum * beltHeight * scale,
           0];
         rb.p = [...b.p];
+        rb.setUIGroup(RIGID_DEFAULT_GROUP);
+        rb.setUINots(1, 2, 3,
+          5, 6,
+          13, 14, 15, 16,
+        );
         break;
 
       case 6:
@@ -424,6 +434,10 @@ class LockChain extends PMX.Maker {
         rb.type = PMX.Rigid.TYPE_STATIC;
         rb.shape = PMX.Rigid.SHAPE_SPHERE;
         rb.setUIGroup(RIGID_DEFAULT_GROUP);
+        rb.setUINots(1, 2, 3,
+          5, 6,
+          13, 14, 15, 16,
+        );
         rb.p = [...b.p];
         break;
 
