@@ -66,7 +66,7 @@ class LockChain extends PMX.Maker {
   }
 
 /**
- * 物理 SDEF してみたい。一旦できた。まんなかを動かす。
+ * 物理 SDEF してみたい。まんなかを動かす。
  * 常時物理
  */
   make(param) {
@@ -303,7 +303,7 @@ class LockChain extends PMX.Maker {
     }
 
     //const rotAng = _rad(90);
-    const rotAng = _rad(50);
+    const rotAng = _rad(45);
     for (let i = 0; i < boneNum; ++i) { // ボーン
       const rr = capsuleR;
 /**
@@ -433,11 +433,8 @@ class LockChain extends PMX.Maker {
         b.p = [0, 0, 0];
         rb.type = PMX.Rigid.TYPE_STATIC;
         rb.shape = PMX.Rigid.SHAPE_SPHERE;
-        rb.setUIGroup(RIGID_DEFAULT_GROUP);
-        rb.setUINots(1, 2, 3,
-          5, 6,
-          13, 14, 15, 16,
-        );
+        rb.setUIGroup(RIGID_IGNORE_GROUP);
+        rb.groupFlags = 0x0000;
         rb.p = [...b.p];
         break;
 
@@ -448,27 +445,18 @@ class LockChain extends PMX.Maker {
           0];
         rb.friction = 1000;
         rb.mass = 0.002; // 重量
-        rb.setUINots(1, 2, 3,
-          5, 6,
-          13, 14, 15, 16,
-        );
         if ((i & 1) !== 0) { // odd がエフェクト
           j = null;
           rb.type = PMX.Rigid.TYPE_STATIC;
           if (i === 7) {
             b.parent = 3; // 3の動きについていく
           } else {
-            b.bits |= PMX.Bone.BIT_AFTERPHY;
+            b.bits |= PMX.Bone.BIT_AFTERPHY; // 物理後
             b.parent = i - 1;
           }
         } else { // even が tree
           //rb.type = PMX.Rigid.TYPE_DYNAMIC;
           rb.type = PMX.Rigid.TYPE_DYNAMIC_POS;
-          rb.setUIGroup(RIGID_DEFAULT_GROUP);
-          rb.setUINots(1, 2, 3,
-            5, 6,
-            13, 14, 15, 16
-          );
           b.parent = i - 2;
 
           if (i + 2 < boneNum) { // 子ボーンが存在するとき
@@ -541,7 +529,7 @@ class LockChain extends PMX.Maker {
           break;
         case 2:
           m.nameEn = 'bmul';
-          mm.tex = [0, 0, 1, 1];
+          mm.tex = [1, 1, 0, 1];
           break;
         }
         m.nameJa = m.nameEn;
