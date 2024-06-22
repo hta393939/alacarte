@@ -119,10 +119,9 @@ class LockChain extends PMX.Maker {
  * センター 2 多分メッシュ無し
  */
 /**
- * ベースボーンインデックス
- * 下の半球
+ * 
  */
-    const baseBoneIndex = 3;
+    const BONE_CENTER = 2;
 
     //const capsuleR = 1 / (2 * Math.PI);
     const capsuleR = 1;
@@ -140,11 +139,6 @@ class LockChain extends PMX.Maker {
  * 内側の存在する部分の幅
  */
     const beltV = 1 - capV * 2;
-
-/**
- * 増えていくボーンインデックス
- */
-    let boneIndex = baseBoneIndex;
 
     for (let i = 0; i < 1; ++i) { // 材質
       const m = new PMX.Material();
@@ -167,9 +161,17 @@ class LockChain extends PMX.Maker {
       this.materials.push(m);
     }
 
+    let boneNum = 3 + beltNum * 2 + 1 + 1;
+// ソート後ボーンリスト
+    const sortedBones = [5, 3];
+    for (let i = 0; i <= beltNum - 2; ++i) {
+      sortedBones.push(i * 2 + 7);
+    }
+    console.log('sortedBones', sortedBones);
+
     let vertexOffset = 0;
     let m = this.materials[0];
-    {
+    { // 頂点
       vertexOffset = this.vts.length;
       for (let i = 0; i <= div / 4; ++i) { // 上半球 +Y
         for (let j = 0; j <= div; ++j) {
@@ -181,14 +183,14 @@ class LockChain extends PMX.Maker {
           let rr = Math.sin(vang) * capsuleR;
           let x = -cs * rr;
           let z =  sn * rr;
-          let y = capsuleR * Math.cos(vang);
+          let y = capsuleR * Math.cos(vang) + beltHeight * beltNum;
 
           v.n = this.normalize([x, y, z]);
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [ (j / div),
             - i / div * 4 * capV + 1];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [baseBoneIndex, 0, 0, 0];
+          v.joints = [sortedBones[0], 0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
           this.vts.push(v);
@@ -205,8 +207,8 @@ class LockChain extends PMX.Maker {
         }
       }
 
-      console.log('boneIndex', boneIndex);
-      let by = 0;
+
+      let by = beltNum * beltHeight;
       for (let h = 0; h < beltNum; ++h) { // まんなか 上から下へ
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
@@ -225,7 +227,12 @@ class LockChain extends PMX.Maker {
             v.uv = [(j / div),
               - i / div * beltV + (1 - capV)];
             v.deformType = PMX.Vertex.DEFORM_SDEF;
-            v.joints = [boneIndex, boneIndex + 2, 0, 0];
+            v.joints = [
+              sortedBones[h],
+              sortedBones[h + 1],
+              0,
+              0
+            ];
             v.weights = [1 - i / div,
               0, 0, 0];
             v.weights[1] = 1 - v.weights[0];
@@ -236,7 +243,6 @@ class LockChain extends PMX.Maker {
             this.vts.push(v);
           }
         }
-        boneIndex += 2;
         by += -beltHeight;
 
         for (let i = 0; i < div; ++i) {
@@ -272,7 +278,7 @@ class LockChain extends PMX.Maker {
             i / div * 4 * capV,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [boneIndex, 0, 0, 0];
+          v.joints = [sortedBones[sortedBones.length - 1], 0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
           this.vts.push(v);
@@ -296,9 +302,9 @@ class LockChain extends PMX.Maker {
       this.textures.push(name);
     }
 
-
-
-    for (let i = 0; i <= boneIndex; ++i) { // ボーン
+    //const rotAng = _rad(90);
+    const rotAng = _rad(50);
+    for (let i = 0; i < boneNum; ++i) { // ボーン
       const rr = capsuleR;
 /**
  * ボーン
@@ -319,8 +325,7 @@ class LockChain extends PMX.Maker {
       let j = new PMX.Joint();
       j.nameEn = `j${_pad(i, 3)}`;
       j.nameJa = j.nameEn;
-      //const rotAng = _rad(90);
-      const rotAng = _rad(45);
+
       j.rotUpper = [rotAng, rotAng * 0, rotAng];
       j.rotLower = [-rotAng, -rotAng * 0, -rotAng];
       j.lockMove();
@@ -371,10 +376,60 @@ class LockChain extends PMX.Maker {
         rb.rot = [Math.PI * 30 / 180, 0, 0];
         break;
 
+      case 3:
+        j = null;
+        b.parent = BONE_CENTER;
+        b.bits |= PMX.Bone.BIT_BONECONNECT;
+        b.endBoneIndex = 4;
+        b.bits |= PMX.Bone.BIT_MOVE;
+        b.nameEn = `b003effmove`;
+        b.nameJa = b.nameEn;
+        b.p = [0,
+          (beltNum - 1) * beltHeight * scale,
+          0];
+        rb.p = [...b.p];
+        break;
+
+      case 4:
+        j = null;
+        b.parent = 3;
+        b.bits |= PMX.Bone.BIT_BONECONNECT;
+        b.endBoneIndex = 5;
+        b.nameJa = `b004tree`;
+        b.nameEn = `b004tree`;
+        b.p = [0,
+          (beltNum * 2 - 1) * beltHeight * 0.5 * scale,
+          0];
+        rb.p = [...b.p];
+        break;
+
+      case 5:
+        j = null;
+        b.parent = 4;
+        b.nameEn = `b005eff`;
+        b.nameJa = `b005eff`;
+        b.p = [0,
+          beltNum * beltHeight * scale,
+          0];
+        rb.p = [...b.p];
+        break;
+
+      case 6:
+        j = null;
+        b.parent = 2;
+        b.bits |= PMX.Bone.BIT_MOVE;
+        b.nameJa = 'ロック6';
+        b.nameEn = 'b006lock';
+        b.p = [0, 0, 0];
+        rb.type = PMX.Rigid.TYPE_STATIC;
+        rb.shape = PMX.Rigid.SHAPE_SPHERE;
+        rb.p = [...b.p];
+        break;
+
       default:
         b.p = [
           0,
-          - (i - baseBoneIndex) * beltHeight * 0.5 * scale,
+          (beltNum * 2 - (i - 5)) * beltHeight * 0.5 * scale,
           0];
         rb.friction = 1000;
         rb.mass = 0.002; // 重量
@@ -384,22 +439,25 @@ class LockChain extends PMX.Maker {
         );
         if ((i & 1) !== 0) { // odd がエフェクト
           j = null;
-          if (i !== baseBoneIndex) {
+          rb.type = PMX.Rigid.TYPE_STATIC;
+          if (i === 7) {
+            b.parent = 3; // 3の動きについていく
+          } else {
             b.bits |= PMX.Bone.BIT_AFTERPHY;
+            b.parent = i - 1;
           }
-          b.parent = i - 1;
         } else { // even が tree
           //rb.type = PMX.Rigid.TYPE_DYNAMIC;
           rb.type = PMX.Rigid.TYPE_DYNAMIC_POS;
           rb.setUIGroup(RIGID_DEFAULT_GROUP);
           b.parent = i - 2;
 
-          if (i + 2 <= boneIndex) { // 子ボーンが存在するとき
+          if (i + 2 < boneNum) { // 子ボーンが存在するとき
             b.bits |= PMX.Bone.BIT_BONECONNECT;
             b.endBoneIndex = i + 2;
           }
-          if (i == baseBoneIndex + 1) {
-            b.parent = baseBoneIndex;
+          if (i == 7 + 1) {
+            b.parent = 4;
             console.log('match first tree', i, b.parent);
           }
           {
@@ -408,8 +466,21 @@ class LockChain extends PMX.Maker {
           }
           // TODO: 動的の場合はすべての親にぶらさげてみる
           //b.parent = 0;
+
+          if (i === beltNum * 2 + 2) { // 一番最後
+            console.log('last reverser joint', i, b.p);
+            const j2 = new PMX.Joint();
+            j2.nameEn = `j${_pad(i, 3)}lock`;
+            j2.nameJa = j2.nameEn;
+            j2.p = [...j.p];
+            j2.rigids = [6, i];
+            j2.rotUpper = [rotAng, 0, rotAng];
+            j2.rotLower = [-rotAng, 0, -rotAng];
+            j2.lockMove();
+            this.joints.push(j2);
+          }
         }
-        if (i == baseBoneIndex) {
+        if (i == 7) {
           b.nameJa += '根っこ';
         }
 // 半径、不使用、不使用
