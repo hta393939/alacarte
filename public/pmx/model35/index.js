@@ -2,8 +2,6 @@
  * @file index.js
  */
 
-const { LockChain } = require("./lockchain");
-
 const _lim = (a, x, b) => {
   if (x < a) {
     return a;

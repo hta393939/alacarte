@@ -25,6 +25,9 @@ const _rad = (deg) => {
   return deg * Math.PI / 180;
 };
 
+/**
+ * 
+ */
 class LockChain extends PMX.Maker {
   constructor() {
     super();
@@ -63,43 +66,50 @@ class LockChain extends PMX.Maker {
   }
 
 /**
- * 偏ったチェーン
+ * 物理 SDEF してみたい。一旦できた。まんなかを動かす。
+ * 常時物理
  */
   make(param) {
-    const _usePhy = true;
+    const _belt = param.belt;
 
-    const _belt = param.belt || 10;
+    const _indexByInclude = (s) => {
+      return this.bones.findIndex(bone => {
+        return bone.nameJa.includes(s);
+      });
+    };
 
     const d = new Date();
 /**
  * 最終位置とサイズへの倍率
  */
-    const scale = param.scale || (1 / 8);
+    const scale = param.scale;
     let div = 16;
-//        const beltNum = 20;
     const beltNum = _belt;
-    const halfBeltNum = _belt * 0.5;
+/**
+ * 移動減衰
+ */
+    const moveDamp = 1;
+    const rotDamp = 1;
+/**
+ * 普通の衝突グループ GUI
+ * 自分にはぶつからない
+ */
+    const RIGID_DEFAULT_GROUP = 4;
+/**
+ * 一切衝突しないグループ(1-origin)
+ */
+    const RIGID_IGNORE_GROUP = 14;
+
     this.debug = 1;
-
-    //const capsuleR = 1 / (2 * Math.PI);
-    const capsuleR = 1;
-/**
- * ベルト1個分
- */
-    const beltHeight = capsuleR * 2;
-/**
- * X軸 伸びた先
- */
-    const centerOffset = beltHeight * halfBeltNum;
-
-    const sideBoneNum = halfBeltNum * 2 + 1;
 
     this.head.nameEn = param.nameEn;
     this.head.nameJa = this.head.nameEn;
     let s = `${d.toLocaleString()} LockChain.make\r\n`;
-    s += `phy: ${_usePhy}\r\n`;
-    s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
-    s += `${param.texprefix}`;
+    s += `damp: ${moveDamp}, ${rotDamp}\r\n`;
+    s += `gui group: ${RIGID_DEFAULT_GROUP}`;
+    s += `, scale: ${scale}, div: ${div}\r\n`;
+    s += `belt: ${beltNum}\r\n`;
+    s += `${param.texprefix}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
@@ -110,19 +120,37 @@ class LockChain extends PMX.Maker {
  */
 /**
  * ベースボーンインデックス
- * @default 3
+ * 下の半球
  */
     const baseBoneIndex = 3;
 
+    //const capsuleR = 1 / (2 * Math.PI);
+    const capsuleR = 1;
+/**
+ * ベルト1個分
+ */
+    const beltHeight = capsuleR * 2;
+
+/**
+ * 上下の空いてる幅
+ */
     const capV = 92 / 512;
     //const capV = 0.25;
+/**
+ * 内側の存在する部分の幅
+ */
     const beltV = 1 - capV * 2;
+
+/**
+ * 増えていくボーンインデックス
+ */
+    let boneIndex = baseBoneIndex;
 
     for (let i = 0; i < 1; ++i) { // 材質
       const m = new PMX.Material();
       m._index = i;
       m.nameEn = `mtl${_pad(i, 3)}`;
-      m.nameJa = m.nameEn;
+      m.nameJa = m.nameJa;
       m.texIndex = 0;
       m.diffuse = [1, 1, 1, 1];
       m.specular = [0.2, 0.2, 0.2];
@@ -143,7 +171,7 @@ class LockChain extends PMX.Maker {
     let m = this.materials[0];
     {
       vertexOffset = this.vts.length;
-      for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
+      for (let i = 0; i <= div / 4; ++i) { // 上半球 +Y
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
           let vang = Math.PI * 2 * i / div;
@@ -151,18 +179,16 @@ class LockChain extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.sin(vang) * capsuleR;
-          let y = cs * rr;
-          let z = sn * rr;
-          let x = -capsuleR * Math.cos(vang);
+          let x = -cs * rr;
+          let z =  sn * rr;
+          let y = capsuleR * Math.cos(vang);
 
           v.n = this.normalize([x, y, z]);
-          x += -centerOffset;
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [ (j / div),
-            i / div * 4 * capV];
+            - i / div * 4 * capV + 1];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [baseBoneIndex + (sideBoneNum * 1 - 1),
-            0, 0, 0];
+          v.joints = [baseBoneIndex, 0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
           this.vts.push(v);
@@ -174,12 +200,14 @@ class LockChain extends PMX.Maker {
           let v1 = v0 + 1;
           let v2 = v0 + (div + 1);
           let v3 = v2 + 1;
-          m.faces.push([v0, v1, v2]);
-          m.faces.push([v2, v1, v3]);
+          m.faces.push([v0, v2, v1]);
+          m.faces.push([v2, v3, v1]);
         }
       }
-      let bx = - centerOffset;
-      for (let h = 0; h < beltNum; ++h) { // まんなか
+
+      console.log('boneIndex', boneIndex);
+      let by = 0;
+      for (let h = 0; h < beltNum; ++h) { // まんなか 上から下へ
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
           for (let j = 0; j <= div; ++j) {
@@ -188,36 +216,28 @@ class LockChain extends PMX.Maker {
             let hang = Math.PI * 2 * j / div;
             const cs = Math.cos(hang);
             const sn = Math.sin(hang);
-            let y = sn * rr;
-            let x = bx + i * beltHeight / div;
+            let x = -sn * rr;
+            let y = by - i * beltHeight / div;
             let z = cs * rr;
 
-            v.n = this.normalize([0, y, z]);
+            v.n = this.normalize([x, 0, z]);
             v.p = [x * scale, y * scale, z * scale];
             v.uv = [(j / div),
-              i / div * beltV + capV];
+              - i / div * beltV + (1 - capV)];
             v.deformType = PMX.Vertex.DEFORM_SDEF;
-
-            let fromCenter = (halfBeltNum - 1 - h);
-            let rightBone = fromCenter * 2 + baseBoneIndex;
-            let leftBone = rightBone + 2;
-            if (h >= halfBeltNum) { // 右半分
-              fromCenter = h - halfBeltNum;
-              leftBone = fromCenter * 2 + baseBoneIndex + sideBoneNum;
-              rightBone = leftBone + 2;
-            }
-            v.joints = [leftBone, rightBone, 0, 0];
+            v.joints = [boneIndex, boneIndex + 2, 0, 0];
             v.weights = [1 - i / div,
               0, 0, 0];
             v.weights[1] = 1 - v.weights[0];
-            v.r0 = [bx * scale, 0, 0];
-            v.r1 = [(bx + beltHeight) * scale, 0, 0];
-            v.c = [x * scale, 0, 0];
+            v.r0 = [0, by * scale, 0]; // +Z は奥
+            v.r1 = [0, (by - beltHeight) * scale, 0]; // -Z は手前
+            v.c = [0, y * scale, 0];
 
             this.vts.push(v);
           }
         }
-        bx += beltHeight;
+        boneIndex += 2;
+        by += -beltHeight;
 
         for (let i = 0; i < div; ++i) {
           for (let j = 0; j < div; ++j) {
@@ -225,15 +245,15 @@ class LockChain extends PMX.Maker {
             let v1 = v0 + 1;
             let v2 = v0 + (div + 1);
             let v3 = v2 + 1;
-            m.faces.push([v0, v2, v1]);
-            m.faces.push([v2, v3, v1]);
+            m.faces.push([v0, v1, v2]);
+            m.faces.push([v2, v1, v3]);
           }
         }
       }
 
       vertexOffset = this.vts.length;
-      console.log('右半分', 'bx', bx, 'vertexOffset', vertexOffset);
-      for (let i = 0; i <= div/4; ++i) { // 右半球 +Y
+      console.log('下半分', 'by', by, 'vertexOffset', vertexOffset);
+      for (let i = 0; i <= div/4; ++i) { // 下半球 -Y
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
           const vang = Math.PI * 2 * i / div;
@@ -241,19 +261,18 @@ class LockChain extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.cos(vang) * capsuleR;
-          let y = sn * rr;
-          let z = cs * rr;
-          let x = Math.sin(vang);
+          let x = -cs * rr;
+          let z = sn * rr;
+          let y = -Math.sin(vang);
 
           v.n = this.normalize([x, y, z]);
-          x += centerOffset;
+          y = (y * capsuleR) + by;
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [ (j / div),
-            i / div * 4 * capV + (1 - capV),
+            i / div * 4 * capV,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [baseBoneIndex + sideBoneNum * 2 - 1,
-            0, 0, 0];
+          v.joints = [boneIndex, 0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
           this.vts.push(v);
@@ -268,25 +287,18 @@ class LockChain extends PMX.Maker {
           m.faces.push([v0, v2, v1]);
           m.faces.push([v2, v3, v1]);
         }
-      } // 右の半球
+      } // 下の半球
 
     }
 
     {
-      let name = `tex/${param.texprefix}013.png`;
+      let name = `tex/${param.texprefix}012.png`;
       this.textures.push(name);
     }
-/**
- * 一切衝突しないグループ(1-origin)
- */
-    const RIGID_IGNORE_GROUP = 14;
 
-/**
- * 普通の衝突グループ(1-origin UI)
- */
-    const RIGID_DEFAULT_GROUP = 4;
 
-    for (let i = 0; i <= 2; ++i) { // ボーン
+
+    for (let i = 0; i <= boneIndex; ++i) { // ボーン
       const rr = capsuleR;
 /**
  * ボーン
@@ -295,167 +307,140 @@ class LockChain extends PMX.Maker {
 /**
  * 剛体
  */
-      let r = new PMX.Rigid();
-// 関連ボーンのインデックス
-      r.bone = i;
-      r.type = PMX.Rigid.TYPE_STATIC;
+      let rb = new PMX.Rigid();
+      rb.bone = i;
+      rb.type = PMX.Rigid.TYPE_STATIC;
+      rb.groupFlags = 0x0000;
+      rb.setUIGroup(RIGID_IGNORE_GROUP);
+      rb.shape = PMX.Rigid.SHAPE_SPHERE;
+      rb.moveDamping = moveDamp;
+      rb.rotDamping = rotDamp;
+
+      let j = new PMX.Joint();
+      j.nameEn = `j${_pad(i, 3)}`;
+      j.nameJa = j.nameEn;
+      //const rotAng = _rad(90);
+      const rotAng = _rad(45);
+      j.rotUpper = [rotAng, rotAng * 0, rotAng];
+      j.rotLower = [-rotAng, -rotAng * 0, -rotAng];
+      j.lockMove();
 
       let x = 0;
       let y = 0;
       let z = 0;
-      r.p = [x * scale, y * scale, z * scale];
-      r.size = [rr * scale, 0.5 * scale, 1 * scale];
+      rb.p = [x * scale, y * scale, z * scale];
+      rb.size = [rr * scale, 0.5 * scale, 1 * scale];
 
       let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
         | PMX.Bone.BIT_VISIBLE;
       bits |= PMX.Bone.BIT_CONTROL;
       b.bits = bits;
+// even が tree
+      let opt = ((i & 1) === 0) ? 'tree' : 'effleaf';
+      b.nameJa = `b${_pad(i, 3)}${opt}`;
+      b.nameEn = b.nameJa;
+      rb.nameJa = `rb${_pad(i, 3)}`;
+      rb.nameEn = rb.nameJa;
 
       b.parent = i - 1;
-      b.layer = 0;
 
       switch(i) {
       case 0:
+        j = null;
         b.nameJa = '全ての親';
         b.nameEn = 'root';
-        r.setUIGroup(RIGID_IGNORE_GROUP);
-        r.groupFlags = 0x0000;
-        r.shape = PMX.Rigid.SHAPE_BOX;
-        r.size = [0.1, 0.05, 0.05];
+        rb.shape = PMX.Rigid.SHAPE_BOX;
+        rb.size = [0.1, 0.05, 0.05];
         break;
       case 1:
+        j = null;
         b.nameJa = '操作中心'; // 視点基準
         b.nameEn = 'view cnt bone';
         b.parent = -1;
-        r.setUIGroup(RIGID_IGNORE_GROUP);
-        r.groupFlags = 0x0000;
-        r.shape = PMX.Rigid.SHAPE_BOX;
-        r.size = [0.05, 0.05, 0.1];
-        r.rot = [0, 0, Math.PI * 30 / 180];
+        rb.shape = PMX.Rigid.SHAPE_BOX;
+        rb.size = [0.05, 0.05, 0.1];
+        rb.rot = [0, 0, Math.PI * 30 / 180];
         break;
       case 2:
+        j = null;
         b.parent = 0;
         b.nameJa = 'センター';
         b.nameEn = 'center';
-        r.setUIGroup(RIGID_IGNORE_GROUP);
-        r.groupFlags = 0x0000;
-        r.shape = PMX.Rigid.SHAPE_BOX;
-        r.size = [0.05, 0.1, 0.05];
-        r.rot = [Math.PI * 30 / 180, 0, 0];
+        rb.shape = PMX.Rigid.SHAPE_BOX;
+        rb.size = [0.05, 0.1, 0.05];
+        rb.rot = [Math.PI * 30 / 180, 0, 0];
+        break;
+
+      default:
+        b.p = [
+          0,
+          - (i - baseBoneIndex) * beltHeight * 0.5 * scale,
+          0];
+        rb.friction = 1000;
+        rb.mass = 0.002; // 重量
+        rb.setUINots(1, 2, 3,
+          5, 6,
+          13, 14, 15, 16,
+        );
+        if ((i & 1) !== 0) { // odd がエフェクト
+          j = null;
+          if (i !== baseBoneIndex) {
+            b.bits |= PMX.Bone.BIT_AFTERPHY;
+          }
+          b.parent = i - 1;
+        } else { // even が tree
+          //rb.type = PMX.Rigid.TYPE_DYNAMIC;
+          rb.type = PMX.Rigid.TYPE_DYNAMIC_POS;
+          rb.setUIGroup(RIGID_DEFAULT_GROUP);
+          b.parent = i - 2;
+
+          if (i + 2 <= boneIndex) { // 子ボーンが存在するとき
+            b.bits |= PMX.Bone.BIT_BONECONNECT;
+            b.endBoneIndex = i + 2;
+          }
+          if (i == baseBoneIndex + 1) {
+            b.parent = baseBoneIndex;
+            console.log('match first tree', i, b.parent);
+          }
+          {
+            j.p = [...b.p];
+            j.rigids = [b.parent, i];
+          }
+          // TODO: 動的の場合はすべての親にぶらさげてみる
+          //b.parent = 0;
+        }
+        if (i == baseBoneIndex) {
+          b.nameJa += '根っこ';
+        }
+// 半径、不使用、不使用
+        rb.size = [capsuleR * scale, scale, scale];
+        rb.p = [...b.p];
         break;
       }
 
       if (b) {
         this.bones.push(b);
       }
-      if (r & _usePhy) {
-        this.rigids.push(r);
+      if (rb) {
+        this.rigids.push(rb);
+      }
+      if (j) {
+        this.joints.push(j);
       }
     }
 
-    for (let h = 0; h < 2; ++h) {
-      const dx = (h === 0) ? (-1) : 1;
-      for (let i = 0; i < sideBoneNum; ++i) { // ボーン
-        const rr = capsuleR;
-/**
- * ボーン
- */
-        let b = new PMX.Bone();
-/**
- * 剛体
- */
-        let r = new PMX.Rigid();
-        r.bone = baseBoneIndex + sideBoneNum * h + i;
-        r.type = PMX.Rigid.TYPE_STATIC; // 追従
-
-        let x = beltHeight * 0.5 * i * dx;
-        let y = 0;
-        let z = 0;
-        r.size = [rr * scale, 0.5 * scale, 1 * scale];
-        b.p = [x * scale, y * scale, z * scale];
-
-        let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
-          | PMX.Bone.BIT_VISIBLE;
-        bits |= PMX.Bone.BIT_CONTROL;
-        b.bits = bits;
-// odd が tree
-        let opt = ((i & 1) === 0) ?
-          'effleaf' : 'tree';
-        const index = this.bones.length;
-        b.nameJa = `b${_pad(index, 3)}${opt}`;
-        b.nameEn = b.nameJa;
-        r.nameJa = `rb${_pad(index, 3)}`;
-        r.nameEn = r.nameJa;
-
-        b.parent = r.bone - 1;
-        b.layer = 0;
-
-        switch (i) {
-        default:
-
-          b.layer = 0;
-          r.friction = 1000;
-          r.mass = 0.002; // 重量
-          r.setUIGroup(RIGID_DEFAULT_GROUP);
-          r.setUINots(1, 2, 4, // UI3 とは当たる
-            5, 6, 7, 8,
-            13, 14, 15, 16);
-          if ((i & 1) === 0) { // even がエフェクト
-            b.parent = r.bone - 1;
-            //b.layer = 3;
-          } else { // odd が tree IK
-            b.parent = r.bone - 2;
-            if (i + 2 < sideBoneNum) {
-              b.bits |= PMX.Bone.BIT_BONECONNECT;
-              b.endBoneIndex = r.bone + 2;
-            }
-            if (i == 1) {
-              b.parent = baseBoneIndex + sideBoneNum * h;
-              console.log('match first ik', i, b.parent);
-            }
-          }
-          if (i == 0) {
-            b.nameJa += '根っこ';
-            b.parent = baseBoneIndex - 1;
-          }
-
-  /*
-        r.shape = PMXRigid.SHAPE_SPHERE;
-        // 半径、高さ、不使用
-        r.size = [capsuleR * scale, 0.5 * scale, 1 * scale];
-        r.p = [...b.p];
-        */
-          r.shape = PMX.Rigid.SHAPE_CAPSULE;
-        // カプセルだと 半径、高さ、不使用
-          r.size = [capsuleR * scale, 0.5 * scale * 0.5, 1 * scale];
-          r.p = [...b.p];
-          if (opt !== 'effleaf') {
-            r = null;
-          }
-          break;
-        }
-
-        if (b) {
-          this.bones.push(b);
-        }
-        if (r & _usePhy) {
-          this.rigids.push(r);
-        }
-      }
-    }
-
-    { // モーフ 3個
+    { // モーフ 0個
       for (let i = 0; i < 3; ++i) {
         const m = new PMX.Morph();
-        m.nameJa = `mr${i}`;
-        m.nameEn = `mr${i}`;
+        m.panel = PMX.Morph.PANEL_ETC; // その他
         m.type = PMX.Morph.TYPE_MATERIAL;
-        m.panel = PMX.Morph.PANEL_ETC;
+        this.morphs.push(m);
+
         const mm = new PMX.MaterialMorph();
-        mm.calcType = PMX.MaterialMorph.CALC_MUL;
-        mm.setValue(1);
         m.materialMorphs.push(mm);
-        switch(i) {
+        mm.setValue(1);
+
+        switch (i) {
         case 0:
           m.nameEn = 'rmul';
           mm.tex = [0, 1, 1, 1];
@@ -466,11 +451,10 @@ class LockChain extends PMX.Maker {
           break;
         case 2:
           m.nameEn = 'bmul';
-          mm.tex = [1, 1, 0, 1];
+          mm.tex = [0, 0, 1, 1];
           break;
         }
         m.nameJa = m.nameEn;
-        this.morphs.push(m);
       }
     }
 
@@ -478,7 +462,7 @@ class LockChain extends PMX.Maker {
       for (let i = 0; i < 4; ++i) {
         const f = new PMX.Frame();
         f.nameJa = 'その他のボーンたち';
-        f.nameEn = `fr00${i}`;
+        f.nameEn = `frame00${i}`;
         f.specialFlag = 0;
         f.bones = [];
 
@@ -491,7 +475,9 @@ class LockChain extends PMX.Maker {
           f.specialFlag = 1;
         } else if (i === 2) {
           f.nameJa = '色';
-          f.morphs.push(0, 1, 2);
+          for (let j = 0; j < 3; ++j) {
+            f.morphs.push(j);
+          }
         } else {
           for (let j = 1; j < this.bones.length; ++j) {
             f.bones.push(j);
@@ -516,3 +502,4 @@ if (typeof exports !== 'undefined') {
 }
 
 })(globalThis);
+
