@@ -161,11 +161,11 @@ class LockChain extends PMX.Maker {
       this.materials.push(m);
     }
 
-    let boneNum = 3 + beltNum * 2 + 1 + 1;
+    let boneNum = 3 + beltNum * 2 + 1 + 1 + 1;
 // ソート後ボーンリスト
     const sortedBones = [5, 3];
     for (let i = 0; i <= beltNum - 2; ++i) {
-      sortedBones.push(i * 2 + 7);
+      sortedBones.push(i * 2 + 9);
     }
     console.log('sortedBones', sortedBones);
 
@@ -220,7 +220,7 @@ class LockChain extends PMX.Maker {
             const sn = Math.sin(hang);
             let x = -sn * rr;
             let y = by - i * beltHeight / div;
-            let z = cs * rr;
+            let z =  cs * rr;
 
             v.n = this.normalize([x, 0, z]);
             v.p = [x * scale, y * scale, z * scale];
@@ -416,13 +416,14 @@ class LockChain extends PMX.Maker {
 
       case 6:
         j = null;
-        b.parent = 2;
+        b.parent = BONE_CENTER;
         b.bits |= PMX.Bone.BIT_MOVE;
-        b.nameJa = 'ロック6';
         b.nameEn = 'b006lock';
+        b.nameJa = b.nameEn;
         b.p = [0, 0, 0];
         rb.type = PMX.Rigid.TYPE_STATIC;
         rb.shape = PMX.Rigid.SHAPE_SPHERE;
+        rb.setUIGroup(RIGID_DEFAULT_GROUP);
         rb.p = [...b.p];
         break;
 
@@ -450,6 +451,10 @@ class LockChain extends PMX.Maker {
           //rb.type = PMX.Rigid.TYPE_DYNAMIC;
           rb.type = PMX.Rigid.TYPE_DYNAMIC_POS;
           rb.setUIGroup(RIGID_DEFAULT_GROUP);
+          rb.setUINots(1, 2, 3,
+            5, 6,
+            13, 14, 15, 16
+          );
           b.parent = i - 2;
 
           if (i + 2 < boneNum) { // 子ボーンが存在するとき
@@ -457,7 +462,7 @@ class LockChain extends PMX.Maker {
             b.endBoneIndex = i + 2;
           }
           if (i == 7 + 1) {
-            b.parent = 4;
+            b.parent = 3;
             console.log('match first tree', i, b.parent);
           }
           {
@@ -467,7 +472,7 @@ class LockChain extends PMX.Maker {
           // TODO: 動的の場合はすべての親にぶらさげてみる
           //b.parent = 0;
 
-          if (i === beltNum * 2 + 2) { // 一番最後
+          if (i === Math.floor((boneNum - 1) / 2) * 2) { // 一番最後
             console.log('last reverser joint', i, b.p);
             const j2 = new PMX.Joint();
             j2.nameEn = `j${_pad(i, 3)}lock`;
@@ -500,7 +505,7 @@ class LockChain extends PMX.Maker {
       }
     }
 
-    { // モーフ 0個
+    { // モーフ
       for (let i = 0; i < 3; ++i) {
         const m = new PMX.Morph();
         m.panel = PMX.Morph.PANEL_ETC; // その他
