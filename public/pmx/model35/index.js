@@ -2,6 +2,8 @@
  * @file index.js
  */
 
+const { LockChain } = require("./lockchain");
+
 const _lim = (a, x, b) => {
   if (x < a) {
     return a;
@@ -198,22 +200,19 @@ class Misc {
       console.log('bon offsets', offsets);
     });
 
-    window.idmakecentercapsule?.addEventListener('click', () => {
+    window.idmakelockchain?.addEventListener('click', () => {
       const param = this.getCommonOptions();
       let top = 'a'; // param.texprefix
+      const d = param.denom;
+      const dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
       Object.assign(param, {
-        nameEn: `${top}003_centercapsule_${param.belt}_d${param.denom.toFixed(0)}`,
+        nameEn: `${top}013_lockchain_${param.belt}_${dtext}`,
       });
-      const writer = new CenterCapsule();
+      const writer = new LockChain();
       writer.make(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-  
-      const offsets = writer.toOffsets(bufs);
-      for (const chunk of offsets.chunks) {
-        chunk.hex = `0x${chunk.offset.toString(16)}`;
-      }
-      console.log('make center capsule offsets', offsets);
+      console.log('make lockchain');
     });
 
     window.idmakeik?.addEventListener('click', () => {
@@ -339,8 +338,10 @@ class Misc {
 
     const writer = new PhyCapsule();
     let top = 'a';
+    const d = param.denom;
+    const dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
     Object.assign(param, {
-      nameEn: `${top}012_phycapsule_${param.belt}_d${param.denom.toFixed(0)}`,
+      nameEn: `${top}012_phycapsule_${param.belt}_${dtext}`,
     });
     writer.make(param);
     const bufs = writer.makeBuffer();
