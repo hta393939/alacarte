@@ -77,6 +77,10 @@ export class Tg {
     }
   }
 
+  /**
+   * 
+   * @returns {THREE.Mesh}
+   */
   makeMesh() {
     {
       const vnum = 10;
@@ -119,6 +123,8 @@ export class Tg {
       //geo.addAttribute('weight', new THREE.BufferAttribute(ps, 4));
       //geo.addAttribute('joint', new THREE.BufferAttribute(ps, 4));
       geo.setIndex(fis);
+      geo.computeBoundingBox();
+      geo.computeBoundingSphere();
 
       const mtl = new THREE.MeshStandardMaterial({
         color: 0x8080ff,
