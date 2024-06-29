@@ -26,6 +26,7 @@ const _norm = (x, y, z) => {
 
 export class Tg {
   constructor() {
+    this.div = 16;
   }
 
   async initialize() {
@@ -224,7 +225,7 @@ export class Tg {
    * @returns {{vs: Vtx[], fis: number[]}}
    */
   createLathe(vs, indexOffset) {
-    const div = 16;
+    const div = this.div;
     const ret = {vs: [], fis: []};
     const num = vs.length;
     for (let i = 0; i < num; ++i) {

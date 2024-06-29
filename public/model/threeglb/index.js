@@ -19,6 +19,8 @@ const _norm = (x, y, z) => {
 class Misc extends Tg {
   constructor() {
     super();
+
+    this.div = 32;
   }
 
   async init() {
@@ -211,11 +213,67 @@ class Misc extends Tg {
       return ret;
     };
 
+    /**
+     * 一周した厚みの無い円盤
+     * @param {number} radius 
+     * @param {number} iny 
+     * @param {number} inny 
+     * @param {number} indexOffset
+     */
+    const makeYDisc = (radius, iny, inny, indexOffset) => {
+      const ret = {vs: [], fis: []};
+      const div = this.div;
+      for (let i = 0; i < div; ++i) {
+        const ang = Math.PI * 2 * i / div;
+        const cs = Math.cos(ang);
+        const sn = Math.sin(ang);
+        const vt = {
+          p: [cs * radius, iny, -sn * radius],
+          n: [0, inny, 0],
+          uv: [0.5 + cs * 0.5, 0.5 + sn * 0.5],
+        };
+        ret.vs.push(vt);
+
+        let v0 = div;
+        let v1 = i;
+        let v2 = (i + 1) % div;
+        v0 += indexOffset;
+        v1 += indexOffset;
+        v2 += indexOffset;
+        if (inny > 0) {
+          ret.fis.push(v0, v1, v2);
+        } else {
+          ret.fis.push(v0, v2, v1);
+        }
+      }
+      {
+        const vt = {
+          p: [0, iny, 0],
+          n: [0, inny, 0],
+          uv: [0.5, 0.5],
+        };
+        ret.vs.push(vt);       
+      }
+      return ret;
+    };
+
+    /**
+     * 最終頂点配列
+     */
+    const vts = [];
+    const fis = [];
+    let index = 0;
+
     const vs = [];
     let x = 0.4;
     let y = 0;
     const parts = [];
-    parts.push(makeCurve([0, y], [x / 3, y], [x * 2 / 3, y], [x, y]));
+    { // 下面
+      const disc = makeYDisc(x, y, -1, vts.length);
+      vts.push(...disc.vs);
+      fis.push(...disc.fis);
+    }
+
     parts.push(makeDisc(thin2, thin2, x));
     y += thin2 * 2;
     parts.push(makeCurve([x, y], [x-0.02, y+0.02], [x-0.04, y+0.04], [x-0.06, y+0.06]));
@@ -236,7 +294,11 @@ class Misc extends Tg {
     x -= 0.06;
     parts.push(makeDisc(y + thin2, thin2, x));
     y += thin2 * 2;
-    parts.push(makeCurve([x, y], [x * 2 / 3, y], [x / 3, y], [0, y]));
+    { // 上面
+      const disc = makeYDisc(x, y, 1, vts.length);
+      vts.push(...disc.vs);
+      fis.push(...disc.fis);
+    }
 
     for (const part of parts) {
       vs.push(...part.vs);
@@ -244,26 +306,26 @@ class Misc extends Tg {
     this.draw(window.maincanvas, vs);
 
     const geo = new THREE.BufferGeometry();
-    const vts = [];
-    const fis = [];
-    let index = 0;
+
     for (let part of parts) {
       index = vts.length;
       const lathe = this.createLathe(part.vs, index);
       vts.push(...lathe.vs);
       fis.push(...lathe.fis);
     }
+
     const vnum = vts.length;
     const ps = new Float32Array(vnum * 3);
     const ns = new Float32Array(vnum * 3);
     const uvs = new Float32Array(vnum * 2);
+    const scale = 1 / 2;
     for (let i = 0; i < vnum; ++i) {
       const pt = vts[i];
       const ft3 = i * 3;
       const ft2 = i * 2;
-      ps[ft3] = pt.p[0];
-      ps[ft3+1] = pt.p[1];
-      ps[ft3+2] = pt.p[2];
+      ps[ft3] = pt.p[0] * scale;
+      ps[ft3+1] = pt.p[1] * scale;
+      ps[ft3+2] = pt.p[2] * scale;
       ns[ft3] = pt.n[0];
       ns[ft3+1] = pt.n[1];
       ns[ft3+2] = pt.n[2];
