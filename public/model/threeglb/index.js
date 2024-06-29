@@ -39,16 +39,94 @@ class Misc {
       preservedDrawingBuffer: true,
     });
     this.renderer = renderer;
-    //renderer.setSize(320, 180);
+    renderer.setSize(320, 180);
+
     const scene = new THREE.Scene();
     this.scene = scene;
-    const camera = new THREE.PerspectiveCamera();
+    const camera = new THREE.PerspectiveCamera(
+      45, 16/9, 0.02, 768
+    );
     this.camera = camera;
+    camera.position.copy(new THREE.Vector3(1, 1, 5));
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+    {
+      const light = new THREE.DirectionalLight(0xffffff);
+      light.name = 'light';
+      const obj3d = new THREE.Object3D();
+      light.target = obj3d;
+      scene.add(light);
+    }
 
     const controller = new OrbitControls(camera, canvas);
     this.controller = controller;
 
+    this.makeScene();
+    //this.makeMesh();
+
     this.update();
+  }
+
+  makeScene() {
+    {
+      const geo = new THREE.SphereGeometry(2, 2);
+      const mtl = new THREE.MeshStandardMaterial({
+        color: 0xff8000,
+      });
+      const m = new THREE.Mesh(geo, mtl);
+      this.scene.add(m);
+    }
+  }
+
+  makeMesh() {
+    {
+      const vnum = 10;
+      const ps = new Float32Array(vnum * 3);
+      const ns = new Float32Array(vnum * 3);
+      const uvs = new Float32Array(vnum * 2);
+      const ws = new Float32Array(vnum * 4);
+      const js = new Float32Array(vnum * 4);
+      const fis = new Array(1 * 3);
+
+      for (let i = 0; i < 10; ++i) {
+        let ft3 = i * 3;
+        let ft2 = i * 2;
+        let ft4 = i * 4;
+        ps[ft3  ] = i & 1;
+        ps[ft3+1] = 1 - Math.floor(i / 2);
+        ps[ft3+2] = 0;
+        ns[ft3  ] = 0;
+        ns[ft3+1] = 0;
+        ns[ft3+2] = 1;
+        uvs[ft2  ] = 0.5;
+        uvs[ft2+1] = 0.5;
+        ws[ft4  ] = 1;
+        ws[ft4+1] = 0;
+        ws[ft4+2] = 0;
+        ws[ft4+3] = 0;
+        js[ft4  ] = 0;
+        js[ft4+1] = 0;
+        js[ft4+2] = 0;
+        js[ft4+3] = 0;
+        fis[0] = 0;
+        fis[1] = 1;
+        fis[2] = 2;
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(ps, 3));
+      geo.setAttribute('normal', new THREE.BufferAttribute(ns, 3));
+      geo.setAttribute('uv', new THREE.BufferAttribute(ps, 2));
+      //geo.addAttribute('weight', new THREE.BufferAttribute(ps, 4));
+      //geo.addAttribute('joint', new THREE.BufferAttribute(ps, 4));
+      geo.setIndex(fis);
+
+      const mtl = new THREE.MeshStandardMaterial({
+        color: 0x8080ff,
+      });
+      const m = new THREE.Mesh(geo, mtl);
+      this.scene.add(m);
+    }
   }
 
   update() {
@@ -61,6 +139,14 @@ class Misc {
   }
 
   async makeGlb() {
+    for (const k of ['light']) {
+      const obj = this.scene.getObjectByName(k);
+      if (!obj) {
+        continue;
+      }
+      //this.scene.remove(obj);
+    }
+
     const exporter = new GLTFExporter();
 
     const opt = {
@@ -164,62 +250,62 @@ class Misc {
  * 
  * @param {HTMLCanvasElement} canvas 
  */
-async make1(canvas) {
+  async make1(canvas) {
 
-  const w = canvas.width;
-  const h = canvas.height;
-  const c = canvas.getContext('2d');
-  const data = c.getImageData(0, 0, w, h);
+    const w = canvas.width;
+    const h = canvas.height;
+    const c = canvas.getContext('2d');
+    const data = c.getImageData(0, 0, w, h);
 
-  const router = 37;
+    const router = 37;
 
-  {
-    const rot = Math.PI * 20 / 180;
-    for (let y = 0; y < h; ++y) {
-      for (let x = 0; x < w; ++x) {
-        let dx = (x - w * 0.5) / (w * 0.5);
-        let dy = (y - h * 0.5) / (h * 0.5);
-        const d = Math.sqrt(dx * dx + dy * dy);
-        const ang = Math.atan2(-dy, dx);
-        const deg = ang * 180 / Math.PI;
+    {
+      const rot = Math.PI * 20 / 180;
+      for (let y = 0; y < h; ++y) {
+        for (let x = 0; x < w; ++x) {
+          let dx = (x - w * 0.5) / (w * 0.5);
+          let dy = (y - h * 0.5) / (h * 0.5);
+          const d = Math.sqrt(dx * dx + dy * dy);
+          const ang = Math.atan2(-dy, dx);
+          const deg = ang * 180 / Math.PI;
 
-        dx *= 1;
-        dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
-        const cs = Math.cos(rot);
-        const sn = Math.sin(rot);
-        let vx = dx * cs - dy * sn;
-        let vy = dx * sn + dy * cs;
+          dx *= 1;
+          dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
+          const cs = Math.cos(rot);
+          const sn = Math.sin(rot);
+          let vx = dx * cs - dy * sn;
+          let vy = dx * sn + dy * cs;
 
-        const d2 = Math.sqrt(vx * vx + vy * vy);
-        let lv = 1 - d2 * 1;
-        lv = Math.max(0, Math.min(1, lv));
+          const d2 = Math.sqrt(vx * vx + vy * vy);
+          let lv = 1 - d2 * 1;
+          lv = Math.max(0, Math.min(1, lv));
 
-        const offset = (x + h * y) * 4;
+          const offset = (x + h * y) * 4;
 
-        lv *= 255;
+          lv *= 255;
 
-        let r = 255;
-        let g = 204;
-        let b = 204;
-        let a = lv;
-        r = lv;
-        g = lv;
-        b = lv;
-        a = 255;
+          let r = 255;
+          let g = 204;
+          let b = 204;
+          let a = lv;
+          r = lv;
+          g = lv;
+          b = lv;
+          a = 255;
 
-        r = Math.max(0, Math.min(r, 255));
-        g = Math.max(0, Math.min(g, 255));
-        b = Math.max(0, Math.min(b, 255));
+          r = Math.max(0, Math.min(r, 255));
+          g = Math.max(0, Math.min(g, 255));
+          b = Math.max(0, Math.min(b, 255));
 
-        data.data[offset+0] = r;
-        data.data[offset+1] = g;
-        data.data[offset+2] = b;
-        data.data[offset+3] = a;
+          data.data[offset+0] = r;
+          data.data[offset+1] = g;
+          data.data[offset+2] = b;
+          data.data[offset+3] = a;
+        }
       }
     }
+    c.putImageData(data, 0, 0);
   }
-  c.putImageData(data, 0, 0);
-}
 
 /**
  * 
