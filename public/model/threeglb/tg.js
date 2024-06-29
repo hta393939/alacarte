@@ -22,8 +22,6 @@ export class Tg {
   }
 
   async initialize() {
-    this.makeRoundPath();
-
     this.initThree(window.subcanvas);
   }
 
@@ -62,7 +60,7 @@ export class Tg {
     this.makeScene();
     {
       const m = this.makeMesh();
-      scene.add(m);
+      //scene.add(m);
     }
 
     this.update();
@@ -140,6 +138,7 @@ export class Tg {
   }
 
   async makeGlb() {
+    console.log('makeGlb');
     for (const k of ['light']) {
       const obj = this.scene.getObjectByName(k);
       if (!obj) {
@@ -274,95 +273,6 @@ export class Tg {
     a.download = name;
     a.href = URL.createObjectURL(blob);
     a.click();
-  }
-
-  makeRoundPath() {
-    // +
-    // しずく
-    // (=)
-    // ノ 長い胴体
-    // (=)
-    // ノ ベース
-    // (=)
-    // 下から
-    const thin2 = 0.05;
-
-    const makeDisc = (height, _thin2, radius) => {
-      const ret = {vs: []};
-      for (let i = 0; i <= 16; ++i) {
-        const ang = (i - 8) * Math.PI * 2 / 32;
-        const cs = Math.cos(ang);
-        const sn = Math.sin(ang);
-        const p = [radius + cs * _thin2, sn * _thin2 + height, 0];
-        const n = [cs, sn, 0];
-        ret.vs.push({p, n});
-      }
-      return ret;
-    };
-    const makeCurve = (a, b, c, d) => {
-      const ret = {vs: []};
-      for (let i = 0; i <= 16; ++i) {
-        let t = i / 16;
-        let u = 1 - t;
-        let x = a[0] * u ** 3
-          + b[0] * 3 * u * u * t
-          + c[0] * 3 * u * t * t
-          + d[0] * t ** 3;
-        let y = a[1] * u ** 3
-          + b[1] * 3 * u * u * t
-          + c[1] * 3 * u * t * t
-          + d[1] * t ** 3;
-
-        let nx = - a[0] * 3 * u * u
-          + b[0] * 3 * (1 - 3 * t) * u
-          + c[0] * 3 * (2 - t * 3) * t
-          + d[0] * 3 * t * t;
-        let ny = - a[1] * 3 * u * u
-          + b[1] * 3 * (-2 * u * t + u * u)
-          + c[1] * 3 * (- t * t + u * 2 * t)
-          + d[1] * 3 * t * t;
-        const p = [x, y, 0];
-        const n = _norm(nx, ny, 0);
-        ret.vs.push({p, n});
-      }
-      return ret;
-    };
-
-    const vs = [];
-    let x = 0.4;
-    let y = 0;
-    const result0 = makeCurve([0, y], [x / 3, y], [x * 2 / 3, y], [x, y]);
-    const result = makeDisc(thin2, thin2, x);
-    y += thin2 * 2;
-    const result2 = makeCurve([x, y], [x-0.02, y+0.02], [x-0.04, y+0.04], [x-0.06, y+0.06]);
-    y += 0.06;
-    const result3 = makeDisc(y + thin2, thin2, 0.5);
-    y += thin2 * 2;
-    x = 0.1;
-    const result4 = makeCurve([x, y], [x, y+0.04], [x, y+0.08], [x, y+0.12]);
-    y += 0.12;
-    const result5 = makeDisc(y + thin2, thin2, x);
-    y += thin2 * 2;
-    const result6 = makeCurve([x, y], [x-0.02, y+0.1], [x-0.04, y+0.2], [x-0.06, y+0.3]);
-    y += 0.3;
-    x = 0.1;
-    const result7 = makeDisc(y + thin2, thin2, x);
-    y += thin2 * 2;
-    const result8 = makeCurve([x, y], [x * 2 / 3, y], [x / 3, y], [0, y]);
-
-    // 十字
-    vs.push(
-      ...result0.vs,
-      ...result.vs,
-      ...result2.vs,
-      ...result3.vs,
-      ...result4.vs,
-      ...result5.vs,
-      ...result6.vs,
-      ...result7.vs,
-      ...result8.vs,
-    );
-    this.draw(window.maincanvas, vs);
   }
 
   /**

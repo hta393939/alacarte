@@ -3,9 +3,6 @@
  */
 
 import * as THREE from 'three/three.module.min.js';
-import {OrbitControls} from 'three/jsm/controls/OrbitControls.js';
-
-import {GLTFExporter} from 'three/jsm/exporters/GLTFExporter.js';
 
 import {Tg} from './tg.js';
 
@@ -21,15 +18,16 @@ const _norm = (x, y, z) => {
 
 class Misc extends Tg {
   constructor() {
+    super();
   }
 
   async init() {
-    await this.initialize();
     this.setListener();
-
     this.makeRoundPath();
+  
+    await this.initialize();
 
-    this.makeMesh();
+
   }
 
   makeMesh() {
@@ -91,6 +89,7 @@ class Misc extends Tg {
   }
 
   setListener() {
+    console.log('setListener');
     {
       const el = window;
       el.addEventListener('dragover', ev => {
@@ -149,7 +148,7 @@ class Misc extends Tg {
         await this.make1(canvas);
       });
     }
-
+    console.log('setListener');
   }
 
   /**
@@ -269,5 +268,5 @@ class Misc extends Tg {
 
 const misc = new Misc();
 globalThis.misc = misc;
-misc.initialize();
+misc.init();
 

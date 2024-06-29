@@ -212,6 +212,9 @@ class Misc {
       console.log('make plane', planenum);
     };
 
+    window.idmake1?.addEventListener('click', () => {
+      makePlanes(1);
+    });
     window.idmake10?.addEventListener('click', () => {
       makePlanes(10);
     });
