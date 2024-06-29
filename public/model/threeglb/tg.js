@@ -70,7 +70,7 @@ export class Tg {
     const controller = new OrbitControls(camera, canvas);
     this.controller = controller;
 
-    this.makeScene();
+    //this.makeScene();
     {
       const m = this.makeMesh();
       //scene.add(m);
@@ -231,7 +231,7 @@ export class Tg {
     for (let i = 0; i < num; ++i) {
       const pt = vs[i];
       for (let j = 0; j <= div; ++j) {
-        const ang = Math.PI * 2 * j / div;
+        const ang = Math.PI * 2 * (j % div) / div;
         const cs = Math.cos(ang);
         const sn = Math.sin(ang);
         let x = pt.p[0] * cs;

@@ -162,7 +162,7 @@ class Misc extends Tg {
    */
   makeRoundPath() {
     console.log('makeRoundPath');
-    // +
+    // ()
     // しずく
     // (=)
     // ノ 長い胴体
@@ -198,16 +198,18 @@ class Misc extends Tg {
           + c[1] * 3 * u * t * t
           + d[1] * t ** 3;
 
-        let nx = - a[0] * 3 * u * u
+        let tx =
+          - a[0] * 3 * u * u
           + b[0] * 3 * (1 - 3 * t) * u
           + c[0] * 3 * (2 - t * 3) * t
           + d[0] * 3 * t * t;
-        let ny = - a[1] * 3 * u * u
+        let ty =
+          - a[1] * 3 * u * u
           + b[1] * 3 * (-2 * u * t + u * u)
           + c[1] * 3 * (- t * t + u * 2 * t)
           + d[1] * 3 * t * t;
         const p = [x, y, 0];
-        const n = _norm(nx, ny, 0);
+        const n = _norm(ty, -tx, 0);
         ret.vs.push({p, n});
       }
       return ret;
