@@ -265,7 +265,7 @@ class Misc extends Tg {
     let index = 0;
 
     const vs = [];
-    let x = 0.4;
+    let x = 0.3;
     let y = 0;
     const parts = [];
     { // 下面
@@ -276,33 +276,53 @@ class Misc extends Tg {
 
     parts.push(makeDisc(thin2, thin2, x));
     y += thin2 * 2;
-    parts.push(makeCurve([x, y], [x-0.02, y+0.02], [x-0.04, y+0.04], [x-0.06, y+0.06]));
-    y += 0.06;
-    x -= 0.06;
+    parts.push(makeCurve( // 足
+      [x, y],
+      [x+0.02, y+0.075],
+      [x+0.02, y+0.075],
+      [x, y+0.15]));
+    y += 0.15;
+    x -= 0.0;
     parts.push(makeDisc(y + thin2, thin2, x));
     y += thin2 * 2;
-    parts.push(makeCurve([x, y], [x, y+0.04], [x, y+0.08], [x, y+0.12]));
-    y += 0.12;
+    parts.push(makeCurve( // 胴
+      [x, y],
+      [x - 0.05, y+0.10],
+      [x - 0.15, y+0.40],
+      [x - 0.15, y+0.60]));
+    x -= 0.15;
+    y += 0.60;
     parts.push(makeDisc(y + thin2, thin2, x));
     y += thin2 * 2;
+    parts.push(makeCurve( // 帽子
+      [x, y],
+      [x+0.15, y+0.15],
+      [x+0.10, y+0.20],
+      [x-0.09, y+0.40]));
+    y += 0.40;
+    x -= 0.09;
+
+    //parts.push(makeDisc(y + thin2, thin2, x));
+    //y += thin2 * 2;
+
     parts.push(makeCurve(
       [x, y],
-      [x-0.02, y+0.1],
-      [x-0.06, y+0.2],
-      [x-0.06, y+0.3]));
-    y += 0.3;
-    x -= 0.06;
-    parts.push(makeDisc(y + thin2, thin2, x));
-    y += thin2 * 2;
-    { // 上面
+      [x+0.04, y+0.05],
+      [x+0.04, y+0.15],
+      [x-x, y+0.15]));
+    y += 0.15;
+    x -= x;
+
+    if (false) { // 上面
       const disc = makeYDisc(x, y, 1, vts.length);
       vts.push(...disc.vs);
       fis.push(...disc.fis);
     }
+    console.log('y', y, x);
 
     for (const part of parts) {
       vs.push(...part.vs);
-    } // 十字が無い
+    }
     this.draw(window.maincanvas, vs);
 
     const geo = new THREE.BufferGeometry();
@@ -353,17 +373,40 @@ class Misc extends Tg {
   draw(canvas, vs) {
     const w = 200;
     const h = 200;
+    const scale = w / 4;
     canvas.width = w;
     canvas.height = h;
     const c = canvas.getContext('2d');
+
+    {
+      c.beginPath();
+      c.strokeStyle = 'black';
+      let x = w * 0.5;
+      let y = h * 0.5;
+      c.moveTo(x, 0);
+      c.lineTo(x, h);
+      c.stroke();
+      c.beginPath();
+      c.moveTo(0, y);
+      c.lineTo(w, y);
+      c.stroke();
+    }
+
     c.beginPath();
-    c.moveTo((vs[0].p[0] + 1) * w * 0.5, (1 - vs[0].p[1]) * h * 0.5);
+    c.moveTo(
+      vs[0].p[0] * scale + w * 0.5,
+      - vs[0].p[1] * scale + h * 0.5);
     for (let i = 1; i < vs.length; ++i) {
       const v = vs[i];
-      c.lineTo((v.p[0] + 1) * w * 0.5, (1 - v.p[1]) * h * 0.5);
+      c.lineTo(
+        w * 0.5 + v.p[0] * scale,
+        h * 0.5 - v.p[1] * scale);
     }
+    c.lineWidth = 1.5;
     c.strokeStyle = 'red';
     c.stroke();
+
+
   }
 
 }
