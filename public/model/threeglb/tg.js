@@ -7,6 +7,13 @@ import {OrbitControls} from 'three/jsm/controls/OrbitControls.js';
 
 import {GLTFExporter} from 'three/jsm/exporters/GLTFExporter.js';
 
+/**
+ * @typedef Vtx
+ * @property {[number, number, number]} p
+ * @property {number[]} n
+ * @property {[number, number]} uv
+ */
+
 const _lerp = (a, b, t) => {
   return (a * (1 - t) + b * t);
 };
@@ -54,6 +61,11 @@ export class Tg {
       scene.add(light);
     }
 
+    {
+      const light = new THREE.AmbientLight(0x999999);
+      scene.add(light);
+    }
+
     const controller = new OrbitControls(camera, canvas);
     this.controller = controller;
 
@@ -73,6 +85,7 @@ export class Tg {
         color: 0xff8000,
       });
       const m = new THREE.Mesh(geo, mtl);
+      m.position.set(-5, 0, 0);
       this.scene.add(m);
     }
   }
@@ -197,83 +210,6 @@ export class Tg {
     });
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} src 
- */
-  scaleImage(src) {
-    const scale = this.scale;
-
-    const cellx = this.cellx;
-    const celly = this.celly;
-    const cellw = this.cellw;
-    const cellh = cellw;
-
-/**
- * 入力画像の幅
- */
-//        const w = src.width;
-//        const h = src.height;
-    const context = src.getContext('2d');
-/**
- * 書き出し先
- * @type {HTMLCanvasElement}
- */
-    const canvas = document.getElementById('subcanvas');
-    const c = canvas.getContext('2d');
-    canvas.width = cellw * scale;
-    canvas.height = cellh * scale;
-    const cx = cellx * cellw;
-    const cy = celly * cellh;
-    console.log(cx, cy, cellw, cellh);
-    const dat = context.getImageData(cx, cy, cellw, cellh);
-
-    let backs = [-1, -1, -1];
-    if (true) {
-      let ft = (0 + 0 * 0) * 4;
-      backs[0] = dat.data[ft];
-      backs[1] = dat.data[ft+1];
-      backs[2] = dat.data[ft+2];
-    }
-
-    for (let i = 0; i < cellw; ++i) {
-      for (let j = 0; j < cellw; ++j) {
-        let ft = (j + i * cellw) * 4;
-        let x = j * scale;
-        let y = i * scale;
-        let r = dat.data[ft];
-        let g = dat.data[ft+1];
-        let b = dat.data[ft+2];
-        let a = dat.data[ft+3];
-        if (r === backs[0] && g === backs[1] && b === backs[2]) {
-          a = 0;
-        }
-        c.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
-        c.fillRect(x, y, scale, scale);
-      }
-    }
-  }
-
-/**
- * 
- * @param {File} file 
- */
-  async parseImage(file) {
-    const img = new Image();
-    img.addEventListener('load', () => {
-/**
- * @type {HTMLCanvasElement}
- */
-      const canvas = document.getElementById('maincanvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const c = canvas.getContext('2d');
-      c.drawImage(img, 0, 0);
-      this.scaleImage(canvas);
-    });
-    img.src = URL.createObjectURL(file);
-  }
-
   download(blob, name) {
     const a = document.createElement('a');
     a.download = name;
@@ -282,24 +218,55 @@ export class Tg {
   }
 
   /**
-   * 
-   * @param {HTMLCanvasElement} canvas 
-   * @param {*} vs 
+   * 法線付きlathe
+   * @param {Vtx[]} vs 
+   * @param {number} indexOffset 頂点インデックスオフセット
+   * @returns {{vs: Vtx[], fis: number[]}}
    */
-  draw(canvas, vs) {
-    const w = 200;
-    const h = 200;
-    canvas.width = w;
-    canvas.height = h;
-    const c = canvas.getContext('2d');
-    c.beginPath();
-    c.moveTo((vs[0].p[0] + 1) * w * 0.5, (1 - vs[0].p[1]) * h * 0.5);
-    for (let i = 1; i < vs.length; ++i) {
-      const v = vs[i];
-      c.lineTo((v.p[0] + 1) * w * 0.5, (1 - v.p[1]) * h * 0.5);
+  createLathe(vs, indexOffset) {
+    const div = 16;
+    const ret = {vs: [], fis: []};
+    const num = vs.length;
+    for (let i = 0; i < num; ++i) {
+      const pt = vs[i];
+      for (let j = 0; j <= div; ++j) {
+        const ang = Math.PI * 2 * j / div;
+        const cs = Math.cos(ang);
+        const sn = Math.sin(ang);
+        let x = pt.p[0] * cs;
+        let y = pt.p[1];
+        let z = - pt.p[0] * sn;
+        let nx = pt.n[0] * cs;
+        let ny = pt.n[1];
+        let nz = - pt.n[2] * sn;
+        let u = j / div;
+        let v = i / (num - 1);
+
+        const vtx = {
+          p: [x, y, z],
+          n: [nx, ny, nz],
+          uv: [u, v],
+        };
+        ret.vs.push(vtx);
+      }
+
+      if (i === 0) {
+        continue;
+      }
+      for (let j = 0; j < div; ++j) {
+        let v0 = (i - 1) * (div + 1) + j;
+        let v1 = v0 + 1;
+        let v2 = v0 + (div + 1);
+        let v3 = v2 + 1;
+        v0 += indexOffset;
+        v1 += indexOffset;
+        v2 += indexOffset;
+        v3 += indexOffset;
+        ret.fis.push(v0, v1, v2);
+        ret.fis.push(v2, v1, v3);
+      }
     }
-    c.strokeStyle = 'red';
-    c.stroke();
+    return ret;
   }
 
 }

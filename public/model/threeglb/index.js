@@ -23,11 +23,14 @@ class Misc extends Tg {
 
   async init() {
     this.setListener();
-    this.makeRoundPath();
+
   
     await this.initialize();
 
-
+    {
+      const m = this.makeRoundPath();
+      this.scene.add(m);
+    }
   }
 
   makeMesh() {
@@ -139,7 +142,7 @@ class Misc extends Tg {
         this.download(new Blob([ab]), `a.glb`);
       });
     }
-    {
+    { // 未実装
       const el = document.getElementById('idmake3');
       el?.addEventListener('click', async () => {
         const canvas = document.getElementById('maincanvas');
@@ -153,8 +156,10 @@ class Misc extends Tg {
 
   /**
    * このクラスの関数
+   * @returns {THREE.Mesh}
    */
   makeRoundPath() {
+    console.log('makeRoundPath');
     // +
     // しずく
     // (=)
@@ -209,38 +214,69 @@ class Misc extends Tg {
     const vs = [];
     let x = 0.4;
     let y = 0;
-    const result0 = makeCurve([0, y], [x / 3, y], [x * 2 / 3, y], [x, y]);
-    const result = makeDisc(thin2, thin2, x);
+    const parts = [];
+    parts.push(makeCurve([0, y], [x / 3, y], [x * 2 / 3, y], [x, y]));
+    parts.push(makeDisc(thin2, thin2, x));
     y += thin2 * 2;
-    const result2 = makeCurve([x, y], [x-0.02, y+0.02], [x-0.04, y+0.04], [x-0.06, y+0.06]);
+    parts.push(makeCurve([x, y], [x-0.02, y+0.02], [x-0.04, y+0.04], [x-0.06, y+0.06]));
     y += 0.06;
-    const result3 = makeDisc(y + thin2, thin2, 0.5);
+    parts.push(makeDisc(y + thin2, thin2, 0.5));
     y += thin2 * 2;
     x = 0.1;
-    const result4 = makeCurve([x, y], [x, y+0.04], [x, y+0.08], [x, y+0.12]);
+    parts.push(makeCurve([x, y], [x, y+0.04], [x, y+0.08], [x, y+0.12]));
     y += 0.12;
-    const result5 = makeDisc(y + thin2, thin2, x);
+    parts.push(makeDisc(y + thin2, thin2, x));
     y += thin2 * 2;
-    const result6 = makeCurve([x, y], [x-0.02, y+0.1], [x-0.04, y+0.2], [x-0.06, y+0.3]);
+    parts.push(makeCurve([x, y], [x-0.02, y+0.1], [x-0.04, y+0.2], [x-0.06, y+0.3]));
     y += 0.3;
     x = 0.1;
-    const result7 = makeDisc(y + thin2, thin2, x);
+    parts.push(makeDisc(y + thin2, thin2, x));
     y += thin2 * 2;
-    const result8 = makeCurve([x, y], [x * 2 / 3, y], [x / 3, y], [0, y]);
+    parts.push(makeCurve([x, y], [x * 2 / 3, y], [x / 3, y], [0, y]));
 
-    // 十字
-    vs.push(
-      ...result0.vs,
-      ...result.vs,
-      ...result2.vs,
-      ...result3.vs,
-      ...result4.vs,
-      ...result5.vs,
-      ...result6.vs,
-      ...result7.vs,
-      ...result8.vs,
-    );
+    for (const part of parts) {
+      vs.push(...part.vs);
+    } // 十字が無い
     this.draw(window.maincanvas, vs);
+
+    const geo = new THREE.BufferGeometry();
+    const vts = [];
+    const fis = [];
+    let index = 0;
+    for (let part of parts) {
+      index = vts.length;
+      const lathe = this.createLathe(part.vs, index);
+      vts.push(...lathe.vs);
+      fis.push(...lathe.fis);
+    }
+    const vnum = vts.length;
+    const ps = new Float32Array(vnum * 3);
+    const ns = new Float32Array(vnum * 3);
+    const uvs = new Float32Array(vnum * 2);
+    for (let i = 0; i < vnum; ++i) {
+      const pt = vts[i];
+      const ft3 = i * 3;
+      const ft2 = i * 2;
+      ps[ft3] = pt.p[0];
+      ps[ft3+1] = pt.p[1];
+      ps[ft3+2] = pt.p[2];
+      ns[ft3] = pt.n[0];
+      ns[ft3+1] = pt.n[1];
+      ns[ft3+2] = pt.n[2];
+      uvs[ft2] = pt.uv[0];
+      uvs[ft2+1] = pt.uv[1];
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(ps, 3));
+    geo.setAttribute('normal', new THREE.BufferAttribute(ns, 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+    geo.setIndex(fis);
+    geo.computeBoundingBox();
+    geo.computeBoundingSphere();
+    const mtl = new THREE.MeshStandardMaterial({
+      color: 0x00ccff,
+    });
+    const m = new THREE.Mesh(geo, mtl);
+    return m;
   }
 
   /**
