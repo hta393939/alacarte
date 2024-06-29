@@ -220,16 +220,20 @@ class Misc extends Tg {
     y += thin2 * 2;
     parts.push(makeCurve([x, y], [x-0.02, y+0.02], [x-0.04, y+0.04], [x-0.06, y+0.06]));
     y += 0.06;
-    parts.push(makeDisc(y + thin2, thin2, 0.5));
+    x -= 0.06;
+    parts.push(makeDisc(y + thin2, thin2, x));
     y += thin2 * 2;
-    x = 0.1;
     parts.push(makeCurve([x, y], [x, y+0.04], [x, y+0.08], [x, y+0.12]));
     y += 0.12;
     parts.push(makeDisc(y + thin2, thin2, x));
     y += thin2 * 2;
-    parts.push(makeCurve([x, y], [x-0.02, y+0.1], [x-0.04, y+0.2], [x-0.06, y+0.3]));
+    parts.push(makeCurve(
+      [x, y],
+      [x-0.02, y+0.1],
+      [x-0.06, y+0.2],
+      [x-0.06, y+0.3]));
     y += 0.3;
-    x = 0.1;
+    x -= 0.06;
     parts.push(makeDisc(y + thin2, thin2, x));
     y += thin2 * 2;
     parts.push(makeCurve([x, y], [x * 2 / 3, y], [x / 3, y], [0, y]));
@@ -273,7 +277,7 @@ class Misc extends Tg {
     geo.computeBoundingBox();
     geo.computeBoundingSphere();
     const mtl = new THREE.MeshStandardMaterial({
-      color: 0x00ccff,
+      color: 0xeeeeee,
     });
     const m = new THREE.Mesh(geo, mtl);
     return m;

@@ -238,7 +238,7 @@ export class Tg {
         let z = - pt.p[0] * sn;
         let nx = pt.n[0] * cs;
         let ny = pt.n[1];
-        let nz = - pt.n[2] * sn;
+        let nz = - pt.n[0] * sn;
         let u = j / div;
         let v = i / (num - 1);
 
