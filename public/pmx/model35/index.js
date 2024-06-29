@@ -198,6 +198,27 @@ class Misc {
       console.log('bon offsets', offsets);
     });
 
+    const makePlanes = (planenum) => {
+      const param = {
+        planenum,
+      };
+      Object.assign(param, {
+        nameEn: `plane${planenum}`,
+      });
+      const writer = new CapsuleBuilder();
+      writer.makePlane(param);
+      const bufs = writer.makeBuffer();
+      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
+      console.log('make plane', planenum);
+    };
+
+    window.idmake10?.addEventListener('click', () => {
+      makePlanes(10);
+    });
+    window.idmake100?.addEventListener('click', () => {
+      makePlanes(100);
+    });
+
     window.idmakelockchain?.addEventListener('click', () => {
       const param = this.getCommonOptions();
       let top = 'a'; // param.texprefix

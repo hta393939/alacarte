@@ -5,6 +5,8 @@
 import * as THREE from 'three/three.module.min.js';
 import {OrbitControls} from 'three/jsm/controls/OrbitControls.js';
 
+import {GLTFExporter} from 'three/jsm/exporters/GLTFExporter.js';
+
 const _lerp = (a, b, t) => {
   return (a * (1 - t) + b * t);
 };
@@ -56,6 +58,28 @@ class Misc {
 
     this.controller?.update();
     this.renderer?.render(this.scene, this.camera);
+  }
+
+  async makeGlb() {
+    const exporter = new GLTFExporter();
+
+    const opt = {
+      /*
+			// default options
+			binary: false,
+			trs: false,
+			onlyVisible: true,
+			maxTextureSize: Infinity,
+			animations: [],
+			includeCustomExtensions: false,
+      */
+
+      binary: true,
+    };
+
+    const ab = await exporter.parseAsync(this.scene, opt);
+    console.log('makeGlb', ab);
+    return ab;
   }
 
 /**
@@ -335,6 +359,13 @@ async make1(canvas) {
     img.src = URL.createObjectURL(file);
   }
 
+  download(blob, name) {
+    const a = document.createElement('a');
+    a.download = name;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+  }
+
   setListener() {
     {
       const el = window;
@@ -378,13 +409,11 @@ async make1(canvas) {
       });
     }
 
-    { // 未実装
+    {
       const el = document.getElementById('idmake2');
       el?.addEventListener('click', async () => {
-        const canvas = document.getElementById('maincanvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        await this.make1(canvas);
+        const ab = await this.makeGlb();
+        this.download(new Blob([ab]), `a.glb`);
       });
     }
     {
