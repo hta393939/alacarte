@@ -7,8 +7,6 @@ import {OrbitControls} from 'three/jsm/controls/OrbitControls.js';
 
 import {GLTFExporter} from 'three/jsm/exporters/GLTFExporter.js';
 
-import {Tg} from './tg.js';
-
 const _lerp = (a, b, t) => {
   return (a * (1 - t) + b * t);
 };
@@ -19,17 +17,66 @@ const _norm = (x, y, z) => {
   return [x * k, y * k, z * k];
 };
 
-class Misc extends Tg {
+export class Tg {
   constructor() {
   }
 
-  async init() {
-    await this.initialize();
-    this.setListener();
-
+  async initialize() {
     this.makeRoundPath();
 
-    this.makeMesh();
+    this.initThree(window.subcanvas);
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  initThree(canvas) {
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      preservedDrawingBuffer: true,
+    });
+    this.renderer = renderer;
+    renderer.setSize(320, 180);
+
+    const scene = new THREE.Scene();
+    this.scene = scene;
+    const camera = new THREE.PerspectiveCamera(
+      45, 16/9, 0.02, 768
+    );
+    this.camera = camera;
+    camera.position.copy(new THREE.Vector3(1, 1, 5));
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+    {
+      const light = new THREE.DirectionalLight(0xffffff);
+      light.name = 'light';
+      const obj3d = new THREE.Object3D();
+      light.target = obj3d;
+      scene.add(light);
+    }
+
+    const controller = new OrbitControls(camera, canvas);
+    this.controller = controller;
+
+    this.makeScene();
+    {
+      const m = this.makeMesh();
+      scene.add(m);
+    }
+
+    this.update();
+  }
+
+  makeScene() {
+    {
+      const geo = new THREE.SphereGeometry(2, 2);
+      const mtl = new THREE.MeshStandardMaterial({
+        color: 0xff8000,
+      });
+      const m = new THREE.Mesh(geo, mtl);
+      this.scene.add(m);
+    }
   }
 
   makeMesh() {
@@ -83,6 +130,145 @@ class Misc extends Tg {
     }
   }
 
+  update() {
+    requestAnimationFrame(() => {
+      this.update();
+    });
+
+    this.controller?.update();
+    this.renderer?.render(this.scene, this.camera);
+  }
+
+  async makeGlb() {
+    for (const k of ['light']) {
+      const obj = this.scene.getObjectByName(k);
+      if (!obj) {
+        continue;
+      }
+      //this.scene.remove(obj);
+    }
+
+    const exporter = new GLTFExporter();
+
+    const opt = {
+      /*
+			// default options
+			binary: false,
+			trs: false,
+			onlyVisible: true,
+			maxTextureSize: Infinity,
+			animations: [],
+			includeCustomExtensions: false,
+      */
+
+      binary: true,
+    };
+
+    const ab = await exporter.parseAsync(this.scene, opt);
+    console.log('makeGlb', ab);
+    return ab;
+  }
+
+/**
+ * 
+ * @param {File} file 
+ * @param {HTMLCanvasElement} canvas 
+ * @returns {Promise<HTMLCanvasElement>}
+ */
+  loadFileToCanvas(file, canvas) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.addEventListener('load', () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const c = canvas.getContext('2d');
+        c.drawImage(img, 0, 0);
+        resolve(canvas);
+      });
+      img.addEventListener('error', () => {
+        reject(`load error`);
+      });
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+/**
+ * 
+ * @param {HTMLCanvasElement} src 
+ */
+  scaleImage(src) {
+    const scale = this.scale;
+
+    const cellx = this.cellx;
+    const celly = this.celly;
+    const cellw = this.cellw;
+    const cellh = cellw;
+
+/**
+ * 入力画像の幅
+ */
+//        const w = src.width;
+//        const h = src.height;
+    const context = src.getContext('2d');
+/**
+ * 書き出し先
+ * @type {HTMLCanvasElement}
+ */
+    const canvas = document.getElementById('subcanvas');
+    const c = canvas.getContext('2d');
+    canvas.width = cellw * scale;
+    canvas.height = cellh * scale;
+    const cx = cellx * cellw;
+    const cy = celly * cellh;
+    console.log(cx, cy, cellw, cellh);
+    const dat = context.getImageData(cx, cy, cellw, cellh);
+
+    let backs = [-1, -1, -1];
+    if (true) {
+      let ft = (0 + 0 * 0) * 4;
+      backs[0] = dat.data[ft];
+      backs[1] = dat.data[ft+1];
+      backs[2] = dat.data[ft+2];
+    }
+
+    for (let i = 0; i < cellw; ++i) {
+      for (let j = 0; j < cellw; ++j) {
+        let ft = (j + i * cellw) * 4;
+        let x = j * scale;
+        let y = i * scale;
+        let r = dat.data[ft];
+        let g = dat.data[ft+1];
+        let b = dat.data[ft+2];
+        let a = dat.data[ft+3];
+        if (r === backs[0] && g === backs[1] && b === backs[2]) {
+          a = 0;
+        }
+        c.fillStyle = `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+        c.fillRect(x, y, scale, scale);
+      }
+    }
+  }
+
+/**
+ * 
+ * @param {File} file 
+ */
+  async parseImage(file) {
+    const img = new Image();
+    img.addEventListener('load', () => {
+/**
+ * @type {HTMLCanvasElement}
+ */
+      const canvas = document.getElementById('maincanvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const c = canvas.getContext('2d');
+      c.drawImage(img, 0, 0);
+      this.scaleImage(canvas);
+    });
+    img.src = URL.createObjectURL(file);
+  }
+
   download(blob, name) {
     const a = document.createElement('a');
     a.download = name;
@@ -90,71 +276,6 @@ class Misc extends Tg {
     a.click();
   }
 
-  setListener() {
-    {
-      const el = window;
-      el.addEventListener('dragover', ev => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        ev.dataTransfer.dropEffect = 'copy';
-      });
-      el.addEventListener('drop', async ev => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        ev.dataTransfer.dropEffect = 'copy';
-        const canvas = document.getElementById('subcanvas');
-        await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
-        this.round(canvas);
-      });
-    }
-
-    for (const k of [
-      'scale', 'cellx', 'celly', 'cellw',
-    ]) {
-      const el = document.getElementById(`${k}`);
-      const viewel = document.getElementById(`${k}view`);
-      const _update = () => {
-        this[k] = Number.parseFloat(el.value);
-        viewel.textContent = this[k];
-      };
-      el?.addEventListener('input', () => {
-        _update();
-      });
-      _update();
-    }
-
-    {
-      const el = document.getElementById('idmake1');
-      el?.addEventListener('click', async () => {
-        const canvas = document.getElementById('maincanvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        await this.make1(canvas);
-      });
-    }
-
-    {
-      const el = document.getElementById('idmake2');
-      el?.addEventListener('click', async () => {
-        const ab = await this.makeGlb();
-        this.download(new Blob([ab]), `a.glb`);
-      });
-    }
-    {
-      const el = document.getElementById('idmake3');
-      el?.addEventListener('click', async () => {
-        const canvas = document.getElementById('maincanvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        await this.make1(canvas);
-      });
-    }
-
-  }
-
-  /**
-   * このクラスの関数
-   */
   makeRoundPath() {
     // +
     // しずく
@@ -245,7 +366,7 @@ class Misc extends Tg {
   }
 
   /**
-   * このクラスの関数
+   * 
    * @param {HTMLCanvasElement} canvas 
    * @param {*} vs 
    */
@@ -266,8 +387,4 @@ class Misc extends Tg {
   }
 
 }
-
-const misc = new Misc();
-globalThis.misc = misc;
-misc.initialize();
 
