@@ -2,8 +2,17 @@
  * @file index.js
  */
 
+import * as THREE from 'three/three.module.min.js';
+import {OrbitControls} from 'three/jsm/controls/OrbitControls.js';
+
 const _lerp = (a, b, t) => {
   return (a * (1 - t) + b * t);
+};
+
+const _norm = (x, y, z) => {
+  const sum = x ** 2 + y ** 2 + z ** 2;
+  const k = (sum > 0) ? (1 / Math.sqrt(sum)) : 0;
+  return [x * k, y * k, z * k];
 };
 
 class Misc {
@@ -12,6 +21,41 @@ class Misc {
 
   async initialize() {
     this.setListener();
+
+    this.makeRoundPath();
+
+    this.initThree(window.subcanvas);
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  initThree(canvas) {
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      preservedDrawingBuffer: true,
+    });
+    this.renderer = renderer;
+    //renderer.setSize(320, 180);
+    const scene = new THREE.Scene();
+    this.scene = scene;
+    const camera = new THREE.PerspectiveCamera();
+    this.camera = camera;
+
+    const controller = new OrbitControls(camera, canvas);
+    this.controller = controller;
+
+    this.update();
+  }
+
+  update() {
+    requestAnimationFrame(() => {
+      this.update();
+    });
+
+    this.controller?.update();
+    this.renderer?.render(this.scene, this.camera);
   }
 
 /**
@@ -106,90 +150,6 @@ async make1(canvas) {
   const router = 37;
 
   {
-    const rot = Math.PI * 20 / 180;
-    for (let y = 0; y < h; ++y) {
-      for (let x = 0; x < w; ++x) {
-        let dx = (x - w * 0.5) / (w * 0.5);
-        let dy = (y - h * 0.5) / (h * 0.5);
-        const d = Math.sqrt(dx * dx + dy * dy);
-        const ang = Math.atan2(-dy, dx);
-        const deg = ang * 180 / Math.PI;
-
-        dx *= 1;
-        dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
-        const cs = Math.cos(rot);
-        const sn = Math.sin(rot);
-        let vx = dx * cs - dy * sn;
-        let vy = dx * sn + dy * cs;
-
-        const d2 = Math.sqrt(vx * vx + vy * vy);
-        let lv = 1 - d2 * 1;
-        lv = Math.max(0, Math.min(1, lv));
-
-        const offset = (x + h * y) * 4;
-
-        lv *= 255;
-
-        let r = 255;
-        let g = 204;
-        let b = 204;
-        let a = lv;
-        r = lv;
-        g = lv;
-        b = lv;
-        a = 255;
-
-        r = Math.max(0, Math.min(r, 255));
-        g = Math.max(0, Math.min(g, 255));
-        b = Math.max(0, Math.min(b, 255));
-
-        data.data[offset+0] = r;
-        data.data[offset+1] = g;
-        data.data[offset+2] = b;
-        data.data[offset+3] = a;
-      }
-    }
-  }
-  c.putImageData(data, 0, 0);
-}
-
-/**
- * 
- * @param {HTMLCanvasElement} canvas 
- */
-async make2(canvas) {
-
-  const w = canvas.width;
-  const h = canvas.height;
-  const c = canvas.getContext('2d');
-  const data = c.getImageData(0, 0, w, h);
-
-  for (let i = 0; i < 1000; ++i) {
-    const u = Math.random();
-    const v = Math.random();
-    let z = - u * 2 + 1;
-    let rr = Math.sqrt(1 - z * z);
-    let x = rr * Math.cos(2 * Math.PI * v);
-    let y = rr * Math.sin(2 * Math.PI * v);
-
-    x *= w;
-    y *= h;
-
-    let lv = 128;
-    x = Math.floor(x);
-    y = Math.floor(y);
-    if (x < 0 || y < 0) {
-      continue;
-    }
-
-    const ft = (w * y + x) * 4;
-    data.data[ft  ] += lv;
-    data.data[ft+1] += lv;
-    data.data[ft+2] += lv;
-    data.data[ft+3] = 255;
-  }
-
-  if (false) {
     const rot = Math.PI * 20 / 180;
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
@@ -418,16 +378,135 @@ async make2(canvas) {
       });
     }
 
-    {
+    { // 未実装
       const el = document.getElementById('idmake2');
       el?.addEventListener('click', async () => {
         const canvas = document.getElementById('maincanvas');
         canvas.width = 256;
         canvas.height = 256;
-        await this.make2(canvas);
+        await this.make1(canvas);
+      });
+    }
+    {
+      const el = document.getElementById('idmake3');
+      el?.addEventListener('click', async () => {
+        const canvas = document.getElementById('maincanvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        await this.make1(canvas);
       });
     }
 
+  }
+
+  makeRoundPath() {
+    // +
+    // しずく
+    // (=)
+    // ノ 長い胴体
+    // (=)
+    // ノ ベース
+    // (=)
+    // 下から
+    const thin2 = 0.05;
+
+    const makeDisc = (height, _thin2, radius) => {
+      const ret = {vs: []};
+      for (let i = 0; i <= 16; ++i) {
+        const ang = (i - 8) * Math.PI * 2 / 32;
+        const cs = Math.cos(ang);
+        const sn = Math.sin(ang);
+        const p = [radius + cs * _thin2, sn * _thin2 + height, 0];
+        const n = [cs, sn, 0];
+        ret.vs.push({p, n});
+      }
+      return ret;
+    };
+    const makeCurve = (a, b, c, d) => {
+      const ret = {vs: []};
+      for (let i = 0; i <= 16; ++i) {
+        let t = i / 16;
+        let u = 1 - t;
+        let x = a[0] * u ** 3
+          + b[0] * 3 * u * u * t
+          + c[0] * 3 * u * t * t
+          + d[0] * t ** 3;
+        let y = a[1] * u ** 3
+          + b[1] * 3 * u * u * t
+          + c[1] * 3 * u * t * t
+          + d[1] * t ** 3;
+
+        let nx = - a[0] * 3 * u * u
+          + b[0] * 3 * (1 - 3 * t) * u
+          + c[0] * 3 * (2 - t * 3) * t
+          + d[0] * 3 * t * t;
+        let ny = - a[1] * 3 * u * u
+          + b[1] * 3 * (-2 * u * t + u * u)
+          + c[1] * 3 * (- t * t + u * 2 * t)
+          + d[1] * 3 * t * t;
+        const p = [x, y, 0];
+        const n = _norm(nx, ny, 0);
+        ret.vs.push({p, n});
+      }
+      return ret;
+    };
+
+    const vs = [];
+    let x = 0.4;
+    let y = 0;
+    const result0 = makeCurve([0, y], [x / 3, y], [x * 2 / 3, y], [x, y]);
+    const result = makeDisc(thin2, thin2, x);
+    y += thin2 * 2;
+    const result2 = makeCurve([x, y], [x-0.02, y+0.02], [x-0.04, y+0.04], [x-0.06, y+0.06]);
+    y += 0.06;
+    const result3 = makeDisc(y + thin2, thin2, 0.5);
+    y += thin2 * 2;
+    x = 0.1;
+    const result4 = makeCurve([x, y], [x, y+0.04], [x, y+0.08], [x, y+0.12]);
+    y += 0.12;
+    const result5 = makeDisc(y + thin2, thin2, x);
+    y += thin2 * 2;
+    const result6 = makeCurve([x, y], [x-0.02, y+0.1], [x-0.04, y+0.2], [x-0.06, y+0.3]);
+    y += 0.3;
+    x = 0.1;
+    const result7 = makeDisc(y + thin2, thin2, x);
+    y += thin2 * 2;
+    const result8 = makeCurve([x, y], [x * 2 / 3, y], [x / 3, y], [0, y]);
+
+    // 十字
+    vs.push(
+      ...result0.vs,
+      ...result.vs,
+      ...result2.vs,
+      ...result3.vs,
+      ...result4.vs,
+      ...result5.vs,
+      ...result6.vs,
+      ...result7.vs,
+      ...result8.vs,
+    );
+    this.draw(window.maincanvas, vs);
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   * @param {*} vs 
+   */
+  draw(canvas, vs) {
+    const w = 200;
+    const h = 200;
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    c.beginPath();
+    c.moveTo((vs[0].p[0] + 1) * w * 0.5, (1 - vs[0].p[1]) * h * 0.5);
+    for (let i = 1; i < vs.length; ++i) {
+      const v = vs[i];
+      c.lineTo((v.p[0] + 1) * w * 0.5, (1 - v.p[1]) * h * 0.5);
+    }
+    c.strokeStyle = 'red';
+    c.stroke();
   }
 
 }

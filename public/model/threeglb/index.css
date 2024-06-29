@@ -20,6 +20,8 @@
 
 #maincanvas {
   border: solid 1px blue;
+  width: 200px;
+  height: 200px;
 }
 
 #subcanvas {
