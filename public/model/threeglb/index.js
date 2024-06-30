@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three/three.module.min.js';
-
+import * as Util from '../../lib/util.js';
 import {Tg} from './tg.js';
 
 const _lerp = (a, b, t) => {
@@ -31,6 +31,7 @@ class Misc extends Tg {
 
     {
       const m = this.makeRoundPath();
+      m.name = 'bishop';
       this.scene.add(m);
     }
   }
@@ -140,8 +141,9 @@ class Misc extends Tg {
     {
       const el = document.getElementById('idmake2');
       el?.addEventListener('click', async () => {
-        const ab = await this.makeGlb();
-        this.download(new Blob([ab]), `a.glb`);
+        const obj = this.scene.getObjectByName('bishop');
+        const ab = await this.makeGlb(obj);
+        Util.download(new Blob([ab]), `a.glb`);
       });
     }
     { // 未実装
@@ -304,9 +306,6 @@ class Misc extends Tg {
     y += 0.40;
     x -= 0.09;
 
-    //parts.push(makeDisc(y + thin2, thin2, x));
-    //y += thin2 * 2;
-
     parts.push(makeCurve(
       [x, y],
       [x+0.04, y+0.05],
@@ -315,11 +314,6 @@ class Misc extends Tg {
     y += 0.15;
     x -= x;
 
-    if (false) { // 上面
-      const disc = makeYDisc(x, y, 1, vts.length);
-      vts.push(...disc.vs);
-      fis.push(...disc.fis);
-    }
     console.log('y', y, x);
 
     for (const part of parts) {
@@ -366,6 +360,14 @@ class Misc extends Tg {
     const m = new THREE.Mesh(geo, mtl);
     return m;
   }
+
+  /**
+   * @returns {THREE.Mesh}
+   */
+  makeRound() {
+    
+  }
+
 
   /**
    * このクラスの関数

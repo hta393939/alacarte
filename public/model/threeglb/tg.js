@@ -93,41 +93,42 @@ export class Tg {
 
   /**
    * 
+   * @param {{vs: Vtx[], fis: number[]}} part
    * @returns {THREE.Mesh}
    */
-  makeMesh() {
+  makeMesh(part, indexOffset = 0) {
     {
-      const vnum = 10;
+      const vnum = part.vs.length;
       const ps = new Float32Array(vnum * 3);
       const ns = new Float32Array(vnum * 3);
       const uvs = new Float32Array(vnum * 2);
       const ws = new Float32Array(vnum * 4);
       const js = new Float32Array(vnum * 4);
-      const fis = new Array(1 * 3);
+      const fis = part.fis;
 
-      for (let i = 0; i < 10; ++i) {
+      for (let i = 0; i < vnum; ++i) {
+        const vt = part.vs[i];
         let ft3 = i * 3;
         let ft2 = i * 2;
         let ft4 = i * 4;
-        ps[ft3  ] = i & 1;
-        ps[ft3+1] = 1 - Math.floor(i / 2);
-        ps[ft3+2] = 0;
-        ns[ft3  ] = 0;
-        ns[ft3+1] = 0;
-        ns[ft3+2] = 1;
-        uvs[ft2  ] = 0.5;
-        uvs[ft2+1] = 0.5;
-        ws[ft4  ] = 1;
-        ws[ft4+1] = 0;
-        ws[ft4+2] = 0;
-        ws[ft4+3] = 0;
-        js[ft4  ] = 0;
-        js[ft4+1] = 0;
-        js[ft4+2] = 0;
-        js[ft4+3] = 0;
-        fis[0] = 0;
-        fis[1] = 1;
-        fis[2] = 2;
+        ps[ft3  ] = vt.p[0];
+        ps[ft3+1] = vt.p[1];
+        ps[ft3+2] = vt.p[2];
+        ns[ft3  ] = vt.n[0];
+        ns[ft3+1] = vt.n[1];
+        ns[ft3+2] = vt.n[2];
+        uvs[ft2  ] = vt.uv[0];
+        uvs[ft2+1] = vt.uv[1];
+        if ('w' in vt) {
+          ws[ft4  ] = vt.w[0];
+          ws[ft4+1] = vt.w[1];
+          ws[ft4+2] = vt.w[2];
+          ws[ft4+3] = vt.w[3];
+          js[ft4  ] = vt.j[0];
+          js[ft4+1] = vt.j[1];
+          js[ft4+2] = vt.j[2];
+          js[ft4+3] = vt.j[3];
+        }
       }
 
       const geo = new THREE.BufferGeometry();
@@ -136,7 +137,7 @@ export class Tg {
       geo.setAttribute('uv', new THREE.BufferAttribute(ps, 2));
       //geo.addAttribute('weight', new THREE.BufferAttribute(ps, 4));
       //geo.addAttribute('joint', new THREE.BufferAttribute(ps, 4));
-      geo.setIndex(fis);
+      geo.setIndex(fis.map(v => v + indexOffset));
       geo.computeBoundingBox();
       geo.computeBoundingSphere();
 
@@ -157,16 +158,13 @@ export class Tg {
     this.renderer?.render(this.scene, this.camera);
   }
 
-  async makeGlb() {
+  /**
+   * 
+   * @param {THREE.Object3D} inobj 
+   * @returns 
+   */
+  async makeGlb(inobj) {
     console.log('makeGlb');
-    for (const k of ['light']) {
-      const obj = this.scene.getObjectByName(k);
-      if (!obj) {
-        continue;
-      }
-      //this.scene.remove(obj);
-    }
-
     const exporter = new GLTFExporter();
 
     const opt = {
@@ -183,7 +181,9 @@ export class Tg {
       binary: true,
     };
 
-    const ab = await exporter.parseAsync(this.scene, opt);
+    const scene = new THREE.Scene();
+    scene.add(inobj);
+    const ab = await exporter.parseAsync(scene, opt);
     console.log('makeGlb', ab);
     return ab;
   }
