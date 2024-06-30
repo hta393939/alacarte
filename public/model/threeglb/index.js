@@ -3,7 +3,7 @@
  */
 
 import * as THREE from 'three/three.module.min.js';
-import * as Util from '../../lib/util.js';
+import {Util} from '../../lib/util.js';
 import {Tg} from './tg.js';
 
 const _lerp = (a, b, t) => {
@@ -34,64 +34,12 @@ class Misc extends Tg {
       m.name = 'bishop';
       this.scene.add(m);
     }
-  }
 
-  makeMesh() {
     {
-      const vnum = 10;
-      const ps = new Float32Array(vnum * 3);
-      const ns = new Float32Array(vnum * 3);
-      const uvs = new Float32Array(vnum * 2);
-      const ws = new Float32Array(vnum * 4);
-      const js = new Float32Array(vnum * 4);
-      const fis = new Array(1 * 3);
-
-      for (let i = 0; i < 10; ++i) {
-        let ft3 = i * 3;
-        let ft2 = i * 2;
-        let ft4 = i * 4;
-        ps[ft3  ] = i & 1;
-        ps[ft3+1] = 1 - Math.floor(i / 2);
-        ps[ft3+2] = 0;
-        ns[ft3  ] = 0;
-        ns[ft3+1] = 0;
-        ns[ft3+2] = 1;
-        uvs[ft2  ] = 0.5;
-        uvs[ft2+1] = 0.5;
-        ws[ft4  ] = 1;
-        ws[ft4+1] = 0;
-        ws[ft4+2] = 0;
-        ws[ft4+3] = 0;
-        js[ft4  ] = 0;
-        js[ft4+1] = 0;
-        js[ft4+2] = 0;
-        js[ft4+3] = 0;
-        fis[0] = 0;
-        fis[1] = 1;
-        fis[2] = 2;
-      }
-
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.BufferAttribute(ps, 3));
-      geo.setAttribute('normal', new THREE.BufferAttribute(ns, 3));
-      geo.setAttribute('uv', new THREE.BufferAttribute(ps, 2));
-      //geo.addAttribute('weight', new THREE.BufferAttribute(ps, 4));
-      //geo.addAttribute('joint', new THREE.BufferAttribute(ps, 4));
-      geo.setIndex(fis);
-
-      const mtl = new THREE.MeshStandardMaterial({
-        color: 0x8080ff,
-      });
-      const m = new THREE.Mesh(geo, mtl);
-      return m;
+      const m = this.makeRound(1);
+      m.name = 'round';
+      this.scene.add(m);
     }
-  }
-
-  download(blob, name) {
-    const a = document.createElement('a');
-    a.download = name;
-    a.href = URL.createObjectURL(blob);
-    a.click();
   }
 
   setListener() {
@@ -146,13 +94,12 @@ class Misc extends Tg {
         Util.download(new Blob([ab]), `a.glb`);
       });
     }
-    { // 未実装
+    {
       const el = document.getElementById('idmake3');
       el?.addEventListener('click', async () => {
-        const canvas = document.getElementById('maincanvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        await this.make1(canvas);
+        const obj = this.scene.getObjectByName('round');
+        const ab = await this.makeGlb(obj);
+        Util.download(new Blob([ab]), `round.glb`);
       });
     }
     console.log('setListener');
@@ -362,10 +309,87 @@ class Misc extends Tg {
   }
 
   /**
+   * 
+   * @param {number} dirk +1 or -1
    * @returns {THREE.Mesh}
    */
-  makeRound() {
-    
+  makeRound(dirk) {
+    const div = this.div;
+    const thin2 = 1 / 8;
+    const ret = {vs: [], fis: []};
+    for (let i = 0; i <= div; ++i) {
+      // U 
+      // +1.0 ～ 0.0 ～ -1.0
+      let z = (div / 2 - i) / (div / 2);
+      for (let j = 0; j <= div; ++j) {
+        const vt = {
+          p: [0, 0, z],
+          n: [0, -1, 0],
+          uv: [0.5, 0.5],
+        };
+
+        if (0 <= j && j < div / 4) {
+          vt.p = [
+            -(div / 4 - j) / (div / 4),
+            -thin2, // 下
+            z
+          ];
+        } else if (div / 4 <= j && j < div * 3 / 4) {
+          const ang = Math.PI * 2 * ((j + div * 2 / 4) % div) / div;
+          const cs = Math.cos(ang);
+          const sn = Math.sin(ang);
+          vt.p = [thin2 * cs, thin2 * sn, z];
+          vt.n = [cs, sn, 0];
+        } else {
+          vt.n = [0, 1, 0];
+          vt.p = [
+            -(j - div * 3 / 4) / (div / 4),
+            thin2, // 上
+            z
+          ];
+        }
+
+        vt.n = vt.n.map(n => n * dirk);
+
+        ret.vs.push(vt);
+      }
+    }
+
+    for (let i = 0; i < div; ++i) {
+      for (let j = 0; j < div; ++j) {
+        let v0 = (div + 1) * i + j;
+        let v1 = v0 + 1;
+        let v2 = v0 + (div + 1);
+        let v3 = v2 + 1;
+        ret.fis.push(v0, v2, v1);
+        ret.fis.push(v1, v2, v3);
+      }
+    }
+
+    { // 他の側面閉じた方がいいかな...
+      for (let i = 0; i < div; ++i) {
+        let v0 = (div + 1) * i;
+        let v1 = v0 + div;
+        let v2 = v0 + (div + 1);
+        let v3 = v2 + div;
+        ret.fis.push(v0, v1, v2);
+        ret.fis.push(v2, v1, v3);
+      }
+      for (let i = 0; i < div; ++i) {
+        {
+          let v0 = 0;
+          let v1 = 0;
+          let v2 = 0;
+          let v3 = 0;
+          //ret.fis.push(v0, v1, v2);
+          //ret.fis.push(v2, v1, v3);
+        }
+      }
+
+    }
+
+    const m = this.makeMesh(ret);
+    return m;
   }
 
 

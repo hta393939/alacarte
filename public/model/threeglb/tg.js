@@ -70,12 +70,6 @@ export class Tg {
     const controller = new OrbitControls(camera, canvas);
     this.controller = controller;
 
-    //this.makeScene();
-    {
-      const m = this.makeMesh();
-      //scene.add(m);
-    }
-
     this.update();
   }
 
@@ -96,15 +90,17 @@ export class Tg {
    * @param {{vs: Vtx[], fis: number[]}} part
    * @returns {THREE.Mesh}
    */
-  makeMesh(part, indexOffset = 0) {
+  makeMesh(part) {
     {
       const vnum = part.vs.length;
       const ps = new Float32Array(vnum * 3);
       const ns = new Float32Array(vnum * 3);
       const uvs = new Float32Array(vnum * 2);
       const ws = new Float32Array(vnum * 4);
-      const js = new Float32Array(vnum * 4);
+      const js = new Uint16Array(vnum * 4);
       const fis = part.fis;
+
+      let usewj = false;
 
       for (let i = 0; i < vnum; ++i) {
         const vt = part.vs[i];
@@ -120,6 +116,7 @@ export class Tg {
         uvs[ft2  ] = vt.uv[0];
         uvs[ft2+1] = vt.uv[1];
         if ('w' in vt) {
+          usewj = true;
           ws[ft4  ] = vt.w[0];
           ws[ft4+1] = vt.w[1];
           ws[ft4+2] = vt.w[2];
@@ -134,16 +131,26 @@ export class Tg {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(ps, 3));
       geo.setAttribute('normal', new THREE.BufferAttribute(ns, 3));
-      geo.setAttribute('uv', new THREE.BufferAttribute(ps, 2));
-      //geo.addAttribute('weight', new THREE.BufferAttribute(ps, 4));
-      //geo.addAttribute('joint', new THREE.BufferAttribute(ps, 4));
-      geo.setIndex(fis.map(v => v + indexOffset));
+      geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+      if (usewj) {
+        geo.addAttribute('skinWeight', new THREE.BufferAttribute(ws, 4));
+        geo.addAttribute('skinIndex', new THREE.BufferAttribute(js, 4));
+      }
+      geo.setIndex(fis);
       geo.computeBoundingBox();
       geo.computeBoundingSphere();
 
       const mtl = new THREE.MeshStandardMaterial({
         color: 0x8080ff,
       });
+
+      if (usewj) {
+        const m = new THREE.SkinnedMesh(geo, mtl);
+        //const skeleton = new THREE.Skeleton(bones);
+// https://threejs.org/docs/#api/en/objects/SkinnedMesh
+        return m;
+      }
+
       const m = new THREE.Mesh(geo, mtl);
       return m;
     }
@@ -209,13 +216,6 @@ export class Tg {
       });
       img.src = URL.createObjectURL(file);
     });
-  }
-
-  download(blob, name) {
-    const a = document.createElement('a');
-    a.download = name;
-    a.href = URL.createObjectURL(blob);
-    a.click();
   }
 
   /**
