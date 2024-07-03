@@ -2,8 +2,35 @@
  * @file index.js
  */
 
+/**
+ * 
+ * @param {number} a 
+ * @param {number} b 
+ * @param {number} t 1だとb 
+ * @returns 
+ */
 const _lerp = (a, b, t) => {
   return (a * (1 - t) + b * t);
+};
+
+/**
+ * 配列版
+ * @param {number[]} a 
+ * @param {number[]} b 
+ * @param {number} t b側の重み 1だとbになる
+ * @param {boolean} is255 
+ * @returns {number[]}
+ */
+const lerp = (a, b, t, is255) => {
+  const num = Math.min(a.length, b.length);
+  const ret = new Array(num);
+  for (let i = 0; i < num; ++i) {
+    ret[i] = a[i] * (1 - t) + b[i] * t;
+    if (is255) {
+      ret[i] = Math.round(ret[i]);
+    }
+  }
+  return ret;
 };
 
 class Misc {
@@ -246,43 +273,88 @@ class Misc {
     const w = canvas.width;
     const h = canvas.height;
     const c = canvas.getContext('2d');
-    c.fillStyle = '#c0c0c0';
-    c.fillRect(0, 0, w, h);
+    //c.fillStyle = '#c0c0c0'; // 192
+    //c.fillRect(0, 0, w, h);
 
     const data = c.getImageData(0, 0, w, h);
 
-    {
-      
+    let c0 = [0, 153, 0];
+    let c1 = [51, 255, 51];
+    const objs = [];
+    for (let i = 0; i < 32; ++i) {
+      const ang = Math.PI * 2 * i / 32;
+      const odd = (i & 1) !== 0;
+      {
+        const k = 0.5 + (odd ? +0.05 : -0.05);
+        const obj = {
+          x: Math.cos(ang) * k * w * 0.5 + w * 0.5,
+          y: Math.sin(ang) * k * h * 0.5 + h * 0.5,
+          z: 0,
+          radius: 2 / 64 * w,
+        };
+        objs.push(obj);
+      }
+
+      if (!odd) {
+        const k = 0.5 + 0.15;
+        const obj = {
+          x: Math.cos(ang + 0.06) * k * w * 0.5 + w * 0.5,
+          y: Math.sin(ang + 0.06) * k * h * 0.5 + h * 0.5,
+          z: 0,
+          radius: 2 / 64 * w,
+        };
+        objs.push(obj);
+      }
     }
 
-    if (false) {
-      const rot = Math.PI * 20 / 180;
+    if (true) {
       for (let y = 0; y < h; ++y) {
         for (let x = 0; x < w; ++x) {
-          let dx = (x - w * 0.5) / (w * 0.5);
-          let dy = (y - h * 0.5) / (h * 0.5);
-          const d = Math.sqrt(dx * dx + dy * dy);
-          const ang = Math.atan2(-dy, dx);
-          const deg = ang * 180 / Math.PI;
+          const sph = [
+            x, y, 0,
+          ];
+          let r = 51;
+          let g = 176;
+          let b = 51; // 126.23
+          let a = 255;
+          for (const obj of objs) {
+            const dist = Math.sqrt(
+              (obj.x - sph[0]) ** 2
+              + (obj.y - sph[1]) ** 2
+              + (obj.z - sph[2]) ** 2
+            );
+            const diff = 1 - dist / obj.radius;
+            if (diff > 1 || diff <= 0) {
+              continue;
+            }
 
-          dx *= 1;
-          dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
-          const cs = Math.cos(rot);
-          const sn = Math.sin(rot);
-          let vx = dx * cs - dy * sn;
-          let vy = dx * sn + dy * cs;
-
-          const d2 = Math.sqrt(vx * vx + vy * vy);
-          let lv = 1 - d2 * 1;
-          lv = Math.max(0, Math.min(1, lv));
-
+            const col = lerp(
+              c0,
+              c1,
+              Math.min(1, Math.max(0, diff)),
+              true);
+            r = col[0];
+            g = col[1];
+            b = col[2];
+          }
           const offset = (x + w * y) * 4;
 
-          lv *= 255;
-          let r = lv;
-          let g = lv;
-          let b = lv;
-          let a = lv;
+          let lv = (r * 87 + g * 150 + b * 29) / 256;
+          lv += 64 + 2;
+
+          {
+            const d = Math.sqrt((x - w * 0.5) ** 2
+              + (y - h * 0.5) ** 2) / (w * 0.5);
+            const thr = 3 / 16; // 2 / 8
+            if (d <= thr) {
+              lv = _lerp(64, 192, d / thr);
+            }
+          }
+
+          r = lv;
+          g = lv;
+          b = lv;
+
           r = Math.max(0, Math.min(r, 255));
           g = Math.max(0, Math.min(g, 255));
           b = Math.max(0, Math.min(b, 255));
@@ -493,8 +565,8 @@ class Misc {
       const el = document.getElementById('idmake3');
       el?.addEventListener('click', async () => {
         const canvas = document.getElementById('maincanvas');
-        canvas.width = 256;
-        canvas.height = 256;
+        canvas.width = 1024;
+        canvas.height = 1024;
         await this.make3(canvas);
       });
     }

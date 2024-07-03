@@ -114,16 +114,17 @@ class PitMaker extends PMX.Maker {
           }
 
           v.p = [x * scale, y * scale, z * scale];
-
+          // 半径のうち1/4
           const uvk = i / div / 4;
           v.uv = [
             0.5 + cs * uvk * 0.5,
             0.5 + sn * uvk * 0.5,
           ];
 
-          v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [2, 0, 0, 0];
-          v.weights = [1, 0, 0, 0];
+          v.deformType = PMX.Vertex.DEFORM_BDEF2;
+          v.joints = [3, 2, 0, 0];
+          const rate = Math.max(0, Math.min(1, y / thinR));
+          v.weights = [rate, 1 - rate, 0, 0];
 
           this.vts.push(v);
         }
