@@ -1,51 +1,51 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8" />
-        <title>テクスチャ作成</title>
-        <link rel="stylesheet" href="./index.css" />
+  <head>
+    <meta charset="UTF-8" />
+    <title>テクスチャ作成</title>
+    <link rel="stylesheet" href="./index.css" />
 
-    </head>
-    <body>
+  </head>
+  <body>
 
-        <div></div>
-        <div>chrome または edge でのみ使用可能</div>
+    <div></div>
+    <div>chrome または edge でのみ使用可能</div>
 
+    <div>
+      <div>
+        <div id="innerview"></div>
+        <div id="element"></div>
+      </div>
+      <div>
+        <canvas id="maincanvas"></canvas>
+        <canvas id="canvas"></canvas>
+
+        <button id="enumvoice">列挙する</button>
+        <input type="number" min="0" max="50" value="3" id="speakerid" />
+        <button id="saytext">発音する</button>
+        <button id="openwindow">開く</button>
+        <button id="opendir">ワーキングフォルダを指定する</button>
+        <button id="retry">リトライする</button>
         <div>
-            <div>
-                <div id="innerview"></div>
-                <div id="element"></div>
-            </div>
-            <div>
-                <canvas id="maincanvas"></canvas>
-                <canvas id="canvas"></canvas>
-
-                <button id="enumvoice">列挙する</button>
-                <input type="number" min="0" max="50" value="3" id="speakerid" />
-                <button id="saytext">発音する</button>
-                <button id="openwindow">開く</button>
-                <button id="opendir">ワーキングフォルダを指定する</button>
-                <button id="retry">リトライする</button>
-                <div>
-                    <div id="processingview"></div>
-                </div>
-            </div>
-            <div>
-                <div id="imelement" class="drop">ここにドロップする</div>
-            </div>
-            <div>
-                <div id="resultelement"></div>
-            </div>
-
-            <div>
-                <img id="baseimage" src="./a008.png" />
-            </div>
+          <div id="processingview"></div>
         </div>
+      </div>
+      <div>
+        <div id="imelement" class="drop">ここにドロップする</div>
+      </div>
+      <div>
+        <div id="resultelement"></div>
+      </div>
 
-        <hr />
+      <div>
+        <img id="baseimage" src="./a008.png" />
+      </div>
+    </div>
 
-        <script src="./index.js"></script>
-    </body>
+    <hr />
+
+    <script src="./index.js"></script>
+  </body>
 </html>
 
 

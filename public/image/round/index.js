@@ -246,9 +246,16 @@ class Misc {
     const w = canvas.width;
     const h = canvas.height;
     const c = canvas.getContext('2d');
+    c.fillStyle = '#c0c0c0';
+    c.fillRect(0, 0, w, h);
+
     const data = c.getImageData(0, 0, w, h);
 
-    if (true) {
+    {
+      
+    }
+
+    if (false) {
       const rot = Math.PI * 20 / 180;
       for (let y = 0; y < h; ++y) {
         for (let x = 0; x < w; ++x) {
