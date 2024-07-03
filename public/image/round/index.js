@@ -269,23 +269,17 @@ class Misc {
           let lv = 1 - d2 * 1;
           lv = Math.max(0, Math.min(1, lv));
 
-          const offset = (x + h * y) * 4;
+          const offset = (x + w * y) * 4;
 
           lv *= 255;
-
-          let r = 255;
-          let g = 204;
-          let b = 204;
+          let r = lv;
+          let g = lv;
+          let b = lv;
           let a = lv;
-          r = lv;
-          g = lv;
-          b = lv;
-          a = 255;
-
           r = Math.max(0, Math.min(r, 255));
           g = Math.max(0, Math.min(g, 255));
           b = Math.max(0, Math.min(b, 255));
-
+          a = Math.max(0, Math.min(a, 255));
           data.data[offset+0] = r;
           data.data[offset+1] = g;
           data.data[offset+2] = b;
