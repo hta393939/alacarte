@@ -293,6 +293,10 @@ class Misc {
       console.log('make11 offsets', offsets);            
     });
 
+    window.idmakepit?.addEventListener('click', () => {
+      this.makePit();
+    });
+
     {
       const el = window.idtoclip1;
       el?.addEventListener('click', async () => {
@@ -369,6 +373,26 @@ class Misc {
     const bufs = writer.makeBuffer();
     this.download(new Blob(bufs), `${param.nameEn}.pmx`);
     console.log('makePhyCapsule offsets');
+  }
+
+/**
+ * ここでは物理カプセルの生成
+ * phycapsule.js
+ */
+  makePit() {
+    const param = this.getCommonOptions();
+
+    const writer = new PitMaker();
+    let top = 'a';
+    const d = param.denom;
+    const dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
+    Object.assign(param, {
+      nameEn: `${top}015_pit_${param.belt}_${dtext}`,
+    });
+    writer.make(param);
+    const bufs = writer.makeBuffer();
+    this.download(new Blob(bufs), `${param.nameEn}.pmx`);
+    console.log('makePit offsets');
   }
 
 /**
