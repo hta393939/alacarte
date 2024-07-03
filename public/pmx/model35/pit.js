@@ -115,9 +115,10 @@ class PitMaker extends PMX.Maker {
 
           v.p = [x * scale, y * scale, z * scale];
 
+          const uvk = i / div / 4;
           v.uv = [
-            0.5 + x / outR * 0.5,
-            0.5 + z / outR * 0.5,
+            0.5 + cs * uvk * 0.5,
+            0.5 + sn * uvk * 0.5,
           ];
 
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
@@ -142,24 +143,27 @@ class PitMaker extends PMX.Maker {
           let y = thinR * Math.sin(vang) + thinR;
           let z = (inR + thinR) * sn + thinR * nz;
           if (i >= div / 2) {
-            nx = -nx;
-            ny = -ny;
-            nz = -nz;
-            x = (inR + thinR * 3) * cs + nx * thinR;
+            x = (inR + thinR * 3) * cs - nx * thinR;
             y = Math.sin(vang) * thinR + thinR;
-            z = (inR + thinR * 3) * sn + nz * thinR;
+            z = (inR + thinR * 3) * sn - nz * thinR;
+
+            const nr = - Math.cos(vang);
+            nx = nr * cs;
+            ny = - Math.sin(vang);
+            nz = nr * sn;
           }
 
           v.n = this.normalize([nx, ny, nz]);
           v.p = [x * scale, y * scale, z * scale];
+          const uvk = (i + div / 4) / div;
           v.uv = [
-            0.5 + x / outR * 0.5,
-            0.5 + z / outR * 0.5,
+            0.5 + cs * uvk * 0.5,
+            0.5 + sn * uvk * 0.5,
           ];
 
           v.deformType = PMX.Vertex.DEFORM_BDEF2;
           v.joints = [3, 2, 0, 0];
-          const rate = y / (thinR * 2);
+          const rate = Math.max(0, Math.min(1, y / thinR));
           v.weights = [1 - rate, rate, 0, 0];
           this.vts.push(v);
         }
@@ -224,10 +228,9 @@ class PitMaker extends PMX.Maker {
     const RIGID_DEFAULT_GROUP = 4;
 
     for (let i = 0; i < 4; ++i) {
-      let j = new PMX.Joint();
-  /**
-  * ボーン
-  */
+/**
+ * ボーン
+ */
       let b = new PMX.Bone();
 
       let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
@@ -254,7 +257,7 @@ class PitMaker extends PMX.Maker {
         b.nameJa = 'センター';
         break;
       case 3:
-        b.p = [0, 0 * scale, 0];
+        b.p = [0, thinR * scale, 0];
         break;
       }
 

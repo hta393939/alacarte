@@ -96,146 +96,206 @@ class Misc {
  * 
  * @param {HTMLCanvasElement} canvas 
  */
-async make1(canvas) {
+  async make1(canvas) {
 
-  const w = canvas.width;
-  const h = canvas.height;
-  const c = canvas.getContext('2d');
-  const data = c.getImageData(0, 0, w, h);
+    const w = canvas.width;
+    const h = canvas.height;
+    const c = canvas.getContext('2d');
+    const data = c.getImageData(0, 0, w, h);
 
-  const router = 37;
+    const router = 37;
 
-  {
-    const rot = Math.PI * 20 / 180;
-    for (let y = 0; y < h; ++y) {
-      for (let x = 0; x < w; ++x) {
-        let dx = (x - w * 0.5) / (w * 0.5);
-        let dy = (y - h * 0.5) / (h * 0.5);
-        const d = Math.sqrt(dx * dx + dy * dy);
-        const ang = Math.atan2(-dy, dx);
-        const deg = ang * 180 / Math.PI;
+    {
+      const rot = Math.PI * 20 / 180;
+      for (let y = 0; y < h; ++y) {
+        for (let x = 0; x < w; ++x) {
+          let dx = (x - w * 0.5) / (w * 0.5);
+          let dy = (y - h * 0.5) / (h * 0.5);
+          const d = Math.sqrt(dx * dx + dy * dy);
+          const ang = Math.atan2(-dy, dx);
+          const deg = ang * 180 / Math.PI;
 
-        dx *= 1;
-        dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
-        const cs = Math.cos(rot);
-        const sn = Math.sin(rot);
-        let vx = dx * cs - dy * sn;
-        let vy = dx * sn + dy * cs;
+          dx *= 1;
+          dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
+          const cs = Math.cos(rot);
+          const sn = Math.sin(rot);
+          let vx = dx * cs - dy * sn;
+          let vy = dx * sn + dy * cs;
 
-        const d2 = Math.sqrt(vx * vx + vy * vy);
-        let lv = 1 - d2 * 1;
-        lv = Math.max(0, Math.min(1, lv));
+          const d2 = Math.sqrt(vx * vx + vy * vy);
+          let lv = 1 - d2 * 1;
+          lv = Math.max(0, Math.min(1, lv));
 
-        const offset = (x + h * y) * 4;
+          const offset = (x + h * y) * 4;
 
-        lv *= 255;
+          lv *= 255;
 
-        let r = 255;
-        let g = 204;
-        let b = 204;
-        let a = lv;
-        r = lv;
-        g = lv;
-        b = lv;
-        a = 255;
+          let r = 255;
+          let g = 204;
+          let b = 204;
+          let a = lv;
+          r = lv;
+          g = lv;
+          b = lv;
+          a = 255;
 
-        r = Math.max(0, Math.min(r, 255));
-        g = Math.max(0, Math.min(g, 255));
-        b = Math.max(0, Math.min(b, 255));
+          r = Math.max(0, Math.min(r, 255));
+          g = Math.max(0, Math.min(g, 255));
+          b = Math.max(0, Math.min(b, 255));
 
-        data.data[offset+0] = r;
-        data.data[offset+1] = g;
-        data.data[offset+2] = b;
-        data.data[offset+3] = a;
+          data.data[offset+0] = r;
+          data.data[offset+1] = g;
+          data.data[offset+2] = b;
+          data.data[offset+3] = a;
+        }
       }
     }
+    c.putImageData(data, 0, 0);
   }
-  c.putImageData(data, 0, 0);
-}
+
+/**
+ * 丸い分布
+ * @param {HTMLCanvasElement} canvas 
+ */
+  async make2(canvas) {
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const c = canvas.getContext('2d');
+    const data = c.getImageData(0, 0, w, h);
+
+    for (let i = 0; i < 1000; ++i) {
+      const u = Math.random();
+      const v = Math.random();
+      let z = - u * 2 + 1;
+      let rr = Math.sqrt(1 - z * z);
+      let x = rr * Math.cos(2 * Math.PI * v);
+      let y = rr * Math.sin(2 * Math.PI * v);
+
+      x *= w;
+      y *= h;
+
+      let lv = 128;
+      x = Math.floor(x);
+      y = Math.floor(y);
+      if (x < 0 || y < 0) {
+        continue;
+      }
+
+      const ft = (w * y + x) * 4;
+      data.data[ft  ] += lv;
+      data.data[ft+1] += lv;
+      data.data[ft+2] += lv;
+      data.data[ft+3] = 255;
+    }
+
+    if (false) {
+      const rot = Math.PI * 20 / 180;
+      for (let y = 0; y < h; ++y) {
+        for (let x = 0; x < w; ++x) {
+          let dx = (x - w * 0.5) / (w * 0.5);
+          let dy = (y - h * 0.5) / (h * 0.5);
+          const d = Math.sqrt(dx * dx + dy * dy);
+          const ang = Math.atan2(-dy, dx);
+          const deg = ang * 180 / Math.PI;
+
+          dx *= 1;
+          dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
+          const cs = Math.cos(rot);
+          const sn = Math.sin(rot);
+          let vx = dx * cs - dy * sn;
+          let vy = dx * sn + dy * cs;
+
+          const d2 = Math.sqrt(vx * vx + vy * vy);
+          let lv = 1 - d2 * 1;
+          lv = Math.max(0, Math.min(1, lv));
+
+          const offset = (x + h * y) * 4;
+
+          lv *= 255;
+
+          let r = 255;
+          let g = 204;
+          let b = 204;
+          let a = lv;
+          r = lv;
+          g = lv;
+          b = lv;
+          a = 255;
+
+          r = Math.max(0, Math.min(r, 255));
+          g = Math.max(0, Math.min(g, 255));
+          b = Math.max(0, Math.min(b, 255));
+
+          data.data[offset+0] = r;
+          data.data[offset+1] = g;
+          data.data[offset+2] = b;
+          data.data[offset+3] = a;
+        }
+      }
+    }
+    c.putImageData(data, 0, 0);
+  }
 
 /**
  * 
  * @param {HTMLCanvasElement} canvas 
  */
-async make2(canvas) {
+  async make3(canvas) {
+    console.log('make3 called');
+    const w = canvas.width;
+    const h = canvas.height;
+    const c = canvas.getContext('2d');
+    const data = c.getImageData(0, 0, w, h);
 
-  const w = canvas.width;
-  const h = canvas.height;
-  const c = canvas.getContext('2d');
-  const data = c.getImageData(0, 0, w, h);
+    if (true) {
+      const rot = Math.PI * 20 / 180;
+      for (let y = 0; y < h; ++y) {
+        for (let x = 0; x < w; ++x) {
+          let dx = (x - w * 0.5) / (w * 0.5);
+          let dy = (y - h * 0.5) / (h * 0.5);
+          const d = Math.sqrt(dx * dx + dy * dy);
+          const ang = Math.atan2(-dy, dx);
+          const deg = ang * 180 / Math.PI;
 
-  for (let i = 0; i < 1000; ++i) {
-    const u = Math.random();
-    const v = Math.random();
-    let z = - u * 2 + 1;
-    let rr = Math.sqrt(1 - z * z);
-    let x = rr * Math.cos(2 * Math.PI * v);
-    let y = rr * Math.sin(2 * Math.PI * v);
+          dx *= 1;
+          dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
+          const cs = Math.cos(rot);
+          const sn = Math.sin(rot);
+          let vx = dx * cs - dy * sn;
+          let vy = dx * sn + dy * cs;
 
-    x *= w;
-    y *= h;
+          const d2 = Math.sqrt(vx * vx + vy * vy);
+          let lv = 1 - d2 * 1;
+          lv = Math.max(0, Math.min(1, lv));
 
-    let lv = 128;
-    x = Math.floor(x);
-    y = Math.floor(y);
-    if (x < 0 || y < 0) {
-      continue;
-    }
+          const offset = (x + h * y) * 4;
 
-    const ft = (w * y + x) * 4;
-    data.data[ft  ] += lv;
-    data.data[ft+1] += lv;
-    data.data[ft+2] += lv;
-    data.data[ft+3] = 255;
-  }
+          lv *= 255;
 
-  if (false) {
-    const rot = Math.PI * 20 / 180;
-    for (let y = 0; y < h; ++y) {
-      for (let x = 0; x < w; ++x) {
-        let dx = (x - w * 0.5) / (w * 0.5);
-        let dy = (y - h * 0.5) / (h * 0.5);
-        const d = Math.sqrt(dx * dx + dy * dy);
-        const ang = Math.atan2(-dy, dx);
-        const deg = ang * 180 / Math.PI;
+          let r = 255;
+          let g = 204;
+          let b = 204;
+          let a = lv;
+          r = lv;
+          g = lv;
+          b = lv;
+          a = 255;
 
-        dx *= 1;
-        dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
-        const cs = Math.cos(rot);
-        const sn = Math.sin(rot);
-        let vx = dx * cs - dy * sn;
-        let vy = dx * sn + dy * cs;
+          r = Math.max(0, Math.min(r, 255));
+          g = Math.max(0, Math.min(g, 255));
+          b = Math.max(0, Math.min(b, 255));
 
-        const d2 = Math.sqrt(vx * vx + vy * vy);
-        let lv = 1 - d2 * 1;
-        lv = Math.max(0, Math.min(1, lv));
-
-        const offset = (x + h * y) * 4;
-
-        lv *= 255;
-
-        let r = 255;
-        let g = 204;
-        let b = 204;
-        let a = lv;
-        r = lv;
-        g = lv;
-        b = lv;
-        a = 255;
-
-        r = Math.max(0, Math.min(r, 255));
-        g = Math.max(0, Math.min(g, 255));
-        b = Math.max(0, Math.min(b, 255));
-
-        data.data[offset+0] = r;
-        data.data[offset+1] = g;
-        data.data[offset+2] = b;
-        data.data[offset+3] = a;
+          data.data[offset+0] = r;
+          data.data[offset+1] = g;
+          data.data[offset+2] = b;
+          data.data[offset+3] = a;
+        }
       }
     }
+    c.putImageData(data, 0, 0);
+    console.log('make3 leave');
   }
-  c.putImageData(data, 0, 0);
-}
 
 /**
  * 
@@ -425,6 +485,16 @@ async make2(canvas) {
         canvas.width = 256;
         canvas.height = 256;
         await this.make2(canvas);
+      });
+    }
+
+    {
+      const el = document.getElementById('idmake3');
+      el?.addEventListener('click', async () => {
+        const canvas = document.getElementById('maincanvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        await this.make3(canvas);
       });
     }
 

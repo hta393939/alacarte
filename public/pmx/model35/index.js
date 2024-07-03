@@ -129,29 +129,49 @@ class Misc {
 
   saveSetting() {
     console.log('saveSetting called');
-    const obj = {
-      texprefix: document.getElementById('texprefix').value,
+    const param = {
+      texprefix: 'w',
+      belt: 10,
+      pow2element: -3,
     };
-    const s = JSON.stringify(obj);
+    for (const key in param) {
+      const el = document.getElementById(key);
+      if (el) {
+        if (Number.isFinite(param[key])) {
+          param[key] = Number.parseFloat(el.value);
+        } else {
+          param[key] = el.value;
+        }
+      }
+    }
+    const s = JSON.stringify(param);
     window.localStorage.setItem(this.STORAGE, s);
   }
 
   loadSetting() {
     const s = window.localStorage.getItem(this.STORAGE);
-    let obj = {
-      texprefix: 'g',
+    const param = {
+      texprefix: 'w',
+      pow2element: -3,
+      belt: 10,
     };
     try {
-      obj = JSON.parse(s);
-
-      {
-        const el = document.getElementById('texprefix');
-        el.value = obj.texprefix;
+      const obj = JSON.parse(s);
+      for (const key in obj) {
+        param[key] = obj[key];
       }
-    } catch(ec) {
+    } catch (ec) {
       console.warn('catch', ec.message);
     }
-    return obj;
+  
+    for (const key in param) {
+      const el = document.getElementById(key);
+      if (el) {
+        el.value = param[key];
+      }
+    }
+    console.log('loadSetting', param);
+    return param;
   }
 
   init() {
@@ -391,7 +411,7 @@ class Misc {
     writer.make(param);
     const bufs = writer.makeBuffer();
     this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-    console.log('makePit offsets');
+    console.log('makePit leave');
   }
 
 /**
