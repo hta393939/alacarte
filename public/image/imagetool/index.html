@@ -13,7 +13,7 @@
 
       <div class="toright">
         <div>スケール</div>
-        <input class="pointer" type="range" id="scale" value="4" min="1" max="16" />
+        <input class="pointer" type="range" id="scale" value="11" min="1" max="16" />
         <div id="scaleview"></div>
       </div>
       <div class="toright">
@@ -36,6 +36,9 @@
     <canvas id="maincanvas"></canvas>
     <canvas id="subcanvas"></canvas>
 
-    <script src="./index.js"></script>
+    <div class="drop" id="convcolor">グレースケール化</div>
+    <div class="drop" id="loadimage">読み取り</div>
+
+    <script type="module" src="./index.js"></script>
   </body>
 </html>

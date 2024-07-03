@@ -4,14 +4,16 @@
 
 class Misc {
   constructor() {
+    this.STORAGE = 'imagetool';
   }
 
   async initialize() {
+    this.loadSetting();
     this.setListener();
   }
 
 /**
- * 
+ * 緑の明るさを取ってきてすべての成分に適用する
  * @param {HTMLCanvasElement} canvas
  */
   convColor(canvas) {
@@ -148,9 +150,51 @@ class Misc {
     img.src = URL.createObjectURL(file);
   }
 
+  loadSetting() {
+    const param = {
+      foo: 1,
+      bar: 2,
+      baz: 3,
+    };
+    try {
+      const obj = JSON.parse(localStorage.getItem(this.STORAGE));
+      for (const key in obj) {
+        param[key] = obj[key];
+      }
+    } catch (e) {
+      console.warn('loadSetting', e.message);
+    }
+    console.log('loadSetting', param);
+    return param;
+  }
+
+  saveSetting() {
+    const param = {
+      foo: 1,
+      bar: 2,
+      baz: 3,
+    };
+    try {
+      for (const key of param) {
+        const el = document.getElementById(key);
+        if (!el) {
+          continue;
+        }
+        if (Number.isFinite(param[key])) {
+          param[key] = Number.parseFloat(el.value);
+        } else {
+          param[key] = el.value;
+        }
+      }
+    } catch (e) {
+      console.warn('saveSetting', e.message);
+    }
+    localStorage.setItem(this.STORAGE, JSON.stringify(param));
+  }
+
   setListener() {
     {
-      const el = window;
+      const el = document.getElementById('convcolor');
       el.addEventListener('dragover', ev => {
         ev.preventDefault();
         ev.stopPropagation();
@@ -163,6 +207,22 @@ class Misc {
         const canvas = document.getElementById('maincanvas');
         await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
         this.convColor(canvas);
+      });
+    }
+
+    {
+      const el = document.getElementById('loadimage');
+      el.addEventListener('dragover', ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.dataTransfer.dropEffect = 'copy';
+      });
+      el.addEventListener('drop', async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.dataTransfer.dropEffect = 'copy';
+        const canvas = document.getElementById('maincanvas');
+        await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
       });
     }
 
@@ -181,12 +241,18 @@ class Misc {
       _update();
     }
 
+    {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          this.saveSetting();
+        }
+      });
+    }
+
   }
 
 }
 
 const misc = new Misc();
+globalThis.misc = misc;
 misc.initialize();
-
-
-
