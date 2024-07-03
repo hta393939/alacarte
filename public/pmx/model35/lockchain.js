@@ -91,8 +91,7 @@ class LockChain extends PMX.Maker {
     const moveDamp = 1;
     const rotDamp = 1;
 /**
- * 普通の衝突グループ GUI
- * 自分にはぶつからない
+ * 普通の衝突グループ GUI 4
  */
     const RIGID_DEFAULT_GROUP = 4;
 /**

@@ -56,14 +56,15 @@ class PitMaker extends PMX.Maker {
   }
 
 /**
- * 
+ * @param {Object} param
+ * @param {number} param.denom
  */
   make(param) {
     const d = new Date();
     let div = 32;
     const height = 2;
-    const inR = 1;
-    const thinR = 0.5;
+    const inR = 1 / param.denom;
+    const thinR = inR * 0.5;
     const outR = inR + thinR * 3;
     console.log('outR', outR, thinR, inR);
 
@@ -167,7 +168,7 @@ class PitMaker extends PMX.Maker {
 
     }
 
-    {
+    { // 中心付近は 192 灰色
       let name = 'tex/pit.png';
       this.textures.push(name);
     }
@@ -218,9 +219,9 @@ class PitMaker extends PMX.Maker {
 
 /**
  * 普通の衝突グループ(1-origin)
- * グループUI6(1-origin)
+ * グループUI4(1-origin)
  */
-    const RIGID_DEFAULT_GROUP = 6;
+    const RIGID_DEFAULT_GROUP = 4;
 
     for (let i = 0; i < 4; ++i) {
       let j = new PMX.Joint();

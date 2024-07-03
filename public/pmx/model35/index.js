@@ -376,18 +376,17 @@ class Misc {
   }
 
 /**
- * ここでは物理カプセルの生成
- * phycapsule.js
+ * pit.js
  */
   makePit() {
     const param = this.getCommonOptions();
 
     const writer = new PitMaker();
-    let top = 'a';
     const d = param.denom;
     const dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
     Object.assign(param, {
-      nameEn: `${top}015_pit_${param.belt}_${dtext}`,
+      nameEn: `a015_pit_${dtext}`,
+      //nameEn: `${top}015_pit_${param.belt}_${dtext}`,
     });
     writer.make(param);
     const bufs = writer.makeBuffer();
