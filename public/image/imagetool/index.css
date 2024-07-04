@@ -1,5 +1,6 @@
 
 .drop {
+  width: 8rem;
   background-color: #f0f0ff;
   border: dashed 4px black;
   margin: 1rem;
@@ -7,6 +8,7 @@
   text-align: center;
   font-weight: bold;
   border-radius: 1rem;
+  user-select: none;
 }
 
 .pointer {
@@ -26,4 +28,7 @@
   border: solid 1px red;
 }
 
-
+.limit {
+  max-width: 320px;
+  max-height: 320px;
+}
