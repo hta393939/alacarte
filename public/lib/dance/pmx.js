@@ -438,13 +438,22 @@ class MaterialMorph {
  */
   static CALC_ADD = 1;
   constructor() {
+/**
+ * クリップ文字列に作文する場合
+ * 配列のインデックス
+ */
     this._index = 0;
-    this._parentName = 'morph000';
+    this._parentName = 'mr000';
+
     this._materialName = 'mtl000';
 /**
  * -1 だと全材質らしい
  */
     this.materialIndex = -1;
+
+/**
+ * @type {number}
+ */
     this.calcType = MaterialMorph.CALC_MUL;
 /**
  * RGBA
@@ -491,9 +500,9 @@ class MaterialMorph {
   toCSV() {
     const ss = [
       'PmxMaterialMorph',
-      `${this._parentName}`, // 空??
-      this._index, // 空??
-      `${this._materialName}`,
+      `"${this._parentName}"`, // Morph の名前。空?
+      this._index, // 0. 空?
+      `"${this._materialName}"`,
       this.calcType,
 
       ...this.diffuse,
@@ -569,12 +578,20 @@ class Morph {
   static TYPE_MATERIAL = 8;
   constructor() {
     this._index = 0;
-    this.nameJa = 'moruhu000';
-    this.nameEn = 'morph000';
-
+    this.nameJa = 'mr000';
+    this.nameEn = 'mr000';
+/**
+ * @type {number}
+ */
     this.panel = Morph.PANEL_ETC;
+/**
+ * @type {number}
+ */
     this.type = Morph.TYPE_VERTEX;
 
+    /**
+     * 読み取りのとき使う
+     */
     this.ones = [];
 
 
@@ -595,8 +612,8 @@ class Morph {
   }
 
 /**
- * 1行だけ返す
- * @returns 
+ * 1行だけ返す。実装済み
+ * @returns {string}
  */
   toCSV() {
     const ss = [
@@ -610,7 +627,7 @@ class Morph {
   }
 
 /**
- * 複数行で返す
+ * API. 複数行で返す。こっちを使う。
  * @returns {string[]}
  */
   toLines() {
@@ -632,6 +649,9 @@ class Morph {
     }
     for (const bm of this.boneMorphs) {
       lines.push(bm.toCSV());
+    }
+    for (const mm of this.materialMorphs) {
+      lines.push(mm.toCSV());
     }
     return lines;
   }

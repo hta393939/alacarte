@@ -255,6 +255,7 @@ class ApplyMaker {
     const adjustvts = [];
 /**
  * モーフの場合
+ * @type {PMX.Morph[]}
  */
     const morphs = [];
 
@@ -308,7 +309,7 @@ class ApplyMaker {
 
     for (let i = 0; i < 2; ++i) {
       const morph = new PMX.Morph();
-      morphs.push(morph);
+      //morphs.push(morph);
       morph.nameEn = `${lrname[i]}chest`;
       morph.nameJa = morph.nameEn;
       morph.panel = PMX.Morph.PANEL_ETC;
@@ -553,6 +554,23 @@ class ApplyMaker {
       }
     }
 
+    {
+      const mr = new PMX.Morph();
+      morphs.push(mr);
+      mr.nameEn = `p`;
+      mr.nameJa = mr.nameEn;
+      mr.panel = PMX.Morph.PANEL_ETC;
+      mr.type = PMX.Morph.TYPE_MATERIAL;
+      morphs.push(mr);
+
+      const mmr = new PMX.MaterialMorph();
+      mmr.setValue(0);
+      mmr._index = 0;
+      mmr._parentName = 'p';
+      mmr._materialName = '\u30d1\u30f3\u30c4';
+      mr.materialMorphs.push(mmr);
+    }
+
 // 行返す
     const lines = [];
     if (false) { // 変形の場合(不使用)
@@ -585,6 +603,10 @@ class ApplyMaker {
       }
       for (const joint of joints) {
         lines.push(joint.toCSV());
+      }
+
+      for (const mr of morphs) {
+        lines.push(...mr.toLines());
       }
     }
     console.log('終わり', setset);
