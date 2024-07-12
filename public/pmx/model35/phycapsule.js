@@ -378,7 +378,7 @@ class PhyCapsule extends PMX.Maker {
           0];
         rb.friction = 1000;
         rb.mass = 0.002; // 重量
-        rb.setUINots(1, 2, 3,
+        rb.setUINots(1, 2,
           5, 6,
           13, 14, 15, 16,
         );
@@ -451,7 +451,7 @@ class PhyCapsule extends PMX.Maker {
           break;
         case 2:
           m.nameEn = 'bmul';
-          mm.tex = [0, 0, 1, 1];
+          mm.tex = [1, 1, 0, 1];
           break;
         }
         m.nameJa = m.nameEn;

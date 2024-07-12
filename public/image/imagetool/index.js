@@ -267,7 +267,63 @@ class Misc {
         this.act();
       });
     }
+    {
+      const el = document.getElementById('curved');
+      el?.addEventListener('dragover', ev => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        ev.dataTransfer.dropEffect = 'copy';
+      });
+      el?.addEventListener('drop', async ev => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const canvas = document.getElementById('maincanvas');
+        await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
+        this.curved(canvas);
+      });
+    }
 
+  }
+
+  /**
+   *  
+   */
+  async curved(canvas) {
+    console.log('curved called');
+    const w = canvas.width;
+    const h = canvas.height;
+    const c = canvas.getContext('2d');
+    const data = c.getImageData(0, 0, w, h);
+
+    const TOPPX = 93; // 512
+    const rr = 8;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; ++x) {
+        const ft = (x + w * y) * 4;
+
+        let r = data.data[ft];
+        let g = data.data[ft+1];
+        let b = data.data[ft+2];
+        if (r === 255 && g === 0 && b === 0) {
+          let ang = Math.PI * 2 * x / w;
+          let ty = (y < h / 2) ? y : (h - 1 - y);
+          let adjust = 176 - Math.cos(ang) * rr;
+          let t = Math.max(0, Math.min(1, (ty - TOPPX * 0.5) / (TOPPX * 0.5)));
+          let lv = 176 * (1 - t) + adjust * t;
+          r = lv;
+          g = lv;
+          b = lv;
+
+          data.data[ft] = r;
+          data.data[ft+1] = g;
+          data.data[ft+2] = b;
+        } else {
+          continue;
+        }
+      }
+    }
+    c.putImageData(data, 0, 0);
+    console.log('curved leave');
   }
 
   act() {

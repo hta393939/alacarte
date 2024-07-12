@@ -388,7 +388,7 @@ class LockChain extends PMX.Maker {
           0];
         rb.p = [...b.p];
         rb.setUIGroup(RIGID_DEFAULT_GROUP);
-        rb.setUINots(1, 2, 3,
+        rb.setUINots(1, 2,
           5, 6,
           13, 14, 15, 16,
         );
@@ -417,7 +417,7 @@ class LockChain extends PMX.Maker {
           0];
         rb.p = [...b.p];
         rb.setUIGroup(RIGID_DEFAULT_GROUP);
-        rb.setUINots(1, 2, 3,
+        rb.setUINots(1, 2,
           5, 6,
           13, 14, 15, 16,
         );
