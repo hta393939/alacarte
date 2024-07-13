@@ -66,7 +66,7 @@ class PhyCapsule extends PMX.Maker {
   }
 
 /**
- * 物理 SDEF してみたい。一旦できた。まんなかを動かす。
+ * 物理 SDEF してみたい。
  * 常時物理
  */
   make(param) {
@@ -179,14 +179,14 @@ class PhyCapsule extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.sin(vang) * capsuleR;
-          let x = -cs * rr;
-          let z =  sn * rr;
+          let x = -sn * rr;
+          let z =  cs * rr;
           let y = capsuleR * Math.cos(vang);
 
           v.n = this.normalize([x, y, z]);
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [ (j / div),
-            - i / div * 4 * capV + 1];
+            - i / (div / 4) * capV + 1];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           v.joints = [baseBoneIndex, 0, 0, 0];
           v.weights = [1, 0, 0, 0];
@@ -200,8 +200,8 @@ class PhyCapsule extends PMX.Maker {
           let v1 = v0 + 1;
           let v2 = v0 + (div + 1);
           let v3 = v2 + 1;
-          m.faces.push([v0, v2, v1]);
-          m.faces.push([v2, v3, v1]);
+          m.faces.push([v0, v1, v2]);
+          m.faces.push([v2, v1, v3]);
         }
       }
 
@@ -218,7 +218,7 @@ class PhyCapsule extends PMX.Maker {
             const sn = Math.sin(hang);
             let x = -sn * rr;
             let y = by - i * beltHeight / div;
-            let z = cs * rr;
+            let z =  cs * rr;
 
             v.n = this.normalize([x, 0, z]);
             v.p = [x * scale, y * scale, z * scale];
@@ -261,15 +261,15 @@ class PhyCapsule extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.cos(vang) * capsuleR;
-          let x = -cs * rr;
-          let z = sn * rr;
+          let x = -sn * rr;
+          let z =  cs * rr;
           let y = -Math.sin(vang);
 
           v.n = this.normalize([x, y, z]);
           y = (y * capsuleR) + by;
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [ (j / div),
-            i / div * 4 * capV,
+            (1 - i / (div / 4)) * capV,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           v.joints = [boneIndex, 0, 0, 0];
@@ -284,8 +284,8 @@ class PhyCapsule extends PMX.Maker {
           let v1 = v0 + 1;
           let v2 = v0 + (div + 1);
           let v3 = v2 + 1;
-          m.faces.push([v0, v2, v1]);
-          m.faces.push([v2, v3, v1]);
+          m.faces.push([v0, v1, v2]);
+          m.faces.push([v2, v1, v3]);
         }
       } // 下の半球
 
@@ -321,7 +321,7 @@ class PhyCapsule extends PMX.Maker {
       j.nameJa = j.nameEn;
       //const rotAng = _rad(90);
       const rotAng = _rad(45);
-      j.rotUpper = [rotAng, rotAng * 0, rotAng];
+      j.rotUpper = [ rotAng,  rotAng * 0,  rotAng];
       j.rotLower = [-rotAng, -rotAng * 0, -rotAng];
       j.lockMove();
 
