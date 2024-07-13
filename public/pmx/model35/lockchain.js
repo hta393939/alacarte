@@ -180,14 +180,18 @@ class LockChain extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.sin(vang) * capsuleR;
-          let x = -cs * rr;
-          let z =  sn * rr;
-          let y = capsuleR * Math.cos(vang) + beltHeight * beltNum;
+          let x = -sn * rr;
+          let z =  cs * rr;
+          let y = capsuleR * Math.cos(vang);
 
           v.n = this.normalize([x, y, z]);
+          y += beltHeight * beltNum;
+
           v.p = [x * scale, y * scale, z * scale];
-          v.uv = [ (j / div),
-            - i / div * 4 * capV + 1];
+          v.uv = [
+            (j / div),
+            - i / (div / 4) * capV + 1,
+          ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           v.joints = [sortedBones[0], 0, 0, 0];
           v.weights = [1, 0, 0, 0];
@@ -201,8 +205,8 @@ class LockChain extends PMX.Maker {
           let v1 = v0 + 1;
           let v2 = v0 + (div + 1);
           let v3 = v2 + 1;
-          m.faces.push([v0, v2, v1]);
-          m.faces.push([v2, v3, v1]);
+          m.faces.push([v0, v1, v2]);
+          m.faces.push([v2, v1, v3]);
         }
       }
 
@@ -223,7 +227,8 @@ class LockChain extends PMX.Maker {
 
             v.n = this.normalize([x, 0, z]);
             v.p = [x * scale, y * scale, z * scale];
-            v.uv = [(j / div),
+            v.uv = [
+              (j / div),
               - i / div * beltV + (1 - capV)];
             v.deformType = PMX.Vertex.DEFORM_SDEF;
             v.joints = [
@@ -266,15 +271,16 @@ class LockChain extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.cos(vang) * capsuleR;
-          let x = -cs * rr;
-          let z = sn * rr;
+          let x = -sn * rr;
+          let z =  cs * rr;
           let y = -Math.sin(vang);
 
           v.n = this.normalize([x, y, z]);
           y = (y * capsuleR) + by;
           v.p = [x * scale, y * scale, z * scale];
-          v.uv = [ (j / div),
-            i / div * 4 * capV,
+          v.uv = [
+            (j / div),
+            (1 - i / (div / 4)) * capV,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           v.joints = [sortedBones[sortedBones.length - 1], 0, 0, 0];
@@ -289,15 +295,15 @@ class LockChain extends PMX.Maker {
           let v1 = v0 + 1;
           let v2 = v0 + (div + 1);
           let v3 = v2 + 1;
-          m.faces.push([v0, v2, v1]);
-          m.faces.push([v2, v3, v1]);
+          m.faces.push([v0, v1, v2]);
+          m.faces.push([v2, v1, v3]);
         }
       } // 下の半球
 
     }
 
     {
-      let name = `tex/${param.texprefix}012.png`;
+      let name = `tex/${param.texprefix}013.png`;
       this.textures.push(name);
     }
 
