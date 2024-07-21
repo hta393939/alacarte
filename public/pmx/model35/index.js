@@ -89,7 +89,7 @@ const _rad2deg = v => {
 
 class Misc {
   constructor() {
-    this.STORAGE = 'miku34';
+    this.STORAGE = 'model';
   }
 
 /**
@@ -121,6 +121,7 @@ class Misc {
  * ik 書き出しするかどうか
  */
       useik: document.getElementById('useikelement')?.checked,
+      useradius: document.getElementById('useradius')?.checked,
     };
     param.scale = 2 ** param.pow2;
     param.denom = 1 / param.scale;
@@ -376,7 +377,7 @@ class Misc {
   }
 
 /**
- * ここでは物理カプセルの生成
+ * ここでは物理カプセルの生成 12
  * phycapsule.js
  */
   makePhyCapsule() {
@@ -387,6 +388,7 @@ class Misc {
     const d = param.denom;
     const dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
     Object.assign(param, {
+      texturePath: `tex/${top}012.png`,
       nameEn: `${top}012_phycapsule_${param.belt}_${dtext}`,
     });
     writer.make(param);
