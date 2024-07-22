@@ -376,15 +376,15 @@ class Misc {
 
   }
 
-/**
- * ここでは物理カプセルの生成 12
- * phycapsule.js
- */
+  /**
+   * ここでは物理カプセルの生成 012
+   * phycapsule.js
+   */
   makePhyCapsule() {
     const param = this.getCommonOptions();
 
     const writer = new PhyCapsule();
-    let top = 'a';
+    let top = param.useradius ? 'r' : 'a';
     const d = param.denom;
     const dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
     Object.assign(param, {

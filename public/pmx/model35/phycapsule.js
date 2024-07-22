@@ -411,11 +411,12 @@ class PhyCapsule extends PMX.Maker {
       default:
         b.p = [
           0,
-          - (i - baseBoneIndex) * beltHeight * 0.5 * scale,
+          (i - baseBoneIndex) * beltHeight * 0.5 * scale,
           0];
         rb.friction = 1000;
         rb.mass = 0.002; // 重量
-        rb.setUINots(1, 2,
+        rb.setUINots(
+          1, 2,
           5, 6,
           13, 14, 15, 16,
         );
