@@ -134,6 +134,7 @@ class Misc {
       texprefix: 'w',
       belt: 10,
       pow2element: -3,
+      useradius: 1,
     };
     for (const key in param) {
       const el = document.getElementById(key);
@@ -397,9 +398,9 @@ class Misc {
     console.log('makePhyCapsule offsets');
   }
 
-/**
- * pit.js
- */
+  /**
+   * pit.js
+   */
   makePit() {
     const param = this.getCommonOptions();
 
@@ -416,11 +417,11 @@ class Misc {
     console.log('makePit leave');
   }
 
-/**
- * ダウンロードする
- * @param {Blob} blob 
- * @param {string} name 
- */
+  /**
+   * ダウンロードする
+   * @param {Blob} blob 
+   * @param {string} name 
+   */
   download(blob, name) {
     const a = document.createElement('a');
     a.download = name;
@@ -428,10 +429,10 @@ class Misc {
     a.click();
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} canvas 
- */
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
   draw(canvas) {
     const w = 512;
     const h = 512;
@@ -484,10 +485,10 @@ class Misc {
     c.putImageData(img, 0, 0);
   }
 
-/**
- * 紫系統色
- * @param {HTMLCanvasElement} canvas 
- */
+  /**
+   * 紫系統色
+   * @param {HTMLCanvasElement} canvas 
+   */
   draw1(canvas) {
     const w = 512;
     const h = 512;
@@ -528,10 +529,10 @@ class Misc {
     c.putImageData(img, 0, 0);
   }
 
-/**
- * sha マップ生成
- * @param {HTMLCanvasElement} canvas 
- */
+  /**
+   * sha マップ生成
+   * @param {HTMLCanvasElement} canvas 
+   */
   draw2(canvas) {
     console.log('draw2 called');
     const w = 512;
@@ -602,10 +603,10 @@ class Misc {
     c.putImageData(img, 0, 0);
   }
 
-/**
- * 壁
- * @param {HTMLCanvasElement} canvas 
- */ 
+  /**
+   * 壁
+   * @param {HTMLCanvasElement} canvas 
+   */ 
   draw3(canvas) {
     console.log('draw3 called');
     const util = new Util();

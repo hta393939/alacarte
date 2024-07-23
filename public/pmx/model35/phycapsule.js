@@ -65,12 +65,14 @@ class PhyCapsule extends PMX.Maker {
     return vs;
   }
 
-/**
- * 物理 SDEF してみたい。
- * 常時物理
- */
+  /**
+   * 物理 SDEF してみたい。
+   * 常時物理
+   */
   make(param) {
     const _belt = param.belt;
+
+    const usephy = param.usephy;
 
     const _indexByInclude = (s) => {
       return this.bones.findIndex(bone => {
@@ -79,25 +81,29 @@ class PhyCapsule extends PMX.Maker {
     };
 
     const d = new Date();
-/**
- * 最終位置とサイズへの倍率
- */
+    /**
+     * 最終位置とサイズへの倍率
+     */
     const scale = param.scale;
     let div = 16;
+    /**
+     * ベルト数
+     * @type {number}
+     */
     const beltNum = _belt;
-/**
- * 移動減衰
- */
+    /**
+     * 移動減衰
+     */
     const moveDamp = 1;
     const rotDamp = 1;
-/**
- * 普通の衝突グループ GUI
- * 自分にはぶつからない
- */
+    /**
+     * 普通の衝突グループ GUI
+     * 自分にはぶつからない
+     */
     const RIGID_DEFAULT_GROUP = 4;
-/**
- * 一切衝突しないグループ(1-origin)
- */
+    /**
+     * 一切衝突しないグループ(1-origin)
+     */
     const RIGID_IGNORE_GROUP = 14;
 
     this.debug = 1;
@@ -108,10 +114,18 @@ class PhyCapsule extends PMX.Maker {
      * @param {number} target 1.0 に対して縮める値
      * @returns 
      */
-    const calcRadius = (t, target = 0.8) => {
+    const calcRadius = (t, fwTarget = 0.8, target = 0.5) => {
+      const fw = 0.4;
       let amp = (1 - target) * 0.5;
+      let fwAmp = (1 - fwTarget) * 0.5;
       let center = 1 - amp;
-      let u = Math.cos(t * Math.PI) * amp + center;
+      let fwCenter = 1 - fwAmp;
+      let fwPower = 1 / 4;
+      if (t < fw) {
+        let u = - Math.cos(Math.pow(t / fw, fwPower) * Math.PI) * fwAmp + fwCenter;
+        return u;
+      }
+      let u = Math.cos((t - fw) / (1 - fw) * Math.PI) * amp + center;
       return u;
     };
 
@@ -122,7 +136,7 @@ class PhyCapsule extends PMX.Maker {
     s += `gui group: ${RIGID_DEFAULT_GROUP}`;
     s += `, scale: ${scale}, div: ${div}\r\n`;
     s += `belt: ${beltNum}\r\n`;
-    s += `${param.texprefix}\r\n`;
+    s += `動的物理: ${usephy}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
@@ -131,32 +145,32 @@ class PhyCapsule extends PMX.Maker {
  * 操作中心 1 メッシュ無し
  * センター 2 多分メッシュ無し
  */
-/**
- * ベースボーンインデックス
- * 下の半球
- */
+    /**
+     * ベースボーンインデックス
+     * 下の半球
+     */
     const baseBoneIndex = 3;
 
     //const capsuleR = 1 / (2 * Math.PI);
     const capsuleR = 1;
-/**
- * ベルト1個分
- */
+    /**
+     * ベルト1個分
+     */
     const beltHeight = capsuleR * 2;
 
-/**
- * 上下の空いてる幅
- */
+    /**
+     * 上下の空いてる幅
+     */
     const capV = 92 / 512;
     //const capV = 0.25;
-/**
- * 内側の存在する部分の幅
- */
+    /**
+     * 内側の存在する部分の幅
+     */
     const beltV = 1 - capV * 2;
 
-/**
- * 増えていくボーンインデックス
- */
+    /**
+     * 増えていくボーンインデックス
+     */
     let boneIndex = baseBoneIndex;
 
     for (let i = 0; i < 1; ++i) { // 材質
@@ -282,7 +296,7 @@ class PhyCapsule extends PMX.Maker {
 
       vertexOffset = this.vts.length;
 
-      // by はの中を上がっていく方
+      // by は中を上がっていく方
       console.log('半分', 'by', by, 'vertexOffset', vertexOffset);
       let adjustR = calcRadius(1) * capsuleR; // 端1.0
       for (let i = 0; i <= div/4; ++i) { // 半球
@@ -323,12 +337,11 @@ class PhyCapsule extends PMX.Maker {
           m.faces.push([v0, v2, v1]);
           m.faces.push([v1, v2, v3]);
         }
-      } // 下の半球
+      } // 上の半球
 
     }
 
     { // テクスチャ
-      //let name = `tex/${param.texprefix}012.png`;
       let name = param.texturePath;
       this.textures.push(name);
     }
@@ -412,7 +425,8 @@ class PhyCapsule extends PMX.Maker {
         b.p = [
           0,
           (i - baseBoneIndex) * beltHeight * 0.5 * scale,
-          0];
+          0,
+        ];
         rb.friction = 1000;
         rb.mass = 0.002; // 重量
         rb.setUINots(
@@ -427,8 +441,9 @@ class PhyCapsule extends PMX.Maker {
           }
           b.parent = i - 1;
         } else { // even が tree
-          //rb.type = PMX.Rigid.TYPE_DYNAMIC;
-          rb.type = PMX.Rigid.TYPE_DYNAMIC_POS;
+          if (usephy) {
+            rb.type = PMX.Rigid.TYPE_DYNAMIC_POS;
+          }
           rb.setUIGroup(RIGID_DEFAULT_GROUP);
           b.parent = i - 2;
 
@@ -444,15 +459,13 @@ class PhyCapsule extends PMX.Maker {
             j.p = [...b.p];
             j.rigids = [b.parent, i];
           }
-          // TODO: 動的の場合はすべての親にぶらさげてみる
-          //b.parent = 0;
         }
         if (i == baseBoneIndex) {
           b.nameJa += '根っこ';
         }
 // 半径、不使用、不使用
         rb.size = [
-          capsuleR * calcRadius(b.p[1] / (beltHeight * beltNum)) * scale,
+          capsuleR * calcRadius(b.p[1] / scale / (beltHeight * beltNum)) * scale,
           scale,
           scale,
         ];
