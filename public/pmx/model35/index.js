@@ -122,6 +122,7 @@ class Misc {
  */
       useik: document.getElementById('useikelement')?.checked,
       useradius: document.getElementById('useradius')?.checked,
+      usedynamic: document.getElementById('usedynamic')?.checked,
     };
     param.scale = 2 ** param.pow2;
     param.denom = 1 / param.scale;
@@ -135,6 +136,8 @@ class Misc {
       belt: 10,
       pow2element: -3,
       useradius: 1,
+      usephy: 0,
+      usedynamic: 0,
     };
     for (const key in param) {
       const el = document.getElementById(key);
@@ -382,6 +385,9 @@ class Misc {
    * phycapsule.js
    */
   makePhyCapsule() {
+    document.getElementById('useradius').checked = true;
+    document.getElementById('usephyelement').checked = true;
+
     const param = this.getCommonOptions();
 
     const writer = new PhyCapsule();

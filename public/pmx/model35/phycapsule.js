@@ -72,7 +72,9 @@ class PhyCapsule extends PMX.Maker {
   make(param) {
     const _belt = param.belt;
 
+    const useradius = param.useradius;
     const usephy = param.usephy;
+    const usedynamic = param.usedynamic;
 
     const _indexByInclude = (s) => {
       return this.bones.findIndex(bone => {
@@ -136,7 +138,7 @@ class PhyCapsule extends PMX.Maker {
     s += `gui group: ${RIGID_DEFAULT_GROUP}`;
     s += `, scale: ${scale}, div: ${div}\r\n`;
     s += `belt: ${beltNum}\r\n`;
-    s += `動的物理: ${usephy}\r\n`;
+    s += `物理: ${usephy}, 動的: ${usedynamic}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
@@ -346,8 +348,6 @@ class PhyCapsule extends PMX.Maker {
       this.textures.push(name);
     }
 
-
-
     for (let i = 0; i <= boneIndex; ++i) { // ボーン
       const rr = capsuleR;
 /**
@@ -437,11 +437,13 @@ class PhyCapsule extends PMX.Maker {
         if ((i & 1) !== 0) { // odd がエフェクト
           j = null;
           if (i !== baseBoneIndex) {
-            b.bits |= PMX.Bone.BIT_AFTERPHY;
+            if (usephy && usedynamic) {
+              b.bits |= PMX.Bone.BIT_AFTERPHY;
+            }
           }
           b.parent = i - 1;
         } else { // even が tree
-          if (usephy) {
+          if (usephy && usedynamic) {
             rb.type = PMX.Rigid.TYPE_DYNAMIC_POS;
           }
           rb.setUIGroup(RIGID_DEFAULT_GROUP);
@@ -471,6 +473,11 @@ class PhyCapsule extends PMX.Maker {
         ];
         rb.p = [...b.p];
         break;
+      }
+
+      if (!usephy) {
+        rb = null;
+        j = null;
       }
 
       if (b) {
