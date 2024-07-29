@@ -207,7 +207,7 @@ class Misc {
 
     window.idmakecentercapsule?.addEventListener('click', () => {
       const param = this.getCommonOptions();
-      const top = 'a';
+      const top = param.useradius ? 'r' : 'a';
       const d = param.denom;
       let dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
@@ -218,7 +218,7 @@ class Misc {
       const writer = new CenterCapsule();
       writer.make(param);
       const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
+      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
       console.log('makecentercapsule offsets');
     });
 

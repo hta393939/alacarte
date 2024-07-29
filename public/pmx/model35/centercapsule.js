@@ -66,6 +66,8 @@ class CenterCapsule extends PMX.Maker {
  * 中央から上の IK してみたい
  */
   make(param) {
+    console.log('make', param);
+
     const useradius = param.useradius;
 
     /**
@@ -107,12 +109,34 @@ class CenterCapsule extends PMX.Maker {
 
     const sideBoneNum = halfBeltNum * 2 + 1;
 
+
+    /**
+     * この関数での半径制御関数
+     * @param {number} t 0.0～1.0
+     * @param {number} target 1.0 に対して縮める値
+     * @returns 
+     */
+    const calcRadius = (t, fwTarget = 0.8, target = 0.5) => {
+      const fw = 0.4;
+      let amp = (1 - target) * 0.5;
+      let fwAmp = (1 - fwTarget) * 0.5;
+      let center = 1 - amp;
+      let fwCenter = 1 - fwAmp;
+      let fwPower = 1 / 4;
+      if (t < fw) {
+        let u = - Math.cos(Math.pow(t / fw, fwPower) * Math.PI) * fwAmp + fwCenter;
+        return u;
+      }
+      let u = Math.cos((t - fw) / (1 - fw) * Math.PI) * amp + center;
+      return u;
+    };
+
+
     this.head.nameEn = param.nameEn;
     this.head.nameJa = this.head.nameEn;
     let s = `${d.toLocaleString()} CenterCapsule.make forward\r\n`;
-    s += `IK: ${_useIK}, phy: ${_usePhy}\r\n`;
+    s += `IK: ${_useIK}, 物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
-    s += `${param.texprefix}`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
@@ -286,7 +310,7 @@ class CenterCapsule extends PMX.Maker {
     }
 
     {
-      let name = param.texurePath;
+      let name = param.texturePath;
       this.textures.push(name);
     }
 /**
@@ -308,16 +332,16 @@ class CenterCapsule extends PMX.Maker {
 /**
  * 剛体
  */
-      let r = new PMX.Rigid();
+      let rb = new PMX.Rigid();
 // 関連ボーンのインデックス
-      r.bone = i;
-      r.type = PMX.Rigid.TYPE_STATIC;
+      rb.bone = i;
+      rb.type = PMX.Rigid.TYPE_STATIC;
 
       let x = 0;
       let y = 0;
       let z = 0;
-      r.p = [x * scale, y * scale, z * scale];
-      r.size = [rr * scale, 0.5 * scale, 1 * scale];
+      rb.p = [x * scale, y * scale, z * scale];
+      rb.size = [scale, scale, scale];
 
       let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
         | PMX.Bone.BIT_VISIBLE;
@@ -325,44 +349,43 @@ class CenterCapsule extends PMX.Maker {
       b.bits = bits;
 
       b.parent = i - 1;
-      b.layer = 0;
 
       switch (i) {
       case 0:
         b.nameJa = '全ての親';
         b.nameEn = 'root';
-        r.setUIGroup(RIGID_IGNORE_GROUP);
-        r.groupFlags = 0x0000;
-        r.shape = PMX.Rigid.SHAPE_BOX;
-        r.size = [0.1, 0.05, 0.05];
+        rb.setUIGroup(RIGID_IGNORE_GROUP);
+        rb.groupFlags = 0x0000;
+        rb.shape = PMX.Rigid.SHAPE_BOX;
+        rb.size = [0.1, 0.05, 0.05];
         break;
       case 1:
         b.nameJa = '操作中心'; // 視点基準
         b.nameEn = 'view cnt bone';
         b.parent = -1;
-        r.setUIGroup(RIGID_IGNORE_GROUP);
-        r.groupFlags = 0x0000;
-        r.shape = PMX.Rigid.SHAPE_BOX;
-        r.size = [0.05, 0.05, 0.1];
-        r.rot = [0, 0, Math.PI * 30 / 180];
+        rb.setUIGroup(RIGID_IGNORE_GROUP);
+        rb.groupFlags = 0x0000;
+        rb.shape = PMX.Rigid.SHAPE_BOX;
+        rb.size = [0.05, 0.05, 0.1];
+        rb.rot = [0, 0, Math.PI * 30 / 180];
         break;
       case 2:
         b.parent = 0;
         b.nameJa = 'センター';
         b.nameEn = 'center';
-        r.setUIGroup(RIGID_IGNORE_GROUP);
-        r.groupFlags = 0x0000;
-        r.shape = PMX.Rigid.SHAPE_BOX;
-        r.size = [0.05, 0.1, 0.05];
-        r.rot = [Math.PI * 30 / 180, 0, 0];
+        rb.setUIGroup(RIGID_IGNORE_GROUP);
+        rb.groupFlags = 0x0000;
+        rb.shape = PMX.Rigid.SHAPE_BOX;
+        rb.size = [0.05, 0.1, 0.05];
+        rb.rot = [Math.PI * 30 / 180, 0, 0];
         break;
       }
 
       if (b) {
         this.bones.push(b);
       }
-      if (r & _usePhy) {
-        this.rigids.push(r);
+      if (rb && _usePhy) {
+        this.rigids.push(rb);
       }
     }
 
@@ -370,38 +393,40 @@ class CenterCapsule extends PMX.Maker {
       const dx = (h === 0) ? (-1) : 1;
       for (let i = 0; i < sideBoneNum; ++i) { // ボーン
         const rr = capsuleR;
-/**
- * ボーン
- */
+        /**
+         * ボーン
+         */
         let b = new PMX.Bone();
-/**
- * 剛体
- */
-        let r = new PMX.Rigid();
-        r.bone = baseBoneIndex + sideBoneNum * h + i;
-        r.type = PMX.Rigid.TYPE_STATIC; // 追従
+        /**
+         * 剛体
+         */
+        let rb = new PMX.Rigid();
+        rb.bone = baseBoneIndex + sideBoneNum * h + i;
+        rb.type = PMX.Rigid.TYPE_STATIC; // 追従
+        rb.shape = PMX.Rigid.SHAPE_SPHERE;
 
         let x = beltHeight * 0.5 * i * dx;
         let y = 0;
         let z = 0;
-        r.size = [rr * scale, 0.5 * scale, 1 * scale];
+        rb.size = [rr * scale, 0.5 * scale, 1 * scale];
         b.p = [x * scale, y * scale, z * scale];
 
         let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
           | PMX.Bone.BIT_VISIBLE;
         bits |= PMX.Bone.BIT_CONTROL;
         b.bits = bits;
-// odd が tree
+        /**
+         * odd が tree
+         */
         let opt = ((i & 1) === 0) ?
           'effleaf' : 'tree';
         const index = this.bones.length;
         b.nameJa = `b${_pad(index, 3)}${opt}`;
         b.nameEn = b.nameJa;
-        r.nameJa = `rb${_pad(index, 3)}`;
-        r.nameEn = r.nameJa;
+        rb.nameJa = `rb${_pad(index, 3)}`;
+        rb.nameEn = rb.nameJa;
 
-        b.parent = r.bone - 1;
-        b.layer = 0;
+        b.parent = rb.bone - 1;
 
         switch (i) {
         case -1:
@@ -409,7 +434,7 @@ class CenterCapsule extends PMX.Maker {
           b.nameJa = 'ik';
           b.nameEn = 'ik';
           b.parent = 0; // 全ての親
-          r = null;
+          rb = null;
           b.bits |= PMX.Bone.BIT_IK;
           b.ikTargetBone = 0;
           b.p = [...this.bones[b.ikTargetBone].p];
@@ -428,23 +453,20 @@ class CenterCapsule extends PMX.Maker {
           break;
 
         default:
-
-          b.layer = 0;
-          r.friction = 1000;
-          r.mass = 0.002; // 重量
-          r.setUIGroup(RIGID_DEFAULT_GROUP);
-          r.setUINots(1, 2, // UI3 とは当たる
+          rb.friction = 1000;
+          rb.mass = 0.002; // 重量
+          rb.setUIGroup(RIGID_DEFAULT_GROUP);
+          rb.setUINots(1, 2, // UI3 とは当たる
             5, 6, 7, 8,
             13, 14, 15, 16,
           );
           if ((i & 1) === 0) { // even がエフェクト
-            b.parent = r.bone - 1;
-            //b.layer = 3;
+            b.parent = rb.bone - 1;
           } else { // odd が tree IK
-            b.parent = r.bone - 2;
+            b.parent = rb.bone - 2;
             if (i + 2 < sideBoneNum) {
               b.bits |= PMX.Bone.BIT_BONECONNECT;
-              b.endBoneIndex = r.bone + 2;
+              b.endBoneIndex = rb.bone + 2;
             }
             if (i == 1) {
               b.parent = baseBoneIndex + sideBoneNum * h;
@@ -462,12 +484,17 @@ class CenterCapsule extends PMX.Maker {
         r.size = [capsuleR * scale, 0.5 * scale, 1 * scale];
         r.p = [...b.p];
         */
-          r.shape = PMX.Rigid.SHAPE_CAPSULE;
+
         // カプセルだと 半径、高さ、不使用
-          r.size = [capsuleR * scale, 0.5 * scale * 0.5, 1 * scale];
-          r.p = [...b.p];
+          rb.size = [
+            capsuleR * calcRadius(0) * scale,
+            scale,
+            scale,
+          ];
+          rb.p = [...b.p];
           if (opt !== 'effleaf') {
-            r = null;
+            rb.setUIGroup(RIGID_IGNORE_GROUP);
+            //rb = null;
           }
           break;
         }
@@ -475,8 +502,8 @@ class CenterCapsule extends PMX.Maker {
         if (b) {
           this.bones.push(b);
         }
-        if (r & _usePhy) {
-          this.rigids.push(r);
+        if (rb && _usePhy) {
+          this.rigids.push(rb);
         }
       }
     }
