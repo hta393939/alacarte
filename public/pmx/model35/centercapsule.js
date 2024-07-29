@@ -171,12 +171,15 @@ class CenterCapsule extends PMX.Maker {
       m.ambient = [0.7, 0.7, 0.7];
       m.edgeColor = [156/255, 130/255, 48/255, 1];
       let bits = 0
-        //PMX.Material.BIT_GROUND
+        | PMX.Material.BIT_GROUND
         | PMX.Material.BIT_TOMAP
-        | PMX.Material.BIT_SELFSHADOW
+        //| PMX.Material.BIT_SELFSHADOW
       m.bitFlag = bits;
       m.sharetoonflag = 0;
       m.sharetoonindex = -1;
+
+      m.sphereIndex = 1;
+      m.sphereMode = 2; // 加算
       this.materials.push(m);
     }
 
@@ -333,10 +336,6 @@ class CenterCapsule extends PMX.Maker {
 
     }
 
-    {
-      let name = param.texturePath;
-      this.textures.push(name);
-    }
     /**
      * 一切衝突しないグループ(1-origin)
      */
@@ -346,6 +345,8 @@ class CenterCapsule extends PMX.Maker {
      * 普通の衝突グループ(1-origin UI)
      */
     const RIGID_DEFAULT_GROUP = 4;
+
+    this.textures.push(...param.texturePath);
 
     for (let i = 0; i <= 2; ++i) { // ボーン
       /**

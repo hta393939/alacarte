@@ -213,7 +213,10 @@ class Misc {
 
       Object.assign(param, {
         nameEn: `${top}003_centercapsule_${param.belt}_${dtext}`,
-        texturePath: `tex/${top}003.png`,
+        texturePath: [
+          `tex/${top}003.png`,
+          `tex/${top}003spa.png`,
+        ],
       });
       const writer = new CenterCapsule();
       writer.make(param);
