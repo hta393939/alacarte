@@ -180,6 +180,7 @@ class CenterCapsule extends PMX.Maker {
     let m = this.materials[0];
     {
       vertexOffset = this.vts.length;
+      let adjustR = calcRadius(0) * capsuleR;
       for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
@@ -187,16 +188,21 @@ class CenterCapsule extends PMX.Maker {
           let hang = Math.PI * 2 * j / div;
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
-          let rr = Math.sin(vang) * capsuleR;
+          let rr = Math.sin(vang);
           let y = cs * rr;
           let z = sn * rr;
-          let x = -capsuleR * Math.cos(vang);
+          let x = -Math.cos(vang);
 
           v.n = this.normalize([x, y, z]);
+          x *= adjustR;
+          y *= adjustR;
+          z *= adjustR;
           x += -centerOffset;
           v.p = [x * scale, y * scale, z * scale];
-          v.uv = [ (j / div),
-            i / div * 4 * capV];
+          v.uv = [
+            (j / div),
+            i / div * 4 * capV,
+          ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           v.joints = [baseBoneIndex + (sideBoneNum * 1 - 1),
             0, 0, 0];
@@ -219,20 +225,29 @@ class CenterCapsule extends PMX.Maker {
       for (let h = 0; h < beltNum; ++h) { // まんなか
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
+          const px = bx + i * beltHeight / div;
+          adjustR = calcRadius((px - 0) / (beltHeight * beltNum)) * capsuleR;
+
           for (let j = 0; j <= div; ++j) {
             const v = new PMX.Vertex();
-            const rr = capsuleR;
             let hang = Math.PI * 2 * j / div;
             const cs = Math.cos(hang);
             const sn = Math.sin(hang);
-            let y = sn * rr;
-            let x = bx + i * beltHeight / div;
-            let z = cs * rr;
+            let y = sn;
+            let x = 0;
+            let z = cs;
 
-            v.n = this.normalize([0, y, z]);
+            v.n = this.normalize([x, y, z]);
+            x *= adjustR;
+            y *= adjustR;
+            z *= adjustR;
+            x += px;
+
             v.p = [x * scale, y * scale, z * scale];
-            v.uv = [(j / div),
-              i / div * beltV + capV];
+            v.uv = [
+              (j / div),
+              i / div * beltV + capV,
+            ];
             v.deformType = PMX.Vertex.DEFORM_SDEF;
 
             let fromCenter = (halfBeltNum - 1 - h);
@@ -270,6 +285,7 @@ class CenterCapsule extends PMX.Maker {
 
       vertexOffset = this.vts.length;
       console.log('右半分', 'bx', bx, 'vertexOffset', vertexOffset);
+      adjustR = calcRadius(1) * capsuleR;
       for (let i = 0; i <= div/4; ++i) { // 右半球 +Y
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
@@ -277,15 +293,19 @@ class CenterCapsule extends PMX.Maker {
           const hang = Math.PI * 2 * j / div;
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
-          let rr = Math.cos(vang) * capsuleR;
+          let rr = Math.cos(vang);
           let y = sn * rr;
           let z = cs * rr;
           let x = Math.sin(vang);
 
           v.n = this.normalize([x, y, z]);
+          x *= adjustR;
+          y *= adjustR;
+          z *= adjustR;
           x += centerOffset;
           v.p = [x * scale, y * scale, z * scale];
-          v.uv = [ (j / div),
+          v.uv = [
+            (j / div),
             i / div * 4 * capV + (1 - capV),
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
@@ -324,7 +344,6 @@ class CenterCapsule extends PMX.Maker {
     const RIGID_DEFAULT_GROUP = 4;
 
     for (let i = 0; i <= 2; ++i) { // ボーン
-      const rr = capsuleR;
 /**
  * ボーン
  */
@@ -392,7 +411,6 @@ class CenterCapsule extends PMX.Maker {
     for (let h = 0; h < 2; ++h) {
       const dx = (h === 0) ? (-1) : 1;
       for (let i = 0; i < sideBoneNum; ++i) { // ボーン
-        const rr = capsuleR;
         /**
          * ボーン
          */
@@ -408,7 +426,7 @@ class CenterCapsule extends PMX.Maker {
         let x = beltHeight * 0.5 * i * dx;
         let y = 0;
         let z = 0;
-        rb.size = [rr * scale, 0.5 * scale, 1 * scale];
+        rb.size = [scale, scale, scale];
         b.p = [x * scale, y * scale, z * scale];
 
         let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
@@ -487,7 +505,7 @@ class CenterCapsule extends PMX.Maker {
 
         // カプセルだと 半径、高さ、不使用
           rb.size = [
-            capsuleR * calcRadius(0) * scale,
+            capsuleR * calcRadius((x - 0) / (beltHeight * beltNum)) * scale,
             scale,
             scale,
           ];
