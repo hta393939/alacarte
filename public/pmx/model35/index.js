@@ -192,7 +192,7 @@ class Misc {
 
     window.idmakehalf?.addEventListener('click', () => {
       const param = this.getCommonOptions();
-      const top = param.useradius ? 'r' : 'a';
+      const top = 'a';
 
       Object.assign(param, {
         nameEn: `${top}001_halfcapsule`,
@@ -203,6 +203,23 @@ class Misc {
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
       console.log('makehalf offsets');
+    });
+
+    window.idmakecentercapsule?.addEventListener('click', () => {
+      const param = this.getCommonOptions();
+      const top = 'a';
+      const d = param.denom;
+      let dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
+
+      Object.assign(param, {
+        nameEn: `${top}003_centercapsule_${param.belt}_${dtext}`,
+        texturePath: `tex/${top}003.png`,
+      });
+      const writer = new CenterCapsule();
+      writer.make(param);
+      const bufs = writer.makeBuffer();
+      this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
+      console.log('makecentercapsule offsets');
     });
 
     window.idmakephycapsule?.addEventListener('click', () => {
