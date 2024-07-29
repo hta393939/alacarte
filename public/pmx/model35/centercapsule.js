@@ -109,6 +109,10 @@ class CenterCapsule extends PMX.Maker {
 
     const sideBoneNum = halfBeltNum * 2 + 1;
 
+    /**
+     * 内側の長さの半分
+     */
+    const halfAllLength = beltHeight * beltNum * 0.5;
 
     /**
      * この関数での半径制御関数
@@ -226,7 +230,7 @@ class CenterCapsule extends PMX.Maker {
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
           const px = bx + i * beltHeight / div;
-          adjustR = calcRadius((px - 0) / (beltHeight * beltNum)) * capsuleR;
+          adjustR = calcRadius((px - (-halfAllLength)) / (beltHeight * beltNum)) * capsuleR;
 
           for (let j = 0; j <= div; ++j) {
             const v = new PMX.Vertex();
@@ -333,32 +337,39 @@ class CenterCapsule extends PMX.Maker {
       let name = param.texturePath;
       this.textures.push(name);
     }
-/**
- * 一切衝突しないグループ(1-origin)
- */
+    /**
+     * 一切衝突しないグループ(1-origin)
+     */
     const RIGID_IGNORE_GROUP = 14;
 
-/**
- * 普通の衝突グループ(1-origin UI)
- */
+    /**
+     * 普通の衝突グループ(1-origin UI)
+     */
     const RIGID_DEFAULT_GROUP = 4;
 
     for (let i = 0; i <= 2; ++i) { // ボーン
-/**
- * ボーン
- */
+      /**
+       * ボーン
+       */
       let b = new PMX.Bone();
-/**
- * 剛体
- */
+      /**
+       * 剛体
+       */
       let rb = new PMX.Rigid();
 // 関連ボーンのインデックス
       rb.bone = i;
       rb.type = PMX.Rigid.TYPE_STATIC;
+      rb.nameEn = `rb${_pad(i, 3)}`;
+      rb.nameJa = rb.nameEn;
+      rb.setUIGroup(RIGID_IGNORE_GROUP);
+      rb.groupFlags = 0x0000;
+      rb.shape = PMX.Rigid.SHAPE_BOX;
+      rb.size = [0.05, 0.1, 0.05];
+      rb.rot = [Math.PI * 30 / 180, 0, 0];
 
       let x = 0;
-      let y = 0;
-      let z = 0;
+      let y = 3;
+      let z = 3;
       rb.p = [x * scale, y * scale, z * scale];
       rb.size = [scale, scale, scale];
 
@@ -373,30 +384,16 @@ class CenterCapsule extends PMX.Maker {
       case 0:
         b.nameJa = '全ての親';
         b.nameEn = 'root';
-        rb.setUIGroup(RIGID_IGNORE_GROUP);
-        rb.groupFlags = 0x0000;
-        rb.shape = PMX.Rigid.SHAPE_BOX;
-        rb.size = [0.1, 0.05, 0.05];
         break;
       case 1:
         b.nameJa = '操作中心'; // 視点基準
         b.nameEn = 'view cnt bone';
         b.parent = -1;
-        rb.setUIGroup(RIGID_IGNORE_GROUP);
-        rb.groupFlags = 0x0000;
-        rb.shape = PMX.Rigid.SHAPE_BOX;
-        rb.size = [0.05, 0.05, 0.1];
-        rb.rot = [0, 0, Math.PI * 30 / 180];
         break;
       case 2:
         b.parent = 0;
         b.nameJa = 'センター';
         b.nameEn = 'center';
-        rb.setUIGroup(RIGID_IGNORE_GROUP);
-        rb.groupFlags = 0x0000;
-        rb.shape = PMX.Rigid.SHAPE_BOX;
-        rb.size = [0.05, 0.1, 0.05];
-        rb.rot = [Math.PI * 30 / 180, 0, 0];
         break;
       }
 
@@ -496,16 +493,9 @@ class CenterCapsule extends PMX.Maker {
             b.parent = baseBoneIndex - 1;
           }
 
-  /*
-        r.shape = PMXRigid.SHAPE_SPHERE;
-        // 半径、高さ、不使用
-        r.size = [capsuleR * scale, 0.5 * scale, 1 * scale];
-        r.p = [...b.p];
-        */
-
-        // カプセルだと 半径、高さ、不使用
+        // 半径、不使用
           rb.size = [
-            capsuleR * calcRadius((x - 0) / (beltHeight * beltNum)) * scale,
+            capsuleR * calcRadius((x - (-halfAllLength)) / (beltHeight * beltNum)) * scale,
             scale,
             scale,
           ];
