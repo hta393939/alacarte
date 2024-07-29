@@ -191,9 +191,13 @@ class Misc {
     });
 
     window.idmakehalf?.addEventListener('click', () => {
-      const param = {
-        nameEn: `a001_halfcapsule`,
-      };
+      const param = this.getCommonOptions();
+      const top = param.useradius ? 'r' : 'a';
+
+      Object.assign(param, {
+        nameEn: `${top}001_halfcapsule`,
+        texturePath: `tex/${top}001.png`,
+      });
       const writer = new HalfCapsule();
       writer.make(param);
       const bufs = writer.makeBuffer();
