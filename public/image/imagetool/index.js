@@ -296,7 +296,9 @@ class Misc {
     const data = c.getImageData(0, 0, w, h);
 
     const TOPPX = 93; // 512
-    const rr = 8;
+    //const rr = 8;
+    const rr = 32;
+    //const rr = 64;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; ++x) {
         const ft = (x + w * y) * 4;
@@ -323,7 +325,7 @@ class Misc {
       }
     }
     c.putImageData(data, 0, 0);
-    console.log('curved leave');
+    console.log('curved leave', rr);
   }
 
   act() {

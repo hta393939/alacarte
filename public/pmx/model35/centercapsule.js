@@ -196,8 +196,8 @@ class CenterCapsule extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.sin(vang);
-          let y = cs * rr;
-          let z = sn * rr;
+          let y = sn * rr;
+          let z = cs * rr;
           let x = -Math.cos(vang);
 
           v.n = this.normalize([x, y, z]);
@@ -208,10 +208,11 @@ class CenterCapsule extends PMX.Maker {
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             (j / div),
-            i / div * 4 * capV,
+            i / (div / 4) * capV,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [baseBoneIndex + (sideBoneNum * 1 - 1),
+          v.joints = [
+            baseBoneIndex + (sideBoneNum * 1 - 1),
             0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
@@ -224,10 +225,11 @@ class CenterCapsule extends PMX.Maker {
           let v1 = v0 + 1;
           let v2 = v0 + (div + 1);
           let v3 = v2 + 1;
-          m.faces.push([v0, v1, v2]);
-          m.faces.push([v2, v1, v3]);
+          m.faces.push([v0, v2, v1]);
+          m.faces.push([v1, v2, v3]);
         }
       }
+
       let bx = - centerOffset;
       for (let h = 0; h < beltNum; ++h) { // まんなか
         vertexOffset = this.vts.length;
