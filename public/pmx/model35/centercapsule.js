@@ -130,18 +130,25 @@ class CenterCapsule extends PMX.Maker {
       let center = 1 - amp;
       let fwCenter = 1 - fwAmp;
       let fwPower = 1 / 4;
-      if (t < fw) {
+      if (t < fw) { // 前半
         const ang = Math.pow(t / fw, fwPower) * Math.PI;
         let u = - Math.cos(ang) * fwAmp + fwCenter;
+
+        //const tx = beltHeight * beltNum;
+        //const tr = Math.sin(ang) * fwAmp * Math.PI * Math.pow(1 / fw, fwPower) * fwPower * Math.pow(t, fwPower - 1);
         const tx = 1;
-        const tu = Math.sin(ang) / fw;
-        return {r: u, nx: -tu, nr: tx};
+        const tr = 0;
+
+        return {r: u, nx: -tr, nr: tx};
       }
+      // 後半 あってる
       const ang = (t - fw) / (1 - fw) * Math.PI;
       let u = Math.cos(ang) * amp + center;
-      const tx = 1;
-      const tu = - Math.sin(ang) / (1 - fw);
-      return {r: u, nx: -tu, nr: tx};
+
+      const tx = beltHeight * beltNum;
+      const tr = - Math.sin(ang) * Math.PI / (1 - fw) * amp;
+
+      return {r: u, nx: -tr, nr: tx};
     };
 
 
@@ -245,7 +252,7 @@ class CenterCapsule extends PMX.Maker {
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
           const px = bx + i * beltHeight / div;
-          const result = calcRadius((px - (-halfAllLength)) / (beltHeight * beltNum)).r;
+          const result = calcRadius((px - (-halfAllLength)) / (beltHeight * beltNum));
           adjustR = result.r * capsuleR;
 
           for (let j = 0; j <= div; ++j) {
@@ -254,15 +261,23 @@ class CenterCapsule extends PMX.Maker {
             const cs = Math.cos(hang);
             const sn = Math.sin(hang);
 
-            let x = (beltHeight * beltNum) * result.nx;
-            let y = sn * result.nr;
-            let z = cs * result.nr;
+            
+            let an = this.normalize([
+              result.nx,
+              0,
+              result.nr,
+            ]);
+            //an = [0, 0, 1];
+
+            let x = an[0];
+            let y = sn * an[2];
+            let z = cs * an[2];
 
             v.n = this.normalize([x, y, z]);
-            x *= adjustR;
-            y *= adjustR;
-            z *= adjustR;
-            x += px;
+
+            x = px;
+            y = sn * adjustR;
+            z = cs * adjustR;
 
             v.p = [x * scale, y * scale, z * scale];
             v.uv = [
