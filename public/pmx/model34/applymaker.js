@@ -72,7 +72,8 @@ class ApplyMaker {
  */
     const _usePhy = document.getElementById('usephy')?.checked;
     const _useChain = document.getElementById('usechain')?.checked;
-    console.log('applymaker.js analyzeFileRoss, 物理使用', _usePhy, _useChain);
+    const _useMorph = document.getElementById('usemorph')?.checked;
+    console.log('applymaker.js analyzeFileRoss, 物理使用', _usePhy, _useChain, _useMorph);
 /**
  * gui group(1-origin)
  */
@@ -307,9 +308,10 @@ class ApplyMaker {
       { rr: 1, delta: 0.02 }, // 13          
     ]; */
 
+    const additiveMorphs = [];
     for (let i = 0; i < 2; ++i) {
       const morph = new PMX.Morph();
-      //morphs.push(morph);
+      additiveMorphs.push(morph);
       morph.nameEn = `${lrname[i]}chest`;
       morph.nameJa = morph.nameEn;
       morph.panel = PMX.Morph.PANEL_ETC;
@@ -517,6 +519,12 @@ class ApplyMaker {
             adjust.add(center).add(dir.scale(rr)).sub(new V3(...vtx.p));
           }
           vm.offset = adjust.asArray();
+          if (true) { // 戻すモーフ
+            vm.offset[0] *= -1;
+            vm.offset[1] *= -1;
+            vm.offset[2] *= -1;
+          }
+
           vtx.p = new V3(...vtx.p).add(adjust).asArray();
 // 頂点変形を足す
           {
@@ -569,6 +577,10 @@ class ApplyMaker {
       mmr._parentName = 'p';
       mmr._materialName = '\u30d1\u30f3\u30c4';
       mr.materialMorphs.push(mmr);
+    }
+
+    if (_useMorph) {
+      morphs.push(...additiveMorphs);
     }
 
 // 行返す

@@ -600,23 +600,7 @@ class Misc {
     window.idmakephycapsule?.addEventListener('click', () => {
       this.makePhyCapsule();
     });
-    window.idmakecentercapsule?.addEventListener('click', () => {
-      const param = this.getCommonOptions();
-      let top = 'a'; // param.texprefix
-      Object.assign(param, {
-        nameEn: `${top}003_centercapsule_${param.belt}_d${param.denom.toFixed(0)}`,
-      });
-      const writer = new CenterCapsule();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-  
-      const offsets = writer.toOffsets(bufs);
-      for (const chunk of offsets.chunks) {
-        chunk.hex = `0x${chunk.offset.toString(16)}`;
-      }
-      console.log('make center capsule offsets', offsets);
-    });
+
     window.idmake4?.addEventListener('click', () => {
       this.make4();
     });
