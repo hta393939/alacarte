@@ -69,6 +69,7 @@ class CenterCapsule extends PMX.Maker {
     console.log('make', param);
 
     const useradius = param.useradius;
+    const useradiusq = param.useradiusq;
 
     /**
      * true でいいや
@@ -117,22 +118,30 @@ class CenterCapsule extends PMX.Maker {
     /**
      * この関数での半径制御関数
      * @param {number} t 0.0～1.0
-     * @param {number} target 1.0 に対して縮める値
+     * @param {number} fwTarget 1.0 に対して縮める値
      * @returns 
      */
-    const calcRadius = (t, fwTarget = 0.8, target = 0.5) => {
+    const calcRadius = (t, fwTarget = 0.8) => {
+      let bwTarget = useradiusq ? 0.25 : 0.5;
+
       const fw = 0.4;
-      let amp = (1 - target) * 0.5;
+      let amp = (1 - bwTarget) * 0.5;
       let fwAmp = (1 - fwTarget) * 0.5;
       let center = 1 - amp;
       let fwCenter = 1 - fwAmp;
       let fwPower = 1 / 4;
       if (t < fw) {
-        let u = - Math.cos(Math.pow(t / fw, fwPower) * Math.PI) * fwAmp + fwCenter;
-        return u;
+        const ang = Math.pow(t / fw, fwPower) * Math.PI;
+        let u = - Math.cos(ang) * fwAmp + fwCenter;
+        const tx = 1;
+        const tu = Math.sin(ang) / fw;
+        return {r: u, nx: -tu, nr: tx};
       }
-      let u = Math.cos((t - fw) / (1 - fw) * Math.PI) * amp + center;
-      return u;
+      const ang = (t - fw) / (1 - fw) * Math.PI;
+      let u = Math.cos(ang) * amp + center;
+      const tx = 1;
+      const tu = - Math.sin(ang) / (1 - fw);
+      return {r: u, nx: -tu, nr: tx};
     };
 
 
@@ -141,6 +150,7 @@ class CenterCapsule extends PMX.Maker {
     let s = `${d.toLocaleString()} CenterCapsule.make forward\r\n`;
     s += `IK: ${_useIK}, 物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
+    s += `1/4化: ${useradiusq}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
@@ -187,7 +197,7 @@ class CenterCapsule extends PMX.Maker {
     let m = this.materials[0];
     {
       vertexOffset = this.vts.length;
-      let adjustR = calcRadius(0) * capsuleR;
+      let adjustR = calcRadius(0).r * capsuleR;
       for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
@@ -231,20 +241,22 @@ class CenterCapsule extends PMX.Maker {
       }
 
       let bx = - centerOffset;
-      for (let h = 0; h < beltNum; ++h) { // まんなか
+      for (let h = 0; h < beltNum; ++h) { // まんなか。座標ループ
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
           const px = bx + i * beltHeight / div;
-          adjustR = calcRadius((px - (-halfAllLength)) / (beltHeight * beltNum)) * capsuleR;
+          const result = calcRadius((px - (-halfAllLength)) / (beltHeight * beltNum)).r;
+          adjustR = result.r * capsuleR;
 
           for (let j = 0; j <= div; ++j) {
             const v = new PMX.Vertex();
             let hang = Math.PI * 2 * j / div;
             const cs = Math.cos(hang);
             const sn = Math.sin(hang);
-            let y = sn;
-            let x = 0;
-            let z = cs;
+
+            let x = (beltHeight * beltNum) * result.nx;
+            let y = sn * result.nr;
+            let z = cs * result.nr;
 
             v.n = this.normalize([x, y, z]);
             x *= adjustR;
@@ -294,7 +306,7 @@ class CenterCapsule extends PMX.Maker {
 
       vertexOffset = this.vts.length;
       console.log('右半分', 'bx', bx, 'vertexOffset', vertexOffset);
-      adjustR = calcRadius(1) * capsuleR;
+      adjustR = calcRadius(1).r * capsuleR;
       for (let i = 0; i <= div/4; ++i) { // 右半球 +Y
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
@@ -496,9 +508,9 @@ class CenterCapsule extends PMX.Maker {
             b.parent = baseBoneIndex - 1;
           }
 
-        // 半径、不使用
+          // 半径、不使用
           rb.size = [
-            capsuleR * calcRadius((x - (-halfAllLength)) / (beltHeight * beltNum)) * scale,
+            capsuleR * calcRadius((x - (-halfAllLength)) / (beltHeight * beltNum)).r * scale,
             scale,
             scale,
           ];

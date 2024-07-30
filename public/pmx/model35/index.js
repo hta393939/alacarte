@@ -122,6 +122,7 @@ class Misc {
  */
       useik: document.getElementById('useikelement')?.checked,
       useradius: document.getElementById('useradius')?.checked,
+      useradiusq: document.getElementById('useradiusq')?.checked,
       usedynamic: document.getElementById('usedynamic')?.checked,
     };
     param.scale = 2 ** param.pow2;
@@ -209,13 +210,14 @@ class Misc {
       const param = this.getCommonOptions();
       const top = param.useradius ? 'r' : 'a';
       const d = param.denom;
+      const numtext = param.useradiusq ? _pad(23, 3) : _pad(3, 3);
       let dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
       Object.assign(param, {
-        nameEn: `${top}003_centercapsule_${param.belt}_${dtext}`,
+        nameEn: `${top}${numtext}_centercapsule_${param.belt}_${dtext}`,
         texturePath: [
-          `tex/${top}003.png`,
-          `tex/${top}003spa.png`,
+          `tex/${top}${numtext}.png`,
+          `tex/${top}${numtext}spa.png`,
         ],
       });
       const writer = new CenterCapsule();
