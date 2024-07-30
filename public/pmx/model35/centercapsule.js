@@ -137,6 +137,9 @@ class CenterCapsule extends PMX.Maker {
 
         const tx = beltHeight * beltNum;
         let tr = Math.sin(ang) * fwAmp * Math.PI * Math.pow(1 / fw, fwPower) * fwPower * Math.pow(t, fwPower - 1);
+        if (Number.isNaN(tr)) {
+          tr = 0;
+        }
         //tr = 0;
 
         return {r: u, nx: -tr, nr: tx};
@@ -242,7 +245,10 @@ class CenterCapsule extends PMX.Maker {
           let v1 = v0 + 1;
           let v2 = v0 + (div + 1);
           let v3 = v2 + 1;
-          m.faces.push([v0, v2, v1]);
+
+          //if (i !== 0) {
+            m.faces.push([v0, v2, v1]);
+          //}
           m.faces.push([v1, v2, v3]);
         }
       }
