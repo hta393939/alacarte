@@ -129,15 +129,15 @@ class CenterCapsule extends PMX.Maker {
       let fwAmp = (1 - fwTarget) * 0.5;
       let center = 1 - amp;
       let fwCenter = 1 - fwAmp;
-      let fwPower = 1 / 4;
+      //let fwPower = 1 / 4;
+      let fwPower = 1 / 2;
       if (t < fw) { // 前半
         const ang = Math.pow(t / fw, fwPower) * Math.PI;
         let u = - Math.cos(ang) * fwAmp + fwCenter;
 
-        //const tx = beltHeight * beltNum;
-        //const tr = Math.sin(ang) * fwAmp * Math.PI * Math.pow(1 / fw, fwPower) * fwPower * Math.pow(t, fwPower - 1);
-        const tx = 1;
-        const tr = 0;
+        const tx = beltHeight * beltNum;
+        let tr = Math.sin(ang) * fwAmp * Math.PI * Math.pow(1 / fw, fwPower) * fwPower * Math.pow(t, fwPower - 1);
+        //tr = 0;
 
         return {r: u, nx: -tr, nr: tx};
       }
