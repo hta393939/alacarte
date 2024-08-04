@@ -79,6 +79,10 @@ class CenterCapsule extends PMX.Maker {
      * false でいいや
      */
     const usedynamic = false;
+    /**
+     * 一次的に全
+     */
+    const usefull = true;
 /**
  * ik 書き出しするかどうか
  */
@@ -160,7 +164,7 @@ class CenterCapsule extends PMX.Maker {
     let s = `${d.toLocaleString()} CenterCapsule.make forward\r\n`;
     s += `IK: ${_useIK}, 物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
-    s += `1/4化: ${useradiusq}\r\n`;
+    s += `1/4化: ${useradiusq}, フルコリジョン: ${usefull}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
@@ -273,7 +277,6 @@ class CenterCapsule extends PMX.Maker {
               0,
               result.nr,
             ]);
-            //an = [0, 0, 1];
 
             let x = an[0];
             let y = sn * an[2];
@@ -537,7 +540,7 @@ class CenterCapsule extends PMX.Maker {
           ];
           rb.p = [...b.p];
           if (opt !== 'effleaf') {
-            rb.setUIGroup(RIGID_IGNORE_GROUP);
+            rb.setUIGroup(usefull ? RIGID_DEFAULT_GROUP : RIGID_IGNORE_GROUP);
             //rb = null;
           }
           break;
