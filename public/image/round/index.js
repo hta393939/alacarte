@@ -370,6 +370,94 @@ class Misc {
     console.log('make3 leave');
   }
 
+  /**
+   * 明るくしたい場所は白アルファ
+   * 影は黒アルファチャンネル
+   * 無関係はalpha0
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  async makeWater(canvas) {
+    console.log('makeWater called');
+    const w = canvas.width;
+    const h = canvas.height;
+    const c = canvas.getContext('2d');
+
+    const data = c.getImageData(0, 0, w, h);
+
+    if (true) {
+      /**
+       * 中心から外までを1.0としたときの球半径
+       */
+      const rradius = 0.25;
+
+      const tailLen = 0.5;
+
+      for (let y = 0; y < h; ++y) {
+        for (let x = 0; x < w; ++x) {
+          const offset = (x + w * y) * 4;
+
+          let lv = 1;
+          let a = 0;
+
+          const rx = (x - w * 0.5) / (w * 0.5);
+          const ry = (h * 0.5 - y) / (h * 0.5);
+          const d = Math.sqrt(rx ** 2 + ry ** 2);
+
+          const ax = rx * 1;
+          if (ry >= 0) {
+            let ang = Math.PI * 2 * ry / tailLen * 0.5;
+            let hr = (Math.cos(ang) + 3) / 4 * rradius;
+            const bx = Math.abs(rx);
+            if (bx > hr || ry >= tailLen) {
+              lv = 1;
+              a = 0;
+            } else {
+              const mx = bx / hr;
+              let z = Math.sqrt(1 - mx ** 2);
+              let rate = 1 - ry / tailLen;
+              a = z * rate;
+
+              lv = 1; // 白
+              //lv = a;
+            }
+          } else { // 下半分
+            let ay = ry * 0.85;
+            let ad = Math.sqrt(ax ** 2 + ay ** 2);
+            if (ad < rradius) {
+              if (d < rradius) {
+                let z = Math.sqrt(1 - d / rradius);
+                a = z;
+
+                lv = 1; // 白
+                //lv = a;
+              } else {
+                lv = 0; // 黒
+                a = 1;
+              }
+            } else { // 下半分の外側
+              lv = 1;
+              a = 0;
+            }
+          }
+          a *= 0.5;
+
+          // 可視化
+          //a = 1;
+
+          lv = Math.max(0, Math.min(lv * 255, 255));
+          a = Math.max(0, Math.min(a * 255, 255));
+          data.data[offset+0] = lv;
+          data.data[offset+1] = lv;
+          data.data[offset+2] = lv;
+          data.data[offset+3] = a;
+        }
+      }
+    }
+    c.putImageData(data, 0, 0);
+    console.log('makeWater leave');
+  }
+
 /**
  * 
  * @param {HTMLCanvasElement} canvas
@@ -568,6 +656,16 @@ class Misc {
         canvas.width = 1024;
         canvas.height = 1024;
         await this.make3(canvas);
+      });
+    }
+
+    {
+      const el = document.getElementById('makewaterbt');
+      el?.addEventListener('click', async () => {
+        const canvas = document.getElementById('backcanvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        await this.makeWater(canvas);
       });
     }
 
