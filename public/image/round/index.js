@@ -33,6 +33,28 @@ const lerp = (a, b, t, is255) => {
   return ret;
 };
 
+const _norm = (...args) => {
+  const sum = args.reduce((p, c) => {
+    return p + c ** 2;
+  }, 0);
+  if (sum === 0) {
+    return [...args];
+  }
+
+  const k = 1 / Math.sqrt(sum);
+  return args.filter(v => v * k);
+};
+
+const _dot = (as, bs) => {
+  const num = Math.min(as.length, bs.length);
+  let sum = 0;
+  for (let i = 0; i < num; ++i) {
+    sum += as[i] * bs[i];
+  }
+  return sum;
+};
+
+
 class Misc {
   constructor() {
   }
@@ -377,10 +399,11 @@ class Misc {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  async makeWater(canvas) {
+  async makeWater(param) {
     console.log('makeWater called');
-    const w = canvas.width;
-    const h = canvas.height;
+    const w = param.size;
+    const h = w;
+    const canvas = new OffscreenCanvas(w, h);
     const c = canvas.getContext('2d');
 
     const data = c.getImageData(0, 0, w, h);
@@ -391,7 +414,9 @@ class Misc {
        */
       const rradius = 0.25;
 
-      const tailLen = 0.5;
+      const tailLen = param.taillen;
+      const heightrate = param.heightrate;
+      const ishigh = param.ishigh;
 
       for (let y = 0; y < h; ++y) {
         for (let x = 0; x < w; ++x) {
@@ -405,6 +430,7 @@ class Misc {
           const d = Math.sqrt(rx ** 2 + ry ** 2);
 
           const ax = rx * 1;
+          let spec = 0;
           if (ry >= 0) {
             let ang = Math.PI * 2 * ry / tailLen * 0.5;
             let hr = (Math.cos(ang) + 3) / 4 * rradius;
@@ -419,31 +445,49 @@ class Misc {
               a = z * rate;
 
               lv = 1; // 白
-              //lv = a;
             }
           } else { // 下半分
-            let ay = ry * 0.85;
+            let ay = ry * 0.90;
             let ad = Math.sqrt(ax ** 2 + ay ** 2);
             if (ad < rradius) {
               if (d < rradius) {
-                let z = Math.sqrt(1 - d / rradius);
+                let z = Math.sqrt(1 - (d / rradius) ** 2);
                 a = z;
+                if (ishigh) {
+                  const q3 = Math.sqrt(1 / 3);
+                  const lightv = [-q3, -q3, +q3];
+                  let nv = [
+                    rx / rradius,
+                    ry / rradius,
+                    z,
+                  ];
+                  const dp = _dot(nv, lightv);
+                  const ref = [
+                    -lightv[0] + 2 * dp * nv[0],
+                    -lightv[1] + 2 * dp * nv[1],
+                    -lightv[2] + 2 * dp * nv[2],
+                  ];
+                  const viewv = [
+                    0 - x,
+                    0 - y,
+                    2 - z,
+                  ];
+                  const sp = Math.max(0, _dot(ref, viewv));
+                  spec = Math.pow(sp, 50);
+                }
 
                 lv = 1; // 白
-                //lv = a;
               } else {
                 lv = 0; // 黒
                 a = 1;
               }
             } else { // 下半分の外側
-              lv = 1;
+              lv = 0; // 黒
               a = 0;
             }
           }
-          a *= 0.5;
-
-          // 可視化
-          //a = 1;
+          a *= heightrate;
+          a += spec;
 
           lv = Math.max(0, Math.min(lv * 255, 255));
           a = Math.max(0, Math.min(a * 255, 255));
@@ -456,6 +500,7 @@ class Misc {
     }
     c.putImageData(data, 0, 0);
     console.log('makeWater leave');
+    return canvas;
   }
 
 /**
@@ -665,7 +710,19 @@ class Misc {
         const canvas = document.getElementById('backcanvas');
         canvas.width = 256;
         canvas.height = 256;
-        await this.makeWater(canvas);
+        const param = {
+          size: 512,
+          taillen: 0.75,
+          //taillen: 1,
+          //heightrate: 0.5,
+          heightrate: 0.75,
+          ishigh: false,
+        };
+        const src = await this.makeWater(param);
+        const c = canvas.getContext('2d');
+        c.drawImage(src, 0, 0, src.width, src.height,
+          0, 0, canvas.width, canvas.height,
+        );
       });
     }
 
