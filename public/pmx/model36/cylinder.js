@@ -56,6 +56,7 @@ export class CylinderBuilder extends PMX.Maker {
 
   /**
    * シリンダー
+   * UV は V0が上、V1が下
    */
   make(param) {
     const d = new Date();
@@ -86,7 +87,7 @@ export class CylinderBuilder extends PMX.Maker {
         v.n = [0, sign, 0];
         v.uv = [
           0.25 + 0.5 * i,
-          0.75,
+          0.25,
         ];
         v.deformType = PMX.Vertex.DEFORM_BDEF1;
         v.joints = [3 + i, 0, 0, 0];
@@ -109,7 +110,7 @@ export class CylinderBuilder extends PMX.Maker {
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             0.25 + 0.5 * i - sn * uvR,
-            0.75 + cs * uvR,
+            0.25 + cs * uvR,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           v.joints = [3 + i, 0, 0, 0];
@@ -134,7 +135,7 @@ export class CylinderBuilder extends PMX.Maker {
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             (j / div),
-            0.5 * i,
+            0.5 + 0.5 * i,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           v.joints = [3 + i, 0, 0, 0];
