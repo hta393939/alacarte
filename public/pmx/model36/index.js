@@ -327,22 +327,18 @@ class Misc {
       console.log('make8 offsets', offsets);            
     });
 
-    window.idmake11?.addEventListener('click', () => {
+    window.idmakeplate?.addEventListener('click', () => {
       const param = {
-        nameEn: `a011_capsulesdef`,
+        nameEn: `a008_plate`,
         scale: 0.25,
-        div: 16,
+        div: 4,
       };
-      const writer = new CapsuleBuilder11();
+      const writer = new PlateBuilder();
       writer.make(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
   
-      const offsets = writer.toOffsets(bufs);
-      for (const chunk of offsets.chunks) {
-        chunk.hex = `0x${chunk.offset.toString(16)}`;
-      }
-      console.log('make11 offsets', offsets);            
+      console.log('makeplate');            
     });
 
     window.idmakepit?.addEventListener('click', () => {
