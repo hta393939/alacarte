@@ -33,6 +33,11 @@ const lerp = (a, b, t, is255) => {
   return ret;
 };
 
+/**
+ * 
+ * @param  {number[]} args 
+ * @returns {number[]}
+ */
 const _norm = (...args) => {
   const sum = args.reduce((p, c) => {
     return p + c ** 2;
@@ -414,6 +419,151 @@ class Misc {
        */
       const rradius = 0.25;
 
+      const eradius = 0.01;
+
+      const rightblur = true;
+
+      const tailLen = param.taillen;
+      const heightrate = param.heightrate;
+      const ishigh = param.ishigh;
+
+      for (let y = 0; y < h; ++y) {
+        for (let x = 0; x < w; ++x) {
+          const offset = (x + w * y) * 4;
+
+          let lv = 0; // デフォルトは0黒
+          let a = 0;
+
+          const rx = (x - w * 0.5) / (w * 0.5);
+          const ry = (h * 0.5 - y) / (h * 0.5);
+          const d = Math.sqrt(rx ** 2 + ry ** 2);
+          const bx = Math.abs(rx);
+
+          const ax = rx * 1;
+          let spec = 0;
+          if (ry >= 0) { // 上半分
+            let ang = Math.PI * 2 * ry / tailLen * 0.5;
+            let hr = (Math.cos(ang) + 3) / 4 * rradius;
+
+            if (ry >= tailLen) {
+              const diff = bx - rradius * 0.5;
+              if (bx < rradius * 0.5) {
+                lv = 1;
+                a = 0;
+              } else if (diff < eradius) {
+                lv = 0;
+                //a = 1;
+                a = 0;
+              } else { // 外側
+                // Do nothing
+              }
+            } else if (bx > hr) { // 外側
+              const diff = bx - hr;
+              let rate = 1 - ry / tailLen;
+              let thr = eradius;
+              if (rightblur && rx > 0) {
+                thr *= rate ** 6;
+              }
+              if (diff < thr) {
+                a = rate;
+              } else { // 外側
+                // Do nothing
+              }
+            } else { // 内側
+              const mx = bx / hr;
+              let z = Math.sqrt(1 - mx ** 2);
+              let rate = 1 - ry / tailLen;
+              a = z * rate;
+
+              lv = 1; // 白
+            }
+          } else { // 下半分
+            let ay = ry * 0.90;
+            let ad = Math.sqrt(ax ** 2 + ay ** 2);
+            if (ad < rradius) {
+              if (d < rradius) {
+                let z = Math.sqrt(1 - (d / rradius) ** 2);
+                a = z;
+
+                if (ishigh) {
+                  const q3 = Math.sqrt(1 / 3);
+                  const lightv = [-q3, -q3, +q3];
+                  let nv = [
+                    rx / rradius,
+                    ry / rradius,
+                    z,
+                  ];
+                  const dp = _dot(nv, lightv);
+                  const ref = [
+                    -lightv[0] + 2 * dp * nv[0],
+                    -lightv[1] + 2 * dp * nv[1],
+                    -lightv[2] + 2 * dp * nv[2],
+                  ];
+                  const viewv = _norm([
+                    0 - x,
+                    0 - y,
+                    2 - z,
+                  ]);
+                  const sp = Math.max(0, _dot(ref, viewv));
+                  spec = Math.pow(sp, 5);
+                }
+
+                lv = 1; // 白
+              } else {
+                lv = 0; // 黒
+                a = 1;
+              }
+            } else { // 下半分の外側
+
+              const diff = d - rradius;
+              if (diff < eradius) {
+                lv = 0;
+                a = 1;
+              } else {
+                lv = 0; // 黒
+                a = 0;
+              }
+            }
+          }
+          a *= heightrate;
+          a += spec;
+
+          lv = Math.max(0, Math.min(lv * 255, 255));
+          a = Math.max(0, Math.min(a * 255, 255));
+          data.data[offset+0] = lv;
+          data.data[offset+1] = lv;
+          data.data[offset+2] = lv;
+          data.data[offset+3] = a;
+        }
+      }
+    }
+    c.putImageData(data, 0, 0);
+    console.log('makeWater leave');
+    return canvas;
+  }
+
+  /**
+   * 明るくしたい場所は白アルファ
+   * 影は黒アルファチャンネル
+   * 無関係はalpha0
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  async makeWaterKeep(param) {
+    console.log('makeWaterKeep called');
+    const w = param.size;
+    const h = w;
+    const canvas = new OffscreenCanvas(w, h);
+    const c = canvas.getContext('2d');
+
+    const data = c.getImageData(0, 0, w, h);
+
+    if (true) {
+      /**
+       * 中心から外までを1.0としたときの球半径
+       */
+      const rradius = 0.25;
+
       const tailLen = param.taillen;
       const heightrate = param.heightrate;
       const ishigh = param.ishigh;
@@ -467,13 +617,13 @@ class Misc {
                     -lightv[1] + 2 * dp * nv[1],
                     -lightv[2] + 2 * dp * nv[2],
                   ];
-                  const viewv = [
+                  const viewv = _norm([
                     0 - x,
                     0 - y,
                     2 - z,
-                  ];
+                  ]);
                   const sp = Math.max(0, _dot(ref, viewv));
-                  spec = Math.pow(sp, 50);
+                  spec = Math.pow(sp, 5);
                 }
 
                 lv = 1; // 白
@@ -499,7 +649,7 @@ class Misc {
       }
     }
     c.putImageData(data, 0, 0);
-    console.log('makeWater leave');
+    console.log('makeWaterKeep leave');
     return canvas;
   }
 
@@ -716,7 +866,8 @@ class Misc {
           //taillen: 1,
           //heightrate: 0.5,
           heightrate: 0.75,
-          ishigh: false,
+          //ishigh: false,
+          ishigh: true,
         };
         const src = await this.makeWater(param);
         const c = canvas.getContext('2d');
