@@ -3,6 +3,8 @@
  */
 
 import { BoxBuilder } from "./box.js";
+import { CylinderBuilder } from "./cylinder.js";
+import {PlateBuilder} from "./plate.js";
 
 const _lim = (a, x, b) => {
   if (x < a) {
@@ -311,20 +313,16 @@ class Misc {
       console.log('make box');            
     });
 
-    window.idmake8?.addEventListener('click', () => {
+    window.idmakecylinder?.addEventListener('click', () => {
       const param = {
-        nameEn: `a008_capsulesdef`,
+        nameEn: `a009_revcylinder`,
+        texturePath: ['tex/a009.png'],
       };
-      const writer = new CapsuleBuilder8();
+      const writer = new CylinderBuilder();
       writer.make(param);
       const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
-  
-      const offsets = writer.toOffsets(bufs);
-      for (const chunk of offsets.chunks) {
-        chunk.hex = `0x${chunk.offset.toString(16)}`;
-      }
-      console.log('make8 offsets', offsets);            
+      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
+      console.log('makecylinder');            
     });
 
     window.idmakeplate?.addEventListener('click', () => {
