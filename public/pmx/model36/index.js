@@ -5,6 +5,7 @@
 import { BoxBuilder } from "./box.js";
 import { CylinderBuilder } from "./cylinder.js";
 import {PlateBuilder} from "./plate.js";
+import { PlaneDiaBuilder } from "./planedia.js";
 
 const _lim = (a, x, b) => {
   if (x < a) {
@@ -277,15 +278,16 @@ class Misc {
       makePlanes(100);
     });
 
-    window.idmakelockchain?.addEventListener('click', () => {
+    window.idmakedia?.addEventListener('click', () => {
       const param = this.getCommonOptions();
-      let top = 'a'; // param.texprefix
-      const d = param.denom;
-      const dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
       Object.assign(param, {
-        nameEn: `${top}013_lockchain_${param.belt}_${dtext}`,
+        nameEn: `${top}014_dia`,
+        texturePath: [
+          `tex/a014.png`,
+          `tex/a014spa.png`,
+        ],
       });
-      const writer = new LockChain();
+      const writer = new PlaneDiaBuilder();
       writer.make(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}.pmx`);

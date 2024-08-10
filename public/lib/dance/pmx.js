@@ -303,9 +303,9 @@ class Face {
   constructor() {
     this._index = 0;
     this._materialName = '';
-/**
- * 3頂点のインデックス
- */
+    /**
+     * 3頂点のインデックス
+     */
     this.indices = [0, 0, 0];
   }
   toCSV() {
@@ -323,78 +323,85 @@ class Face {
  * 材質。面の管理どうしよう...
  */
 class Material {
-/**
- * 両面
- */
+  /**
+   * 両面
+   */
   static BIT_DOUBLE = 0x01;
-/**
- * 地面影
- */
+  /**
+   * 地面影
+   */
   static BIT_GROUND = 0x02;
-/**
- * セルフシャドウマップへの描画
- */
+  /**
+   * セルフシャドウマップへの描画
+   */
   static BIT_TOMAP = 0x04;
-/**
- * セルフシャドウ
- */
+  /**
+   * セルフシャドウ
+   */
   static BIT_SELFSHADOW = 0x08;
-/**
- * エッジ有効
- */
+  /**
+   * エッジ有効
+   */
   static BIT_EDGE = 0x10;
 
+  static SPMODE_NONE = 0;
+  static SPMODE_MUL = 1;
+  static SPMODE_ADD = 2;
+
   constructor() {
-    this.nameJa = 'm000';
+    this.nameJa = 'mtl000';
     this.nameEn = 'mtl000';
-/**
- * rgba
- */
+    /**
+     * rgba
+     */
     this.diffuse = [1, 1, 1, 1];
     this.specPower = 5;
     this.specular = [0.5, 0.5, 0.5];
     this.ambient = [0.2, 0.2, 0.2];
-/**
- * 材質ビットフラッグ 8bit
- */
+    /**
+     * 材質ビットフラッグ 8bit
+     */
     this.bitFlag = 0;
-/**
- * rgba
- */
+    /**
+     * rgba
+     */
     this.edgeColor = [1, 1, 1, 1];
-/**
- * エッジサイズ
- */
+    /**
+     * エッジサイズ
+     */
     this.edgeSize = 1;
-/**
- * テクスチャインデックス
- */
+    /**
+     * テクスチャインデックス
+     */
     this.texIndex = 0;
-/**
- * スフィアテクスチャインデックス
- */
+    /**
+     * スフィアテクスチャインデックス
+     */
     this.sphereIndex = -1;
-/**
- * 0: 無効、1: 乗算、2: 加算、3: サブテクスチャ
- */
+    /**
+     * 0: 無効、1: 乗算、2: 加算、3: サブテクスチャ
+     */
     this.sphereMode = 0;
 
+    this.sharetoonflag = 0;
+    this.sharetoonindex = -1;
+
     this.memo = 'メモ';
-/**
- * この材質の面の全頂点数。3の倍数であること。
- */
+    /**
+     * この材質の面の全頂点数。3の倍数であること。
+     */
     this._faceIndexNum = 0;
-/**
- * 面配列
- * @type {number[][]}
- */
+    /**
+     * 面配列
+     * @type {number[][]}
+     */
     this.faces = [];
   }
 
-/**
- * 未実装
- * @returns {string}
- */
+  /**
+   * 未実装
+   * @returns {string}
+   */
   toCSV() {
     const ss = [
       'PmxMaterial',
