@@ -128,6 +128,8 @@ export class PlaneDiaBuilder extends PMX.Maker {
       //  | PMX.Material.BIT_TOMAP
       //  | PMX.Material.BIT_SELFSHADOW
       m.bitFlag = bits;
+      m.sphereMode = PMX.Material.SPMODE_ADD;
+      m.sphereIndex = 1;
       m.sharetoonflag = 0;
       m.sharetoonindex = -1;
 

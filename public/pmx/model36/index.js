@@ -283,15 +283,15 @@ class Misc {
       Object.assign(param, {
         nameEn: `a014_dia`,
         texturePath: [
-          `tex/a014.png`,
-          `tex/a014spa.png`,
+          `a014.png`,
+          `a014spa.png`,
         ],
       });
       const writer = new PlaneDiaBuilder();
       writer.make(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-      console.log('make lockchain');
+      console.log('makedia');
     });
 
     window.idmakebox?.addEventListener('click', () => {

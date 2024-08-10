@@ -95,7 +95,7 @@ export class CylinderBuilder extends PMX.Maker {
 
         this.vts.push(v);
       }
-      for (let i = 0; i < 2; ++i) {
+      for (let i = 0; i < 2; ++i) { // 天地
         const sign = (i === 0) ? 1 : -1;
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
@@ -106,7 +106,7 @@ export class CylinderBuilder extends PMX.Maker {
           let y = height2 * sign;
           let z = cs * capsuleR;
 
-          v.n = this.normalize([-x, 0, -z]);
+          v.n = this.normalize([-x, -sign, -z]);
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             0.25 + 0.5 * i - sn * uvR,
@@ -120,7 +120,8 @@ export class CylinderBuilder extends PMX.Maker {
         }
       }
 
-      for (let i = 0; i < 2; ++i) {
+      for (let i = 0; i < 2; ++i) { // 筒
+        const sign = (i === 0) ? 1 : -1;
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
           let hang = Math.PI * 2 * j / div;
@@ -128,10 +129,10 @@ export class CylinderBuilder extends PMX.Maker {
           const sn = Math.sin(hang);
 
           let x = - sn * capsuleR;
-          let y = ((i === 0) ? 1 : -1) * height2;
+          let y = sign * height2;
           let z = cs * capsuleR;
 
-          v.n = this.normalize([-x, 0, -z]);
+          v.n = this.normalize([-x, -sign, -z]);
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             (j / div),
@@ -151,7 +152,7 @@ export class CylinderBuilder extends PMX.Maker {
 
     for (let i = 0; i < 1; ++i) {
       const m = new PMX.Material();
-      m.nameJa = `材質00${i}`;
+      m.nameJa = `mtl00${i}`;
       m.nameEn = `mtl00${i}`;
       m.texIndex = 0;
       m.diffuse = [1, 1, 1, 1];
