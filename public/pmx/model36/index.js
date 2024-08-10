@@ -281,7 +281,7 @@ class Misc {
     window.idmakedia?.addEventListener('click', () => {
       const param = this.getCommonOptions();
       Object.assign(param, {
-        nameEn: `${top}014_dia`,
+        nameEn: `a014_dia`,
         texturePath: [
           `tex/a014.png`,
           `tex/a014spa.png`,

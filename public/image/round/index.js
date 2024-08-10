@@ -421,7 +421,8 @@ class Misc {
 
       const eradius = 0.01;
 
-      const rightblur = true;
+      const leftblur = true;
+      const rightblur = false;
 
       const tailLen = param.taillen;
       const heightrate = param.heightrate;
@@ -461,6 +462,9 @@ class Misc {
               const diff = bx - hr;
               let rate = 1 - ry / tailLen;
               let thr = eradius;
+              if (leftblur && rx < 0) {
+                thr *= rate ** 6;
+              }
               if (rightblur && rx > 0) {
                 thr *= rate ** 6;
               }
@@ -502,7 +506,7 @@ class Misc {
                   const viewv = _norm([
                     0 - x,
                     0 - y,
-                    2 - z,
+                    (-5) - z,
                   ]);
                   const sp = Math.max(0, _dot(ref, viewv));
                   spec = Math.pow(sp, 5);
@@ -866,8 +870,8 @@ class Misc {
           //taillen: 1,
           //heightrate: 0.5,
           heightrate: 0.75,
-          //ishigh: false,
-          ishigh: true,
+          ishigh: false,
+          //ishigh: true,
         };
         const src = await this.makeWater(param);
         const c = canvas.getContext('2d');

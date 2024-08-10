@@ -78,8 +78,8 @@ export class PlaneDiaBuilder extends PMX.Maker {
         for (let j = 0; j <= 2; ++j) {
           const v = new PMX.Vertex();
 
-          let x = j / div * 2 - 1;
-          let y = 1 - i / div * 2;
+          let x = j - 1;
+          let y = 1 - i;
           let z = 0;
 
           v.n = [0, 0, -1];
@@ -89,8 +89,8 @@ export class PlaneDiaBuilder extends PMX.Maker {
 
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
-            j / div,
-            i / div,
+            j / 2,
+            i / 2,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           let bone = BONE_CENTER;

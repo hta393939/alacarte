@@ -1908,7 +1908,7 @@ class Maker extends Parser {
         }
 
         if (b.bits & PMX.Bone.BIT_LOCALAPPLY) { // 回転付与移動付与
-          c += this.write32s(p, c, b.applyParent);
+          c += this.write32s(p, c, [b.applyParent]);
           c += this.writefs(p, c, [b.applyRate]);
         }
         if (b.bits & PMX.Bone.BIT_FIXAXIS) { // 軸固定
