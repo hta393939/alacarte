@@ -63,6 +63,8 @@ export class PlaneDiaBuilder extends PMX.Maker {
 
     this.debug = 1;
 
+    const BONE_CENTER = 2;
+
     this.head.nameEn = param.nameEn;
     this.head.nameJa = this.head.nameEn;
     let comment = `${d.toLocaleString()} PlateDiaBuilder.make\r\n`;
@@ -91,7 +93,17 @@ export class PlaneDiaBuilder extends PMX.Maker {
             i / div,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [2, 0, 0, 0];
+          let bone = BONE_CENTER;
+          switch (j) {
+          case 0:
+            bone = 3;
+            break;
+          case 2:
+            bone = 4;
+            break;
+          }
+
+          v.joints = [bone, 0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
           this.vts.push(v);
@@ -130,28 +142,11 @@ export class PlaneDiaBuilder extends PMX.Maker {
       this.materials.push(m);
     }
 
-    for (let i = 0; i < 2; ++i) { // ボーン
+    for (let i = 0; i < 7; ++i) { // ボーン
       /**
        * ボーン
        */
       const b = new PMX.Bone();
-      /**
-       * 剛体
-       */
-      let rb = new PMX.Rigid();
-
-      rb.nameJa = `rb${_pad(i, 3)}`;
-      rb.nameEn = rb.nameJa;
-      rb.shape = PMX.Rigid.SHAPE_BOX;
-      rb.setUIGroup(4);
-
-      let x = 0;
-      let y = 0;
-      let z = 0;
-      rb.p = [x * scale, y * scale, z * scale];
-      rb.rot = [0, 0, 0];
-      rb.size = [1 * scale, 1 * scale, 1 * scale];
-      rb.friction = 100;
 
       let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
         | PMX.Bone.BIT_VISIBLE;
@@ -160,51 +155,83 @@ export class PlaneDiaBuilder extends PMX.Maker {
 
       b.nameJa = `b${_pad(i, 3)}`;
       b.nameEn = b.nameJa;
-
+      b.p = [0, 0, 0];
       b.parent = i - 1;
 
       switch (i) {
       case 0:
+        b.parent = -1;
         b.nameJa = '全ての親';
         b.nameEn = 'root';
-        rb = null;
         break;
       case 1:
+        b.parent = 0;
         b.nameJa = '操作中心';
         b.nameEn = 'view cnt bone';
-        rb = null;
         break;
-      case 2:
+      case BONE_CENTER:
         b.parent = 0;
         b.nameJa = 'センター';
         b.nameEn = 'center';
         break;
       case 3:
-        b.parent = 2;
+        b.parent = BONE_CENTER;
+        b.p = [1, 0, 0];
         break;
       case 4:
-        b.parent = 2;
+        b.parent = BONE_CENTER;
+        b.p = [-1, 0, 0];
+        b.bits |= PMX.Bone.BIT_MOVEAPPLY;
+        b.applyParent = 3;
+        b.applyRate = 1;
+        break;
+
+      case 5:
+        b.parent = BONE_CENTER;
+        b.p = [0, 1, 0];
+        break;
+      case 6:
+        b.parent = BONE_CENTER;
+        b.p = [0, -1, 0];
         break;
       }
 
+      b.p = b.p.map(v => v * scale);
       this.bones.push(b);
-      if (rb) {
-//        this.rigids.push(rb);
-      }
     }
 
-    { // モーフ 0個 未実装
-      for (let i = 0; i < 0; ++i) {
+    { // モーフ 3個
+      for (let i = 0; i < 3; ++i) {
         const m = new PMX.Morph();
-        m.nameJa = 'mr000';
-        m.nameEn = 'mr000';
-        m.type = 1;
+        m.nameJa = `mr${i}`;
+        m.nameEn = `mr${i}`;
+        m.type = PMX.Morph.TYPE_MATERIAL;
+        m.panel = PMX.Morph.PANEL_ETC;
+        const mm = new PMX.MaterialMorph();
+        mm.calcType = PMX.MaterialMorph.CALC_MUL;
+        mm.setValue(1); // すべてを1にする
+        m.materialMorphs.push(mm);
+        switch(i) {
+        case 0:
+          m.nameEn = 'rmul';
+          mm.tex = [0, 1, 1, 1];
+          break;
+        case 1:
+          m.nameEn = 'gmul';
+          mm.tex = [1, 0, 1, 1];
+          break;
+        case 2:
+          m.nameEn = 'bmul';
+          mm.tex = [1, 1, 0, 1];
+          break;
+        }
+        m.nameJa = m.nameEn;
         this.morphs.push(m);
       }
     }
 
     { // ボーングループフレーム
-      for (let i = 0; i < 5; ++i) {
+      for (let i = 0; i < 3; ++i) {
         const f = new PMX.Frame();
         f.nameJa = 'その他のボーン';
         f.nameEn = `fr00${i}`;
@@ -218,6 +245,9 @@ export class PlaneDiaBuilder extends PMX.Maker {
         } else if (i === 1) {
           f.nameJa = '表情';
           f.specialFlag = 1;
+          for (let j = 0; j < 3; ++j) {
+            f.morphs.push(j);
+          }
         } else {
           if (this.bones.length <= 1) {
             break;

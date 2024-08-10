@@ -63,12 +63,12 @@ export class CylinderBuilder extends PMX.Maker {
     const scale = 1.0;
 
     const capsuleR = 1;
-    const height2 = Math.PI;
+    const height2 = Math.PI * 0.5;
     const uvR = 1 / (2 * Math.PI);
 
     this.debug = 1;
 
-    this.head.nameEn = 'revcylinder';
+    this.head.nameEn = param.nameEn;
     this.head.nameJa = this.head.nameEn;
     let comment = `${d.toLocaleString()} CylinderBuilder.make\r\n`;
     this.head.commentEn = ``;
@@ -131,7 +131,7 @@ export class CylinderBuilder extends PMX.Maker {
           let y = ((i === 0) ? 1 : -1) * height2;
           let z = cs * capsuleR;
 
-          v.n = this.normalize([x, 0, z]);
+          v.n = this.normalize([-x, 0, -z]);
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             (j / div),
@@ -206,7 +206,7 @@ export class CylinderBuilder extends PMX.Maker {
        * 剛体
        */
       let rb = new PMX.Rigid();
-
+      rb.bone = i;
       rb.nameJa = `rb${_pad(i, 3)}`;
       rb.nameEn = rb.nameJa;
       rb.shape = PMX.Rigid.SHAPE_BOX;
@@ -265,16 +265,36 @@ export class CylinderBuilder extends PMX.Maker {
 
       this.bones.push(b);
       if (rb) {
-        this.rigids.push(rb);
+        //this.rigids.push(rb);
       }
     }
 
-    { // モーフ 0個
-      for (let i = 0; i < 0; ++i) {
+    { // モーフ 3個
+      for (let i = 0; i < 3; ++i) {
         const m = new PMX.Morph();
-        m.nameJa = 'mr000';
-        m.nameEn = 'mr000';
-        m.type = 1;
+        m.nameJa = `mr${i}`;
+        m.nameEn = `mr${i}`;
+        m.type = PMX.Morph.TYPE_MATERIAL;
+        m.panel = PMX.Morph.PANEL_ETC;
+        const mm = new PMX.MaterialMorph();
+        mm.calcType = PMX.MaterialMorph.CALC_MUL;
+        mm.setValue(1);
+        m.materialMorphs.push(mm);
+        switch(i) {
+        case 0:
+          m.nameEn = 'rmul';
+          mm.tex = [0, 1, 1, 1];
+          break;
+        case 1:
+          m.nameEn = 'gmul';
+          mm.tex = [1, 0, 1, 1];
+          break;
+        case 2:
+          m.nameEn = 'bmul';
+          mm.tex = [1, 1, 0, 1];
+          break;
+        }
+        m.nameJa = m.nameEn;
         this.morphs.push(m);
       }
     }
@@ -294,6 +314,9 @@ export class CylinderBuilder extends PMX.Maker {
         } else if (i === 1) {
           f.nameJa = '表情';
           f.specialFlag = 1;
+          for (let j = 0; j < 3; ++j) {
+            f.morphs.push(j);
+          }
         } else {
           if (this.bones.length <= 1) {
             break;

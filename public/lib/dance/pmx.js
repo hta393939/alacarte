@@ -154,9 +154,9 @@ class Bone {
  * 回転付与
  */
   static BIT_ROTAPPLY = 0x0100;
-/**
- * 移動付与
- */
+  /**
+   * 移動付与
+   */
   static BIT_MOVEAPPLY = 0x0200;
 
   static BIT_LOCALAPPLY = Bone.BIT_ROTAPPLY | Bone.BIT_MOVEAPPLY;
@@ -212,19 +212,19 @@ class Bone {
  */
     this.endBoneIndex = -1;
 
-/**
- * 付与親ボーン
- */
+    /**
+     * 付与親ボーン
+     */
     this.applyParent = -1;
-/**
- * 付与親ボーン名
- */
+    /**
+     * 付与親ボーン名
+     */
     this._applyParentName = '';
-/**
- * 付与率
- * @type {number}
- * @default 0
- */
+    /**
+     * 付与率
+     * @type {number}
+     * @default 0
+     */
     this.applyRate = 0;
 /**
  * 軸固定: 1 の場合の軸の方向ベクトル
@@ -668,27 +668,27 @@ class Morph {
 class Frame {
   constructor() {
     this._index = 0;
-/**
- * 日本語名
- */
-    this.nameJa = 'f000';
-/**
- * 英語名
- */
-    this.nameEn = 'frame000';
-/**
- * 0: 通常, 1: 特殊
- */
+    /**
+     * 日本語名
+     */
+    this.nameJa = 'fr000';
+    /**
+     * 英語名
+     */
+    this.nameEn = 'fr000';
+    /**
+     * 0: 通常, 1: 特殊
+     */
     this.specialFlag = 0;
-/**
- * ボーンのインデックスの配列
- * @type {number[]}
- */
+    /**
+     * ボーンのインデックスの配列
+     * @type {number[]}
+     */
     this.bones = [];
-/**
- * モーフのインデックスの配列
- * @type {number[]}
- */
+    /**
+     * モーフのインデックスの配列
+     * @type {number[]}
+     */
     this.morphs = [];
   }
 

@@ -317,7 +317,7 @@ class Misc {
 
     window.idmakecylinder?.addEventListener('click', () => {
       const param = {
-        nameEn: `a009_revcylinder`,
+        nameEn: `a009_skycylinder`,
         texturePath: ['a009.png'],
       };
       const writer = new CylinderBuilder();
