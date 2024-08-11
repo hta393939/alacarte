@@ -420,11 +420,16 @@ class Misc {
       const rradius = 0.25;
 
       const eradius = 0.01;
+      /**
+       * n ピクセル相当
+       */
+      const pn = 4 * 2 / param.size;
 
       const leftblur = true;
-      const rightblur = false;
+      const rightblur = true;
 
       const tailLen = param.taillen;
+      const lastLen = param.lastlen;
       const heightrate = param.heightrate;
       const ishigh = param.ishigh;
 
@@ -442,50 +447,58 @@ class Misc {
 
           const ax = rx * 1;
           let spec = 0;
-          if (ry >= 0) { // 上半分
-            let ang = Math.PI * 2 * ry / tailLen * 0.5;
-            let hr = (Math.cos(ang) + 3) / 4 * rradius;
 
-            if (ry >= tailLen) {
-              const diff = bx - rradius * 0.5;
-              if (bx < rradius * 0.5) {
-                lv = 1;
-                a = 0;
-              } else if (diff < eradius) {
-                lv = 0;
-                //a = 1;
-                a = 0;
-              } else { // 外側
-                // Do nothing
-              }
-            } else if (bx > hr) { // 外側
-              const diff = bx - hr;
-              let rate = 1 - ry / tailLen;
-              let thr = eradius;
-              if (leftblur && rx < 0) {
-                thr *= rate ** 6;
-              }
-              if (rightblur && rx > 0) {
-                thr *= rate ** 6;
-              }
-              if (diff < thr) {
-                a = rate;
-              } else { // 外側
-                // Do nothing
-              }
+          /**
+           * 上半分の減衰
+           */
+          let rate = 1 - ry / lastLen;
+
+          if (ry > tailLen) { // 最後の上
+            let hr = 0.5 * rradius;
+            if (bx > hr) {
+              a = (hr + eradius + pn - bx) * pn;
+              a = Math.max(0, Math.min(1, a));
             } else { // 内側
               const mx = bx / hr;
               let z = Math.sqrt(1 - mx ** 2);
-              let rate = 1 - ry / tailLen;
-              a = z * rate;
+              a = z;
+              lv = 1;
+            }
+            a *= rate;
+
+          } else if (ry >= 0) { // 上半分
+            let ang = Math.PI * 2 * ry / tailLen * 0.5;
+            let hr = (Math.cos(ang) + 3) / 4 * rradius;
+
+            if (bx > hr) { // 外側
+              const diff = bx - hr;
+
+              let thr = eradius;
+              let k = 1;
+              if (leftblur && rx < 0) {
+                k = rate ** 6;
+              }
+              if (rightblur && rx > 0) {
+                k = rate ** 6;
+              }
+              thr *= k;
+
+              a = (thr + pn * k - diff) / (pn * k);
+              a = Math.max(0, Math.min(1, a));
+            } else { // 内側
+              const mx = bx / hr;
+              let z = Math.sqrt(1 - mx ** 2);
+              a = z;
 
               lv = 1; // 白
             }
+            a *= rate;
+
           } else { // 下半分
             let ay = ry * 0.90;
             let ad = Math.sqrt(ax ** 2 + ay ** 2);
-            if (ad < rradius) {
-              if (d < rradius) {
+            if (ad < rradius) { // 楕円の内側
+              if (d < rradius) { // 縁の内側
                 let z = Math.sqrt(1 - (d / rradius) ** 2);
                 a = z;
 
@@ -513,17 +526,21 @@ class Misc {
                 }
 
                 lv = 1; // 白
-              } else {
+              } else { // 楕円の内側で円の外
                 lv = 0; // 黒
                 a = 1;
               }
+
             } else { // 下半分の外側
 
               const diff = d - rradius;
-              if (diff < eradius) {
+              if (diff < eradius) { // エッジ追加
                 lv = 0;
                 a = 1;
               } else {
+                a = (eradius + pn - diff) / pn; // 未実装
+                a = Math.max(0, Math.min(1, a));
+
                 lv = 0; // 黒
                 a = 0;
               }
@@ -867,6 +884,8 @@ class Misc {
         const param = {
           size: 512,
           taillen: 0.75,
+          //lastlen: 0.98,
+          lastlen: 1,
           //taillen: 1,
           //heightrate: 0.5,
           heightrate: 0.75,
@@ -875,7 +894,8 @@ class Misc {
         };
         const src = await this.makeWater(param);
         const c = canvas.getContext('2d');
-        c.drawImage(src, 0, 0, src.width, src.height,
+        c.drawImage(src,
+          0, 0, src.width, src.height,
           0, 0, canvas.width, canvas.height,
         );
       });

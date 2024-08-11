@@ -118,6 +118,7 @@ class Misc {
   getCommonOptions() {
     const param = {
       texprefix: document.getElementById('texprefix')?.value || 'a',
+      tail: document.getElementById('tail')?.value || 'e',
       belt: Number.parseFloat(document.getElementById('belt')?.value ?? 1),
       pow2: Number.parseFloat(document.getElementById('pow2element')?.value ?? -3),
 //            denom: Number.parseFloat(document.getElementById('denom')?.value ?? 1),
@@ -138,6 +139,7 @@ class Misc {
   saveSetting() {
     console.log('saveSetting called');
     const param = {
+      tail: 'e',
       texprefix: 'w',
       belt: 10,
       pow2element: -3,
@@ -162,6 +164,7 @@ class Misc {
   loadSetting() {
     const s = window.localStorage.getItem(this.STORAGE);
     const param = {
+      tail: 'e',
       texprefix: 'w',
       pow2element: -3,
       belt: 10,

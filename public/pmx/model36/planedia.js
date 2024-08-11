@@ -74,23 +74,38 @@ export class PlaneDiaBuilder extends PMX.Maker {
     this.head.commentJa = comment;
 
     {
-      for (let i = 0; i <= 2; ++i) {
+      for (let i = 0; i <= 3; ++i) {
         for (let j = 0; j <= 2; ++j) {
           const v = new PMX.Vertex();
 
           let x = j - 1;
-          let y = 1 - i;
+          let y = 0;
           let z = 0;
 
+          switch (i) {
+          case 0:
+            y = 1;
+            break;
+          case 1:
+            y = 0.75;
+            break;
+          case 2:
+            y = 0;
+            break;
+          case 3:
+            y = -1;
+            break;
+          }
+
           v.n = [0, 0, -1];
-          if (j !== 1 || i !== 1) {
+          if (x !== 0 || y !== 0) {
             v.n = this.normalize([x, y, 0]);
           }
 
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             j / 2,
-            i / 2,
+            (1 - y) * 0.5,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           let bone = BONE_CENTER;
@@ -101,6 +116,9 @@ export class PlaneDiaBuilder extends PMX.Maker {
           case 2:
             bone = 4;
             break;
+          }
+          if (i === 0) {
+            bone = 5; // 上だけ伸ばす
           }
 
           v.joints = [bone, 0, 0, 0];
@@ -135,9 +153,10 @@ export class PlaneDiaBuilder extends PMX.Maker {
 
       const fis = [
         [0, 1, 3], [1, 4, 3],
-        [1, 2, 5], [1, 5, 4],
-        [3, 4, 7], [3, 7, 6],
-        [4, 5, 7], [5, 8, 7],
+        [3, 4, 6], [4, 7, 6],
+        [4, 5, 8], [4, 8, 7],
+        [6, 7, 10], [6, 10, 9],
+        [7, 8, 10], [8, 11, 10],
       ];
       m.faces.push(...fis);
 
@@ -185,7 +204,7 @@ export class PlaneDiaBuilder extends PMX.Maker {
         b.p = [-1, 0, 0];
         b.bits |= PMX.Bone.BIT_MOVEAPPLY;
         b.applyParent = 3;
-        b.applyRate = 1;
+        b.applyRate = -1;
         break;
 
       case 5:
@@ -213,7 +232,7 @@ export class PlaneDiaBuilder extends PMX.Maker {
         mm.calcType = PMX.MaterialMorph.CALC_MUL;
         mm.setValue(1); // すべてを1にする
         m.materialMorphs.push(mm);
-        switch(i) {
+        switch (i) {
         case 0:
           m.nameEn = 'rmul';
           mm.tex = [0, 1, 1, 1];
