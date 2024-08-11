@@ -120,10 +120,8 @@ class HalfCapsule extends PMX.Maker {
     }
 
     {
-      let name = 'tex/a001.png';
+      let name = param.texturePath;
       this.textures.push(name);
-      //name = `tex/a001spa.png`;
-      //this.textures.push(name);
     }
 
     for (let i = 0; i < 1; ++i) { // 材質 #1
@@ -201,8 +199,8 @@ class HalfCapsule extends PMX.Maker {
       }
     }
 
-    { // モーフ 0個
-      for (let i = 0; i < 0; ++i) {
+    { // モーフ 0個 TODO: 3個
+      for (let i = 0; i < 3; ++i) {
         const m = new PMX.Morph();
         m.nameJa = 'morph000';
         m.nameEn = 'morph000';
