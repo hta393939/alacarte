@@ -65,6 +65,15 @@ class Misc {
   }
 
   async initialize() {
+    {
+      const canvas = window.maincanvas;
+      canvas.width = 64;
+    }
+    {
+      const canvas = window.subcanvas;
+      canvas.width = 64;
+    }
+
     this.setListener();
   }
 
@@ -425,8 +434,26 @@ class Misc {
        */
       const pn = 4 * 2 / param.size;
 
-      const leftblur = true;
-      const rightblur = true;
+      let leftblur = true;
+      let rightblur = true;
+      switch (param.tail) {
+      case 'e':
+        leftblur = true;
+        rightblur = true;
+        break;
+      case 'l':
+        leftblur = false;
+        rightblur = true;
+        break;
+      case 'r':
+        leftblur = true;
+        rightblur = false;
+        break;
+      case 'w':
+        leftblur = false;
+        rightblur = false;
+        break;
+      }
 
       const tailLen = param.taillen;
       const lastLen = param.lastlen;
@@ -495,7 +522,7 @@ class Misc {
             a *= rate;
 
           } else { // 下半分
-            let ay = ry * 0.90;
+            let ay = ry * 0.98;
             let ad = Math.sqrt(ax ** 2 + ay ** 2);
             if (ad < rradius) { // 楕円の内側
               if (d < rradius) { // 縁の内側
@@ -532,18 +559,8 @@ class Misc {
               }
 
             } else { // 下半分の外側
-
-              const diff = d - rradius;
-              if (diff < eradius) { // エッジ追加
-                lv = 0;
-                a = 1;
-              } else {
-                a = (eradius + pn - diff) / pn; // 未実装
-                a = Math.max(0, Math.min(1, a));
-
-                lv = 0; // 黒
-                a = 0;
-              }
+              a = (rradius + eradius + pn - ad) / pn;
+              a = Math.max(0, Math.min(1, a));
             }
           }
           a *= heightrate;
@@ -878,6 +895,9 @@ class Misc {
     {
       const el = document.getElementById('makewaterbt');
       el?.addEventListener('click', async () => {
+        //const param = this.getCommon();
+
+
         const canvas = document.getElementById('backcanvas');
         canvas.width = 256;
         canvas.height = 256;
@@ -891,6 +911,7 @@ class Misc {
           heightrate: 0.75,
           ishigh: false,
           //ishigh: true,
+          tail: document.getElementById('tail')?.value || 'e',
         };
         const src = await this.makeWater(param);
         const c = canvas.getContext('2d');

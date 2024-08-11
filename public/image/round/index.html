@@ -10,7 +10,6 @@
       <button class="pointer" id="idmake1">make1</button>
       <button class="pointer" id="idmake2">make2</button>
       <button class="pointer" id="idmake3">make3</button>
-      <button class="pointer" id="makewaterbt">makewater</button>
     </div>
 
     <div class="drop">Drop file</div>
@@ -38,6 +37,17 @@
         <input class="pointer" type="range" id="cellw" value="16" min="8" max="32" />
         <div id="cellwview"></div>
       </div>
+
+      <div>
+        <select id="tail" class="pointer">
+          <option value="e" selected>短</option>
+          <option value="l">左</option>
+          <option value="r">右</option>
+          <option value="w">長い</option>
+        </select>
+        <button class="pointer" id="makewaterbt">makewater</button>
+      </div>
+
     </div>
 
     <canvas id="maincanvas"></canvas>
