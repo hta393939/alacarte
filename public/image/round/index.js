@@ -483,14 +483,22 @@ class Misc {
           if (ry > tailLen) { // 最後の上
             let hr = 0.5 * rradius;
             if (bx > hr) {
-              a = (hr + eradius + pn - bx) * pn;
-              a = Math.max(0, Math.min(1, a));
+              a = (hr + eradius + pn - bx) / pn;
+
+              if (rx > 0 && rightblur) {
+                a = 0;
+              }
+              if (rx < 0 && leftblur) {
+                a = 0;
+              }
+
             } else { // 内側
               const mx = bx / hr;
               let z = Math.sqrt(1 - mx ** 2);
               a = z;
               lv = 1;
             }
+            a = Math.max(0, Math.min(1, a));
             a *= rate;
 
           } else if (ry >= 0) { // 上半分
@@ -511,7 +519,6 @@ class Misc {
               thr *= k;
 
               a = (thr + pn * k - diff) / (pn * k);
-              a = Math.max(0, Math.min(1, a));
             } else { // 内側
               const mx = bx / hr;
               let z = Math.sqrt(1 - mx ** 2);
@@ -519,6 +526,7 @@ class Misc {
 
               lv = 1; // 白
             }
+            a = Math.max(0, Math.min(1, a));
             a *= rate;
 
           } else { // 下半分
