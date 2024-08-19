@@ -42,11 +42,11 @@ class ApplyMaker {
   constructor() {
   }
 
-/**
- * 元ファイルを解析した後にクリップボードへ変更点を送信する関数
- * 2024/1/6 17:49 keep
- * @param {File} file 
- */
+  /**
+   * 元ファイルを解析した後にクリップボードへ変更点を送信する関数
+   * 2024/1/6 17:49 keep
+   * @param {File} file 
+   */
   async parseFile(file) {
     const ab = await file.arrayBuffer();
     const parser = new PMX.Maker();
@@ -60,23 +60,23 @@ class ApplyMaker {
     await navigator.clipboard.writeText(str);
   }
 
-/**
- * API. 位置ベース。クリップボード用。
- * @param {PMX.Parser} parser 
- * @returns {string[]} 行ごとに返す
- */
+  /**
+   * API. 位置ベース。クリップボード用。
+   * @param {PMX.Parser} parser 
+   * @returns {string[]} 行ごとに返す
+   */
   analyzeFileRoss(parser) {
-/**
- * 物理変形
- * @type {boolean}
- */
+    /**
+     * 物理変形
+     * @type {boolean}
+     */
     const _usePhy = document.getElementById('usephy')?.checked;
     const _useChain = document.getElementById('usechain')?.checked;
     const _useMorph = document.getElementById('usemorph')?.checked;
     console.log('applymaker.js analyzeFileRoss, 物理使用', _usePhy, _useChain, _useMorph);
-/**
- * gui group(1-origin)
- */
+    /**
+     * gui group(1-origin)
+     */
     const RIGID_DEFAULT_GROUP = 3;
 
     let rc = 93;
@@ -215,9 +215,9 @@ class ApplyMaker {
       }
     }
 
-/**
- * 各0～13段のインデックスに分離する
- */
+    /**
+     * 各0～13段のインデックスに分離する
+     */
     const ringNum = 14;
     const setset = [[], []];
     for (let i = 0; i < ringNum; ++i) {
@@ -401,14 +401,16 @@ class ApplyMaker {
         //rigid.type = _usePhy ? PMX.Rigid.TYPE_DYNAMIC : PMX.Rigid.TYPE_STATIC;
         //rigid.shape = PMX.Rigid.SHAPE_SPHERE;
         rigid.shape = PMX.Rigid.SHAPE_CAPSULE;
-        rigid.p = [...bone.p];
-/**
- * 半径
- */
+        rigid.p = [...bone.p]; // 剛体位置はここで終わり
+        /**
+         * 半径
+         */
         const rr = (newradius >= 0) ? newradius : result.radius;
         let capHeight = rr;
         //rigid.size = [rr, capHeight, rr];
         rigid.size = [0.11, 0.29, 1];
+        //rigid.size = [0.11, 0.29, 1]; // キープ
+
         rigid.setUIGroup(RIGID_DEFAULT_GROUP);
         rigid.setUINots(1, 2, 3,
           13, 14, 15, 16);
@@ -432,14 +434,14 @@ class ApplyMaker {
         joint.lockRot();
         {
           //if (j >= 1 && j <= 7) {
-          if (j === 7) {
-/**
- * 移動範囲
- */
+          if (j === 7) { // 重要ボーン
+            /**
+             * 移動範囲
+             */
             const dp = 0;
-/**
- * 回転範囲
- */
+            /**
+             * 回転範囲
+             */
             const dr = (j === 7) ? /*90*/ 45 : 45;
             joint.moveUpper = [dp, dp, dp];
             joint.moveLower = [-dp, -dp, -dp];
@@ -457,7 +459,14 @@ class ApplyMaker {
             joint.rot = [...rigid.rot]; // [ ] 未確認
 
             { // 内側に引き込む
-              const rate = -0.2; // これより少なくて良さそう
+              let rate = -0.2; // これより少なくて良さそう
+              if (true) { // NOTE: 半分の場合
+                rate += - (rigid.size[0] + rigid.size[1]) * 0.5;
+                rigid.size[0] *= 0.5;
+                rigid.size[1] *= 0.5;
+                rigid.size[2] *= 0.5;
+              }
+
               const adjust = new V3(
                  0.42 * (bone.p[0] >= 0 ? 1 : -1),
                  0.43,
@@ -580,6 +589,7 @@ class ApplyMaker {
     }
 
     if (_useMorph) {
+      // TODO: フレームへの追加は未実装
       morphs.push(...additiveMorphs);
     }
 
