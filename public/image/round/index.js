@@ -905,16 +905,15 @@ class Misc {
       el?.addEventListener('click', async () => {
         //const param = this.getCommon();
 
-
+        const resultSize = 128;
         const canvas = document.getElementById('backcanvas');
-        canvas.width = 256;
-        canvas.height = 256;
+        canvas.width = resultSize;
+        canvas.height = resultSize;
         const param = {
-          size: 512,
+          size: resultSize * 2,
           taillen: 0.75,
           //lastlen: 0.98,
           lastlen: 1,
-          //taillen: 1,
           //heightrate: 0.5,
           heightrate: 0.75,
           ishigh: false,

@@ -1,0 +1,14 @@
+{
+  "name": "alacarte",
+  "version": "0.1.0",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "chext/background.js"
+  },
+  "action": {
+
+  },
+  "permissions": [
+    "tabs", "storage"
+  ]
+}
