@@ -433,6 +433,10 @@ class Misc {
        * n ピクセル相当
        */
       const pn = 4 * 2 / param.size;
+      /**
+       * 占有率算出のための ピクセル相当
+       */
+      const pd = 1 * 2 / param.size;
 
       let leftblur = true;
       let rightblur = true;
@@ -467,9 +471,18 @@ class Misc {
           let lv = 0; // デフォルトは0黒
           let a = 0;
 
+          /**
+           * 比率補正無しで -1.0～0.0～+1.0
+           */
           const rx = (x - w * 0.5) / (w * 0.5);
           const ry = (h * 0.5 - y) / (h * 0.5);
+          /**
+           * 比率補正無しで -1.0～0.0～+1.0
+           */
           const d = Math.sqrt(rx ** 2 + ry ** 2);
+          /**
+           * 符号無し
+           */
           const bx = Math.abs(rx);
 
           const ax = rx * 1;
@@ -478,99 +491,78 @@ class Misc {
           /**
            * 上半分の減衰
            */
-          let rate = 1 - ry / lastLen;
+          let rate = Math.min(1, 1 - ry / lastLen);
 
-          if (ry > tailLen) { // 最後の上
-            let hr = 0.5 * rradius;
-            if (bx > hr) {
-              a = (hr + eradius + pn - bx) / pn;
+          /**
+           * 黒の占有率
+           * @param {number} t 
+           * @param {number} r0 
+           * @param {number} delta 
+           * @returns {number}
+           */
+          const _edgeBlack = (t, r0, delta) => {
+            let result = (t - (r0 - delta)) / (delta * 2);
+            result = Math.max(0, Math.min(1, result));
+            return result;
+          };
 
-              if (rx > 0 && rightblur) {
-                a = 0;
-              }
-              if (rx < 0 && leftblur) {
-                a = 0;
-              }
+          /**
+           * 
+           * @param {number} t 
+           * @param {number} r1 
+           * @param {number} add 
+           * @returns {number} 0.0～1.0
+           */
+          const _outerBlack = (t, r1, add) => {
+            let result = (r1 + add - t) / add;
+            result = Math.max(0, Math.min(1, result));
+            return result;
+          };
 
-            } else { // 内側
-              const mx = bx / hr;
-              let z = Math.sqrt(1 - mx ** 2);
-              a = z;
-              lv = 1;
-            }
-            a = Math.max(0, Math.min(1, a));
-            a *= rate;
-
-          } else if (ry >= 0) { // 上半分
+          let eRate = 0;
+          let hr = rradius;
+          let t = d;
+          if (ry > 0) {
             let ang = Math.PI * 2 * ry / tailLen * 0.5;
-            let hr = (Math.cos(ang) + 3) / 4 * rradius;
-
-            if (bx > hr) { // 外側
-              const diff = bx - hr;
-
-              let thr = eradius;
-              let k = 1;
-              if (leftblur && rx < 0) {
-                k = rate ** 6;
-              }
-              if (rightblur && rx > 0) {
-                k = rate ** 6;
-              }
-              thr *= k;
-
-              a = (thr + pn * k - diff) / (pn * k);
-            } else { // 内側
-              const mx = bx / hr;
-              let z = Math.sqrt(1 - mx ** 2);
-              a = z;
-
-              lv = 1; // 白
-            }
-            a = Math.max(0, Math.min(1, a));
-            a *= rate;
-
-          } else { // 下半分
-            let ay = ry * 0.98;
-            let ad = Math.sqrt(ax ** 2 + ay ** 2);
-            if (ad < rradius) { // 楕円の内側
-              if (d < rradius) { // 縁の内側
-                let z = Math.sqrt(1 - (d / rradius) ** 2);
-                a = z;
-
-                if (ishigh) {
-                  const q3 = Math.sqrt(1 / 3);
-                  const lightv = [-q3, -q3, +q3];
-                  let nv = [
-                    rx / rradius,
-                    ry / rradius,
-                    z,
-                  ];
-                  const dp = _dot(nv, lightv);
-                  const ref = [
-                    -lightv[0] + 2 * dp * nv[0],
-                    -lightv[1] + 2 * dp * nv[1],
-                    -lightv[2] + 2 * dp * nv[2],
-                  ];
-                  const viewv = _norm([
-                    0 - x,
-                    0 - y,
-                    (-5) - z,
-                  ]);
-                  const sp = Math.max(0, _dot(ref, viewv));
-                  spec = Math.pow(sp, 5);
-                }
-
-                lv = 1; // 白
-              } else { // 楕円の内側で円の外
-                lv = 0; // 黒
-                a = 1;
-              }
-
-            } else { // 下半分の外側
-              a = (rradius + eradius + pn - ad) / pn;
-              a = Math.max(0, Math.min(1, a));
+            hr = (Math.cos(ang) + 3) / 4 * rradius;
+            t = bx;
+            if (ry > tailLen) { // 最後の上
+              hr = 0.5 * rradius;
             }
           }
+
+          eRate = _edgeBlack(t, hr, pd);
+          if (eRate <= 0) { // 内側
+            lv = 1;
+            a = Math.sqrt(1 - (t / hr) ** 2);
+            a *= rate;
+          } else { // 外側
+            lv = 0;
+
+            let r1 = hr + eradius;
+            if (ry > 0) {
+              let pull = pn * 2;
+              let add = pull + eradius;
+              let k = 1;
+              if (leftblur && rx < 0) {
+                k = rate ** 1.5;
+              }
+              if (rightblur && rx > 0) {
+                k = rate ** 1.5;
+              }
+              add *= k;
+              r1 = hr - pull + add;
+            }
+
+            const oRate = _outerBlack(
+              t,
+              r1,
+              pn,
+            );
+            a = oRate * eRate;
+            a *= rate;
+          }
+
           a *= heightrate;
           a += spec;
 
