@@ -68,6 +68,12 @@ class Misc {
  */
   loadFileToCanvas(file, canvas) {
     return new Promise((resolve, reject) => {
+      {
+        const name = file.name;
+        window.filename.textContent = name;
+      }
+
+
       const img = new Image();
       img.addEventListener('load', () => {
         canvas.width = img.width;
