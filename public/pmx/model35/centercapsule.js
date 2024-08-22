@@ -70,6 +70,7 @@ class CenterCapsule extends PMX.Maker {
 
     const useradius = param.useradius;
     const useradiusq = param.useradiusq;
+    const useradius8 = param.useradius8;
 
     /**
      * true でいいや
@@ -125,8 +126,14 @@ class CenterCapsule extends PMX.Maker {
      * @param {number} fwTarget 1.0 に対して縮める値
      * @returns 
      */
-    const calcRadius = (t, fwTarget = 0.8) => {
-      let bwTarget = useradiusq ? 0.25 : 0.5;
+    const calcRadius = (t, fwTarget = Math.sqrt(2) * 0.5) => {
+      let bwTarget = 0.5;
+      if (useradiusq) {
+        bwTarget = 0.25;
+      }
+      if (useradius8) {
+        bwTarget = 0.125;
+      }
 
       const fw = 0.4;
       let amp = (1 - bwTarget) * 0.5;

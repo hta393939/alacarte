@@ -265,6 +265,12 @@ class ApplyMaker {
     const items = [];
 
     const bones = [];
+
+    /**
+     * 既存表情への追加
+     */
+    const frames = [];
+
 /**
  * @type {PMX.Rigid[]}
  */

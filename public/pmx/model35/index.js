@@ -123,6 +123,7 @@ class Misc {
       useik: document.getElementById('useikelement')?.checked,
       useradius: document.getElementById('useradius')?.checked,
       useradiusq: document.getElementById('useradiusq')?.checked,
+      useradius8: document.getElementById('useradius8')?.checked,
       usedynamic: document.getElementById('usedynamic')?.checked,
     };
     param.scale = 2 ** param.pow2;
@@ -210,8 +211,14 @@ class Misc {
       const param = this.getCommonOptions();
       const top = param.useradius ? 'r' : 'a';
       const d = param.denom;
-      const numtext = param.useradiusq ? _pad(23, 3) : _pad(3, 3);
-      let dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
+      let numtext = _pad(3, 3);
+      if (param.useradiusq) {
+        numtext = _pad(23, 3);
+      }
+      if (param.useradius8) {
+        numtext = _pad(33, 3);
+      }
+      let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
       Object.assign(param, {
         nameEn: `${top}${numtext}_centercapsule_${param.belt}_${dtext}`,
