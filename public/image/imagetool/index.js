@@ -6,6 +6,8 @@ class Misc {
   constructor() {
     this.STORAGE = 'imagetool';
 
+    this.filename = null;
+
     this.param = {
       scale: 11,
       cellx: 0,
@@ -70,6 +72,7 @@ class Misc {
     return new Promise((resolve, reject) => {
       {
         const name = file.name;
+        this.filename = name;
         window.filename.textContent = name;
       }
 
@@ -107,10 +110,10 @@ class Misc {
 //        const w = src.width;
 //        const h = src.height;
     const context = src.getContext('2d');
-/**
- * 書き出し先
- * @type {HTMLCanvasElement}
- */
+    /**
+     * 書き出し先
+     * @type {HTMLCanvasElement}
+     */
     const canvas = document.getElementById('subcanvas');
     const c = canvas.getContext('2d');
     canvas.width = cellw * scale;
@@ -146,10 +149,10 @@ class Misc {
     }
   }
 
-/**
- * 
- * @param {File} file 
- */
+  /**
+   * 
+   * @param {File} file 
+   */
   async parseImage(file) {
     const img = new Image();
     img.addEventListener('load', () => {
@@ -273,6 +276,22 @@ class Misc {
         this.act();
       });
     }
+
+    {
+      const el = document.getElementById('downloadact');
+      el?.addEventListener('click', async () => {
+        const canvas = document.getElementById('subcanvas');
+        const blob = await this.canvasToBlob(canvas);
+        const re = /(?<fw>[^.]+)(?<ext>\.[^.]*)?/;
+        let name = 'a_po.png';
+        const m = re.exec(this.filename || 'a.png');
+        if (m) {
+          name = `${m.groups?.['fw'] ?? 'a'}_po${m.groups?.['ext'] ?? '.png'}`;
+        }
+        this.download(blob, name);
+      });
+    }
+
     {
       const el = document.getElementById('curved');
       el?.addEventListener('dragover', ev => {
@@ -289,6 +308,19 @@ class Misc {
       });
     }
 
+  }
+
+  /**
+   * 
+   * @param {Blob} blob 
+   * @param {string} name 
+   */
+  download(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   /**
@@ -334,6 +366,23 @@ class Misc {
     console.log('curved leave', rr);
   }
 
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   * @returns {Promise<Blob>}
+   */
+  canvasToBlob(canvas) {
+    console.log('canvasToBlob called');
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(blob => {
+        resolve(blob);
+      }, 'image/png');
+    });
+  }
+
+  /**
+   * subcanvas に書き出す
+   */
   act() {
     console.log('act called');
     const param = this.saveSetting();

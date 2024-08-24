@@ -454,7 +454,8 @@ class ApplyMaker {
             joint.rotUpper = [_deg2rad(dr), _deg2rad(dr), _deg2rad(dr * 1)];
             joint.rotLower = [_deg2rad(-dr), _deg2rad(-dr), _deg2rad(-dr * 1)];
             joint.springMove = [0, 0, 0];
-            joint.springRot = [0.5, 0.5, 0.5];
+            //joint.springRot = [0.5, 0.5, 0.5];
+            joint.springRot = [2.5, 2.5, 2.5]; // NOTE: 戻る値
             // 予め測定した方向ベクトル
             const constDir = [0.42, 0.43, -0.8];
             rigid.rot = [
@@ -467,10 +468,19 @@ class ApplyMaker {
             { // 内側に引き込む
               let rate = -0.2; // これより少なくて良さそう
               if (true) { // NOTE: 半分の場合
-                rate += - (rigid.size[0] + rigid.size[1]) * 0.5;
+                //const rigidRate = rate - (rigid.size[0] + rigid.size[1]) * 0.5;
+                //const rigidRate = - (rigid.size[0] + rigid.size[1]) * 0.5;
+                const rigidRate = 0.0;
                 rigid.size[0] *= 0.5;
                 rigid.size[1] *= 0.5;
                 rigid.size[2] *= 0.5;
+                const halfP = new V3(
+                  0.42 * (bone.p[0] >= 0 ? 1 : -1),
+                  0.43,
+                 -0.80,
+                );
+                halfP.scale(rigidRate).add(new V3(...rigid.p));                
+                rigid.p = halfP.asArray();
               }
 
               const adjust = new V3(
