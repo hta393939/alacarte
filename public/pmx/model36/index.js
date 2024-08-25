@@ -120,16 +120,18 @@ class Misc {
       texprefix: document.getElementById('texprefix')?.value || 'a',
       tail: document.getElementById('tail')?.value || 'e',
       belt: Number.parseFloat(document.getElementById('belt')?.value ?? 1),
+      lenhalf: Number.parseFloat(document.getElementById('lenhalf')?.value ?? 1),
       pow2: Number.parseFloat(document.getElementById('pow2element')?.value ?? -3),
 //            denom: Number.parseFloat(document.getElementById('denom')?.value ?? 1),
       usephy: document.getElementById('usephyelement')?.checked,
-/**
- * ik 書き出しするかどうか
- */
+      /**
+       * ik 書き出しするかどうか
+       */
       useik: document.getElementById('useikelement')?.checked,
       useradius: document.getElementById('useradius')?.checked,
       useradiusq: document.getElementById('useradiusq')?.checked,
       usedynamic: document.getElementById('usedynamic')?.checked,
+      usefriction: document.getElementById('usefriction')?.checked,
     };
     param.scale = 2 ** param.pow2;
     param.denom = 1 / param.scale;
@@ -300,22 +302,23 @@ class Misc {
 
     window.idmakebox?.addEventListener('click', () => {
       const param = this.getCommonOptions();
-      let top = 'box';
+      let base = `box_${param.lenhalf}`;
+      let name = `${base}${param.usefriction ? '': '_no'}`;
       let tail = `d${param.denom.toFixed(0)}`;
       if (param.denom < 1) {
         tail = `${1 / param.denom}`;
       }
       Object.assign(param, {
-        nameEn: `${top}`,
+        nameEn: name,
         texturePath: [
-          `tex/${top}.png`,
-          `tex/${top}spa.png`,
+          `tex/${base}.png`,
+          `tex/${base}spa.png`,
         ],
       });
       const writer = new BoxBuilder();
       writer.make(param);
       const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
+      this.download(new Blob(bufs), `${name}.pmx`);
       console.log('make box');            
     });
 
@@ -383,7 +386,7 @@ class Misc {
       });
     }
 
-    for (const k of ['belt', /*'denom'*/]) {
+    for (const k of ['belt', 'lenhalf']) {
       const el = document.getElementById(k);
       const elview = document.getElementById(`${k}view`);
       const _update = () => {

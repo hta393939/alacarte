@@ -36,6 +36,10 @@
       </label>
 
       <label class="pt">
+        <input class="pt" type="checkbox" id="usefriction" checked />摩擦有り
+      </label>
+
+      <label class="pt">
         <input class="pt" type="checkbox" id="useikelement" />IK使用
       </label>
       <!--
@@ -56,10 +60,17 @@
       </div>
 
       <div class="toright">
+        <div>長さ半分</div>
+        <input id="lenhalf" type="range" min="1" max="20" value="1" />
+        <div id="lenhalfview"></div>
+      </div>
+
+      <div class="toright">
         <div>ベルト数</div>
         <input id="belt" type="range" min="1" max="20" value="10" />
         <div id="beltview"></div>
       </div>
+
       <div>
         <select id="tail" class="pt">
           <option value="e" selected>短</option>
@@ -68,9 +79,10 @@
           <option value="w">長い</option>
         </select>
       </div>
+      
     </div>
     <div>
-      <div id="drop" class="drop">ここに .pmx をドロップ</div>
+      <div id="drop" class="drop">ここに . をドロップ</div>
     </div>
     <div class="toright">
       <canvas id="idcanvas"></canvas>

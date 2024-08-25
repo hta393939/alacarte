@@ -67,6 +67,7 @@ export class BoxBuilder extends PMX.Maker {
     this.head.nameJa = this.head.nameEn;
     let comment = `${d.toLocaleString()} BoxBuilder.make\r\n`;
     comment += `箱\r\n`;
+    comment += `長さ半: ${param.lenhalf}, 摩擦: ${param.usefriction}\r\n`;
     this.head.commentEn = '';
     this.head.commentJa = comment;
 
@@ -103,7 +104,11 @@ export class BoxBuilder extends PMX.Maker {
           let z = vp.p[2];
 
           v.n = this.normalize(men.n);
-          v.p = [x * scale, y * scale, z * scale];
+          v.p = [
+            x * scale * param.lenhalf,
+            y * scale * 1,
+            z * scale * 1,
+          ];
           v.uv = [
             men.uv[j*2+0],
             men.uv[j*2+1],
@@ -163,14 +168,19 @@ export class BoxBuilder extends PMX.Maker {
       rb.nameEn = rb.nameJa;
       rb.shape = PMX.Rigid.SHAPE_BOX;
       rb.setUIGroup(4);
+      rb.bone = i;
 
       let x = 0;
       let y = 0;
       let z = 0;
       rb.p = [x * scale, y * scale, z * scale];
       rb.rot = [0, 0, 0];
-      rb.size = [1 * scale, 1 * scale, 1 * scale];
-      rb.friction = 100;
+      rb.size = [
+        scale * param.lenhalf,
+        1 * scale,
+        1 * scale,
+      ];
+      rb.friction = param.usefriction ? 100 : 0;
 
       let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
         | PMX.Bone.BIT_VISIBLE;
