@@ -105,8 +105,8 @@ export class BoxBuilder extends PMX.Maker {
 
           v.n = this.normalize(men.n);
           v.p = [
-            x * scale * param.lenhalf,
-            y * scale * 1,
+            x * scale * 1,
+            y * scale * param.lenhalf,
             z * scale * 1,
           ];
           v.uv = [
@@ -176,8 +176,8 @@ export class BoxBuilder extends PMX.Maker {
       rb.p = [x * scale, y * scale, z * scale];
       rb.rot = [0, 0, 0];
       rb.size = [
+        scale * 1,
         scale * param.lenhalf,
-        1 * scale,
         1 * scale,
       ];
       rb.friction = param.usefriction ? 100 : 0;
