@@ -212,11 +212,14 @@ class Misc {
       const top = param.useradius ? 'r' : 'a';
       const d = param.denom;
       let numtext = _pad(3, 3);
+      if (param.useradius) {
+        //numtext = _pad(23, 3);
+      }
       if (param.useradiusq) {
-        numtext = _pad(23, 3);
+        numtext = _pad(43, 3);
       }
       if (param.useradius8) {
-        numtext = _pad(33, 3);
+        numtext = _pad(83, 3);
       }
       let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
@@ -418,18 +421,28 @@ class Misc {
    * phycapsule.js
    */
   makePhyCapsule() {
-    document.getElementById('useradius').checked = true;
+    //document.getElementById('useradius').checked = true;
     document.getElementById('usephyelement').checked = true;
 
     const param = this.getCommonOptions();
 
     const writer = new PhyCapsule();
-    let top = param.useradius ? 'r' : 'a';
+    let top = 'r';
+    let nostr = _pad(12, 3);
+    if (param.useradius) {
+      nostr = _pad(22, 3);
+    }
+    if (param.useradiusq) {
+      nostr = _pad(42, 3);
+    }
+    if (param.useradius8) {
+      nostr = _pad(82, 3);
+    }
     const d = param.denom;
-    const dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
+    const dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
     Object.assign(param, {
-      texturePath: `tex/${top}012.png`,
-      nameEn: `${top}012_phycapsule_${param.belt}_${dtext}`,
+      texturePath: `tex/${top}${nostr}.png`,
+      nameEn: `${top}${nostr}_phycapsule_${param.belt}_${dtext}`,
     });
     writer.make(param);
     const bufs = writer.makeBuffer();

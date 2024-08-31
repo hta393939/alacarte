@@ -72,9 +72,19 @@ class PhyCapsule extends PMX.Maker {
   make(param) {
     const _belt = param.belt;
 
-    const useradius = param.useradius;
     const usephy = param.usephy;
     const usedynamic = param.usedynamic;
+
+    let radiusRate = 1;
+    if (param.useradius) {
+      radiusRate = 0.5;
+    }
+    if (param.useradiusq) {
+      radiusRate = 0.25;
+    }
+    if (param.useradiusq) {
+      radiusRate = 0.125;
+    }
 
     const _indexByInclude = (s) => {
       return this.bones.findIndex(bone => {
@@ -116,18 +126,19 @@ class PhyCapsule extends PMX.Maker {
      * @param {number} target 1.0 に対して縮める値
      * @returns 
      */
-    const calcRadius = (t, fwTarget = 0.8, target = 0.5) => {
+    const calcRadius = (t, fwTarget = Math.sqrt(2) * 0.5) => {
+      const fwTarget = (radiusRate < 1) ? Math.sqrt(2) * 0.5 : 1;
+      const bwTarget = radiusRate;
       const fw = 0.4;
-      let amp = (1 - target) * 0.5;
+      let bwAmp = (1 - bwTarget) * 0.5;
       let fwAmp = (1 - fwTarget) * 0.5;
-      let center = 1 - amp;
+      let bwCenter = 1 - bwAmp;
       let fwCenter = 1 - fwAmp;
-      let fwPower = 1 / 4;
       if (t < fw) {
-        let u = - Math.cos(Math.pow(t / fw, fwPower) * Math.PI) * fwAmp + fwCenter;
+        let u = - Math.cos((t / fw) * Math.PI) * fwAmp + fwCenter;
         return u;
       }
-      let u = Math.cos((t - fw) / (1 - fw) * Math.PI) * amp + center;
+      let u = Math.cos((t - fw) / (1 - fw) * Math.PI) * bwAmp + bwCenter;
       return u;
     };
 

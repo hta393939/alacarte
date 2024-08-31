@@ -141,17 +141,20 @@ class CenterCapsule extends PMX.Maker {
       let center = 1 - amp;
       let fwCenter = 1 - fwAmp;
       //let fwPower = 1 / 4;
-      let fwPower = 1 / 2;
+      //let fwPower = 1 / 2;
+      let fwPower = 1;
       if (t < fw) { // 前半
         const ang = Math.pow(t / fw, fwPower) * Math.PI;
         let u = - Math.cos(ang) * fwAmp + fwCenter;
 
         const tx = beltHeight * beltNum;
-        let tr = Math.sin(ang) * fwAmp * Math.PI * Math.pow(1 / fw, fwPower) * fwPower * Math.pow(t, fwPower - 1);
+        // fwPower が 1
+        let tr = Math.sin(ang) * fwAmp * Math.PI / fw;
+        // fwPower が 1 未満の場合
+        //let tr = Math.sin(ang) * fwAmp * Math.PI * Math.pow(1 / fw, fwPower) * fwPower * Math.pow(t, fwPower - 1);
         if (Number.isNaN(tr)) {
           tr = 0;
         }
-        //tr = 0;
 
         return {r: u, nx: -tr, nr: tx};
       }
@@ -171,7 +174,7 @@ class CenterCapsule extends PMX.Maker {
     let s = `${d.toLocaleString()} CenterCapsule.make forward\r\n`;
     s += `IK: ${_useIK}, 物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
-    s += `1/4化: ${useradiusq}, フルコリジョン: ${usefull}\r\n`;
+    s += `1/4化: ${useradiusq}, 1/8化: ${useradius8}, フルコリジョン: ${usefull}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
