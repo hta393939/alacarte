@@ -75,17 +75,6 @@ class PhyCapsule extends PMX.Maker {
     const usephy = param.usephy;
     const usedynamic = param.usedynamic;
 
-    let radiusRate = 1;
-    if (param.useradius) {
-      radiusRate = 0.5;
-    }
-    if (param.useradiusq) {
-      radiusRate = 0.25;
-    }
-    if (param.useradiusq) {
-      radiusRate = 0.125;
-    }
-
     const _indexByInclude = (s) => {
       return this.bones.findIndex(bone => {
         return bone.nameJa.includes(s);
@@ -123,22 +112,28 @@ class PhyCapsule extends PMX.Maker {
     /**
      * 
      * @param {number} t 0.0～1.0
-     * @param {number} target 1.0 に対して縮める値
+     * @param {number} target 1.0 の半径に対して縮める値
      * @returns 
      */
-    const calcRadius = (t, fwTarget = Math.sqrt(2) * 0.5) => {
-      const fwTarget = (radiusRate < 1) ? Math.sqrt(2) * 0.5 : 1;
-      const bwTarget = radiusRate;
+    const calcRadius = (t) => {
+      const fwTarget = param.fwrate; // t が 0 の方
+      const bwTarget = raram.bwrate; // t が 1 の方
       const fw = 0.4;
       let bwAmp = (1 - bwTarget) * 0.5;
       let fwAmp = (1 - fwTarget) * 0.5;
       let bwCenter = 1 - bwAmp;
       let fwCenter = 1 - fwAmp;
       if (t < fw) {
-        let u = - Math.cos((t / fw) * Math.PI) * fwAmp + fwCenter;
+        const ang = (t / fw) * Math.PI;
+        let u = - Math.cos(ang) * fwAmp + fwCenter;
         return u;
       }
-      let u = Math.cos((t - fw) / (1 - fw) * Math.PI) * bwAmp + bwCenter;
+      const ang = (t - fw) / (1 - fw) * Math.PI;
+      let u = Math.cos(ang) * bwAmp + bwCenter;
+      const tr = - Math.sin(ang) * Math.PI / (1 - fw) * bwAmp;
+      const obj = {
+        r: u, nx: -tr, nr: beltHeight * beltNum,
+      };
       return u;
     };
 
@@ -148,7 +143,7 @@ class PhyCapsule extends PMX.Maker {
     s += `damp: ${moveDamp}, ${rotDamp}\r\n`;
     s += `gui group: ${RIGID_DEFAULT_GROUP}`;
     s += `, scale: ${scale}, div: ${div}\r\n`;
-    s += `belt: ${beltNum}\r\n`;
+    s += `belt: ${beltNum}, bw: ${param.bwrate}\r\n`;
     s += `物理: ${usephy}, 動的: ${usedynamic}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;

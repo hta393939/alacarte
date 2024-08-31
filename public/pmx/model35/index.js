@@ -117,17 +117,36 @@ class Misc {
       pow2: Number.parseFloat(document.getElementById('pow2element')?.value ?? -3),
 //            denom: Number.parseFloat(document.getElementById('denom')?.value ?? 1),
       usephy: document.getElementById('usephyelement')?.checked,
-/**
- * ik 書き出しするかどうか
- */
+      /**
+       * ik 書き出しするかどうか
+       */
       useik: document.getElementById('useikelement')?.checked,
       useradius: document.getElementById('useradius')?.checked,
-      useradiusq: document.getElementById('useradiusq')?.checked,
+      useradius2: document.getElementById('useradius2')?.checked,
+      useradius4: document.getElementById('useradius4')?.checked,
+      useradiusq: document.getElementById('useradius4')?.checked,
       useradius8: document.getElementById('useradius8')?.checked,
       usedynamic: document.getElementById('usedynamic')?.checked,
     };
     param.scale = 2 ** param.pow2;
     param.denom = 1 / param.scale;
+
+    param.fwrate = 1;
+    if (param.useradius) {
+      param.fwrate = Math.sqrt(2) * 0.5;
+    }
+
+    param.bwrate = 1;
+    if (param.useradius2) {
+      param.bwrate = 0.5;
+    }
+    if (param.useradius4) {
+      param.bwrate = 0.25;
+    }
+    if (param.useradius8) {
+      param.bwrate = 0.125;
+    }
+
     return param;
   }
 
@@ -212,10 +231,10 @@ class Misc {
       const top = param.useradius ? 'r' : 'a';
       const d = param.denom;
       let numtext = _pad(3, 3);
-      if (param.useradius) {
+      if (param.useradius2) {
         //numtext = _pad(23, 3);
       }
-      if (param.useradiusq) {
+      if (param.useradius4) {
         numtext = _pad(43, 3);
       }
       if (param.useradius8) {
@@ -427,12 +446,12 @@ class Misc {
     const param = this.getCommonOptions();
 
     const writer = new PhyCapsule();
-    let top = 'r';
+    let top = param.useradius ? 'r' : 'a';
     let nostr = _pad(12, 3);
-    if (param.useradius) {
+    if (param.useradius2) {
       nostr = _pad(22, 3);
     }
-    if (param.useradiusq) {
+    if (param.useradius4) {
       nostr = _pad(42, 3);
     }
     if (param.useradius8) {

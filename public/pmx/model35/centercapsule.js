@@ -69,7 +69,8 @@ class CenterCapsule extends PMX.Maker {
     console.log('make', param);
 
     const useradius = param.useradius;
-    const useradiusq = param.useradiusq;
+    const useradius2 = param.useradius2;
+    const useradius4 = param.useradius4;
     const useradius8 = param.useradius8;
 
     /**
@@ -126,14 +127,9 @@ class CenterCapsule extends PMX.Maker {
      * @param {number} fwTarget 1.0 に対して縮める値
      * @returns 
      */
-    const calcRadius = (t, fwTarget = Math.sqrt(2) * 0.5) => {
-      let bwTarget = 0.5;
-      if (useradiusq) {
-        bwTarget = 0.25;
-      }
-      if (useradius8) {
-        bwTarget = 0.125;
-      }
+    const calcRadius = (t) => {
+      const fwTarget = param.fwrate;
+      const bwTarget = param.bwrate;
 
       const fw = 0.4;
       let amp = (1 - bwTarget) * 0.5;
@@ -174,7 +170,7 @@ class CenterCapsule extends PMX.Maker {
     let s = `${d.toLocaleString()} CenterCapsule.make forward\r\n`;
     s += `IK: ${_useIK}, 物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
-    s += `1/4化: ${useradiusq}, 1/8化: ${useradius8}, フルコリジョン: ${usefull}\r\n`;
+    s += `1/4化: ${useradius4}, 1/8化: ${useradius8}, フルコリジョン: ${usefull}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
