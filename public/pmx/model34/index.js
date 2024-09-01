@@ -119,6 +119,24 @@ class Misc {
   }
 
 /**
+ * 
+ * @param {File} file 
+ */
+  async makeApplyClipSub(file) {
+    const ab = await file.arrayBuffer();
+    const parser = new PMX.Maker();
+    this.parser = parser;
+    parser.parse(ab);
+
+    const maker = new ApplyMaker();
+    const result = maker.analyzeNormal(parser);
+
+    result.push('');
+    let str = result.join('\n');
+    await navigator.clipboard.writeText(str);
+  }
+
+/**
  * 位置ベース。クリップボード用。
  * @param {PMX.Parser} parser 
  * @returns {string[]} 行ごとに返す
@@ -597,16 +615,6 @@ class Misc {
       console.log('makehalf offsets', offsets);
     });
 
-    window.idmake4?.addEventListener('click', () => {
-      this.make4();
-    });
-    window.idmake5?.addEventListener('click', () => {
-      this.make5();
-    });
-    window.idmake6?.addEventListener('click', () => {
-      this.make6();
-    });
-
     window.idmakeik?.addEventListener('click', () => {
       const param = this.getCommonOptions();
       let top = 'a'; // param.texprefix
@@ -627,22 +635,6 @@ class Misc {
         chunk.hex = `0x${chunk.offset.toString(16)}`;
       }
       console.log('make ikcapsule offsets', offsets);            
-    });
-
-    window.idmake8?.addEventListener('click', () => {
-      const param = {
-        nameEn: `a008_capsulesdef`,
-      };
-      const writer = new CapsuleBuilder8();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
-  
-      const offsets = writer.toOffsets(bufs);
-      for (const chunk of offsets.chunks) {
-        chunk.hex = `0x${chunk.offset.toString(16)}`;
-      }
-      console.log('make8 offsets', offsets);            
     });
 
     {
@@ -679,6 +671,23 @@ class Misc {
       });
     }
 
+    {
+/**
+ * @type {HTMLDivElement}
+ */
+      const el = window.dropsub;
+      el?.addEventListener('dragover', ev => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        ev.dataTransfer.dropEffect = 'copy';
+      });
+      el?.addEventListener('drop', ev => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        this.makeApplyClipSub(ev.dataTransfer.files[0]);
+      });
+    }
+
     for (const k of ['belt', /*'denom'*/]) {
       const el = document.getElementById(k);
       const elview = document.getElementById(`${k}view`);
@@ -701,57 +710,6 @@ class Misc {
       _update();
     }
 
-  }
-
-/**
- * その4の生成 シンプルカプセルの生成
- * capsule.js
- */
-  make4() {
-    const writer = new CapsuleBuilder();
-    writer.make4();
-    const bufs = writer.makeBuffer();
-    this.download(new Blob(bufs), `a004_${_dstr()}.pmx`);
-
-    const offsets = writer.toOffsets(bufs);
-    for (const chunk of offsets.chunks) {
-      chunk.hex = `0x${chunk.offset.toString(16)}`;
-    }
-    console.log('make4 offsets', offsets);
-  }
-
-/**
- * その5の生成 カプセルの生成
- * capsule.js
- */
-  make5() {
-    const writer = new CapsuleBuilder();
-    writer.make5();
-    const bufs = writer.makeBuffer();
-    this.download(new Blob(bufs), `a005_${_dstr()}.pmx`);
-
-    const offsets = writer.toOffsets(bufs);
-    for (const chunk of offsets.chunks) {
-      chunk.hex = `0x${chunk.offset.toString(16)}`;
-    }
-    console.log('make5 offsets', offsets);
-  }
-
-/**
- * その6の生成
- * capsule.js
- */
-  make6() {
-    const writer = new CapsuleBuilder();
-    writer.make6();
-    const bufs = writer.makeBuffer();
-    this.download(new Blob(bufs), `a006_${_dstr()}.pmx`);
-
-    const offsets = writer.toOffsets(bufs);
-    for (const chunk of offsets.chunks) {
-      chunk.hex = `0x${chunk.offset.toString(16)}`;
-    }
-    console.log('make6 offsets', offsets);
   }
 
 /**

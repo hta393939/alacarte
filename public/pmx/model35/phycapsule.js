@@ -123,16 +123,21 @@ class PhyCapsule extends PMX.Maker {
       let fwAmp = (1 - fwTarget) * 0.5;
       let bwCenter = 1 - bwAmp;
       let fwCenter = 1 - fwAmp;
+      const tx = beltHeight * beltNum;
       if (t < fw) {
         const ang = (t / fw) * Math.PI;
         let u = - Math.cos(ang) * fwAmp + fwCenter;
+        const tr = Math.sin(ang) * fwAmp * Math.PI / fw;
+        const obj = {
+          r: u, nx: -tr, nr: tx,
+        };
         return u;
       }
       const ang = (t - fw) / (1 - fw) * Math.PI;
       let u = Math.cos(ang) * bwAmp + bwCenter;
       const tr = - Math.sin(ang) * Math.PI / (1 - fw) * bwAmp;
       const obj = {
-        r: u, nx: -tr, nr: beltHeight * beltNum,
+        r: u, nx: -tr, nr: tx,
       };
       return u;
     };
@@ -208,6 +213,7 @@ class PhyCapsule extends PMX.Maker {
       vertexOffset = this.vts.length;
 
       for (let i = 0; i <= div / 4; ++i) { // 半球 -Y
+        const result = calcRadius(0);
         let adjustR = capsuleR * calcRadius(0);
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
@@ -254,6 +260,7 @@ class PhyCapsule extends PMX.Maker {
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
           let py = by + i * beltHeight / div;
+          const result = calcRadius(py / (beltHeight * beltNum));
           let adjustR = capsuleR * calcRadius(py / (beltHeight * beltNum));
           for (let j = 0; j <= div; ++j) {
             const v = new PMX.Vertex();
@@ -306,6 +313,7 @@ class PhyCapsule extends PMX.Maker {
 
       // by は中を上がっていく方
       console.log('半分', 'by', by, 'vertexOffset', vertexOffset);
+      const result = calcRadius(1);
       let adjustR = calcRadius(1) * capsuleR; // 端1.0
       for (let i = 0; i <= div/4; ++i) { // 半球
         for (let j = 0; j <= div; ++j) {

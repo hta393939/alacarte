@@ -651,6 +651,50 @@ class ApplyMaker {
     return lines;
   }
 
+  /**
+   * 法線足してみる
+   * @param {*} parser 
+   */
+  analyzeNormal(parser) {
+    // 材質で絞るためのカウント
+    let _ficount = 0;
+    let mtl = null;
+    for (let i = 0; i < parser.materials.length; ++i) {
+      mtl = parser.materials[i];
+      if (mtl.nameJa === '\u30d1\u30f3\u30c4') {
+    //            if (mtlIndex === i) {
+        console.log('_ficount', _ficount);
+        break;
+      }
+      _ficount += mtl._faceIndexNum;
+      console.log(mtl._faceIndexNum / 3);
+    }
+
+    for (let i = 0; i < mtl._faceIndexNum; ++i) {
+      const index = _ficount + i;
+      const vtxIndex = parser.faceIndices[index];
+
+      console.log('vtxIndex', vtxIndex);
+
+/**
+ * 頂点1個
+ */
+      const vtx = parser.vts[vtxIndex];
+      vtx._analyze = {
+        target: false,
+        ring: NA,
+        lr: NA,
+      };
+
+    }
+
+// 実装する
+
+// 行返す
+    const lines = [];
+    return lines;
+  }
+
 }
 
 
