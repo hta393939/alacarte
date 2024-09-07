@@ -49,6 +49,9 @@ class Vertex {
  */
     this._index = 0;
 
+    /**
+     * @type {[number, number, number]}
+     */
     this.p = [0, 0,  0];
     this.n = [0, 0, -1];
 /**

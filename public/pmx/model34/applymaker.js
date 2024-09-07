@@ -123,9 +123,9 @@ class ApplyMaker {
     const L = 1;
     //const lrname = ['right', 'left'];
     const lrname = ['r_', 'l_'];
-/**
- * 最小が有効扱いするので大きい値
- */
+    /**
+     * 最小が有効扱いするので大きい値
+     */
     const NA = 999999;
 
     let rmin = 99999;
@@ -656,6 +656,9 @@ class ApplyMaker {
    * @param {*} parser 
    */
   analyzeNormal(parser) {
+    const morphs = [];
+    const additiveMorphs = [];
+
     // 材質で絞るためのカウント
     let _ficount = 0;
     let mtl = null;
@@ -670,28 +673,102 @@ class ApplyMaker {
       console.log(mtl._faceIndexNum / 3);
     }
 
+    //const indices = new Map();
     for (let i = 0; i < mtl._faceIndexNum; ++i) {
       const index = _ficount + i;
       const vtxIndex = parser.faceIndices[index];
 
       console.log('vtxIndex', vtxIndex);
 
-/**
- * 頂点1個
- */
+      /**
+       * 最小が有効扱いするので大きい値
+       */
+      //const NA = 999999;
+      /**
+       * 頂点1個
+       * @type {PMX.Vertex}
+       */
       const vtx = parser.vts[vtxIndex];
       vtx._analyze = {
-        target: false,
-        ring: NA,
-        lr: NA,
+        target: true,
+        //ring: NA,
+        lr: Math.sign(vtx.p[0]),
       };
 
     }
 
-// 実装する
+    for (let i = 0; i <= 2; ++i) {
+      const morph = new PMX.Morph();
+      additiveMorphs.push(morph);
+      morph.nameEn = `pn${i}`;
+      morph.nameJa = morph.nameEn;
+      morph.panel = PMX.Morph.PANEL_ETC;
+      morph.type = PMX.Morph.TYPE_VERTEX;
+    }
 
-// 行返す
+    const ys = [];
+
+    const vtxNum = parser.vts.length;
+    for (let i = 0; i < vtxNum; ++i) {
+      const vtx = parser.vts[i];
+      if (!vtx._analyze?.target) {
+        continue;
+      }
+
+      let index = i;
+      const vm = new PMX.VertexMorph();
+      vm.target = index;
+
+      vm.offset = [0, 0, 0];
+      let [x, y, z] = vtx.p;
+      console.log('x, y, z', x.toFixed(2), y.toFixed(2), z.toFixed(2));
+      // 12.5 無さそう
+      // 12.25 は上があるが少なすぎ
+      //const ythr2 = 12.125; // おしい
+      // 12 多すぎ
+
+      //const ythr2 = 12.08; // ほぼok
+      //const ythr2 = 12.05;
+      const ythr2 = 12.0;
+      const ythr = 10;
+
+      let morph = null;
+
+      //let z = vtx.p[2];
+      //const zabs = Math.abs(z);
+      if (y >= ythr) {
+        if (y >= ythr2) {
+          morph = additiveMorphs[1];
+          vm.offset = [Math.sign(x) * 0.5, 0.5, 0];
+        } else {
+          morph = additiveMorphs[0];
+          vm.offset = [0, 0, Math.sign(z) * 0.5];
+        }
+        if (x > 0) {
+          ys.push(y);
+        }
+      } else {
+        morph = additiveMorphs[2];
+        y -= ythr;
+        const dir = new V3(0, y, z);
+        vm.offset = dir.normalize().scale(0.5).asArray();
+      }
+
+      vm._parentName = morph?.nameJa ?? '';
+      // 一番最後に足すためのインデックス
+      vm._index = morph?.vertexMorphs?.length || 0;
+      morph?.vertexMorphs?.push(vm);
+    }
+    morphs.push(...additiveMorphs);
+
+    ys.sort((a, b) => b - a);
+    console.log('ys', ...ys.map(v => v.toFixed(2)));
+
+    // 行返す
     const lines = [];
+    for (const mr of morphs) {
+      lines.push(...mr.toLines());
+    }
     return lines;
   }
 
