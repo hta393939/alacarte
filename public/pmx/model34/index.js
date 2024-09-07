@@ -615,28 +615,6 @@ class Misc {
       console.log('makehalf offsets', offsets);
     });
 
-    window.idmakeik?.addEventListener('click', () => {
-      const param = this.getCommonOptions();
-      let top = 'a'; // param.texprefix
-      let tail = `d${param.denom.toFixed(0)}`;
-      if (param.denom < 1) {
-        tail = `${1 / param.denom}`;
-      }
-      Object.assign(param, {
-        nameEn: `${top}007_ikcapsule_${param.belt}_${tail}`,
-      });
-      const writer = new IKCapsule();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-  
-      const offsets = writer.toOffsets(bufs);
-      for (const chunk of offsets.chunks) {
-        chunk.hex = `0x${chunk.offset.toString(16)}`;
-      }
-      console.log('make ikcapsule offsets', offsets);            
-    });
-
     {
       const el = window.idtoclip1;
       el?.addEventListener('click', async () => {
