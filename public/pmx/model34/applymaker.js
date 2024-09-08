@@ -652,7 +652,8 @@ class ApplyMaker {
   }
 
   /**
-   * 法線足してみる
+   * 足してみる．
+   * フレームに追加するには??
    * @param {*} parser 
    */
   analyzeNormal(parser) {
