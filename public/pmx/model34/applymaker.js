@@ -717,19 +717,19 @@ class ApplyMaker {
 
       let index = i;
       const vm = new PMX.VertexMorph();
+      // 頂点インデックス
       vm.target = index;
 
       vm.offset = [0, 0, 0];
       let [x, y, z] = vtx.p;
       console.log('x, y, z', x.toFixed(2), y.toFixed(2), z.toFixed(2));
       // 12.5 無さそう
-      // 12.25 は上があるが少なすぎ
-      //const ythr2 = 12.125; // おしい
-      // 12 多すぎ
-
       //const ythr2 = 12.08; // ほぼok
       //const ythr2 = 12.05;
-      const ythr2 = 12.0;
+      //const ythr2 = 12.0;
+      const ythr2 = 11.9; // OK
+
+      //const ythr = 10.04; // なぜか裏返る
       const ythr = 10;
 
       let morph = null;
@@ -738,10 +738,10 @@ class ApplyMaker {
       //const zabs = Math.abs(z);
       if (y >= ythr) {
         if (y >= ythr2) {
-          morph = additiveMorphs[1];
+          morph = additiveMorphs[0];
           vm.offset = [Math.sign(x) * 0.5, 0.5, 0];
         } else {
-          morph = additiveMorphs[0];
+          morph = additiveMorphs[1];
           vm.offset = [0, 0, Math.sign(z) * 0.5];
         }
         if (x > 0) {
@@ -757,12 +757,21 @@ class ApplyMaker {
       vm._parentName = morph?.nameJa ?? '';
       // 一番最後に足すためのインデックス
       vm._index = morph?.vertexMorphs?.length || 0;
+      {
+        vm._p = [x, y, z];
+      }
       morph?.vertexMorphs?.push(vm);
     }
     morphs.push(...additiveMorphs);
 
     ys.sort((a, b) => b - a);
     console.log('ys', ...ys.map(v => v.toFixed(2)));
+    {
+      for (const m of additiveMorphs) {
+        m.vertexMorphs.sort((a, b) => b._p[1] - a._p[1]);
+      }
+      console.log('additive', additiveMorphs);
+    }
 
     // 行返す
     const lines = [];
