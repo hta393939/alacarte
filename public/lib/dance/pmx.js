@@ -696,6 +696,12 @@ class Frame {
   }
 
   toCSV() {
+    const ss = [
+      `Pmx`,
+      `"${this.nameJa}"`,
+      `"${this.nameEn}"`,
+    ];
+    ss.join(',');
     console.warn('not implemented');
   }
 }
@@ -705,15 +711,18 @@ class Frame {
  * フレームの中のアイテム
  */
 class NodeItem {
-/**
- * ボーン
- */
+  /**
+   * ボーン
+   */
   static TYPE_BONE = 0;
-/**
- * 表情
- */
+  /**
+   * 表情
+   */
   static TYPE_EXPRESSION = 1;
   constructor() {
+    /**
+     * 枠名
+     */
     this._parentName = 'node000';
     this.type = NodeItem.TYPE_BONE;
     this._itemName = 'bone000';
@@ -741,7 +750,7 @@ class PMXNode {
     const ss = [
       'PmxNode',
       `"${this.nameJa}"`,
-      `"${this.nameEn}"`
+      `"${this.nameEn}"`,
     ];
     return ss.join(',');
   }

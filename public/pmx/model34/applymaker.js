@@ -659,6 +659,7 @@ class ApplyMaker {
   analyzeNormal(parser) {
     const morphs = [];
     const additiveMorphs = [];
+    const nodeItems = [];
 
     // 材質で絞るためのカウント
     let _ficount = 0;
@@ -705,6 +706,12 @@ class ApplyMaker {
       morph.nameJa = morph.nameEn;
       morph.panel = PMX.Morph.PANEL_ETC;
       morph.type = PMX.Morph.TYPE_VERTEX;
+
+      const item = new PMX.NodeItem();
+      nodeItems.push(item);
+      item._parentName = '表情';
+      item.type = PMX.NodeItem.TYPE_EXPRESSION;
+      item._itemName = morph.nameJa;
     }
 
     const ys = [];
@@ -778,6 +785,9 @@ class ApplyMaker {
     const lines = [];
     for (const mr of morphs) {
       lines.push(...mr.toLines());
+    }
+    for (const item of nodeItems) {
+      lines.push(item.toCSV());
     }
     return lines;
   }
