@@ -598,23 +598,6 @@ class Misc {
       }
     });
 
-    window.idmakehalf?.addEventListener('click', () => {
-
-      const param = {
-        nameEn: `a001_halfcapsule`,
-      };
-      const writer = new HalfCapsule();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
-  
-      const offsets = writer.toOffsets(bufs);
-      for (const chunk of offsets.chunks) {
-        chunk.hex = `0x${chunk.offset.toString(16)}`;
-      }
-      console.log('makehalf offsets', offsets);
-    });
-
     {
       const el = window.idtoclip1;
       el?.addEventListener('click', async () => {
@@ -632,9 +615,9 @@ class Misc {
     //this.draw3(window.canvast3);
 
     {
-/**
- * @type {HTMLDivElement}
- */
+      /**
+       * @type {HTMLDivElement}
+       */
       const el = window.drop;
       el?.addEventListener('dragover', ev => {
         ev.stopPropagation();
@@ -650,9 +633,9 @@ class Misc {
     }
 
     {
-/**
- * @type {HTMLDivElement}
- */
+      /**
+       * @type {HTMLDivElement}
+       */
       const el = window.dropsub;
       el?.addEventListener('dragover', ev => {
         ev.stopPropagation();
@@ -690,11 +673,11 @@ class Misc {
 
   }
 
-/**
- * ダウンロードする
- * @param {Blob} blob 
- * @param {string} name 
- */
+  /**
+   * ダウンロードする
+   * @param {Blob} blob 
+   * @param {string} name 
+   */
   download(blob, name) {
     const a = document.createElement('a');
     a.download = name;
@@ -751,10 +734,10 @@ class Misc {
     c.putImageData(img, 0, 0);
   }
 
-/**
- * 紫系統色
- * @param {HTMLCanvasElement} canvas 
- */
+  /**
+   * 紫系統色
+   * @param {HTMLCanvasElement} canvas 
+   */
   draw1(canvas) {
     const w = 512;
     const h = 512;
@@ -795,10 +778,10 @@ class Misc {
     c.putImageData(img, 0, 0);
   }
 
-/**
- * sha マップ生成
- * @param {HTMLCanvasElement} canvas 
- */
+  /**
+   * sha マップ生成
+   * @param {HTMLCanvasElement} canvas 
+   */
   draw2(canvas) {
     console.log('draw2 called');
     const w = 512;
@@ -869,10 +852,10 @@ class Misc {
     c.putImageData(img, 0, 0);
   }
 
-/**
- * 壁
- * @param {HTMLCanvasElement} canvas 
- */ 
+  /**
+   * 壁
+   * @param {HTMLCanvasElement} canvas 
+   */ 
   draw3(canvas) {
     console.log('draw3 called');
     const util = new Util();
@@ -984,5 +967,4 @@ class Misc {
 
 const misc = new Misc();
 misc.init();
-
 

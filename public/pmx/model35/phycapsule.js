@@ -117,7 +117,7 @@ class PhyCapsule extends PMX.Maker {
      */
     const calcRadius = (t) => {
       const fwTarget = param.fwrate; // t が 0 の方
-      const bwTarget = raram.bwrate; // t が 1 の方
+      const bwTarget = param.bwrate; // t が 1 の方
       const fw = 0.4;
       let bwAmp = (1 - bwTarget) * 0.5;
       let fwAmp = (1 - fwTarget) * 0.5;
