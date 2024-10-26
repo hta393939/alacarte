@@ -467,7 +467,7 @@ class ApplyMaker {
 
             { // 内側に引き込む
               let rate = -0.2; // これより少なくて良さそう
-              if (true) { // NOTE: 半分の場合
+              if (false) { // NOTE: true にすると剛体半分にする
                 //const rigidRate = rate - (rigid.size[0] + rigid.size[1]) * 0.5;
                 //const rigidRate = - (rigid.size[0] + rigid.size[1]) * 0.5;
                 const rigidRate = 0.0;
