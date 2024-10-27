@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>モデル生成</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div>
+      <div id="drop" class="drop">ここにファイルをドロップする</div>
+    </div>
+    <div>
+      <div id="counterview"></div>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <details class="pt">
+      <summary class="pt">画像</summary>
+      <div>
+        <!--
+        <img id="img" src="IMG_20190519_185109365.jpg" />
+      -->
+      </div>
+    </details>
+
+    <script type="importmap">
+{
+  "imports": {
+    "three": "../third_party/three/three.module.min.js",
+    "three/addons/": "../third_party/three/jsm/"  
+  }
+}
+    </script>
+
+    <script src="./index.js" type="module"></script>
+  </body>
+</html>
+

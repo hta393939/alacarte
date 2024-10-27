@@ -1,0 +1,16 @@
+
+body {
+  height: 100vh;
+}
+
+.pt {
+  cursor: pointer;
+}
+
+.drop {
+  user-select: none;
+  border: dashed 4px black;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
