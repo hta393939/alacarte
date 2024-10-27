@@ -1,6 +1,6 @@
 
 import * as THREE from 'three';
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.169.js';
 
 class Misc {
   constructor() {
@@ -71,10 +71,10 @@ class Misc {
     this.scene = scene;
 
     const camera = new THREE.PerspectiveCamera(
-      45,
+      50,
       w / h,
       0.002,
-      768,
+      2000,
     );
     this.camera = camera;
     camera.position.set(0, 0, 0);
@@ -110,6 +110,11 @@ class Misc {
       this.control = control;
     }
 
+    {
+      const clock = new THREE.Clock(true);
+      this.clock = clock;
+    }
+
   }
 
   update() {
@@ -119,7 +124,9 @@ class Misc {
       this.update();
     });
 
-    this.control?.update();
+    const delta = this.clock.getDelta();
+
+    this.control?.update(delta);
     this.renderer?.render(this.scene, this.camera);
 
     {
