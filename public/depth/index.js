@@ -2,6 +2,8 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.163.js';
 
+import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.169.js';
+
 class Misc {
   constructor() {
     this.counter = 0;
@@ -19,10 +21,10 @@ class Misc {
     };
 
     this.target = 'scr_4_146';
-    //this.target = 'img_4_365';
-    //this.target = 'img_8_365';
-    //this.target = 'img_4_967';
-    //this.target = 'img_8_967';
+    this.target = 'img_4_365';
+    this.target = 'img_8_365';
+    this.target = 'img_4_967';
+    this.target = 'img_8_967';
   }
 
   /**
@@ -36,6 +38,25 @@ class Misc {
     //const text = await res.text();
     const blob = await res.blob();
     this.makeFile(blob, true);
+  }
+
+  async exportGLB() {
+    console.log('exportGLB called');
+    const exporter = new GLTFExporter();
+    const opt = {
+      binary: true,
+      includeCustomExtensions: true,
+    };
+    exporter.parse(this.scene,
+      gltf => {
+        console.log('gltf');
+        this.download(new Blob([gltf]), `${this.target}.glb`);
+      },
+      () => {
+        console.warn('gltf error');
+      },
+      opt,
+    );
   }
 
   async init() {
@@ -75,8 +96,15 @@ class Misc {
       });
     }
 
-    this.initGL();
     {
+      const el = document.getElementById('exportglb');
+      el?.addEventListener('click', () => {
+        this.exportGLB();
+      });
+    }
+
+    this.initGL();
+    if (false) {
       const m = await this.makeMesh();
       this.scene.add(m);
     }
@@ -128,12 +156,12 @@ class Misc {
       this.scene.add(light);
     }
 
-    {
+    if (false) {
       const axes = new THREE.AxesHelper(10);
       this.scene.add(axes);
     }
 
-    {
+    if (false) {
       const geo = new THREE.SphereGeometry(0.2);
       const mtl = new THREE.MeshStandardMaterial({
         color: 0xffffff,
