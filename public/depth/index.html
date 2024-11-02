@@ -5,28 +5,37 @@
     <title>モデル生成</title>
     <link rel="stylesheet" href="./index.css" />
   </head>
+
   <body>
     <div>
+      <label><input id="fromcsvdirect" type="checkbox" checked />.csvから直接生成</label>
       <div id="drop" class="drop">ここにファイルをドロップする</div>
     </div>
     <div>
       <div id="counterview"></div>
-      <canvas id="canvas"></canvas>
+      <div id="view"></div>
+      <canvas id="maincanvas"></canvas>
     </div>
 
     <details class="pt">
       <summary class="pt">画像</summary>
       <div>
         <!--
+        <img id="img" src="scr_4_146.png" />
+        <img id="img2" src="img_4_365.png" />
+        <img id="img3" src="img_4_967.png" />
+        <img id="img4" src="img_8_365.png" />
+        <img id="img5" src="img_8_967.png" />
+
         <img id="img" src="IMG_20190519_185109365.jpg" />
-      -->
+        -->
       </div>
     </details>
 
     <script type="importmap">
 {
   "imports": {
-    "three": "../third_party/three/three.module.min.169.js",
+    "three": "../third_party/three/three.module.min.163.js",
     "three/addons/": "../third_party/three/"
   }
 }
