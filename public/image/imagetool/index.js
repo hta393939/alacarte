@@ -29,10 +29,10 @@ class Misc {
     this.setListener();
   }
 
-/**
- * 緑の明るさを取ってきてすべての成分に適用する
- * @param {HTMLCanvasElement} canvas
- */
+  /**
+   * 緑の明るさを取ってきてすべての成分に適用する
+   * @param {HTMLCanvasElement} canvas
+   */
   convColor(canvas) {
     console.log('convColor called');
     const c = canvas.getContext('2d');
@@ -67,12 +67,12 @@ class Misc {
     c.putImageData(dat, 0, 0);
   }
 
-/**
- * 
- * @param {File} file 
- * @param {HTMLCanvasElement} canvas 
- * @returns {Promise<HTMLCanvasElement>}
- */
+  /**
+   * 
+   * @param {File} file 
+   * @param {HTMLCanvasElement} canvas 
+   * @returns {Promise<HTMLCanvasElement>}
+   */
   loadFileToCanvas(file, canvas) {
     return new Promise((resolve, reject) => {
       {
@@ -97,10 +97,10 @@ class Misc {
     });
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} src 
- */
+  /**
+   * 
+   * @param {HTMLCanvasElement} src 
+   */
   scaleImage(src) {
     const scale = this.scale;
 
@@ -109,9 +109,9 @@ class Misc {
     const cellw = this.cellw;
     const cellh = cellw;
 
-/**
- * 入力画像の幅
- */
+    /**
+     * 入力画像の幅
+     */
 //        const w = src.width;
 //        const h = src.height;
     const context = src.getContext('2d');
@@ -341,7 +341,7 @@ class Misc {
   async selectDir() {
     const opt = {
       mode: 'readwrite',
-      //id, mode, startIn,
+      //id, startIn,
     };
     /**
      * @type {FileSystemDirectoryHandle}
@@ -375,7 +375,6 @@ class Misc {
         const file = await h.getFile();
         await this.parseImage(file);
         this.act();
-        this.drawFrame();
         break;
       }
     }
@@ -388,7 +387,8 @@ class Misc {
     const inputdh = await dh.getDirectoryHandle('input');
     const outputdh = await dh.getDirectoryHandle('output');
 
-    const re = /^(?<body>.+)(?<ext>\.[^.])$/;
+    let count = 0;
+    const re = /^(?<body>.+)(?<ext>\.[^.]+)$/;
     for await (const [k, h] of inputdh) {
       console.log(k, h); // 短い名前とハンドル
       if (h.kind !== 'file') {
@@ -433,7 +433,17 @@ class Misc {
       await wr.close();
 
       await window?.scheduler?.yield();
+
+      count += 1;
     }
+
+    {
+      const el = document.getElementById('countview');
+      if (el) {
+        el.textContent = `${count}, ${new Date().toLocaleTimeString()}`;
+      }
+    }
+
     console.log('processForDir');
   }
 
