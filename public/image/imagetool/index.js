@@ -17,6 +17,11 @@ class Misc {
       x: 0,
       y: 0,
     };
+
+    /**
+     * @type {FileSystemDirectoryHandle}
+     */
+    this.dirHandle = null;
   }
 
   async initialize() {
@@ -150,23 +155,32 @@ class Misc {
   }
 
   /**
-   * 
+   * File を maincanvas に読み込む
    * @param {File} file 
+   * @returns {Promise<{canvas: HTMLCanvasElement}>}
    */
   async parseImage(file) {
-    const img = new Image();
-    img.addEventListener('load', () => {
-/**
- * @type {HTMLCanvasElement}
- */
-      const canvas = document.getElementById('maincanvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const c = canvas.getContext('2d');
-      c.drawImage(img, 0, 0);
-      this.scaleImage(canvas);
+    return new Promise((resolve, reject) => {
+
+      const img = new Image();
+      img.addEventListener('load', () => {
+        /**
+         * @type {HTMLCanvasElement}
+         */
+        const canvas = document.getElementById('maincanvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const c = canvas.getContext('2d');
+        c.drawImage(img, 0, 0);
+        this.scaleImage(canvas);
+
+        resolve({
+          canvas,
+        });
+      });
+      img.src = URL.createObjectURL(file);
     });
-    img.src = URL.createObjectURL(file);
+
   }
 
   loadSetting() {
@@ -278,6 +292,20 @@ class Misc {
     }
 
     {
+      const el = document.getElementById('selectdir');
+      el?.addEventListener('click', () => {
+        this.selectDir();
+      });
+    }
+
+    {
+      const el = document.getElementById('processfordir');
+      el?.addEventListener('click', () => {
+        this.processForDir();
+      });
+    }
+
+    {
       const el = document.getElementById('downloadact');
       el?.addEventListener('click', async () => {
         const canvas = document.getElementById('subcanvas');
@@ -310,6 +338,105 @@ class Misc {
 
   }
 
+  async selectDir() {
+    const opt = {
+      mode: 'readwrite',
+      //id, mode, startIn,
+    };
+    /**
+     * @type {FileSystemDirectoryHandle}
+     */
+    const dh = await window.showDirectoryPicker(opt);
+    this.dirHandle = dh;
+    const el = document.getElementById('dirview');
+    if (el) {
+      el.textContent = `dir, ${dh.name}`;
+    }
+
+    { // 1枚だけ表示する
+      const inputdh = await dh.getDirectoryHandle('input');
+      const re = /^(?<body>.+)(?<ext>\.[^.]+)$/;
+      for await (const [k, h] of inputdh) {
+        if (h.kind !== 'file') {
+          continue;
+        }
+        const m = re.exec(h.name);
+        if (!m) {
+          continue;
+        }
+
+        const ext = m.groups['ext'];
+        console.log('one', ext, m.groups['body']);
+
+        if (ext !== '.png') {
+          continue;
+        }
+
+        const file = await h.getFile();
+        await this.parseImage(file);
+        this.act();
+        this.drawFrame();
+        break;
+      }
+    }
+
+  }
+
+  async processForDir() {
+    console.log('processForDir called');
+    const dh = this.dirHandle;
+    const inputdh = await dh.getDirectoryHandle('input');
+    const outputdh = await dh.getDirectoryHandle('output');
+
+    const re = /^(?<body>.+)(?<ext>\.[^.])$/;
+    for await (const [k, h] of inputdh) {
+      console.log(k, h); // 短い名前とハンドル
+      if (h.kind !== 'file') {
+        continue;
+      }
+
+      const m = re.exec(h.name);
+      if (!m) {
+        continue;
+      }
+      const ext = m.groups['ext'];
+      if (ext !== '.png') {
+        continue;
+      }
+
+      /**
+       * @type {File}
+       */
+      const file = await h.getFile();
+
+      let dstbuf = null;
+      {
+        const result = await this.parseImage(file);
+
+        this.act();
+        // 変換処理後のバイナリ
+        const subcanvas = document.getElementById('subcanvas');
+        const dstblob = await this.canvasToBlob(subcanvas);
+        dstbuf = await dstblob.arrayBuffer();
+      }
+
+      const opt = {
+        create: true,
+      };
+      const outname = `${m.groups['body']}_po.png`;
+      const fh = await outputdh.getFileHandle(outname, opt);
+
+      const wr = await fh.createWritable({
+        keepExistingData: false, // false は空にする
+      });
+      await wr.write(dstbuf);
+      await wr.close();
+
+      await window?.scheduler?.yield();
+    }
+    console.log('processForDir');
+  }
+
   /**
    * 
    * @param {Blob} blob 
@@ -324,7 +451,7 @@ class Misc {
   }
 
   /**
-   *  
+   * 円軌道上を周辺色で上塗りする
    */
   async curved(canvas) {
     console.log('curved called');
@@ -381,7 +508,7 @@ class Misc {
   }
 
   /**
-   * subcanvas に書き出す
+   * maincanvas の内容から処理して subcanvas に書き出す
    */
   act() {
     console.log('act called');
@@ -441,6 +568,9 @@ class Misc {
     console.log('act leave');
   }
 
+  /**
+   * 目で見る用
+   */
   drawFrame() {
     console.log('drawFrame called');
     const param = this.saveSetting();
