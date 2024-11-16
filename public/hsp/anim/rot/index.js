@@ -1,14 +1,76 @@
+
+class Channel {
+  targetId = '';
+  //targetAttrib = '';
+  /**
+   * ミリ秒整数
+   * @type {number[]}
+   */
+  keytimes = [];
+  //kval = [];
+  /**
+   * 1次元配列
+   * @type {number[]}
+   */
+  values = [];
+  //tangentsIn
+  //tangentsOut
+  //interpolations
+}
+
 class Misc {
   init() {
+    {
+      const el = document.getElementById('make');
+      el?.addEventListener('click', () => {
+        this.downloadFile();
+      });
+    }
   }
 
+  /**
+   * keytimes は unsigned int
+   */
   downloadFile() {
     {
-      const chs = [
-        {targetId: 'head'},
-      ];
+      /**
+       * @type {Channel[]}
+       */
+      const chs = [];
+      const num = 4 * 30;
+      for (let i = 0; i < 1; ++i) {
+        const ch = new Channel();
+        chs.push(ch);
+
+        for (let j = 0; j <= num; ++j) {
+
+          let msec = Math.floor(j * 1000 / 30);
+          let q = [0, 0, 0, 1];
+          let tick = j / 2; // num で1周
+          const ang = Math.PI * 2 * (tick % num) / num;
+          let cs = Math.cos(ang);
+          let sn = Math.sin(ang);
+          if (tick === num * 0.5) {
+            cs = -1;
+            sn = 0;
+          } else if (tick === num * 0.25) {
+            cs = 0;
+            sn = 1;
+          }
+          sn = Math.ceil(sn * 10000) / 10000;
+          cs = Math.ceil(cs * 10000) / 10000;
+
+          q = [0, sn, 0, cs];
+
+          ch.keytimes.push(msec);
+          ch.values.push(...q, 0, 0, 0);
+        }
+
+        ch.targetId = 'head';
+      }
+
       const text = this.makeXML(chs);
-      this.download(new Blob([text]), `a.xml`);
+      this.download(new Blob([text]), `headyrot4.xml`);
     }
   }
 
@@ -19,6 +81,11 @@ class Misc {
     a.click();
   }
 
+  /**
+   * 
+   * @param {Channel[]} chs 
+   * @returns 
+   */
   makeXML(chs) {
     const rootel = document.createElement('root');
     const asel = document.createElement('Animations');
@@ -44,13 +111,13 @@ class Misc {
       chel.appendChild(targetel);
 
       const kel = document.createElement('keytimes');
-      kel.setAttribute('Count', `2`);
-      kel.textContent = `${[``, ``].join(' ')}`;
+      kel.setAttribute('Count', `${ch.keytimes.length}`);
+      kel.textContent = `${ch.keytimes.join(' ')} `;
       chel.appendChild(kel);
 
       const vel = document.createElement('values');
-      vel.setAttribute('Count', `${2*7}`);
-      vel.textContent = `${[``, ``].join(' ')}`;
+      vel.setAttribute('Count', `${ch.values.length}`);
+      vel.textContent = `${ch.values.join(' ')} `;
       chel.appendChild(vel);
 
       const tinel = document.createElement('tangentsIn');
