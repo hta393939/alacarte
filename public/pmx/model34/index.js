@@ -82,10 +82,10 @@ class Misc {
     this.STORAGE = 'miku34';
   }
 
-/**
- * 
- * @param {File} file 
- */
+  /**
+   * 
+   * @param {File} file 
+   */
   async parseFile(file) {
     const ab = await file.arrayBuffer();
     const parser = new PMX.Maker();
@@ -100,10 +100,10 @@ class Misc {
     await navigator.clipboard.writeText(str);
   }
 
-/**
- * 
- * @param {File} file 
- */
+  /**
+   * 
+   * @param {File} file 
+   */
   async makeApplyClip(file) {
     const ab = await file.arrayBuffer();
     const parser = new PMX.Maker();
@@ -118,10 +118,10 @@ class Misc {
     await navigator.clipboard.writeText(str);
   }
 
-/**
- * 
- * @param {File} file 
- */
+  /**
+   * 
+   * @param {File} file 
+   */
   async makeApplyClipSub(file) {
     const ab = await file.arrayBuffer();
     const parser = new PMX.Maker();
@@ -134,13 +134,16 @@ class Misc {
     result.push('');
     let str = result.join('\n');
     await navigator.clipboard.writeText(str);
+
+    const el = document.getElementById('view');
+    el.textContent = `${new Date().toLocaleTimeString()} モーフ`;
   }
 
-/**
- * 位置ベース。クリップボード用。
- * @param {PMX.Parser} parser 
- * @returns {string[]} 行ごとに返す
- */
+  /**
+   * 位置ベース。クリップボード用。
+   * @param {PMX.Parser} parser 
+   * @returns {string[]} 行ごとに返す
+   */
   analyzeFileRoss(parser) {
 /**
  * 物理変形

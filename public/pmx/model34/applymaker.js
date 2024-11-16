@@ -745,21 +745,25 @@ class ApplyMaker {
       //let z = vtx.p[2];
       //const zabs = Math.abs(z);
       if (y >= ythr) {
-        if (y >= ythr2) {
+        if (y >= ythr2) { // 横
           morph = additiveMorphs[0];
           vm.offset = [Math.sign(x) * 0.5, 0.5, 0];
-        } else {
+          //vm.offset = [Math.sign(x) * 0.5, 0, 0]; // 横広
+        } else { // 厚み
           morph = additiveMorphs[1];
           vm.offset = [0, 0, Math.sign(z) * 0.5];
         }
         if (x > 0) {
           ys.push(y);
         }
-      } else {
+      } else { // 下
         morph = additiveMorphs[2];
         y -= ythr;
-        const dir = new V3(0, y, z);
-        vm.offset = dir.normalize().scale(0.5).asArray();
+        //const dir = new V3(0, y, z);
+        //vm.offset = dir.normalize().scale(0.5).asArray();
+
+        const dir = new V3(0, y, 0);
+        vm.offset = dir.normalize().scale(1.25).asArray();
       }
 
       vm._parentName = morph?.nameJa ?? '';
