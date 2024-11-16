@@ -111,25 +111,25 @@ class Misc {
       chel.appendChild(targetel);
 
       const kel = document.createElement('keytimes');
-      kel.setAttribute('Count', `${ch.keytimes.length}`);
+      kel.setAttribute('count', `${ch.keytimes.length}`);
       kel.textContent = `${ch.keytimes.join(' ')} `;
       chel.appendChild(kel);
 
       const vel = document.createElement('values');
-      vel.setAttribute('Count', `${ch.values.length}`);
+      vel.setAttribute('count', `${ch.values.length}`);
       vel.textContent = `${ch.values.join(' ')} `;
       chel.appendChild(vel);
 
       const tinel = document.createElement('tangentsIn');
-      tinel.setAttribute('Count', `0`);
+      tinel.setAttribute('count', `0`);
       chel.appendChild(tinel);
 
       const toutel = document.createElement('tangentsOut');
-      toutel.setAttribute('Count', `0`);
+      toutel.setAttribute('count', `0`);
       chel.appendChild(toutel);
 
       const interel = document.createElement('interpolations');
-      interel.setAttribute('Count', `1`);
+      interel.setAttribute('count', `1`);
       interel.textContent = `${[`1`, ``].join(' ')}`;
       chel.appendChild(interel);
     }
