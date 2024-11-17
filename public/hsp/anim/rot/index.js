@@ -37,10 +37,32 @@ class Misc {
        * @type {Channel[]}
        */
       const chs = [];
-      const num = 4 * 30;
-      for (let i = 0; i < 1; ++i) {
+      const sec = 4;
+      const num = sec * 30;
+
+      const targets = [
+        `head`,
+        'XSBone_000', 'hip', 'chest', // 12
+        `ude_L_`, `arm_L_`, `momo_L_`, `asi_L_`,
+        `ude_R_`, `arm_R_`, `momo_R_`, `asi_R_`,
+      ];
+
+      for (let i = 0; i < targets.length; ++i) {
         const ch = new Channel();
         chs.push(ch);
+
+        const targetName = targets[i];
+        ch.targetId = targetName;
+        if (targetName !== 'head') {
+          for (let j = 0; j <= 1; ++j) {
+            let msec = Math.floor(j * 1000 * sec);
+            let q = [0, 0, 0, 1];
+  
+            ch.keytimes.push(msec);
+            ch.values.push(...q, 0, 0, 0);
+          }
+          continue;
+        }
 
         for (let j = 0; j <= num; ++j) {
 
@@ -57,20 +79,18 @@ class Misc {
             cs = 0;
             sn = 1;
           }
-          sn = Math.ceil(sn * 10000) / 10000;
-          cs = Math.ceil(cs * 10000) / 10000;
 
           q = [0, sn, 0, cs];
+          q = q.map(v => { const r10 = 10 ** 6; return Math.ceil(v * r10) / r10; });
 
           ch.keytimes.push(msec);
           ch.values.push(...q, 0, 0, 0);
         }
 
-        ch.targetId = 'head';
       }
 
       const text = this.makeXML(chs);
-      this.download(new Blob([text]), `headyrot4.xml`);
+      this.download(new Blob([text]), `z.xml`);
     }
   }
 
@@ -139,6 +159,11 @@ class Misc {
     return str;
   }
 
+  /**
+   * 全部小文字になるので大文字に変換する
+   * @param {string} intext 
+   * @returns 
+   */
   replaceTag(intext) {
     let result = intext;
     const pairs = [
@@ -153,14 +178,14 @@ class Misc {
     ];
     for (const pair of pairs) {
       {
-        const search = new RegExp(`<${pair.target.toLocaleLowerCase()}`);
+        const search = new RegExp(`<${pair.target.toLocaleLowerCase()}`, 'g');
         const rep = `<${pair.target}`;
-        result = result.replace(search, rep);
+        result = result.replaceAll(search, rep);
       }
       {
-        const search = new RegExp(`</${pair.target.toLocaleLowerCase()}>`);
+        const search = new RegExp(`</${pair.target.toLocaleLowerCase()}>`, 'g');
         const rep = `</${pair.target}>`;
-        result = result.replace(search, rep);
+        result = result.replaceAll(search, rep);
       }
     }
 
