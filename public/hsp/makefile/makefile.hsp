@@ -1,7 +1,7 @@
     sdim buf,1024*1024
-    repeat 1024*1024/4
+    repeat 1024*1024/2
         val = rnd(32768)
-        lpoke buf,cnt*4
+        wpoke buf,cnt*2
     loop
     bsave a,b,c
 
