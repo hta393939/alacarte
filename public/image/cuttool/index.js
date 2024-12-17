@@ -222,7 +222,7 @@ class Misc {
   }
 
   setListener() {
-    {
+    { // 無効化
       const el = document;
       el?.addEventListener('dragover', ev => {
         ev.preventDefault();
@@ -231,7 +231,7 @@ class Misc {
       });
     }
 
-    {
+    { // ドロップ
       const el = document.getElementById('loadimage');
       el.addEventListener('dragover', ev => {
         ev.preventDefault();
@@ -247,6 +247,7 @@ class Misc {
       });
     }
 
+    // パラメータ群
     for (const k in this.param) {
       const el = document.getElementById(`${k}`);
       const viewel = document.getElementById(`${k}view`);
@@ -254,7 +255,8 @@ class Misc {
         this[k] = Number.parseFloat(el.value);
         viewel.textContent = this[k];
 
-        this.drawFrame();
+        //this.drawFrame();
+        this.renewGuide();
       };
       el?.addEventListener('input', () => {
         _update();
@@ -443,6 +445,32 @@ class Misc {
         resolve(blob);
       }, 'image/png');
     });
+  }
+
+  /**
+   * 
+   */
+  renewGuide() {
+    const src = document.getElementById('maincanvas');
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    const dst = document.getElementById('subcanvas');
+    if (!src || !dst) {
+      return;
+    }
+
+    const param = this.saveSetting();
+
+    const {destsize, x, y, w, h} = param;
+
+    dst.width = destsize;
+    dst.height = destsize;
+    const c = dst.getContext('2d');
+    c.drawImage(src,
+      x, y, w, h,
+      0, 0, destsize, destsize,
+    );
   }
 
   /**
