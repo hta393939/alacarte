@@ -77,10 +77,10 @@ class Misc {
     this.setListener();
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} canvas 
- */
+  /**
+   * 丸くならす
+   * @param {HTMLCanvasElement} canvas 
+   */
   async round(canvas) {
 
     const w = canvas.width;
@@ -155,10 +155,10 @@ class Misc {
     c.putImageData(data, 0, 0);
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} canvas 
- */
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
   async make1(canvas) {
 
     const w = canvas.width;
@@ -216,10 +216,10 @@ class Misc {
     c.putImageData(data, 0, 0);
   }
 
-/**
- * 丸い分布
- * @param {HTMLCanvasElement} canvas 
- */
+  /**
+   * 丸い分布
+   * @param {HTMLCanvasElement} canvas 
+   */
   async make2(canvas) {
 
     const w = canvas.width;
@@ -300,10 +300,10 @@ class Misc {
     c.putImageData(data, 0, 0);
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} canvas 
- */
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
   async make3(canvas) {
     console.log('make3 called');
     const w = canvas.width;
@@ -691,10 +691,10 @@ class Misc {
     return canvas;
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} canvas
- */
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas
+   */
   convColor(canvas) {
     console.log('convColor called');
     const c = canvas.getContext('2d');
@@ -729,12 +729,12 @@ class Misc {
     c.putImageData(dat, 0, 0);
   }
 
-/**
- * 
- * @param {File} file 
- * @param {HTMLCanvasElement} canvas 
- * @returns {Promise<HTMLCanvasElement>}
- */
+  /**
+   * 
+   * @param {File} file 
+   * @param {HTMLCanvasElement} canvas 
+   * @returns {Promise<HTMLCanvasElement>}
+   */
   loadFileToCanvas(file, canvas) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -752,10 +752,10 @@ class Misc {
     });
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} src 
- */
+  /**
+   * 
+   * @param {HTMLCanvasElement} src 
+   */
   scaleImage(src) {
     const scale = this.scale;
 
@@ -809,10 +809,10 @@ class Misc {
     }
   }
 
-/**
- * 
- * @param {File} file 
- */
+  /**
+   * 
+   * @param {File} file 
+   */
   async parseImage(file) {
     const img = new Image();
     img.addEventListener('load', () => {
