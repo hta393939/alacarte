@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>pref</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div>
+      <button class="pointer" id="idmake1">make1</button>
+      <button class="pointer" id="idmake2">make2</button>
+      <button class="pointer" id="idmake3">make3</button>
+    </div>
+
+    <div class="drop">Drop file</div>
+
+    <div>
+      <div>色変換</div>
+
+      <div class="toright">
+        <div>スケール</div>
+        <input class="pointer" type="range" id="scale" value="4" min="1" max="16" />
+        <div id="scaleview"></div>
+      </div>
+      <div class="toright">
+        <div>セル横</div>
+        <input class="pointer" type="range" id="cellx" value="0" min="0" max="8" />
+        <div id="cellxview"></div>
+      </div>
+      <div class="toright">
+        <div>セル縦</div>
+        <input class="pointer" type="range" id="celly" value="0" min="0" max="8" />
+        <div id="cellyview"></div>
+      </div>
+      <div class="toright">
+        <div>1セルサイズ</div>
+        <input class="pointer" type="range" id="cellw" value="16" min="8" max="32" />
+        <div id="cellwview"></div>
+      </div>
+
+      <div>
+        <select id="tail" class="pointer">
+          <option value="e" selected>短</option>
+          <option value="l">左</option>
+          <option value="r">右</option>
+          <option value="w">長い</option>
+        </select>
+        <button class="pointer" id="makewaterbt">makewater</button>
+      </div>
+
+    </div>
+
+    <canvas id="maincanvas"></canvas>
+    <canvas id="subcanvas"></canvas>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
