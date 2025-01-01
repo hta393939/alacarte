@@ -21,12 +21,14 @@ export class RotAnim extends HspAnim {
         'hip', 'chest', // 4
         `head`,
       ];
-
+/**
+ * 親からの前進相対位置
+ */
 const rel = {
-"root": [0.000000, 0.000000, 0.000000,],
-"hip": [ 0.000000, 0, 0.000000,],
-"chest": [0.000000, 0, 0.000000,],
-"head": [0, 0, 0.000000,],
+"root": [0, 0, 0],
+"hip": [0, 0, 0],
+"chest": [0, 120, 0],
+"head": [0, 80, 0],
 };
 
       for (let i = 0; i < targets.length; ++i) {
