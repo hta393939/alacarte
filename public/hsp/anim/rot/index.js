@@ -4,11 +4,11 @@ import { FireAnim } from "./fireanim.js";
 class Misc {
   init() {
     {
-      const el = document.getElementById('make');
+      const el = document.getElementById('makerot');
       el?.addEventListener('click', () => {
         const rotAnim = new RotAnim();
-        const text = rotAnim.makeText();
-        this.download(new Blob([text]), `rot.xml`);
+        const text = rotAnim.makeText({rotName: 'chest', sec: 4});
+        this.download(new Blob([text]), `radar.xml`);
       });
     }
 
