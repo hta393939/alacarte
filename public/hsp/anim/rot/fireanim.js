@@ -1,4 +1,4 @@
-import { HspAnim } from "../hspanim.mjs";
+import { HspAnim, Channel } from "../hspanim.mjs";
 
 export class FireAnim extends HspAnim {
   /**
@@ -39,17 +39,21 @@ const rel = {
         [{t: 1000, p: [0, 0, -20]}, {t: 10 * 1000, p: [0, 0, 0]}],
       ];
       // fire2, fire3 かな
-      for (let i = 0; i < 10; ++i) {
+      for (let i = 0; i < 6; ++i) {
+        let t = Math.floor(i * 1000 / 6);
         {
-          const obj = {t: i * 100, p: [0, 0, -7.5]};
+          const obj = {t, p: [0, 0, -7.5]};
+          const offset = [0, -5, 0, -5, 0, -10];
+          obj.p[2] += offset[i];
           ks[3].unshift(obj);
         }
         {
-          const obj = {t: i * 100, p: [0, 0, -20]};
+          const obj = {t, p: [0, 0, -20]};
+          const offset = [0, -5, 0, -5, 0, -10];
+          obj.p[2] += offset[i];
           ks[4].unshift(obj);
         }
       }
-
 
       for (let i = 0; i < targets.length; ++i) {
         const ch = new Channel();

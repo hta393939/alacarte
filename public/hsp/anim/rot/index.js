@@ -1,5 +1,5 @@
-import { RotAnim } from "./rotanim";
-import { FireAnim } from "./fireanim";
+import { RotAnim } from "./rotanim.js";
+import { FireAnim } from "./fireanim.js";
 
 class Misc {
   init() {
@@ -13,8 +13,9 @@ class Misc {
     }
 
     {
-      const el = document.getElementById('make');
+      const el = document.getElementById('makefire');
       el?.addEventListener('click', () => {
+        console.log('makefire clicked');
         const fireAnim = new FireAnim();
         const text = fireAnim.makeText();
         this.download(new Blob([text]), `fighter.xml`);

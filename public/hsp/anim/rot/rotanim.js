@@ -1,4 +1,4 @@
-import { HspAnim } from "../hspanim.mjs";
+import { HspAnim, Channel } from "../hspanim.mjs";
   
 export class RotAnim extends HspAnim {
   /**
