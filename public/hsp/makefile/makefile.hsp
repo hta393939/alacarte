@@ -1,7 +1,10 @@
-    sdim buf,1024*1024
-    repeat 1024*1024/2
+
+    bytenum = 1024 * 1024
+    sdim buf, bytenum
+    repeat bytenum / 2
         val = rnd(32768)
-        wpoke buf,cnt*2
+        wpoke buf, cnt*2, val
     loop
-    bsave a,b,c
+    name = strf("a%05d.dat", 0)
+    bsave name, buf, bytenum
 
