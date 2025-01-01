@@ -39,7 +39,7 @@ const rel = {
         [{t: 1000, p: [0, 0, -20]}, {t: 10 * 1000, p: [0, 0, 0]}],
       ];
       // fire2, fire3 かな
-      for (let i = 0; i < 6; ++i) {
+      for (let i = 5; i >= 0; --i) {
         let t = Math.floor(i * 1000 / 6);
         {
           const obj = {t, p: [0, 0, -7.5]};
@@ -49,7 +49,7 @@ const rel = {
         }
         {
           const obj = {t, p: [0, 0, -20]};
-          const offset = [0, -5, 0, -5, 0, -10];
+          const offset = [0, -5, 0, -5, 0, -20];
           obj.p[2] += offset[i];
           ks[4].unshift(obj);
         }
