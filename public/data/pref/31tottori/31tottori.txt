@@ -1,0 +1,5 @@
+1,31201,鳥取,Tottori
+2,31202,米子,Yonago
+3,31203,倉吉,Kurayoshi
+4,31204,境港,Sakaiminato
+5,31302,岩美,Iwami
