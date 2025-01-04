@@ -1,5 +1,6 @@
 import { RotAnim } from "./rotanim.js";
 import { FireAnim } from "./fireanim.js";
+import { TimeAnim } from "./timeanim.js";
 
 class Misc {
   init() {
@@ -19,6 +20,16 @@ class Misc {
         const fireAnim = new FireAnim();
         const text = fireAnim.makeText();
         this.download(new Blob([text]), `fighter.xml`);
+      });
+    }
+
+    {
+      const el = document.getElementById('maketime');
+      el?.addEventListener('click', () => {
+        console.log('maketime clicked');
+        const anim = new TimeAnim();
+        const text = anim.makeText();
+        this.download(new Blob([text]), `time.xml`);
       });
     }
 
