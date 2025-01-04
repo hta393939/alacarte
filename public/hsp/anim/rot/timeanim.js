@@ -30,10 +30,10 @@ const rel = {
           {t: 30 * 1000, p: [0, 0, 0]},
           {t: 60 * 1000, p: [0, 0, 0]},
         ],
-        [
-          {t: 0, p: [0, 0, 0]},
-          {t: 30 * 1000, p: [0, 0, 0]},
-          {t: 60 * 1000, p: [0, 0, 0]},
+        [ // 'time'
+          {t: 0,         p: [-1, 1, 0.0]},
+          {t: 30 * 1000, p: [ 0, 0, 0.5]},
+          {t: 60 * 1000, p: [+1, 1, 1.0]},
         ],
       ];
 
@@ -44,7 +44,8 @@ const rel = {
         const targetName = targets[i];
         ch.targetId = targetName;
 
-        for (const kv of ks[i]) {
+        const index = (targetName === 'time') ? 1 : 0;
+        for (const kv of ks[index]) {
           let msec = kv.t;
           let q = [0, 0, 0, 1];
           let p = [...kv.p];
