@@ -1,6 +1,0 @@
-1,16201,富山,Toyama
-2,16202,高岡,Takaoka
-3,16204,魚津,Uodu
-4,16205,氷見,Himi
-5,16206,滑川,Namerikawa
-6,16207,黒部,Kurobe
