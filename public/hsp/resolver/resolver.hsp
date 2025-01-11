@@ -1,0 +1,113 @@
+// @charset "Shift_JIS"
+// resolve #include
+
+#define MEGA (1024 * 1024)
+#define MARK "#include"
+// \n only
+#define LINEEND "\n"
+
+#module
+#defcfunc _dqtrim str intext, local s, local n, local c, local i, local offset
+	sdim s, 4096
+	s = intext
+	offset = 0
+	repeat 2
+		i = cnt
+		n = strlen(s)
+		repeat n
+			if i == 0 {
+				offset = n - 1 - cnt
+			} else {
+				offset = cnt
+			}
+			c = peek(s, offset)
+			if c == 0x22 { // double quote
+				if i == 0 {
+					poke s, offset, 0x00
+				} else {
+					s = strmid(s, offset + 1, 4096)
+				}
+				break
+			}
+		loop
+	loop
+	return s
+#global
+
+    sdim note, 4 * MEGA
+    sdim linebuf, 4096
+    common_dir = dirinfo(1) + "\\common"
+
+	sdim text, 4096
+    text = "C:\\soft\\hsp37b9\\hsp37beta\\sample\\hgimg4\\start.hsp"
+	input text, 560, 32, 4000
+
+	pos 560, 0
+	button gosub "GO", *resolve
+	stop
+
+*resolve
+	_target_file = text
+    same_dir = getpath(_target_file, 32)
+	process_file = getpath(_target_file, 1) + "_.hsp"
+
+	exist _target_file
+	bytenum = strsize
+	sdim fullbuf, bytenum + 16
+	bload _target_file, fullbuf, bytenum
+	bsave process_file, fullbuf, bytenum
+
+	color 255,255,255
+	boxf 0,0, 640, 480
+	color 0,0,0
+	pos 0, 32
+    repeat 10
+    	mes "depth, " + cnt
+    	wait 1
+        gosub *replace
+        if _out == 0 {
+	        break
+	    }
+    loop
+    title "end"
+    return
+
+*replace
+	_out = 0
+    notesel note
+    noteload process_file
+    sdim dst, 4 * MEGA
+    // line num
+    n = noteinfo(0)
+    title "" + n + ", line..."
+    repeat n
+        noteget linebuf, cnt
+        if instr(linebuf,0,MARK) == 0 {
+	        _out += 1
+			// linebuf Ç©ÇÁ hsp3dish.as Ç»Ç«ÇéÊÇËèoÇ∑
+			name = _dqtrim(linebuf)
+
+			name1 = same_dir + "\\" + name
+			mes "" + name1
+			exist name1
+			bytenum = strsize
+			if bytenum <= 0 {     
+		        name1 = common_dir + "\\" + name
+		        mes "" + name1
+		        exist name1
+		        bytenum = strsize
+		    }
+			mes "" + bytenum
+		    
+			sdim fullbuf, bytenum + 16
+			bload name1, fullbuf, bytenum
+			dst += LINEEND + fullbuf + LINEEND
+        } else {
+	        dst += linebuf + LINEEND
+	    }
+	    await 1
+    loop
+	if _out > 0 { // è„èëÇ´ï€ë∂Ç∑ÇÈ
+		bsave process_file, dst, strlen(dst)
+	}
+    return
