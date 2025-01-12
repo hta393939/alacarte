@@ -1,8 +1,13 @@
-// @charset "Shift_JIS"
+// code "Shift_JIS"
 // resolve #include
 
+#include "shell32.as"
+
 #define MEGA (1024 * 1024)
-#define MARK "#include"
+#define MARK1 "#include"
+#define MARK2 "#addition"
+#define EXC1 "hsp3dish.as"
+#define EXC2 "hgimg4.as"
 // \n only
 #define LINEEND "\n"
 
@@ -37,14 +42,47 @@
     sdim note, 4 * MEGA
     sdim linebuf, 4096
     common_dir = dirinfo(1) + "\\common"
+// UI
+	screen 0, 640, 360, 0
+	title "resolver"
+#define WM_DROPFILES    0x0233
+	oncmd gosub *OnDropFiles, WM_DROPFILES
+	DragAcceptFiles hwnd, 1
 
 	sdim text, 4096
-    text = "C:\\soft\\hsp37b9\\hsp37beta\\sample\\hgimg4\\start.hsp"
+    text = ""
 	input text, 560, 32, 4000
+	objid = stat
 
 	pos 560, 0
-	button gosub "GO", *resolve
+	objsize 80, 32
+	button gosub "ref", *ref
+	objsize 80, 48
+	button gosub "convert", *resolve
+	pos 0, 32
 	stop
+
+
+*ref
+	dialog "hsp",16,"entry source"
+	if stat == 1 {
+		objprm objid, refstr
+	}
+	return
+
+*OnDropFiles
+	hdrop = wParam
+	DragQueryFile hdrop, -1, 0, 0
+	ndrop = stat
+
+	sdim filename, 260
+	repeat ndrop
+		DragQueryFile hdrop, cnt, varptr(filename), 260
+	loop
+	DragFinish hdrop
+
+	objprm objid, filename
+	return
 
 *resolve
 	_target_file = text
@@ -53,6 +91,10 @@
 
 	exist _target_file
 	bytenum = strsize
+	if bytenum < 0 {
+		title "Not found, " + _target_file
+		return
+	}
 	sdim fullbuf, bytenum + 16
 	bload _target_file, fullbuf, bytenum
 	bsave process_file, fullbuf, bytenum
@@ -82,21 +124,39 @@
     title "" + n + ", line..."
     repeat n
         noteget linebuf, cnt
-        if instr(linebuf,0,MARK) == 0 {
-	        _out += 1
-			// linebuf ‚©‚ç hsp3dish.as ‚È‚Ç‚ðŽæ‚èo‚·
+        flag = 0
+        if instr(linebuf,0,MARK1) == 0 {
+	        flag = 1
+	    } else {
+		    if instr(linebuf,0,MARK2) == 0 {
+			    flag = 1
+			}
+		}
+        if flag {
+			// trim hsp3dish.as from linebuf
 			name = _dqtrim(linebuf)
 
+			if name == EXC1 {
+				flag = 0
+			}
+			if name == EXC2 {
+				flag = 0
+			}
+		}
+		if flag {
+			_out += 1
+
 			name1 = same_dir + "\\" + name
-			mes "" + name1
 			exist name1
 			bytenum = strsize
 			if bytenum <= 0 {     
 		        name1 = common_dir + "\\" + name
-		        mes "" + name1
 		        exist name1
 		        bytenum = strsize
 		    }
+		    if bytenum < 0 {
+			    continue
+			}
 			mes "" + bytenum
 		    
 			sdim fullbuf, bytenum + 16
@@ -107,7 +167,7 @@
 	    }
 	    await 1
     loop
-	if _out > 0 { // ã‘‚«•Û‘¶‚·‚é
+	if _out > 0 { // overwrite
 		bsave process_file, dst, strlen(dst)
 	}
     return
