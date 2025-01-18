@@ -4,16 +4,24 @@
 
 class Misc {
   constructor() {
+    /**
+     * UIで値を変更する
+     */
+    this.scale = 4;
+    this.cellx = 0;
+    this.celly = 0;
+    this.cellw = 64;
+    this.cellh = 64;
   }
 
   async initialize() {
     this.setListener();
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} src 
- */
+  /**
+   * 
+   * @param {HTMLCanvasElement} src 
+   */
   scaleImage(src) {
     const scale = this.scale;
 
@@ -22,16 +30,16 @@ class Misc {
     const cellw = this.cellw;
     const cellh = cellw;
 
-/**
- * 入力画像の幅
- */
+    /**
+     * 入力画像の幅
+     */
 //        const w = src.width;
 //        const h = src.height;
     const context = src.getContext('2d');
-/**
- * 書き出し先
- * @type {HTMLCanvasElement}
- */
+    /**
+     * 書き出し先
+     * @type {HTMLCanvasElement}
+     */
     const canvas = document.getElementById('subcanvas');
     const c = canvas.getContext('2d');
     canvas.width = cellw * scale;
@@ -42,7 +50,7 @@ class Misc {
     const dat = context.getImageData(cx, cy, cellw, cellh);
 
     let backs = [-1, -1, -1];
-    if (true) {
+    if (true) { // 左上を背景色として採用する
       let ft = (0 + 0 * 0) * 4;
       backs[0] = dat.data[ft];
       backs[1] = dat.data[ft+1];

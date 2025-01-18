@@ -1,4 +1,3 @@
-@charset "UTF-8";
 
 .drop {
   background-color: #f0f0ff;
@@ -26,5 +25,3 @@
 #subcanvas {
   border: solid 1px red;
 }
-
-
