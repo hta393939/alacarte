@@ -518,7 +518,7 @@ class Misc {
   }
 
   /**
-   * maincanvas の内容から処理して subcanvas に書き出す
+   * maincanvas の内容から加工処理して subcanvas に書き出す
    */
   act() {
     console.log('act called');

@@ -1,7 +1,6 @@
 /**
- * @file index.js
+ * 不透明の絵をscale倍でドット絵拡大する
  */
-
 class Misc {
   constructor() {
     /**
