@@ -76,336 +76,6 @@ class Misc {
 
   /**
    * 
-   * @param {HTMLCanvasElement} canvas 
-   */
-  async round(canvas) {
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const c = canvas.getContext('2d');
-    const data = c.getImageData(0, 0, w, h);
-
-    const center = [440, 71]; // 1607, 71
-    const router = 37;
-    const rinner = 4;
-    const ps = [
-      [0, 0, 0, 255, 70], // 角度
-      [0, 0, 0, 255, 130], // 角度
-    ];
-
-    for (let lr = 0; lr < 2; ++lr) {
-      /**
-       * 度角度範囲
-       */
-      const range = [ps[0][4], ps[1][4]];
-      if (lr === 1) {
-        center[0] = 2047 - center[0];
-        const turn = [180 - range[0], 180 - range[1]];
-        range[0] = Math.min(...turn);
-        range[1] = Math.max(...turn);
-      }
-
-      for (let y = 0; y < h; ++y) {
-        for (let x = 0; x < w; ++x) {
-          const dx = x - center[0];
-          const dy = y - center[1];
-          const d = Math.sqrt(dx * dx + dy * dy);
-          const ang = Math.atan2(-dy, dx);
-          const deg = ang * 180 / Math.PI;
-          if (deg < range[0] || deg > range[1]) {
-            continue;
-          }
-          if (d > router || rinner > d) {
-            continue;
-          }
-
-          for (let i = 0; i < 2; ++i) {
-            const pang = range[i] * Math.PI / 180;
-            let px = Math.round(center[0] + Math.cos(pang) * d);
-            let py = Math.round(center[1] - Math.sin(pang) * d);
-            const offset = (px + h * py) * 4;
-            ps[i][0] = data.data[offset];
-            ps[i][1] = data.data[offset+1];
-            ps[i][2] = data.data[offset+2];
-          }
-
-          const offset = (x + h * y) * 4;
-
-          let t = (deg - range[0]) / (range[1] - range[0]);
-
-          let r = _lerp(ps[0][0], ps[1][0], t);
-          let g = _lerp(ps[0][1], ps[1][1], t);
-          let b = _lerp(ps[0][2], ps[1][2], t);
-          let a = 255;
-
-          r = Math.max(0, Math.min(r, 255));
-          g = Math.max(0, Math.min(g, 255));
-          b = Math.max(0, Math.min(b, 255));
-
-          data.data[offset+0] = r;
-          data.data[offset+1] = g;
-          data.data[offset+2] = b;
-          data.data[offset+3] = a;
-        }
-      }
-    }
-    c.putImageData(data, 0, 0);
-  }
-
-  /**
-   * 目テクスチャ作りたい 
-   * @param {HTMLCanvasElement} canvas 
-   */
-  async make1(canvas) {
-    const w = 1024;
-    const h = 512;
-    const canvas = new OffscreenCanvas(w, h);
-    const c = canvas.getContext('2d');
-    const data = c.getImageData(0, 0, w, h);
-
-    const router = 37;
-
-    {
-      const rot = Math.PI * 20 / 180;
-      for (let y = 0; y < h; ++y) {
-        for (let x = 0; x < w; ++x) {
-          let dx = (x - w * 0.5) / (w * 0.5);
-          let dy = (y - h * 0.5) / (h * 0.5);
-          const d = Math.sqrt(dx * dx + dy * dy);
-          const ang = Math.atan2(-dy, dx);
-          const deg = ang * 180 / Math.PI;
-
-          dx *= 1;
-          dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
-          const cs = Math.cos(rot);
-          const sn = Math.sin(rot);
-          let vx = dx * cs - dy * sn;
-          let vy = dx * sn + dy * cs;
-
-          const d2 = Math.sqrt(vx * vx + vy * vy);
-          let lv = 1 - d2 * 1;
-          lv = Math.max(0, Math.min(1, lv));
-
-          const offset = (x + h * y) * 4;
-
-          lv *= 255;
-
-          let r = 255;
-          let g = 204;
-          let b = 204;
-          let a = lv;
-          r = lv;
-          g = lv;
-          b = lv;
-          a = 255;
-
-          r = Math.max(0, Math.min(r, 255));
-          g = Math.max(0, Math.min(g, 255));
-          b = Math.max(0, Math.min(b, 255));
-
-          data.data[offset+0] = r;
-          data.data[offset+1] = g;
-          data.data[offset+2] = b;
-          data.data[offset+3] = a;
-        }
-      }
-    }
-    c.putImageData(data, 0, 0);
-    return canvas;
-  }
-
-  /**
-   * 丸い分布
-   * @param {HTMLCanvasElement} canvas 
-   */
-  async make2(canvas) {
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const c = canvas.getContext('2d');
-    const data = c.getImageData(0, 0, w, h);
-
-    for (let i = 0; i < 1000; ++i) {
-      const u = Math.random();
-      const v = Math.random();
-      let z = - u * 2 + 1;
-      let rr = Math.sqrt(1 - z * z);
-      let x = rr * Math.cos(2 * Math.PI * v);
-      let y = rr * Math.sin(2 * Math.PI * v);
-
-      x *= w;
-      y *= h;
-
-      let lv = 128;
-      x = Math.floor(x);
-      y = Math.floor(y);
-      if (x < 0 || y < 0) {
-        continue;
-      }
-
-      const ft = (w * y + x) * 4;
-      data.data[ft  ] += lv;
-      data.data[ft+1] += lv;
-      data.data[ft+2] += lv;
-      data.data[ft+3] = 255;
-    }
-
-    if (false) {
-      const rot = Math.PI * 20 / 180;
-      for (let y = 0; y < h; ++y) {
-        for (let x = 0; x < w; ++x) {
-          let dx = (x - w * 0.5) / (w * 0.5);
-          let dy = (y - h * 0.5) / (h * 0.5);
-          const d = Math.sqrt(dx * dx + dy * dy);
-          const ang = Math.atan2(-dy, dx);
-          const deg = ang * 180 / Math.PI;
-
-          dx *= 1;
-          dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
-          const cs = Math.cos(rot);
-          const sn = Math.sin(rot);
-          let vx = dx * cs - dy * sn;
-          let vy = dx * sn + dy * cs;
-
-          const d2 = Math.sqrt(vx * vx + vy * vy);
-          let lv = 1 - d2 * 1;
-          lv = Math.max(0, Math.min(1, lv));
-
-          const offset = (x + h * y) * 4;
-
-          lv *= 255;
-
-          let r = 255;
-          let g = 204;
-          let b = 204;
-          let a = lv;
-          r = lv;
-          g = lv;
-          b = lv;
-          a = 255;
-
-          r = Math.max(0, Math.min(r, 255));
-          g = Math.max(0, Math.min(g, 255));
-          b = Math.max(0, Math.min(b, 255));
-
-          data.data[offset+0] = r;
-          data.data[offset+1] = g;
-          data.data[offset+2] = b;
-          data.data[offset+3] = a;
-        }
-      }
-    }
-    c.putImageData(data, 0, 0);
-  }
-
-  /**
-   * 
-   * @param {HTMLCanvasElement} canvas 
-   */
-  async make3(canvas) {
-    console.log('make3 called');
-    const w = canvas.width;
-    const h = canvas.height;
-    const c = canvas.getContext('2d');
-    //c.fillStyle = '#c0c0c0'; // 192
-    //c.fillRect(0, 0, w, h);
-
-    const data = c.getImageData(0, 0, w, h);
-
-    let c0 = [0, 153, 0];
-    let c1 = [51, 255, 51];
-    const objs = [];
-    for (let i = 0; i < 32; ++i) {
-      const ang = Math.PI * 2 * i / 32;
-      const odd = (i & 1) !== 0;
-      {
-        const k = 0.5 + (odd ? +0.05 : -0.05);
-        const obj = {
-          x: Math.cos(ang) * k * w * 0.5 + w * 0.5,
-          y: Math.sin(ang) * k * h * 0.5 + h * 0.5,
-          z: 0,
-          radius: 2 / 64 * w,
-        };
-        objs.push(obj);
-      }
-
-      if (!odd) {
-        const k = 0.5 + 0.15;
-        const obj = {
-          x: Math.cos(ang + 0.06) * k * w * 0.5 + w * 0.5,
-          y: Math.sin(ang + 0.06) * k * h * 0.5 + h * 0.5,
-          z: 0,
-          radius: 2 / 64 * w,
-        };
-        objs.push(obj);
-      }
-    }
-
-    if (true) {
-      for (let y = 0; y < h; ++y) {
-        for (let x = 0; x < w; ++x) {
-          const sph = [
-            x, y, 0,
-          ];
-          let r = 51;
-          let g = 176;
-          let b = 51; // 126.23
-          let a = 255;
-          for (const obj of objs) {
-            const dist = Math.sqrt(
-              (obj.x - sph[0]) ** 2
-              + (obj.y - sph[1]) ** 2
-              + (obj.z - sph[2]) ** 2
-            );
-            const diff = 1 - dist / obj.radius;
-            if (diff > 1 || diff <= 0) {
-              continue;
-            }
-
-            const col = lerp(
-              c0,
-              c1,
-              Math.min(1, Math.max(0, diff)),
-              true);
-            r = col[0];
-            g = col[1];
-            b = col[2];
-          }
-          const offset = (x + w * y) * 4;
-
-          let lv = (r * 87 + g * 150 + b * 29) / 256;
-          lv += 64 + 2;
-
-          {
-            const d = Math.sqrt((x - w * 0.5) ** 2
-              + (y - h * 0.5) ** 2) / (w * 0.5);
-            const thr = 3 / 16; // 2 / 8
-            if (d <= thr) {
-              lv = _lerp(64, 192, d / thr);
-            }
-          }
-
-          r = lv;
-          g = lv;
-          b = lv;
-
-          r = Math.max(0, Math.min(r, 255));
-          g = Math.max(0, Math.min(g, 255));
-          b = Math.max(0, Math.min(b, 255));
-          a = Math.max(0, Math.min(a, 255));
-          data.data[offset+0] = r;
-          data.data[offset+1] = g;
-          data.data[offset+2] = b;
-          data.data[offset+3] = a;
-        }
-      }
-    }
-    c.putImageData(data, 0, 0);
-    console.log('make3 leave');
-  }
-
-  /**
-   * 
    * @param {HTMLCanvasElement} canvas
    */
   convColor(canvas) {
@@ -556,7 +226,9 @@ class Misc {
         ev.dataTransfer.dropEffect = 'copy';
         const canvas = document.getElementById('subcanvas');
         await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
-        this.round(canvas);
+
+        this.miniScale(canvas);
+        this.downColor(canvas);
       });
     }
 
@@ -590,56 +262,110 @@ class Misc {
       });
     }
 
-    {
-      const el = document.getElementById('idmake2');
-      el?.addEventListener('click', async () => {
-        const canvas = document.getElementById('maincanvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        await this.make2(canvas);
-      });
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  miniScale(canvas) {
+    let w = canvas.width;
+    let h = canvas.height;
+    const c = canvas.getContext('2d');
+    while (w > 256 || h > 256) {
+      w *= 0.5;
+      h *= 0.5;
     }
+    w = Math.floor(w);
+    h = Math.floor(h);
 
-    {
-      const el = document.getElementById('idmake3');
-      el?.addEventListener('click', async () => {
-        const canvas = document.getElementById('maincanvas');
-        canvas.width = 1024;
-        canvas.height = 1024;
-        await this.make3(canvas);
-      });
+    const mid = new OffscreenCanvas(w, h);
+    const midc = mid.getContext('2d');
+    midc.drawImage(canvas, 0, 0, canvas.width, canvas.height,
+      0, 0, w, h,
+    );
+    canvas.width = w;
+    canvas.height = h;
+    c.drawImage(mid, 0, 0);
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  downColor(canvas) {
+    const w = canvas.width;
+    const h = canvas.height;
+    const c = canvas.getContext('2d');
+    const img = c.getImageData(0, 0, w, h);
+
+    const cols = [
+      {cs:[0,0,0]}, {cs:[0,0,255]}, {cs:[255,0,0]}, {cs:[255,0,255]},
+      {cs:[0,255,0]}, {cs:[0,255,255]}, {cs:[255,255,0]}, {cs:[255,255,255]},
+      {cs:[192,192,192]}, {cs:[0,0,128]}, {cs:[128,0,0]}, {cs:[128,0,128]},
+      {cs:[0,128,0]}, {cs:[0,128,128]}, {cs:[128,128,0]}, {cs:[128,128,128]},
+    ];
+    /*
+    for (let i = 0; i < 16; ++i) {
+      let r = Math.floor(i / 2) & 1;
+      let g = Math.floor(i / 4) & 1;
+      let b = i & 1;
+      if (i >= 8) {
+        r *= 128;
+        g *= 128;
+        b *= 128;
+      } else {
+        r *= 255;
+        g *= 255;
+        b *= 255;
+      }
+      if (i === 8) {
+        r = 0;
+        g = 0;
+        b = 0;
+      }
+      const obj = {
+        cs: [r, g, b],
+      };
+      cols.push(obj);
+    } */
+
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        for (const v of cols) {
+          v.err = 99999;
+        }
+
+        let offset = (x + w * y) * 4;
+        let r = img.data[offset];
+        let g = img.data[offset+1];
+        let b = img.data[offset+2];
+        let a = img.data[offset+3];
+
+        let miniErr = 99999;
+        let minCol = [0, 0, 0];
+        for (const v of cols) {
+          let sum = Math.abs(r - v.cs[0])
+            + Math.abs(g - v.cs[1])
+            + Math.abs(b - v.cs[2]);
+          v.err = sum;
+          if (sum <= miniErr) {
+            miniErr = sum;
+            minCol = [...v.cs];
+          }
+        }
+
+        r = minCol[0];
+        g = minCol[1];
+        b = minCol[2];
+
+        img.data[offset] = r;
+        img.data[offset+1] = g;
+        img.data[offset+2] = b;
+        img.data[offset+3] = a;
+      }
     }
-
-    {
-      const el = document.getElementById('makewaterbt');
-      el?.addEventListener('click', async () => {
-        //const param = this.getCommon();
-
-
-        const canvas = document.getElementById('backcanvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        const param = {
-          size: 512,
-          taillen: 0.75,
-          //lastlen: 0.98,
-          lastlen: 1,
-          //taillen: 1,
-          //heightrate: 0.5,
-          heightrate: 0.75,
-          ishigh: false,
-          //ishigh: true,
-          tail: document.getElementById('tail')?.value || 'e',
-        };
-        const src = await this.makeWater(param);
-        const c = canvas.getContext('2d');
-        c.drawImage(src,
-          0, 0, src.width, src.height,
-          0, 0, canvas.width, canvas.height,
-        );
-      });
-    }
-
+    c.putImageData(img, 0, 0);
   }
 
 }
