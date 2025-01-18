@@ -9,6 +9,10 @@ class Misc {
     const opt = {
       wasi_snapshot_preview1: {
         proc_exit: () => {},
+        fd_close: () => {},
+        fd_write: () => {},
+        fd_read: () => {},
+        fd_seek: () => {},
       }
     };
     const source = await WebAssembly.instantiate(ab, opt);
@@ -26,7 +30,7 @@ class Misc {
       for (let i = 0; i < 16; ++i) {
         view[i] = i;
       }
-      const result = Module.sum(view, 16);
+      const result = Module.sum(pointer, 16);
       console.log('result', result, view);
     }
   }

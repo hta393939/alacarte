@@ -6,7 +6,7 @@ extern "C" int sum(int pointer, int num) {
   auto p = (float*)pointer;
 
   int loopNum = num >> 2;
-  v128_t coeff = wasm_f32x4_const(2.0f, 2.0f, 2.0f, 1.0f);
+  v128_t coeff = wasm_f32x4_const(2.0f, 0.1f, 1.0f, 1.0f);
   for (int i = 0; i < loopNum; ++i) {
     v128_t v0 = wasm_v128_load(p);
     v128_t v1 = wasm_f32x4_mul(v0, coeff);
