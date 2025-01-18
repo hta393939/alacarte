@@ -329,6 +329,7 @@ class Misc {
       };
       cols.push(obj);
     } */
+    // bayer 行列
 
     const table = [
       [ 0,  8,  2, 10],
@@ -336,6 +337,20 @@ class Misc {
       [ 3, 11,  1,  9],
       [15,  7, 13,  5],
     ];
+    const table8 = [
+      [ 0,32, 8,40, 2,34,10,42],
+      [48,16,56,24,50,18,58,26],
+      [12,44, 4,36,14,46, 6,38],
+      [60,28,52,20,62,30,54,22],
+      [ 3,35,11,43, 1,33, 9,41],
+      [51,19,59,27,49,17,57,25],
+      [15,47, 7,39,13,45, 5,37],
+      [63,31,55,23,61,29,53,21],
+    ];
+    let use8 = true;
+    let modp = use8 ? 8 : 4;
+    let num = modp * modp;
+    const qsize = use8 ? 1 : 4;
 
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
@@ -366,20 +381,20 @@ class Misc {
         //g = minCol[1];
         //b = minCol[2];
 
-        let mx = x & 3;
-        let my = y & 3;
-        const add = table[my][mx];
+        let mx = x & (modp - 1);
+        let my = y & (modp - 1);
+        const add = (use8 ? table8 : table)[my][mx];
         // 2: 8*8*8 カラー
         //const qsize = 2;
         // 4: 4*4*4 カラー 64色カラー
         // 256 / 4 = 64, 64 / 16 = 4
-        const qsize = 4;
+
         r /= qsize;
         g /= qsize;
         b /= qsize;
-        r = (Math.floor(r / 16) + ((r % 16) >= add ? 1 : 0)) * 16 * qsize;
-        g = (Math.floor(g / 16) + ((g % 16) >= add ? 1 : 0)) * 16 * qsize;
-        b = (Math.floor(b / 16) + ((b % 16) >= add ? 1 : 0)) * 16 * qsize;
+        r = (Math.floor(r / num) + ((r % num) >= add ? 1 : 0)) * num * qsize;
+        g = (Math.floor(g / num) + ((g % num) >= add ? 1 : 0)) * num * qsize;
+        b = (Math.floor(b / num) + ((b % num) >= add ? 1 : 0)) * num * qsize;
 
         img.data[offset] = r;
         img.data[offset+1] = g;
