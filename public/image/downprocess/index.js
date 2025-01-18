@@ -330,6 +330,13 @@ class Misc {
       cols.push(obj);
     } */
 
+    const table = [
+      [ 0,  8,  2, 10],
+      [12,  4, 14,  6],
+      [ 3, 11,  1,  9],
+      [15,  7, 13,  5],
+    ];
+
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
         for (const v of cols) {
@@ -355,9 +362,24 @@ class Misc {
           }
         }
 
-        r = minCol[0];
-        g = minCol[1];
-        b = minCol[2];
+        //r = minCol[0];
+        //g = minCol[1];
+        //b = minCol[2];
+
+        let mx = x & 3;
+        let my = y & 3;
+        const add = table[my][mx];
+        // 2: 8*8*8 カラー
+        //const qsize = 2;
+        // 4: 4*4*4 カラー 64色カラー
+        // 256 / 4 = 64, 64 / 16 = 4
+        const qsize = 4;
+        r /= qsize;
+        g /= qsize;
+        b /= qsize;
+        r = (Math.floor(r / 16) + ((r % 16) >= add ? 1 : 0)) * 16 * qsize;
+        g = (Math.floor(g / 16) + ((g % 16) >= add ? 1 : 0)) * 16 * qsize;
+        b = (Math.floor(b / 16) + ((b % 16) >= add ? 1 : 0)) * 16 * qsize;
 
         img.data[offset] = r;
         img.data[offset+1] = g;
