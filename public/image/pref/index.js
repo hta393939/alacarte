@@ -62,6 +62,8 @@ const _dot = (as, bs) => {
 
 class Misc {
   constructor() {
+    this.map = new Int32Array(256 * 256);
+    this.indices = new Int32Array(256 * 256);
   }
 
   async initialize() {
@@ -301,7 +303,7 @@ class Misc {
   }
 
   /**
-   * 
+   * ドットによる境界線太線化1
    */
   async toThick() {
     console.log('toThick called');
@@ -342,6 +344,165 @@ class Misc {
       await window.scheduler.yield();
     }
 
+  }
+
+  /**
+   * ドットによる境界線太線化1
+   */
+  async toThick2() {
+    console.log('toThick2 called');
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    const src = document.getElementById('maincanvas');
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    const dst = document.getElementById('subcanvas');
+
+    const srcc = src.getContext('2d');
+    const dstc = dst.getContext('2d');
+    const w = src.width;
+    const h = src.height;
+    dst.width = w;
+    dst.height = h;
+    //dstc.drawImage(src, 0, 0, w, h, 0, 0, w, h);
+    const dat = srcc.getImageData(0, 0, w, h);
+
+    dstc.fillStyle = 'black';
+    const size = 10; // 8 はわずかに切れる
+    for (let i = 0; i < h; ++i) {
+      for (let j = 0; j < w; ++j) {
+        let x = j;
+        let y = i;
+        let ft = (j + i * w) * 4;
+        let r = dat.data[ft];
+        let g = dat.data[ft+1];
+        let b = dat.data[ft+2];
+        //let a = dat.data[ft+3];
+        let luma = (r * 87 + g * 150 + b * 29) >> 8;
+        if (luma < 128 + 8) {
+          dstc.fillRect(x, y, size, size);
+        }
+      }
+      await window.scheduler.yield();
+    }
+
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  async canvasToMap(canvas) {
+    const w = canvas.width;
+    const h = canvas.height;
+    const map = new Int32Array(w * h);
+    const c = canvas.getContext('2d');
+    const img = c.getImageData(0, 0, w, h);
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let index = x + w * y;
+        let offset = index * 4;
+        let r = img.data[offset];
+        let g = img.data[offset+1];
+        let b = img.data[offset+2];
+        let a = img.data[offset+3];
+        let flag = (r >= 128);
+        map[index] = flag ? 1 : 0;
+      }
+    }
+    return {
+      width: w,
+      height: h,
+      map,
+    };
+  }
+
+  /**
+   * this.map から this.indices を作成してinfos を返す
+   * @param {number} w 
+   * @param {number} h 
+   * @returns {{index:number,offsets:number[]}[]} 結果的に領域個数
+   */
+  async checkIsland(w, h) {
+    const num = w * h;
+    for (let i = 0; i < num; ++i) {
+      this.indices[i] = -1;
+    }
+
+    let infos = [];
+    let nextIndex = 0;
+
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let offset = x + w * y;
+        let left = (x >= 1) ? this.indices[offset - 1] : -1;
+        let top = (y >= 1) ? this.indices[offset - w] : -1;
+
+        let flag = this.map[offset];
+        if (flag === 0) {
+          this.indices[offset] = -1;
+          continue;
+        }
+
+        if (false) {
+          continue;
+        }
+
+        //// 有効マップ
+        if (top >= 0) {
+          if (left >= 0) {
+            this.indices[offset] = top;
+            infos[top].offsets.push(offset);
+            // 左をくっつける
+            for (const offset of infos[left].offsets) {
+              this.indices[offset] = top;
+            }
+            infos[top].offsets.push(...infos[left].offsets);
+          } else {
+            this.indices[offset] = top;
+            infos[top].offsets.push(offset);
+          }
+        } else if (left >= 0) {
+          this.indices[offset] = left;
+          infos[left].offsets.push(offset);
+        } else {
+          // 上も左も空いていた
+          this.indices[offset] = nextIndex;
+          const obj = {
+            index: nextIndex,
+            offsets: [offset],
+          };
+          infos.push(obj);
+          nextIndex += 1;
+        }
+      }
+    }
+    return infos;
+  }
+
+  /**
+   * 
+   * @param {number} w 
+   * @param {number} h 
+   * @param {number} scale 
+   */
+  async scaleMini(w, h, scale) {
+    const dw = Math.ceil(w / scale);
+    const dh = Math.ceil(h / scale);
+    const dmap = new Int32Array(dw * dh);
+    for (let dy = 0; dy < dh; ++dy) {
+      for (let dx = 0; dx < dw; ++dx) {
+        let sum = 0;
+        for (let py = 0; py < scale; ++py) {
+          for (let px = 0; px < scale; ++px) {
+            sum += 0;
+          }
+        }
+        dmap[dx + dw * dy] = sum;
+      }
+    }
   }
 
   /**
@@ -545,3 +706,14 @@ const misc = new Misc();
 globalThis.misc = misc;
 misc.initialize();
 
+/**
+ * - 0or1の2次元配列を0or1の小さい配列に縮小したい
+ * - 元々つながっている横または斜めはつながった結果になってほしい
+ * - 縮小に伴った良さげな痩せ化はしたい
+ * - つながっていない島は島で残っていてほしい
+ * - つながってほしくないが難しそう
+ * 
+ * 島はあらかじめ除外する。1領域とする。
+ * 0個を0とする。判定trueを1とする。
+ * 離れた島をつなげる。not 0 な判定falseでなんとかつなげる。
+ */
