@@ -174,7 +174,7 @@ class Misc {
   }
 
   /**
-   * 
+   * canvas から 0 or 1 マップを生成する
    * @param {HTMLCanvasElement} canvas 
    */
   async canvasToMap(canvas) {
@@ -183,6 +183,7 @@ class Misc {
     const map = new Int32Array(w * h);
     const c = canvas.getContext('2d');
     const img = c.getImageData(0, 0, w, h);
+    let sum = 0;
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
         let index = x + w * y;
@@ -191,14 +192,19 @@ class Misc {
         let g = img.data[offset+1];
         let b = img.data[offset+2];
         let a = img.data[offset+3];
-        let flag = (r >= 128);
+        //let flag = (r < 128 || g < 128 || b < 128);
+        let flag = (g < 128);
         map[index] = flag ? 1 : 0;
+
+        sum += map[index];
       }
     }
     return {
       width: w,
       height: h,
       map,
+      sum,
+      percent: sum / (w * h),
     };
   }
 
@@ -266,7 +272,7 @@ class Misc {
   }
 
   /**
-   * 
+   * map を縮小したい
    * @param {number} w 元幅
    * @param {number} h 元高さ
    * @param {number} scale 縮小数
@@ -274,7 +280,10 @@ class Misc {
   async scaleMini(w, h, scale) {
     const dw = Math.ceil(w / scale);
     const dh = Math.ceil(h / scale);
+    const smap = this.map;
     const dmap = new Int32Array(dw * dh);
+
+    let totalsum = 0;
     for (let dy = 0; dy < dh; ++dy) {
       for (let dx = 0; dx < dw; ++dx) {
         let sum = 0;
@@ -283,12 +292,61 @@ class Misc {
             let sx = dx * scale + px;
             let sy = dy * scale + py;
             let soffset = w * sy + sx;
-            sum += 0;
+            sum += (smap[soffset] !== 0) ? 1 : 0;
           }
         }
-        dmap[dx + dw * dy] = sum;
+        dmap[dx + dw * dy] = (sum > scale * scale / 2) ? 1 : 0;
+
+        totalsum += dmap[dx + dw * dy];
       }
     }
+    return {width: dw, height: dh, map: dmap, totalsum,
+      rate: totalsum / (dw * dh),
+    };
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   * @param {} map 
+   * @param {number} w 
+   * @param {number} h 
+   */
+  async drawMap(canvas, map, w, h) {
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    const side = 1;
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        const val = map[x + w * y];
+        let r = 0;
+        let g = (val !== 0) ? 255 : 0;
+        let b = 128;
+        let a = 1;
+        c.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+        c.fillRect(x * side, y * side, side, side);
+      }
+    }
+  }
+
+  /**
+   * エントリ関数
+   */
+  async scaling() {
+    const canvas = document.getElementById('maincanvas');
+    const result1 = await this.canvasToMap(canvas);
+    console.log('result1', result1);
+    this.map = result1.map;
+    const result2 = await this.scaleMini(
+      result1.width, result1.height,
+      16);
+    console.log('scaling', result2);
+    await this.drawMap(
+      document.getElementById('subcanvas'),
+      this.map,
+      result2.width,
+      result2.height);
   }
 
   /**
@@ -432,6 +490,13 @@ class Misc {
         canvas.height = 256;
 
         await this.make1(canvas, this.scale);
+      });
+    }
+
+    {
+      const el = document.getElementById('scalingbt');
+      el?.addEventListener('click', async () => {
+        await this.scaling();
       });
     }
 
