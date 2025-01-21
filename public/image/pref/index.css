@@ -28,9 +28,16 @@
 }
 
 #subcanvas {
+  max-width: 40vw;
   border: solid 1px red;
 }
 
 #canvas2 {
   max-width: 40vw;
+  border: solid 1px magenta;
+}
+
+#canvas3 {
+  max-width: 40vw;
+  border: solid 1px lime;
 }

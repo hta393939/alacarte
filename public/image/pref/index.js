@@ -193,7 +193,7 @@ class Misc {
         let b = img.data[offset+2];
         let a = img.data[offset+3];
         //let flag = (r < 128 || g < 128 || b < 128);
-        let flag = (g < 128);
+        let flag = (r === 255 && g === 0 && b === 0);
         map[index] = flag ? 1 : 0;
 
         sum += map[index];
@@ -273,16 +273,18 @@ class Misc {
 
   /**
    * map を縮小したい
+   * @param {Int32Array} map ラスタマップ
    * @param {number} w 元幅
    * @param {number} h 元高さ
    * @param {number} scale 縮小数
    */
-  async scaleMini(w, h, scale) {
+  async scaleMini(map, w, h, scale) {
     const dw = Math.ceil(w / scale);
     const dh = Math.ceil(h / scale);
-    const smap = this.map;
+    const smap = map;
     const dmap = new Int32Array(dw * dh);
 
+    let thr = scale * scale / 2;
     let totalsum = 0;
     for (let dy = 0; dy < dh; ++dy) {
       for (let dx = 0; dx < dw; ++dx) {
@@ -295,12 +297,13 @@ class Misc {
             sum += (smap[soffset] !== 0) ? 1 : 0;
           }
         }
-        dmap[dx + dw * dy] = (sum > scale * scale / 2) ? 1 : 0;
+        dmap[dx + dw * dy] = (sum > thr) ? 1 : 0;
 
         totalsum += dmap[dx + dw * dy];
       }
     }
-    return {width: dw, height: dh, map: dmap, totalsum,
+    return {width: dw, height: dh,
+      map: dmap, totalsum,
       rate: totalsum / (dw * dh),
     };
   }
@@ -347,12 +350,13 @@ class Misc {
     );
 
     const result2 = await this.scaleMini(
+      result1.map,
       result1.width, result1.height,
-      16);
+      this.scale);
     console.log('scaling', result2);
     await this.drawMap(
       document.getElementById('subcanvas'),
-      this.map,
+      result2.map,
       result2.width,
       result2.height);
   }
