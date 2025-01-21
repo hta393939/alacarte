@@ -31,3 +31,6 @@
   border: solid 1px red;
 }
 
+#canvas2 {
+  max-width: 40vw;
+}

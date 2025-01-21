@@ -306,11 +306,11 @@ class Misc {
   }
 
   /**
-   * 
-   * @param {HTMLCanvasElement} canvas 
-   * @param {} map 
-   * @param {number} w 
-   * @param {number} h 
+   * 描画する
+   * @param {HTMLCanvasElement} canvas 描画先
+   * @param {Int32Array} map ラスタ
+   * @param {number} w マップ幅
+   * @param {number} h マップ高さ
    */
   async drawMap(canvas, map, w, h) {
     canvas.width = w;
@@ -337,7 +337,15 @@ class Misc {
     const canvas = document.getElementById('maincanvas');
     const result1 = await this.canvasToMap(canvas);
     console.log('result1', result1);
+
     this.map = result1.map;
+    await this.drawMap(
+      document.getElementById('canvas2'),
+      result1.map,
+      result1.width,
+      result1.height,
+    );
+
     const result2 = await this.scaleMini(
       result1.width, result1.height,
       16);
