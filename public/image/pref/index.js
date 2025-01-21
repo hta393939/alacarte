@@ -210,28 +210,51 @@ class Misc {
 
   /**
    * this.map から this.indices を作成してinfos を返す
+   * @param {Int32Array} map 
    * @param {number} w 
    * @param {number} h 
-   * @returns {{index:number,offsets:number[]}[]} 結果的に領域個数
+   * @returns {{indices,infos:{index:number,offsets:number[]}[]}} 結果的に領域個数
    */
-  async checkIsland(w, h) {
+  async checkIsland(map, w, h) {
     const num = w * h;
+    const indices = new Int32Array(num);
     for (let i = 0; i < num; ++i) {
-      this.indices[i] = -1;
+      indices[i] = -1;
     }
 
     let infos = [];
-    let nextIndex = 0;
+    
+    const _searchNext = () => {
+      let result = -1;
+      const n = infos.length;
+      for (let i = 0; i < n; ++i) {
+        const info = infos[i];
+        if (info.index < 0) {
+          result = i;
+          info.index = i;
+          info.offsets = [];
+          break;
+        }
+      }
+      if (result < 0) {
+        infos.push({
+          index: n,
+          offsets: [],
+        });
+        result = n;
+      }
+      return result;
+    };
 
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
         let offset = x + w * y;
-        let left = (x >= 1) ? this.indices[offset - 1] : -1;
-        let top = (y >= 1) ? this.indices[offset - w] : -1;
+        let left = (x >= 1) ? indices[offset - 1] : -1;
+        let top = (y >= 1) ? indices[offset - w] : -1;
 
-        let flag = this.map[offset];
+        let flag = map[offset];
         if (flag === 0) {
-          this.indices[offset] = -1;
+          indices[offset] = -1;
           continue;
         }
 
@@ -242,33 +265,33 @@ class Misc {
         //// 有効マップ
         if (top >= 0) {
           if (left >= 0) {
-            this.indices[offset] = top;
+            indices[offset] = top;
             infos[top].offsets.push(offset);
             // 左をくっつける
             for (const offset of infos[left].offsets) {
-              this.indices[offset] = top;
+              indices[offset] = top;
             }
             infos[top].offsets.push(...infos[left].offsets);
+
           } else {
-            this.indices[offset] = top;
+            indices[offset] = top;
             infos[top].offsets.push(offset);
           }
         } else if (left >= 0) {
-          this.indices[offset] = left;
+          indices[offset] = left;
           infos[left].offsets.push(offset);
         } else {
           // 上も左も空いていた
-          this.indices[offset] = nextIndex;
-          const obj = {
-            index: nextIndex,
-            offsets: [offset],
-          };
-          infos.push(obj);
-          nextIndex += 1;
+          const nextIndex = _searchNext();
+          infos[nextIndex].offsets = [offset];
+          infos[nextIndex].index = offset;
         }
       }
     }
-    return infos;
+    return {
+      infos,
+      indices,
+    };
   }
 
   /**
@@ -359,6 +382,13 @@ class Misc {
       result2.map,
       result2.width,
       result2.height);
+
+    const result3 = await this.checkIsland(
+      result2.map,
+      result2.width,
+      result2.height,
+    );
+    console.log('result3', result3.infos.length);
   }
 
   /**
