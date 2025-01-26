@@ -31,7 +31,7 @@ class Misc {
     this.loadSetting();
     this.setListener();
 
-    this.replace();
+    this.replace(8);
   }
 
   loadSetting() {
@@ -144,9 +144,11 @@ class Misc {
       const el = document.getElementById('makingfont');
       el?.addEventListener('click', () => {
         console.log('makingfont click');
-        const canvas = document.getElementById('maincanvas');
-        const name = 'afont';
-        const buf = this.makeFont(name, canvas);
+        
+        const dst = document.getElementById('subcanvas');
+        this.magByDot(this.scale);
+        const name = `afont8_${8 * this.scale}`;
+        const buf = this.makeFont(name, dst);
         this.download(new Blob([buf]), `${name}.gpb`);
       });
     }
@@ -276,10 +278,10 @@ class Misc {
   }
 
   /**
-   * 
+   * afont8.png を 16x16 で再配置する
+   * @param {number} size 8 など
    */
-  replace() {
-    const size = 8;
+  replace(size) {
     const img = document.getElementById('afont8');
     /**
      * @type {HTMLCanvasElement}
@@ -410,7 +412,7 @@ class Misc {
   }
 
   /**
-   * フォントバイナリを生成する
+   * gpb フォントバイナリを生成する
    * @see https://github.com/gameplay3d/gameplay/blob/master/gameplay/src/Font.h
    * @param {string} name 
    * @param {HTMLCanvasElement} canvas 
@@ -418,19 +420,28 @@ class Misc {
    */
   makeFont(name, canvas) {
     const texw = canvas.width;
-    const texh = canvas.height;
+
     const TYPE_FONT = 128;
     const FORMAT_BITMAP = 0;
     const STYLE_PLAIN = 0;
     /**
-     * 1グリフのサイズ
+     * 幅に対してグリフ16個均等割つけ
      */
-    const size = 8 * 2 / 2;
+    const GWNUM = 16;
+    /**
+     * 1グリフのピクセルサイズ
+     */
+    const size = texw / GWNUM;
+
+    // code 0x80 以降は含まない場合
+    // そもそもレンダリングできなかったはず
+    const texh = Math.min(canvas.height, size * 8);
+
     const gryphs = [];
     // 0x20～0x7e か? 0x7f が del
     for (let i = 32; i <= 0x7e; ++i) {
-      let x = (i & 15) * size;
-      let y = Math.floor(i / 16) * size;
+      let x = (i & (GWNUM - 1)) * size;
+      let y = Math.floor(i / GWNUM) * size;
       const g = {
         code: i,
         width: size,
@@ -541,6 +552,41 @@ class Misc {
       c += 4;
     }
     return buf.slice(0, c);
+  }
+
+  /**
+   * ドットのまま拡大する
+   * @param {number} scale 倍率
+   */
+  magByDot(scale) {
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    const src = document.getElementById('maincanvas');
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    const dst = document.getElementById('subcanvas');
+    const w = src.width;
+    const h = src.height;
+    dst.width = w * scale;
+    dst.height = h * scale;
+
+    const srcc = src.getContext('2d');
+    const dstc = dst.getContext('2d');
+    const img = srcc.getImageData(0, 0, w, h);
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let offset = (x + w * y) * 4;
+        let r = img.data[offset];
+        let g = img.data[offset+1];
+        let b = img.data[offset+2];
+        let a = img.data[offset+3];
+
+        dstc.fillStyle = `rgba(${r},${g},${b},${a / 255})`;
+        dstc.fillRect(x * scale, y * scale, scale, scale);
+      }
+    }
   }
 
 }
