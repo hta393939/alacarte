@@ -538,6 +538,7 @@ class Misc {
         }
       }
       p.setInt32(c, FORMAT_BITMAP, true);
+      c += 4;
     }
     return buf.slice(0, c);
   }
