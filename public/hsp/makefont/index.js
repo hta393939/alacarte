@@ -411,6 +411,7 @@ class Misc {
 
   /**
    * フォントバイナリを生成する
+   * @see https://github.com/gameplay3d/gameplay/blob/master/gameplay/src/Font.h
    * @param {string} name 
    * @param {HTMLCanvasElement} canvas 
    * @returns 
@@ -419,10 +420,12 @@ class Misc {
     const texw = canvas.width;
     const texh = canvas.height;
     const TYPE_FONT = 128;
+    const FORMAT_BITMAP = 0;
+    const STYLE_PLAIN = 0;
     /**
      * 1グリフのサイズ
      */
-    const size = 8 * 2;
+    const size = 8 * 2 / 2;
     const gryphs = [];
     // 0x20～0x7e か? 0x7f が del
     for (let i = 32; i <= 0x7e; ++i) {
@@ -480,7 +483,7 @@ class Misc {
       _wascii(name);
 
       // font style
-      const style = 0;
+      const style = STYLE_PLAIN;
       p.setInt32(c, style, true);
       c += 4;
 
@@ -534,6 +537,7 @@ class Misc {
           c += 1;
         }
       }
+      p.setInt32(c, FORMAT_BITMAP, true);
     }
     return buf.slice(0, c);
   }
