@@ -147,7 +147,7 @@ class Misc {
         
         const dst = document.getElementById('subcanvas');
         this.magByDot(this.scale);
-        const padding = 0.25;
+        const padding = 0.5 * 1;
         const name = `afont8_${8 * this.scale}_${padding * 100}`;
         const buf = this.makeFont(name, dst, padding);
         this.download(new Blob([buf]), `${name}.gpb`);
