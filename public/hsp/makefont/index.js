@@ -140,6 +140,17 @@ class Misc {
       });
     }
 
+    {
+      const el = document.getElementById('makingfont');
+      el?.addEventListener('click', () => {
+        console.log('makingfont click');
+        const canvas = document.getElementById('maincanvas');
+        const name = 'afont';
+        const buf = this.makeFont(name, canvas);
+        this.download(new Blob([buf]), `${name}.gpb`);
+      });
+    }
+
   }
 
   async selectDir() {
@@ -399,7 +410,7 @@ class Misc {
   }
 
   /**
-   * 
+   * フォントバイナリを生成する
    * @param {string} name 
    * @param {HTMLCanvasElement} canvas 
    * @returns 
@@ -408,7 +419,10 @@ class Misc {
     const texw = canvas.width;
     const texh = canvas.height;
     const TYPE_FONT = 128;
-    const size = 8;
+    /**
+     * 1グリフのサイズ
+     */
+    const size = 8 * 2;
     const gryphs = [];
     // 0x20～0x7e か? 0x7f が del
     for (let i = 32; i <= 0x7e; ++i) {
@@ -419,40 +433,68 @@ class Misc {
         width: size,
         bearingX: 0,
         advance: size,
-        uvs: [x, y, size, size],
+        uvs: [x, y, x + size, y + size],
       };
       gryphs.push(g);
     }
 
-    const buf = new Uint8Array(256);
+
+    const buf = new ArrayBuffer(texw * texh * 4);
     const p = new DataView(buf);
     let c = 0;
-    { // magic and reftable
-      p.setInt32(c, 123, true);
 
-      
-    }
-    { // ヘッダ
-      // not empty font family
-      const len = name.length;
+    /**
+     * 
+     * @param {string} ascii 
+     */
+    const _wascii = (ascii) => {
+      const len = ascii.length;
       p.setInt32(c, len, true);
       c += 4;
       for (let i = 0; i < len; ++i) {
-        p.setUint8(c, name.codePointAt(i), true);
+        p.setUint8(c, ascii.codePointAt(i), true);
         c += 1;
       }
+    };
+
+    { // magic and reftable
+      const chs = [
+        0xab, 0x47, 0x50, 0x42,
+        0xbb, 0x0d, 0x0a, 0x1a,
+        0x0a, 0x01, 0x05,
+      ];
+      for (const v of chs) {
+        p.setUint8(c, v);
+        c += 1;
+      }
+      p.setInt32(c, 1, true); // ref 1個
+      c += 4;
+      _wascii(name); // チャンク名
+      p.setInt32(c, TYPE_FONT, true);
+      c += 4;
+      p.setInt32(c, c + 4, true);
+      c += 4;
+    }
+    { // フォントチャンク内のヘッダ
+      // not empty font family
+      _wascii(name);
 
       // font style
       const style = 0;
       p.setInt32(c, style, true);
       c += 4;
 
-      if (true) { // fontSize ver.1.4以上のみ
+      if (true) { // fontSize ver.1.4以上のみ 以前は1固定
         p.setInt32(c, 1, true);
         c += 4;
       }
 
       {
+        p.setInt32(c, size, true); // 高さサイズ
+        c += 4;
+
+        _wascii('');
+
         const gnum = gryphs.length;
         p.setInt32(c, gnum, true);
         c += 4;
@@ -461,21 +503,22 @@ class Misc {
           p.setInt32(c, g.code, true);
           p.setInt32(c + 4, g.width, true);
           c += 8;
-          if (true) { // 1.5以上のみ
+          if (true) { // 1.5以上のみ デフォルトは 0, width
             p.setInt32(c, g.bearingX, true);
             p.setInt32(c + 4, g.advance, true);
             c += 8;
           }
-          p.setInt32(c, g.uvs[0], true);
-          p.setInt32(c + 4, g.uvs[1], true);
-          p.setInt32(c + 8, g.uvs[2], true);
-          p.setInt32(c + 12, g.uvs[3], true);
+          p.setFloat32(c, g.uvs[0] / texw, true);
+          p.setFloat32(c + 4, g.uvs[1] / texh, true);
+          p.setFloat32(c + 8, g.uvs[2] / texw, true);
+          p.setFloat32(c + 12, g.uvs[3] / texh, true);
+          c += 16;
         }
       }
     }
     { // 中身
-      const c = canvas.getContext('2d');
-      const img = c.getImageData(0, 0, texw, texh);
+      const ctx = canvas.getContext('2d');
+      const img = ctx.getImageData(0, 0, texw, texh);
 
       p.setInt32(c, texw, true);
       p.setInt32(c + 4, texh, true);
@@ -492,7 +535,7 @@ class Misc {
         }
       }
     }
-    return buf;
+    return buf.slice(0, c);
   }
 
 }
