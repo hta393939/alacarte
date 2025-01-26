@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>makefont 固定</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div class="toright">
+
+      <div>
+        <button class="pointer" id="act">処理する</button>
+        <button class="pointer" id="downloadact">処理後をダウンロードする</button>
+        <br />
+        <button class="pointer" id="selectdir">フォルダを選択する</button>
+        <div id="dirview"></div>
+        <button class="pointer" id="processfordir">フォルダに処理する</button>
+        <div id="countview"></div>
+      </div>
+      <div id="filename"></div>
+    </div>
+
+    <div>
+      <div class="toright">
+        <div>スケール</div>
+        <input class="pointer" type="range" id="scale" value="16" min="1" max="16" />
+        <div id="scaleview"></div>
+      </div>
+      <div class="toright">
+        <div>セル横x</div>
+        <input class="pointer" type="range" id="cellx" value="10" min="0" max="100" />
+        <div id="cellxview"></div>
+      </div>
+      <div class="toright">
+        <div>セル縦y</div>
+        <input class="pointer" type="range" id="celly" value="10" min="0" max="100" />
+        <div id="cellyview"></div>
+      </div>
+      <div class="toright">
+        <div>セル回数w</div>
+        <input class="pointer" type="range" id="cellw" value="10" min="1" max="100" />
+        <div id="cellwview"></div>
+      </div>
+      <div class="toright">
+        <div>セル回数h</div>
+        <input class="pointer" type="range" id="cellh" value="10" min="1" max="100" />
+        <div id="cellhview"></div>
+      </div>
+
+      <div class="toright">
+        <div>x</div>
+        <input class="pointer" type="range" id="x" value="0" min="0" max="1000" />
+        <div id="xview"></div>
+      </div>
+      <div class="toright">
+        <div>y</div>
+        <input class="pointer" type="range" id="y" value="0" min="0" max="1000" />
+        <div id="yview"></div>
+      </div>
+
+      <div class="toright">
+        <div>w</div>
+        <input class="pointer" type="range" id="w" value="512" min="1" max="1000" />
+        <div id="wview"></div>
+      </div>
+      <div class="toright">
+        <div>h</div>
+        <input class="pointer" type="range" id="h" value="512" min="1" max="1000" />
+        <div id="hview"></div>
+      </div>
+
+      <div class="toright">
+        <div>destsize</div>
+        <input class="pointer" type="range" id="destsize" value="512" min="1" max="1024" />
+        <div id="destsizeview"></div>
+      </div>
+    </div>
+
+    <div class="toright">
+      <div class="tobottom">
+        <canvas class="limit" id="maincanvas"></canvas>
+        <div class="drop" id="loadimage">読み取り</div>
+        <div>
+          <div id="idsourceinfo"></div>
+        </div>
+      </div>
+      <div class="tobottom">
+        <canvas class="limit" id="subcanvas"></canvas>
+        <div>
+          <div id="iddestinfo"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="pointer" id="processfont">フォント移動</button>
+    <img id="afont8" src="afont8.png" />
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
