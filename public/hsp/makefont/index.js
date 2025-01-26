@@ -147,8 +147,9 @@ class Misc {
         
         const dst = document.getElementById('subcanvas');
         this.magByDot(this.scale);
-        const name = `afont8_${8 * this.scale}`;
-        const buf = this.makeFont(name, dst);
+        const padding = 0.25;
+        const name = `afont8_${8 * this.scale}_${padding * 100}`;
+        const buf = this.makeFont(name, dst, padding);
         this.download(new Blob([buf]), `${name}.gpb`);
       });
     }
@@ -416,11 +417,11 @@ class Misc {
    * @see https://github.com/gameplay3d/gameplay/blob/master/gameplay/src/Font.h
    * @param {string} name 
    * @param {HTMLCanvasElement} canvas 
+   * @param {number} padding ピクセル単位
    * @returns 
    */
-  makeFont(name, canvas) {
+  makeFont(name, canvas, padding) {
     const texw = canvas.width;
-
     const TYPE_FONT = 128;
     const FORMAT_BITMAP = 0;
     const STYLE_PLAIN = 0;
@@ -447,7 +448,12 @@ class Misc {
         width: size,
         bearingX: 0,
         advance: size,
-        uvs: [x, y, x + size, y + size],
+        uvs: [
+          x + padding,
+          y + padding,
+          x + size - padding,
+          y + size - padding,
+        ],
       };
       gryphs.push(g);
     }
