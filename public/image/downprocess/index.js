@@ -56,6 +56,61 @@ const _dot = (as, bs) => {
   return sum;
 };
 
+class LineCost {
+  constructor() {
+    this.index = 2;
+    this.cost = 10 ** 9;
+    this.elm = 0;
+    this.len = 1;
+    /**
+     * index 0 or 1 のときの色
+     */
+    this.cs = [0, 0, 0];
+  }
+}
+
+class LineResult {
+  constructor() {
+    this.index = 2;
+    /**
+     * index 0 or 1 のときの色
+     */
+    this.cs = [0, 0, 0];
+
+    /**
+     * elm 0 側の色
+     */
+    this.scs = [0, 0, 0];
+    /**
+     * elm 1 側の色
+     */
+    this.dcs = [0, 0, 0];
+    /**
+     * 2点の距離
+     */
+    this.len = 1;
+    /**
+     * 線分要素
+     */
+    this.elm = 0;
+  }
+}
+
+class LineObj {
+  constructor() {
+    /**
+     * s から d への方向ベクトル
+     */
+    this.dir = [0, 0, 1];
+    /**
+     * 2点の距離
+     */
+    this.len = 1;
+    this.s = {cs: [0, 0, 0], luma: 0};
+    this.d = {cs: [255, 255, 255], luma: 255 * 256};
+  }
+}
+
 
 class Misc {
   static A = 214013;
@@ -426,6 +481,9 @@ class Misc {
     }
 
 // 線分の構成
+    /**
+     * @type {LineObj[]}
+     */
     const _lines = [];
     for (let i = 0; i < palnum; ++i) {
       for (let j = i + 1; j < palnum; ++j) {
@@ -455,11 +513,23 @@ class Misc {
      * @param {number} inr 
      * @param {number} ing 
      * @param {number} inb 
-     * @returns 
+     * @returns {LineResult}
      */
     const _calcCost = (inr, ing, inb) => {
       let minCost = 10 ** 9;
+      /**
+       * @type {LineResult | null}
+       */
       let minLine = null;
+
+      /**
+       * 
+       * @param {LineObj} line 
+       * @param {*} r 
+       * @param {*} g 
+       * @param {*} b 
+       * @returns {LineCost}
+       */
       const _calc = (line, r, g, b) => {
         const diffs = [
           r - line.s.cs[0],
@@ -490,12 +560,12 @@ class Misc {
           this.len(...dist),
         ];
 
-        const result = {
-          elm,
-          index: 0,
-          cs: [...line.s.cs],
-          cost: lens[0],
-        };
+        const result = new LineCost();
+        result.elm = elm;
+        result.index = 0;
+        result.cs = [...line.s.cs];
+        result.cost = lens[0];
+
         if (lens[0] > lens[1]) {
           result.index = 1;
           result.cs = [...line.d.cs];
@@ -508,12 +578,13 @@ class Misc {
         }
 
         if (elm < 0 || elm > 1) {
-          result.cost = 10 ** 7;
+          result.cost *= 10;
           return result;
         }
 
-        // 線分コスト定義
-        let linecost = lens[2] + lens[0] + lens[1];
+        // TODO: 線分コスト定義
+        //let linecost = lens[2] + lens[0] + lens[1];
+        let linecost = lens[2] * 0.5 + (lens[0] + lens[1]) * 0.01;
         result.index = 2;
         result.cost = linecost;
         return result;
@@ -522,9 +593,12 @@ class Misc {
       for (const line of _lines) {
         const result = _calc(line, inr, ing, inb);
         if (result.cost <= minCost) {
-          minCost = result.cost;
-          line.costResult = result;
-          minLine = line;
+          minLine = new LineResult();
+          minLine.index = result.index;
+          minLine.elm = result.elm;
+          minLine.len = line.len;
+          minLine.scs = [...line.s.cs];
+          minLine.dcs = [...line.d.cs];
         }
       }
       return minLine;
@@ -541,21 +615,21 @@ class Misc {
         const line = _calcCost(r, g, b);
         console.log(line, x, y);
 
-        if (line.costResult.index !== 2) {
-          r = line.costResult.cs[0];
-          g = line.costResult.cs[1];
-          b = line.costResult.cs[2];
+        if (line.index !== 2) {
+          r = line.cs[0];
+          g = line.cs[1];
+          b = line.cs[2];
         } else {
           const rate = line.elm * nump / line.len;
           const thr = thrTable[x + w * y];
-          if (rate < thr) {
-            r = line.s.cs[0];
-            g = line.s.cs[1];
-            b = line.s.cs[2];
+          if (rate >= thr) {
+            r = line.scs[0];
+            g = line.scs[1];
+            b = line.scs[2];
           } else {
-            r = line.d.cs[0];
-            g = line.d.cs[1];
-            b = line.d.cs[2];
+            r = line.dcs[0];
+            g = line.dcs[1];
+            b = line.dcs[2];
           }
         }
 
