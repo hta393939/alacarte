@@ -445,14 +445,22 @@ class Misc {
     const img = c.getImageData(0, 0, w, h);
 
     const _cols = [
-      {cs:[0,0,0]}, {cs:[0,0,255]}, {cs:[255,0,0]}, {cs:[255,0,255]},
-      {cs:[0,255,0]}, {cs:[0,255,255]}, {cs:[255,255,0]}, {cs:[255,255,255]},
-      {cs:[192,192,192]}, {cs:[0,0,128]}, {cs:[128,0,0]}, {cs:[128,0,128]},
-      {cs:[0,128,0]},
+      {cs:[0,0,0]}, // 黒
+      {cs:[256,128,64]},
+      {cs:[255,0,0]},
+      {cs:[255,0,255]},
+      {cs:[192,64,64]},
+      {cs:[0,255,255]},
+      {cs:[228,188,128]}, // 水→顔 多い
+      {cs:[255,255,255]}, // 白
+      {cs:[192,192,192]},
+      {cs:[255,192,192]},
+      {cs:[128,0,0]},
+      {cs:[128,0,128]},
+      {cs:[0,192,0]}, // 緑唯一
       {cs:[0,128,128]},
       {cs:[128,128,0]},
-      //{cs:[128,128,128]},
-      {cs:[255,192,192]},
+      {cs:[128,128,128]},
     ];
 
     const table = [
@@ -478,8 +486,37 @@ class Misc {
     const thrTable = await this.makeThrImage(w, h);
     console.log('thrTable', thrTable);
 
-// パレットの作成
+//// パレットの作成
 // 8pxブロックの投票
+    const palblocks = [];
+    for (let r = 0; r < 32; ++r) {
+      const rs = [];
+      for (let g = 0; g < 32; ++g) {
+        const bs = [];
+        for (let b = 0; b < 32; ++b) {
+          const obj = {
+            count: 0,
+          };
+          bs.push(obj);
+        }
+        rs.push(bs);
+      }
+      palblocks.push(rs);
+    }
+    for (let y = 0; y < 0; ++y) {
+      for (let x = 0; x < 0; ++x) {
+        let offset = (x + w * y) * 4;
+        let r = img.data[offset  ];
+        let g = img.data[offset+1];
+        let b = img.data[offset+2];
+        let ri = Math.floor(r / 8);
+        let gi = Math.floor(g / 8);
+        let bi = Math.floor(b / 8);
+        palblocks[ri][gi][bi].count += 1;
+      }
+    }
+
+
 
     const palnum = _cols.length;
     for (let i = 0; i < palnum; ++i) {
@@ -580,9 +617,10 @@ class Misc {
           result.cs = [...line.d.cs];
           result.cost = lens[1];
         }
-
-        const nearThr = 8;
+        // TODO: 一番近い色を採用する半径
+        const nearThr = 8 * 4;
         if (lens[result.index] < nearThr) {
+          result.cost = Math.sqrt(result.cost);
           return result;
         }
 
@@ -593,7 +631,7 @@ class Misc {
 
         // TODO: 線分コスト定義
         //let linecost = lens[2] + lens[0] + lens[1];
-        let linecost = lens[2] * 0.5 + (lens[0] + lens[1]) * 0.01;
+        let linecost = lens[2] * 4 + (lens[0] + lens[1]) * 1;
         result.index = 2;
         result.cost = linecost;
         return result;
