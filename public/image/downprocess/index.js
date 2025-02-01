@@ -443,15 +443,22 @@ class Misc {
           obj.d.cs[1] - obj.s.cs[1],
           obj.d.cs[2] - obj.s.cs[2],
         ];
-        obj.len = this.len(diff);
-        obj.dir = this.newNorm(diff);
+        obj.len = this.len(...diff);
+        obj.dir = this.newNorm(...diff);
         _lines.push(obj);
       }
     }
 
 //// 決定
+    /**
+     * 
+     * @param {number} inr 
+     * @param {number} ing 
+     * @param {number} inb 
+     * @returns 
+     */
     const _calcCost = (inr, ing, inb) => {
-      let minCost = 99999999;
+      let minCost = 10 ** 9;
       let minLine = null;
       const _calc = (line, r, g, b) => {
         const diffs = [
@@ -468,9 +475,9 @@ class Misc {
          * s点からd点へ向かう成分
          */
         const elm =
-          + diff[0] * line.dir[0]
-          + diff[1] * line.dir[1]
-          + diff[2] * line.dir[2];
+          + diffs[0] * line.dir[0]
+          + diffs[1] * line.dir[1]
+          + diffs[2] * line.dir[2];
         const dist = [
           diffs - line.dir[0] * elm,
           diffs - line.dir[1] * elm,
@@ -486,12 +493,12 @@ class Misc {
         const result = {
           elm,
           index: 0,
-          cs: [...line.s],
+          cs: [...line.s.cs],
           cost: lens[0],
         };
         if (lens[0] > lens[1]) {
           result.index = 1;
-          result.cs = [...line.d];
+          result.cs = [...line.d.cs];
           result.cost = lens[1];
         }
 
@@ -501,7 +508,7 @@ class Misc {
         }
 
         if (elm < 0 || elm > 1) {
-          result.cost = 9999999;
+          result.cost = 10 ** 7;
           return result;
         }
 
@@ -511,6 +518,7 @@ class Misc {
         result.cost = linecost;
         return result;
       };
+
       for (const line of _lines) {
         const result = _calc(line, inr, ing, inb);
         if (result.cost <= minCost) {
@@ -531,6 +539,8 @@ class Misc {
         let a = img.data[offset+3];
 
         const line = _calcCost(r, g, b);
+        console.log(line, x, y);
+
         if (line.costResult.index !== 2) {
           r = line.costResult.cs[0];
           g = line.costResult.cs[1];
@@ -539,13 +549,13 @@ class Misc {
           const rate = line.elm * nump / line.len;
           const thr = thrTable[x + w * y];
           if (rate < thr) {
-            r = line.s[0];
-            g = line.s[1];
-            b = line.s[2];
+            r = line.s.cs[0];
+            g = line.s.cs[1];
+            b = line.s.cs[2];
           } else {
-            r = line.d[0];
-            g = line.d[1];
-            b = line.d[2];
+            r = line.d.cs[0];
+            g = line.d.cs[1];
+            b = line.d.cs[2];
           }
         }
 
