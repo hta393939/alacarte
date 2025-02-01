@@ -58,7 +58,16 @@ const _dot = (as, bs) => {
 
 
 class Misc {
+  static A = 214013;
+  static C = 2531011;
+
   constructor() {
+    this.v = new Uint32Array(1);
+    this.v[0] = 1;
+  }
+
+  rand() {
+    this.v[0] = (this.v[0] * Seq.A + Seq.C) & 0xffffffff; return (this.v[0] >> 16) & 32767;  
   }
 
   async initialize() {
@@ -290,7 +299,85 @@ class Misc {
   }
 
   /**
+   * wxh の閾値テーブルを作る
+   * @param {number} w 
+   * @param {number} h 
+   * @param {number} size
+   */
+  async makeThrImage(w, h, shufflenum = 32, size = 8) {
+    const table = new Float32Array(w * h);
+    const mtx = new Float32Array(size * size);
+
+    const table8 = [
+      [ 0,32, 8,40, 2,34,10,42],
+      [48,16,56,24,50,18,58,26],
+      [12,44, 4,36,14,46, 6,38],
+      [60,28,52,20,62,30,54,22],
+      [ 3,35,11,43, 1,33, 9,41],
+      [51,19,59,27,49,17,57,25],
+      [15,47, 7,39,13,45, 5,37],
+      [63,31,55,23,61,29,53,21],
+    ];
+    for (let i = 0; i < size; ++i) {
+      for (let j = 0; j < size; ++j) {
+        mtx[j + size * i] = table8[i][j];
+      }
+    }
+    const _shuffle = (num) => {
+      for (let i = 0; i < num; ++i) {
+        const a = Math.floor(Math.random() * num);
+        const b = Math.floor(Math.random() * num);
+        const tmp = mtx[a];
+        mtx[a] = mtx[b];
+        mtx[b] = tmp;
+      }
+    };
+
+    const bw = Math.ceil(w / size);
+    const bh = Math.ceil(h / size);
+    for (let y = 0; y < bh; ++y) {
+      for (let x = 0; x < bw; ++x) {
+        _shuffle(shufflenum);
+
+        for (let i = 0; i < size; ++i) {
+          for (let j = 0; j < size; ++j) {
+            let dx = j + x * size;
+            let dy = i + y * size;
+            if (dx >= w || dy >= h) {
+              continue;
+            }
+            let soff = j + i * size;
+            let doff = dx + w * dy;
+            table[doff] = soff;
+          }
+        }
+
+        await globalThis.scheduler?.yield?.();
+      }
+    }
+
+    return table;
+  }
+
+  /**
    * 
+   * @param {number} x 
+   * @param {number} y 
+   * @param {number} z 
+   * @returns {[number, number, number]}
+   */
+  newNorm(x, y, z) {
+    const sum = x ** 2 + y ** 2 + z ** 2;
+    const k = (sum > 0) ? 1 / Math.sqrt(sum) : 0;
+    return [x * k, y * k, z * k];
+  }
+
+  len(x, y, z) {
+    return Math.sqrt(x ** 2 + y ** 2 + z ** 2);
+  }
+
+  /**
+   * 減色したい
    * @param {HTMLCanvasElement} canvas 
    */
   downColor(canvas) {
@@ -299,37 +386,12 @@ class Misc {
     const c = canvas.getContext('2d');
     const img = c.getImageData(0, 0, w, h);
 
-    const cols = [
+    const _cols = [
       {cs:[0,0,0]}, {cs:[0,0,255]}, {cs:[255,0,0]}, {cs:[255,0,255]},
       {cs:[0,255,0]}, {cs:[0,255,255]}, {cs:[255,255,0]}, {cs:[255,255,255]},
       {cs:[192,192,192]}, {cs:[0,0,128]}, {cs:[128,0,0]}, {cs:[128,0,128]},
       {cs:[0,128,0]}, {cs:[0,128,128]}, {cs:[128,128,0]}, {cs:[128,128,128]},
     ];
-    /*
-    for (let i = 0; i < 16; ++i) {
-      let r = Math.floor(i / 2) & 1;
-      let g = Math.floor(i / 4) & 1;
-      let b = i & 1;
-      if (i >= 8) {
-        r *= 128;
-        g *= 128;
-        b *= 128;
-      } else {
-        r *= 255;
-        g *= 255;
-        b *= 255;
-      }
-      if (i === 8) {
-        r = 0;
-        g = 0;
-        b = 0;
-      }
-      const obj = {
-        cs: [r, g, b],
-      };
-      cols.push(obj);
-    } */
-    // bayer 行列
 
     const table = [
       [ 0,  8,  2, 10],
@@ -349,52 +411,143 @@ class Misc {
     ];
     let use8 = true;
     let modp = use8 ? 8 : 4;
-    let num = modp * modp;
-    const qsize = use8 ? 1 : 4;
+    let nump = modp * modp;
+
+    const thrTable = this.makeThrImage(w, h);
+
+// パレットの作成
+// 8pxブロックの投票
+
+    const palnum = _cols.length;
+    for (let i = 0; i < palnum; ++i) {
+      const col = _cols[i];
+      const luma = col.cs[0] * 77 + col.cs[1] * 150 + col.cs[2] * 29;
+      col.luma = luma;
+    }
+
+// 線分の構成
+    const _lines = [];
+    for (let i = 0; i < palnum; ++i) {
+      for (let j = i + 1; j < palnum; ++j) {
+        const obj = {
+          s: _cols[i],
+          d: _cols[j],
+        };
+        if (obj.s.luma > obj.d.luma) {
+          const tmp = obj.s;
+          obj.s = obj.d;
+          obj.d = tmp;
+        }
+        const diff = [
+          obj.d.cs[0] - obj.s.cs[0],
+          obj.d.cs[1] - obj.s.cs[1],
+          obj.d.cs[2] - obj.s.cs[2],
+        ];
+        obj.len = this.len(diff);
+        obj.dir = this.newNorm(diff);
+        _lines.push(obj);
+      }
+    }
+
+//// 決定
+    const _calcCost = (inr, ing, inb) => {
+      let minCost = 99999999;
+      let minLine = null;
+      const _calc = (line, r, g, b) => {
+        const diffs = [
+          r - line.s.cs[0],
+          g - line.s.cs[1],
+          b - line.s.cs[2],
+        ];
+        const diffd = [
+          r - line.d.cs[0],
+          g - line.d.cs[1],
+          b - line.d.cs[2],
+        ];
+        /**
+         * s点からd点へ向かう成分
+         */
+        const elm =
+          + diff[0] * line.dir[0]
+          + diff[1] * line.dir[1]
+          + diff[2] * line.dir[2];
+        const dist = [
+          diffs - line.dir[0] * elm,
+          diffs - line.dir[1] * elm,
+          diffs - line.dir[2] * elm,
+        ];
+
+        const lens = [
+          this.len(...diffs),
+          this.len(...diffd),
+          this.len(...dist),
+        ];
+
+        const result = {
+          elm,
+          index: 0,
+          cs: [...line.s],
+          cost: lens[0],
+        };
+        if (lens[0] > lens[1]) {
+          result.index = 1;
+          result.cs = [...line.d];
+          result.cost = lens[1];
+        }
+
+        const nearThr = 8;
+        if (lens[result.index] < nearThr) {
+          return result;
+        }
+
+        if (elm < 0 || elm > 1) {
+          result.cost = 9999999;
+          return result;
+        }
+
+        // 線分コスト定義
+        let linecost = lens[2] + lens[0] + lens[1];
+        result.index = 2;
+        result.cost = linecost;
+        return result;
+      };
+      for (const line of _lines) {
+        const result = _calc(line, inr, ing, inb);
+        if (result.cost <= minCost) {
+          minCost = result.cost;
+          line.costResult = result;
+          minLine = line;
+        }
+      }
+      return minLine;
+    };
 
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
-        for (const v of cols) {
-          v.err = 99999;
-        }
-
         let offset = (x + w * y) * 4;
         let r = img.data[offset];
         let g = img.data[offset+1];
         let b = img.data[offset+2];
         let a = img.data[offset+3];
 
-        let miniErr = 99999;
-        let minCol = [0, 0, 0];
-        for (const v of cols) {
-          let sum = Math.abs(r - v.cs[0])
-            + Math.abs(g - v.cs[1])
-            + Math.abs(b - v.cs[2]);
-          v.err = sum;
-          if (sum <= miniErr) {
-            miniErr = sum;
-            minCol = [...v.cs];
+        const line = _calcCost(r, g, b);
+        if (line.costResult.index !== 2) {
+          r = line.costResult.cs[0];
+          g = line.costResult.cs[1];
+          b = line.costResult.cs[2];
+        } else {
+          const rate = line.elm * nump / line.len;
+          const thr = thrTable[x + w * y];
+          if (rate < thr) {
+            r = line.s[0];
+            g = line.s[1];
+            b = line.s[2];
+          } else {
+            r = line.d[0];
+            g = line.d[1];
+            b = line.d[2];
           }
         }
-
-        //r = minCol[0];
-        //g = minCol[1];
-        //b = minCol[2];
-
-        let mx = x & (modp - 1);
-        let my = y & (modp - 1);
-        const add = (use8 ? table8 : table)[my][mx];
-        // 2: 8*8*8 カラー
-        //const qsize = 2;
-        // 4: 4*4*4 カラー 64色カラー
-        // 256 / 4 = 64, 64 / 16 = 4
-
-        r /= qsize;
-        g /= qsize;
-        b /= qsize;
-        r = (Math.floor(r / num) + ((r % num) >= add ? 1 : 0)) * num * qsize;
-        g = (Math.floor(g / num) + ((g % num) >= add ? 1 : 0)) * num * qsize;
-        b = (Math.floor(b / num) + ((b % num) >= add ? 1 : 0)) * num * qsize;
 
         img.data[offset] = r;
         img.data[offset+1] = g;

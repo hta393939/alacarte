@@ -147,6 +147,7 @@ class Misc {
         
         const dst = document.getElementById('subcanvas');
         this.magByDot(this.scale);
+        // TODO: 0.5 だと拡大もいける。縮小だけだと 0 でいい
         const padding = 0.5 * 1;
         const name = `afont8_${8 * this.scale}_${padding * 100}`;
         const buf = this.makeFont(name, dst, padding);

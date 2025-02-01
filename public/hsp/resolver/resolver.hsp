@@ -1,4 +1,4 @@
-// code "Shift_JIS"
+// {"code": "Shift_JIS"}
 // resolve #include
 
 #include "shell32.as"
