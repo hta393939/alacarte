@@ -361,6 +361,9 @@ class Misc {
    */
   async makeThrImage(w, h, shufflenum = 32, size = 8) {
     const table = new Float32Array(w * h);
+    /**
+     * ラスタ
+     */
     const mtx = new Float32Array(size * size);
 
     const table8 = [
@@ -380,8 +383,8 @@ class Misc {
     }
     const _shuffle = (num) => {
       for (let i = 0; i < num; ++i) {
-        const a = Math.floor(Math.random() * num);
-        const b = Math.floor(Math.random() * num);
+        const a = Math.floor(Math.random() * size * size);
+        const b = Math.floor(Math.random() * size * size);
         const tmp = mtx[a];
         mtx[a] = mtx[b];
         mtx[b] = tmp;
@@ -403,7 +406,7 @@ class Misc {
             }
             let soff = j + i * size;
             let doff = dx + w * dy;
-            table[doff] = soff;
+            table[doff] = mtx[soff];
           }
         }
 
@@ -435,7 +438,7 @@ class Misc {
    * 減色したい
    * @param {HTMLCanvasElement} canvas 
    */
-  downColor(canvas) {
+  async downColor(canvas) {
     const w = canvas.width;
     const h = canvas.height;
     const c = canvas.getContext('2d');
@@ -445,7 +448,11 @@ class Misc {
       {cs:[0,0,0]}, {cs:[0,0,255]}, {cs:[255,0,0]}, {cs:[255,0,255]},
       {cs:[0,255,0]}, {cs:[0,255,255]}, {cs:[255,255,0]}, {cs:[255,255,255]},
       {cs:[192,192,192]}, {cs:[0,0,128]}, {cs:[128,0,0]}, {cs:[128,0,128]},
-      {cs:[0,128,0]}, {cs:[0,128,128]}, {cs:[128,128,0]}, {cs:[128,128,128]},
+      {cs:[0,128,0]},
+      {cs:[0,128,128]},
+      {cs:[128,128,0]},
+      //{cs:[128,128,128]},
+      {cs:[255,192,192]},
     ];
 
     const table = [
@@ -468,7 +475,8 @@ class Misc {
     let modp = use8 ? 8 : 4;
     let nump = modp * modp;
 
-    const thrTable = this.makeThrImage(w, h);
+    const thrTable = await this.makeThrImage(w, h);
+    console.log('thrTable', thrTable);
 
 // パレットの作成
 // 8pxブロックの投票
@@ -506,6 +514,7 @@ class Misc {
         _lines.push(obj);
       }
     }
+    console.log('_line', _lines);
 
 //// 決定
     /**
@@ -523,11 +532,11 @@ class Misc {
       let minLine = null;
 
       /**
-       * 
+       * 線分と色のコストを返す
        * @param {LineObj} line 
-       * @param {*} r 
-       * @param {*} g 
-       * @param {*} b 
+       * @param {number} r 
+       * @param {number} g 
+       * @param {number} b 
        * @returns {LineCost}
        */
       const _calc = (line, r, g, b) => {
@@ -549,9 +558,9 @@ class Misc {
           + diffs[1] * line.dir[1]
           + diffs[2] * line.dir[2];
         const dist = [
-          diffs - line.dir[0] * elm,
-          diffs - line.dir[1] * elm,
-          diffs - line.dir[2] * elm,
+          diffs[0] - line.dir[0] * elm,
+          diffs[1] - line.dir[1] * elm,
+          diffs[2] - line.dir[2] * elm,
         ];
 
         const lens = [
@@ -577,7 +586,7 @@ class Misc {
           return result;
         }
 
-        if (elm < 0 || elm > 1) {
+        if (elm < 0 || elm > line.len) {
           result.cost *= 10;
           return result;
         }
@@ -593,8 +602,10 @@ class Misc {
       for (const line of _lines) {
         const result = _calc(line, inr, ing, inb);
         if (result.cost <= minCost) {
+          minCost = result.cost;
           minLine = new LineResult();
           minLine.index = result.index;
+          minLine.cs = [...result.cs];
           minLine.elm = result.elm;
           minLine.len = line.len;
           minLine.scs = [...line.s.cs];
@@ -607,7 +618,7 @@ class Misc {
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
         let offset = (x + w * y) * 4;
-        let r = img.data[offset];
+        let r = img.data[offset  ];
         let g = img.data[offset+1];
         let b = img.data[offset+2];
         let a = img.data[offset+3];
@@ -622,7 +633,7 @@ class Misc {
         } else {
           const rate = line.elm * nump / line.len;
           const thr = thrTable[x + w * y];
-          if (rate >= thr) {
+          if (rate < thr) {
             r = line.scs[0];
             g = line.scs[1];
             b = line.scs[2];
@@ -633,7 +644,7 @@ class Misc {
           }
         }
 
-        img.data[offset] = r;
+        img.data[offset  ] = r;
         img.data[offset+1] = g;
         img.data[offset+2] = b;
         img.data[offset+3] = a;
