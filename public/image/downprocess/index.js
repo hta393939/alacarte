@@ -444,6 +444,10 @@ class Misc {
     const c = canvas.getContext('2d');
     const img = c.getImageData(0, 0, w, h);
 
+    /**
+     * パレット
+     * 素直にピックした方が良さそうだった。
+     */
     const _cols = [
       {cs:[0,0,0]}, // 黒
       {cs:[256,128,64]},
