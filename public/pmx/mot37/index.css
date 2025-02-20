@@ -1,0 +1,17 @@
+
+.pt {
+  cursor: pointer;
+}
+
+.toright {
+  display: flex;
+  flex-direction: row;
+}
+
+.drop {
+  border: dashed 4px black;
+  border-radius: 1rem;
+  margin: 1rem;
+  padding: 1rem;
+  font-weight: bold;
+}
