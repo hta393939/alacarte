@@ -48,6 +48,20 @@ class Bone {
 
 class Misc {
   constructor() {
+
+    this.names = [
+      `center`, // en
+      `b004tree`,
+      `b012tree`,
+      `b015tree`,
+      `b023tree`,
+    ];
+
+    this.morphs = [
+      'rmul',
+      'gmul',
+      'bmul',
+    ];
   }
 
   /**
