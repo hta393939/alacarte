@@ -46,14 +46,40 @@ class Bone {
   }
 }
 
+class MotionData {
+  constructor() {
+    this.header = {
+      /**
+       * 30char
+       */
+      magic: `Vocaloid Motion Data 0002\x00\x00\x00\x00\x00`,
+      name: 'modelname',
+    };
+    /**
+     * @type {Bone[]}
+     */
+    this.bones = [];
+    /**
+     * @type {Bone[]}
+     */
+    this.morphs = [];
+  }
+}
+
 class Misc {
   constructor() {
 
     this.names = [
-      `center`, // en
+      //`center`, // en
       `b004tree`,
+      `b006tree`,
+      `b008tree`,
+      `b010tree`,
       `b012tree`,
       `b015tree`,
+      `b017tree`,
+      `b019tree`,
+      `b021tree`,
       `b023tree`,
     ];
 
@@ -156,11 +182,15 @@ class Misc {
    * 
    */
   async downloadMotion() {
+    const motionData = new MotionData();
     {
 
     }
+    {
+      
+    }
 
-    const ab = await this.makeFile();
+    const ab = await this.makeFile(motionData);
     this.downloadFile(new Blob([ab]), `a.vmd`);
   }
 
@@ -176,7 +206,12 @@ class Misc {
     a.click();
   }
 
-  async makeFile() {
+  /**
+   * 
+   * @param {MotionData} motionData 
+   * @returns 
+   */
+  async makeFile(motionData) {
     const buf = new ArrayBuffer(65536);
     const p = new DataView(buf);
     let c = 0;
@@ -196,15 +231,15 @@ class Misc {
     };
 
     {
-      writeText(`Vocaloid Motion Data 0002\x00\x00\x00\x00\x00`, 30);
-      writeText('modelname', 20);
+      writeText(motionData.header.magic, 30);
+      writeText(motionData.header.name, 20);
     }
 
     {
       /**
        * @type {Bone[]}
        */
-      const ks = [];
+      const ks = motionData.bones;
       const num = ks.length;
       for (let i = 0; i < num; ++i) {
         const k = ks[i];
@@ -230,7 +265,7 @@ class Misc {
       /**
        * @type {Bone[]}
        */
-      const ks = [];
+      const ks = motionData.morphs;
       const num = ks.length;
       p.setInt32(c, num, true);
       c += 4;
