@@ -1,0 +1,36 @@
+@charset "UTF-8";
+
+canvas {
+    border: solid 1px black;
+}
+
+.pt {
+    cursor: pointer;
+}
+
+.mini {
+    width: 256px;
+    height: 256px;
+}
+
+.toright {
+    flex-wrap: wrap;
+
+    display: flex;
+    flex-direction: row;
+}
+
+.tobottom {
+    display: flex;
+    flex-direction: column;
+}
+
+#idwebgl {
+/*    border: solid 1px red;
+    width: 640px;
+    height: 360px;*/
+}
+
+#img06 {
+    border: solid 1px green;
+}

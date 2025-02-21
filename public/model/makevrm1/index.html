@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='UTF-8' />
+        <title>.vrm 生成</title>
+        <link rel='stylesheet' href='./index.css' />
+        <script src='./nodetemplate.js'></script>
+        <script src='./three.min.js'></script>
+        <script src='./OrbitControls.js'></script>
+        <script src='./LoaderSupport.js'></script>
+        <script src='./GLTFLoader.js'></script>
+        <script src='./VRMLoader.js'></script>
+        <script src='./objparse.js'></script>
+        <script src='./vtx.js'></script>
+        <script src='./threed.js'></script>
+        <script src='./gltf.js'></script>
+        <script src='./index.js'></script>
+    </head>
+    <body>
+        <div id='info0'></div>
+
+        <label class='pt'><input class='pt' type='checkbox' id='idvis' checked="checked" />表示</label>
+        <label class='pt'><input class='pt' type='checkbox' id='idwire' checked="checked" />ワイヤー</label>
+        <label class='pt'><input class='pt' type='checkbox' id='idaxes' />軸</label>        
+
+        <input type='button' id='idPre2' value='ぷり' />
+        <input type='button' id='idSave3' value='保存3 makeFile' />
+        背を低くした
+
+        <div id='idwebgl'></div>
+
+        <div id='idadd1'></div>
+
+        <div class="toright">
+<div class="tobottom">
+    <div>▼ メインcv00</div>
+    <canvas id='cv00' width='64' height='64'></canvas>
+</div>
+<div>
+    <div>▼ cv01</div>
+            <canvas class='mini' id='cv01'></canvas>
+            <img class='mini' id='imgthumb' src='./v16.png' />
+            <!--           <img id='imgthumb' src='./polybbb_thumb.png' />
+            -->
+</div>
+<div class="tobottom">
+    <div>▼ cv02</div>
+    <canvas class='mini' id='cv02' width='512' height='512'></canvas>
+</div>
+<div class="tobottom">
+    <div>▼ cv03</div>
+    <canvas class='mini' id='cv03' width='512' height='512'></canvas>
+</div>
+<div class="tobottom">
+    <div>▼ cv04</div>
+    <canvas class='mini' id='cv04' width='512' height='512'></canvas>
+</div>
+<div class="tobottom">
+    <div>▼ cv05</div>
+    <canvas class='mini' id='cv05' width='512' height='512'></canvas>
+</div>
+<div class="tobottom">
+    <div>▼ cv06</div>
+    <canvas class='mini' id='cv06' width='512' height='512'></canvas>
+</div>
+<div class="tobottom">
+    <div>06 img</div>
+    <img class='mini' id='img06' />
+</div>
+<div class="tobottom">
+    <div>▼ cv07</div>
+    <canvas class='mini' id='cv07' width='512' height='512'></canvas>
+</div>
+<div class="tobottom">
+    <div>img07</div>
+    <img class='mini' id='img07' src='./inner.png' />
+</div>
+       </div>
+       <hr />
+
+    </body>
+</html>
