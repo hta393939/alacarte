@@ -6,6 +6,38 @@ const _pad = (v, n = 2) => {
   return String(v).padStart(n, '0');
 };
 
+/**
+ * クォータニオンを取得
+ * @param {number} index 0,1,2 
+ * @param {number} deg 
+ * @returns 
+ */
+const _qaxis = (index, deg) => {
+  let cs = Math.cos(deg * Math.PI / 180 * 0.5);
+  let sn = Math.sin(deg * Math.PI / 180 * 0.5);
+  const ret = [0, 0, 0, cs];
+  ret[index] = sn;
+  return ret;
+};
+
+/**
+ * クォータニオン積
+ * @param {number[]} a 
+ * @param {number[]} b 
+ * @returns 
+ */
+const _qmul = (a, b) => {
+  const rea = a[3];
+  const reb = b[3];
+  const ret = [
+    a[0] * reb + b[0] * rea + a[1] * b[2] - a[2] * b[1],
+    a[1] * reb + b[1] * rea + a[2] * b[0] - a[0] * b[2], 
+    a[2] * reb + b[2] * rea + a[0] * b[1] - a[1] * b[0],
+    rea * reb - a[0] * b[0] - a[1] * b[1] - a[2] * b[2],
+  ];
+  return ret;
+};
+
 class Bone {
   constructor() {
     this.name = '';
@@ -38,10 +70,10 @@ class Bone {
       x[2], y[2], z[2], r[2], x[3], y[3], z[3], r[3], 1,
 
                   z[0], r[0], x[1], y[1], z[1], r[1],
-      x[2], y[2], z[2], r[2], x[3], y[3], z[3], r[3], 0, 1,
+      x[2], y[2], z[2], r[2], x[3], y[3], z[3], r[3], 1, 0,
 
                         r[0], x[1], y[1], z[1], r[1],
-      x[2], y[2], z[2], r[2], x[3], y[3], z[3], r[3], 0, 0, 1,
+      x[2], y[2], z[2], r[2], x[3], y[3], z[3], r[3], 1, 0, 0,
     ];
   }
 }
@@ -182,8 +214,39 @@ class Misc {
    * 
    */
   async downloadMotion() {
+    console.log('downloadMotion');
     const motionData = new MotionData();
-    {
+    { // モーション
+      for (let i = 0; i <= 3; ++i) {
+        let frame = i * 10;
+        for (let j = 0; j <= 4; ++j) {
+          const obj = new Bone();
+          obj.frame = frame;
+          obj.name = `b0${15 + j * 2}tree`;
+
+          let sgn = (((j + i) & 1) !== 0) ? -1 : 1;
+
+          switch (j) {
+          case 0:
+            obj.q = _qaxis(2, 90 * sgn);
+            break;
+          case 1:
+            obj.q = _qaxis(2, 90 * sgn);
+            break;
+          case 2:
+            obj.q = _qaxis(2, 90 * sgn);
+            break;
+          case 3:
+            obj.q = _qaxis(2, 90 * sgn);
+            break;
+          case 4:
+            obj.q = _qaxis(2, 90 * sgn);
+            break;
+          }
+
+          motionData.bones.push(obj);
+        }
+      }
 
     }
     {
@@ -201,7 +264,7 @@ class Misc {
    */
   downloadFile(blob, name) {
     const a = document.createElement('a');
-    a.url = URL.createObjectURL(blob);
+    a.href = URL.createObjectURL(blob);
     a.download = name;
     a.click();
   }
@@ -241,6 +304,9 @@ class Misc {
        */
       const ks = motionData.bones;
       const num = ks.length;
+      p.setInt32(c, num, true);
+      c += 4;
+
       for (let i = 0; i < num; ++i) {
         const k = ks[i];
         writeText(k.name, 15);
