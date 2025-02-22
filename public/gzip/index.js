@@ -97,8 +97,9 @@ class Misc {
    * @param {string} name 
    */
   downloadFile(blob, name) {
+    console.log('downloadFile', blob.size, name);
     const a = document.createElement('a');
-    a.url = URL.createObjectURL(blob);
+    a.href = URL.createObjectURL(blob);
     a.download = name;
     a.click();
   }
