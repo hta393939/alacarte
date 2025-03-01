@@ -9,17 +9,17 @@ class AUElement {
     this._index = 0;
 
     this.data = {};
-/**
- * 表示を0-originにしても1から開始する
- */
+    /**
+     * 表示を0-originにしても1から開始する
+     */
     this.data.start = 1;
-/**
- * 1-1 の場合、1フレーム分の長さ
- */
+    /**
+     * 1-1 の場合、1フレーム分の長さ
+     */
     this.data.end = 61;
-/**
- * 配置するレイヤー番号
- */
+    /**
+     * 配置するレイヤー番号
+     */
     this.data.layer = 1;
 
     this.data.overlay = 1;
@@ -31,11 +31,11 @@ class AUElement {
     this.data1 = null;
   }
 
-/**
- * この要素の全ラインを取得する
- * this._index を事前に適切にセットしておくこと
- * @returns {string[]}
- */
+  /**
+   * この要素の全ラインを取得する
+   * this._index を事前に適切にセットしておくこと
+   * @returns {string[]}
+   */
   getLines() {
     const ss = [
       `[${this._index}]`
@@ -73,45 +73,45 @@ class AUElement {
  * テキスト
  */
 class AUText extends AUElement {
-/**
- * 縁取り文字影など無し
- */
+  /**
+   * 縁取り文字影など無し
+   */
   static TYPE_NORMAL = 0;
-/**
- * 影つき
- */
+  /**
+   * 影つき
+   */
   static TYPE_SHADOW = 1;
-/**
- * 影付き薄い
- */
+  /**
+   * 影付き薄い
+   */
   static TYPE_SHADOW2 = 2;
-/**
- * 縁取り
- */
+  /**
+   * 縁取り
+   */
   static TYPE_EDGE = 3;
-/**
- * 縁取り細い
- */
+  /**
+   * 縁取り細い
+   */
   static TYPE_EDGETHIN = 4;
 
-/**
- * 左上
- */
+  /**
+   * 左上
+   */
   static ALIGN_LEFTTOP = 0;
-/**
- * 中央揃え中
- */
+  /**
+   * 中央揃え中
+   */
   static ALIGN_CENTERMIDDLE = 4;
-/**
- * 中央揃え下
- */
+  /**
+   * 中央揃え下
+   */
   static ALIGN_CENTERBOTTOM = 7;
 
-/**
- * UTF-16 little endian をテキスト化
- * @param {string} instr 
- * @returns {string} 4096 文字(0-9a-f)
- */
+  /**
+   * UTF-16 little endian をテキスト化
+   * @param {string} instr 
+   * @returns {string} 4096 文字(0-9a-f)
+   */
   static Make4096(instr) {
     const _pad = (v, n = 2) => String(v).padStart(n, '0');
     const cs = Array.from(instr);
@@ -129,9 +129,9 @@ class AUText extends AUElement {
 
     this.data.camera = 0;
 
-/**
- * 変換元
- */
+    /**
+     * 変換元
+     */
     this._text = '';
 
     this.data0 = {
@@ -153,9 +153,9 @@ class AUText extends AUElement {
       precision: 1,
       color: 'ffffff',
       color2: '1a1a1c',
-      //font: 'BIZ UDPゴシック',
+      font: 'BIZ UDPゴシック',
       //font: 'メイリオ',
-      font: 'Noto Sans JP Black',
+      //font: 'Noto Sans JP Black',
       text: '0000',
     };
     this.data1 = {
@@ -237,9 +237,9 @@ class AUGroup extends AUElement {
 
 class Project {
   constructor() {
-/**
- * @type {AUElement[]}
- */
+    /**
+     * @type {AUElement[]}
+     */
     this.elements = [];
 
     this.data = {
@@ -255,10 +255,10 @@ class Project {
     };
   }
 
-/**
- * 1ファイル分
- * @returns {string[]}
- */
+  /**
+   * 1ファイル分
+   * @returns {string[]}
+   */
   getLines() {
     const ss = [];
     ss.push('[exedit]');
