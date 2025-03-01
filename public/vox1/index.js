@@ -11,19 +11,19 @@ class Misc {
 
   constructor() {
     this.startLayer = 10;
-/**
- * ずんだもんノーマル
- */
+    /**
+     * ずんだもんノーマル
+     */
     this.speakerid = 3;
-/**
- * VOICEVOX ベースアドレス
- */
+    /**
+     * VOICEVOX ベースアドレス
+     */
     this.base = 'http://127.0.0.1:50021';
   }
 
-/**
- * 初期化する
- */
+  /**
+   * 初期化する
+   */
   async initialize() {
     this.setListener();
 
@@ -33,9 +33,9 @@ class Misc {
     console.log('buf', buf);
   }
 
-/**
- * VOICEVOX のスピーカ列挙要求
- */
+  /**
+   * VOICEVOX のスピーカ列挙要求
+   */
   async enumVoice() {
     const res = await fetch(`${this.base}/speakers`);
     const speakers = await res.json();
@@ -58,18 +58,18 @@ class Misc {
     }
   }
 
-/**
- * .wav バイナリをパースして情報を得る
- * @param {ArrayBuffer} ab 
- * @returns 
- */
+  /**
+   * .wav バイナリをパースして情報を得る
+   * @param {ArrayBuffer} ab 
+   * @returns 
+   */
   parseWav(ab) {
-/**
- * 
- * @param {DataView} p 
- * @param {number} c 開始オフセット
- * @returns {string}
- */
+    /**
+     * 
+     * @param {DataView} p 
+     * @param {number} c 開始オフセット
+     * @returns {string}
+     */
     const _readfourcc = (p, c) => {
       let s = '';
       for (let i = 0; i < 4; ++i) {
@@ -115,12 +115,12 @@ class Misc {
     return ret;
   }
 
-/**
- * VOICEVOX へ要求して結果を受け取る
- * @param {string} text 
- * @param {boolean} replay 
- * @returns 
- */
+  /**
+   * VOICEVOX へ要求して結果を受け取る
+   * @param {string} text 
+   * @param {boolean} replay 
+   * @returns 
+   */
   async say(text, replay) {
     let param = {};
     const sp = new URLSearchParams();
@@ -225,19 +225,19 @@ class Misc {
 
   }
 
-/**
- * ～znd.txt をパースする
- * @param {string} instr 
- */
+  /**
+   * ～znd.txt をパースする
+   * @param {string} instr 
+   */
   parseZndml(instr) {
     const ret = {
       says: [],
       pathprefix: '',
       postpadding: 0,
     };
-/**
- * 本家にあわせて {|}
- */
+    /**
+     * 本家にあわせて {|}
+     */
     const reyomi = /(?<fw>[^\{]*)<(?<display>[^\{\}]*)\|(?<yomi>[^\{\}]*)\>(?<bw>.*)/;
 
     const lines = instr.split('\n');
@@ -247,9 +247,9 @@ class Misc {
       if (line.length === 0) {
         continue; // 空行は無視する
       }
-/**
- * 先頭の1文字
- */
+      /**
+       * 先頭の1文字
+       */
       const top = line.substring(0, 1);
       if (top === '#') {
         continue; // コメントであり無視する
@@ -286,7 +286,7 @@ class Misc {
       }
 
       if (top == ' ') {
-// 継続なので obj は消さずに残す
+        // 継続なので obj は消さずに残す
         obj.text += '\r\n';
         line = line.trim();
         obj.keep = line;
@@ -305,7 +305,7 @@ class Misc {
         };
       }
 
-      while(true) {
+      while (true) {
         const m = reyomi.exec(obj.keep);
         if (!m) {
           obj.text += obj.keep;
@@ -325,10 +325,10 @@ class Misc {
     return ret;
   }
 
-/**
- * readwrite でディレクトリを指定する
- * @returns {FileSystemDirectoryHandle}
- */
+  /**
+   * readwrite でディレクトリを指定する
+   * @returns {FileSystemDirectoryHandle}
+   */
   async openDir() {
     const diropt = {
       mode: 'readwrite'
@@ -338,18 +338,18 @@ class Misc {
     return dirHandle;
   }
 
-/**
- * ディレクトリに対して処理を実施する
- * @param {FileSystemDirectoryHandle} dirHandle ディレクトリハンドル指定
- * @returns {}
- */
+  /**
+   * ディレクトリに対して処理を実施する
+   * @param {FileSystemDirectoryHandle} dirHandle ディレクトリハンドル指定
+   * @returns {}
+   */
   async processDir(dirHandle, startLayer) {
     console.log('processDir', dirHandle.name, startLayer);
     const useVox = document.getElementById('idusevox')?.checked;
-/**
- * znd.txt を探す
- * @type {FileSystemFileHandle}
- */
+    /**
+     * znd.txt を探す
+     * @type {FileSystemFileHandle}
+     */
     let mlfh = null;
     const _filenames = [];
     let basename = 'znd';
@@ -380,14 +380,14 @@ class Misc {
       return;
     }
 
-/**
- * @type {HTMLElement}
- */
+    /**
+     * @type {HTMLElement}
+     */
     const viewel = document.getElementById('processingview');
 
-/**
- * 1シーン分
- */
+    /**
+     * 1シーン分
+     */
     const project = new AVIUTL.Project();
     let counter = 0;
     let timeCounter = 0;
@@ -396,9 +396,9 @@ class Misc {
       const file = await mlfh.getFile();
       const text = await file.text();
       const result = this.parseZndml(text);
-/**
- * 全体グループパディングフレーム数
- */
+      /**
+       * 全体グループパディングフレーム数
+       */
       const postPaddingFrame = Math.floor(result.postpadding * _fps);
 
       for (const say of result.says) {
@@ -419,7 +419,7 @@ class Misc {
         if (useVox) {
           try {
             waveBinary = await this.say(say.yomi, false);
-          } catch(ec) {
+          } catch (ec) {
             console.warn('catch', ec.message, 'name', name);
           }
         }
@@ -466,9 +466,9 @@ class Misc {
       { // グループ制御
         const ge = new AVIUTL.AUGroup();
         ge.data.start = 1;
-/**
- * end に指定する値
- */
+        /**
+         * end に指定する値
+         */
         let wholeEnd = ge.data.start + timeCounter - 1;
         wholeEnd += postPaddingFrame;
 
@@ -482,9 +482,9 @@ class Misc {
       { // グループ制御
         const ge = new AVIUTL.AUGroup();
         ge.data.start = 1;
-/**
- * end に指定する値
- */
+        /**
+         * end に指定する値
+         */
         let wholeEnd = ge.data.start + timeCounter - 1;
         wholeEnd += postPaddingFrame;
 
@@ -495,7 +495,7 @@ class Misc {
         project.elements.push(ge);
       }
 
-// .exo ファイルを書き込む
+      // .exo ファイルを書き込む
       const fileHandle = await dirHandle.getFileHandle(`${basename}.exo`,
         { create: true });
       const writer = await fileHandle.createWritable();
@@ -516,11 +516,11 @@ class Misc {
     console.log('processDir 終わり');
   }
 
-/**
- * 文字列から Shift_JIS のバイナリ配列を返す
- * @param {string} instr 
- * @returns {number[]} バイナリ(0-255)のための配列
- */
+  /**
+   * 文字列から Shift_JIS のバイナリ配列を返す
+   * @param {string} instr 
+   * @returns {number[]} バイナリ(0-255)のための配列
+   */
   strToSJIS(instr) {
     const unicodeArray = Encoding.stringToCode(instr);
     const sjisArray = Encoding.convert(unicodeArray,
@@ -534,6 +534,3 @@ class Misc {
 
 const misc = new Misc();
 misc.initialize();
-
-
-

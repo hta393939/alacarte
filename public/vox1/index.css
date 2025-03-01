@@ -1,10 +1,9 @@
-@charset "UTF-8";
 
 .num6 {
   width: 6em;
 }
 
-.pt {
+.pointer {
   cursor: pointer;
 }
 

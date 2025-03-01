@@ -101,6 +101,10 @@ class MotionData {
 class Misc {
   constructor() {
 
+    this.param = {
+      sec: 6,
+    };
+
     this.names = [
       //`center`, // en
       `b004tree`,
@@ -210,12 +214,37 @@ class Misc {
 
   }
 
+  gatherParam() {
+    const ks = Object.keys(this.param);
+    for (const key of ks) {
+      const el = document.getElementById(`${key}`);
+      if (!el) {
+        continue;
+      }
+      const val = Number.parseFloat(el.value);
+      if (!Number.isFinite(val)) {
+        continue;
+      }
+      this.param[key] = val;
+    }
+    return this.param;
+  }
+
   /**
    * 
    */
   async downloadMotion() {
     console.log('downloadMotion');
+    const param = this.gatherParam();
     const motionData = new MotionData();
+
+    const deg1 = 90;
+    const poses = {
+      p0: [deg1, -deg1, -deg1, deg1, 0],
+      p1: [0, 0, 0, 0, 0],
+      pt: [0, 0, 0, 0, 0],
+    };
+
     { // モーション
       for (let i = 0; i <= 3; ++i) {
         let frame = i * 10;
@@ -270,12 +299,12 @@ class Misc {
   }
 
   /**
-   * 
+   * ファイル化する
    * @param {MotionData} motionData 
    * @returns 
    */
   async makeFile(motionData) {
-    const buf = new ArrayBuffer(65536);
+    const buf = new ArrayBuffer(1024 * 128);
     const p = new DataView(buf);
     let c = 0;
 

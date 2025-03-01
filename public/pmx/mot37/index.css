@@ -8,6 +8,11 @@
   flex-direction: row;
 }
 
+.tobottom {
+  display: flex;
+  flex-direction: column;
+}
+
 .drop {
   border: dashed 4px black;
   border-radius: 1rem;
