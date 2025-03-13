@@ -155,6 +155,51 @@ class Misc {
       });
     }
 
+    {
+      const el = document.getElementById('makingbutton');
+      el?.addEventListener('click', () => {
+        console.log('makingbutton click');
+        
+        const dst = document.getElementById('subcanvas');
+        //const name = `vpad_`;
+        this.makeButton(dst);
+        //this.download(new Blob([buf]), `${name}.png`);
+      });
+    }
+
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  async makeButton(canvas) {
+    console.log('makeButton');
+    const w = 256;
+    const h = 256;
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+
+    c.drawImage(window.vpad,
+      0, 0, w, h,
+      0, 0, w, h,
+    );
+    c.clearRect(0, 0, w, 64);
+    c.clearRect(0, 128, h, 64);
+    const img = c.getImageData(0, 0, w, h);
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let offset = (x + w * y) * 4;
+        let r = img.data[offset];
+        let g = img.data[offset+1];
+        let b = img.data[offset+2];
+        let a = img.data[offset+3];
+        if (a !== 0) {
+          console.log(`${a}`); // 32, 64, 87, 96, 115, 128, 144
+        }
+      }
+    }
   }
 
   async selectDir() {

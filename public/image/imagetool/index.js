@@ -301,7 +301,8 @@ class Misc {
     {
       const el = document.getElementById('processfordir');
       el?.addEventListener('click', () => {
-        this.processForDir();
+        const usefunction = document.getElementById('usefunction');
+        this.processForDir(usefunction?.checked);
       });
     }
 
@@ -381,6 +382,29 @@ class Misc {
 
   }
 
+  /**
+   * 
+   * @param {*} param 
+   */
+  async changeParam(param) {
+    for (const v of [
+      { k: 'x', id: 'cellx' },
+      { k: 'y', id: 'celly' },
+      { k: 'w', id: 'cellw' },
+      { k: 'h', id: 'cellh'},
+    ]) {
+      const el = document.getElementById(v.id);
+      if (!el) {
+        continue;
+      }
+      el.value = param[v.k];
+    }
+  }
+
+  /**
+   * ディレクトリ内の画像を処理する
+   * @param {boolean} usefunction
+   */
   async processForDir() {
     console.log('processForDir called');
     const dh = this.dirHandle;
@@ -389,6 +413,8 @@ class Misc {
 
     let count = 0;
     const re = /^(?<body>.+)(?<ext>\.[^.]+)$/;
+
+    const files = [];
     for await (const [k, h] of inputdh) {
       console.log(k, h); // 短い名前とハンドル
       if (h.kind !== 'file') {
@@ -404,6 +430,31 @@ class Misc {
         continue;
       }
 
+      files.push({ name: k, handle: h, match: m });
+    }
+    files.sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    });
+    console.log('files', files);
+    //return;
+
+    const _f = (counter) => {
+      const index = counter % 15;
+      const ot = -13;
+      const ys = [0, -2, -4, -7, -10, -13, ot, ot, ot, ot, ot, -10, -8, -5, -2];
+      let x = 46;
+      let y = ys[index] + 64;
+      let w = 4;
+      let h = 8;
+      return { x, y, w, h };
+    };
+
+    const num = files.length;
+    for (let i = 0; i < num; ++i) {
+      const filekh = files[i];
+      const k = filekh.name;
+      const h = filekh.handle;
+      console.log(k, h); // 短い名前とハンドル
       /**
        * @type {File}
        */
@@ -412,6 +463,8 @@ class Misc {
       let dstbuf = null;
       {
         const result = await this.parseImage(file);
+
+        await this.changeParam(_f(i));
 
         this.act();
         // 変換処理後のバイナリ
@@ -423,7 +476,7 @@ class Misc {
       const opt = {
         create: true,
       };
-      const outname = `${m.groups['body']}_po.png`;
+      const outname = `${filekh.match.groups['body']}_po.png`;
       const fh = await outputdh.getFileHandle(outname, opt);
 
       const wr = await fh.createWritable({
