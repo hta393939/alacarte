@@ -252,78 +252,67 @@ class Misc {
   }
 
   /**
-   * 丸い分布
-   * @param {HTMLCanvasElement} canvas 
+   * 量子化する
+   * 
    */
-  async make2(canvas) {
-
-    const w = canvas.width;
-    const h = canvas.height;
+  async makequat() {
+    /**
+     * @type {HTMLImageElement}
+     */
+    const img = document.getElementById('shootdot');
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    const canvas = document.getElementById('maincanvas');
+    canvas.width = w;
+    canvas.height = h;
     const c = canvas.getContext('2d');
+    c.drawImage(img, 0, 0);
     const data = c.getImageData(0, 0, w, h);
 
-    for (let i = 0; i < 1000; ++i) {
-      const u = Math.random();
-      const v = Math.random();
-      let z = - u * 2 + 1;
-      let rr = Math.sqrt(1 - z * z);
-      let x = rr * Math.cos(2 * Math.PI * v);
-      let y = rr * Math.sin(2 * Math.PI * v);
-
-      x *= w;
-      y *= h;
-
-      let lv = 128;
-      x = Math.floor(x);
-      y = Math.floor(y);
-      if (x < 0 || y < 0) {
-        continue;
-      }
-
-      const ft = (w * y + x) * 4;
-      data.data[ft  ] += lv;
-      data.data[ft+1] += lv;
-      data.data[ft+2] += lv;
-      data.data[ft+3] = 255;
-    }
-
-    if (false) {
-      const rot = Math.PI * 20 / 180;
+    if (true) {
+      //const q = 32;
+      const q = 64;
+      const _q = (v) => {
+        return Math.floor((v + q / 2) / q) * q;
+      };
       for (let y = 0; y < h; ++y) {
         for (let x = 0; x < w; ++x) {
-          let dx = (x - w * 0.5) / (w * 0.5);
-          let dy = (y - h * 0.5) / (h * 0.5);
-          const d = Math.sqrt(dx * dx + dy * dy);
-          const ang = Math.atan2(-dy, dx);
-          const deg = ang * 180 / Math.PI;
-
-          dx *= 1;
-          dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
-          const cs = Math.cos(rot);
-          const sn = Math.sin(rot);
-          let vx = dx * cs - dy * sn;
-          let vy = dx * sn + dy * cs;
-
-          const d2 = Math.sqrt(vx * vx + vy * vy);
-          let lv = 1 - d2 * 1;
-          lv = Math.max(0, Math.min(1, lv));
+          const bx = Math.floor(x / 32);
+          const by = Math.floor(y / 32);
 
           const offset = (x + h * y) * 4;
 
-          lv *= 255;
+          const mx = (x + bx) % 4;
+          const my = (y + Math.floor(bx / 4) * 2) % 4;
+          let pat = (mx == 0 && my == 0) || (mx == 2 && my == 2);
+          //pat = 0;
 
-          let r = 255;
-          let g = 204;
-          let b = 204;
-          let a = lv;
-          r = lv;
-          g = lv;
-          b = lv;
-          a = 255;
+          let r = data.data[offset];
+          let g = data.data[offset+1];
+          let b = data.data[offset+2];
+          let a = data.data[offset+3];
+          r *= a / 256;
+          g *= a / 256;
+          b *= a / 256;
+          r = _q(r);
+          g = _q(g);
+          b = _q(b);
 
-          r = Math.max(0, Math.min(r, 255));
-          g = Math.max(0, Math.min(g, 255));
-          b = Math.max(0, Math.min(b, 255));
+          const rx = x % 32 - 15.5;
+          const ry = y % 32 - 15.5;
+          const rr = Math.sqrt(rx ** 2 + ry ** 2);
+
+          if (pat || rr > 7.5) {
+            r = 0;
+            g = 0;
+            b = 0;
+            a = 0;
+          } else {
+            a = 255;
+          }
 
           data.data[offset+0] = r;
           data.data[offset+1] = g;
@@ -341,286 +330,66 @@ class Misc {
    */
   async make3(canvas) {
     console.log('make3 called');
-    const w = canvas.width;
-    const h = canvas.height;
+    const w = 16 * 8;
+    const h = 16 * 8;
+    canvas.width = w;
+    canvas.height = h;
     const c = canvas.getContext('2d');
     //c.fillStyle = '#c0c0c0'; // 192
     //c.fillRect(0, 0, w, h);
 
+    const cols = [
+      [0, 0, 256],
+      [0, 256, 0],
+      [256, 0, 0],
+      [256, 256, 0],
+    ];
+
     const data = c.getImageData(0, 0, w, h);
-
-    let c0 = [0, 153, 0];
-    let c1 = [51, 255, 51];
-    const objs = [];
-    for (let i = 0; i < 32; ++i) {
-      const ang = Math.PI * 2 * i / 32;
-      const odd = (i & 1) !== 0;
-      {
-        const k = 0.5 + (odd ? +0.05 : -0.05);
-        const obj = {
-          x: Math.cos(ang) * k * w * 0.5 + w * 0.5,
-          y: Math.sin(ang) * k * h * 0.5 + h * 0.5,
-          z: 0,
-          radius: 2 / 64 * w,
-        };
-        objs.push(obj);
-      }
-
-      if (!odd) {
-        const k = 0.5 + 0.15;
-        const obj = {
-          x: Math.cos(ang + 0.06) * k * w * 0.5 + w * 0.5,
-          y: Math.sin(ang + 0.06) * k * h * 0.5 + h * 0.5,
-          z: 0,
-          radius: 2 / 64 * w,
-        };
-        objs.push(obj);
-      }
-    }
-
-    if (true) {
-      for (let y = 0; y < h; ++y) {
-        for (let x = 0; x < w; ++x) {
-          const sph = [
-            x, y, 0,
-          ];
-          let r = 51;
-          let g = 176;
-          let b = 51; // 126.23
+    for (let i = 0; i < 8; ++i) {
+      for (let j = 0; j < 8; ++j) {
+      for (let y = 0; y < 16; ++y) {
+        for (let x = 0; x < 16; ++x) {
+          let offset = (x + (j * 16) + w * (y + i * 16)) * 4;
+          let rx = x - 8;
+          let ry = y - 7;
+          let rr = Math.sqrt(rx ** 2 + ry ** 2);
+          const colIndex = Math.floor(j / 2);
+          let r = cols[colIndex][0];
+          let g = cols[colIndex][1];
+          let b = cols[colIndex][2];
           let a = 255;
-          for (const obj of objs) {
-            const dist = Math.sqrt(
-              (obj.x - sph[0]) ** 2
-              + (obj.y - sph[1]) ** 2
-              + (obj.z - sph[2]) ** 2
-            );
-            const diff = 1 - dist / obj.radius;
-            if (diff > 1 || diff <= 0) {
-              continue;
-            }
-
-            const col = lerp(
-              c0,
-              c1,
-              Math.min(1, Math.max(0, diff)),
-              true);
-            r = col[0];
-            g = col[1];
-            b = col[2];
-          }
-          const offset = (x + w * y) * 4;
-
-          let lv = (r * 87 + g * 150 + b * 29) / 256;
-          lv += 64 + 2;
-
-          {
-            const d = Math.sqrt((x - w * 0.5) ** 2
-              + (y - h * 0.5) ** 2) / (w * 0.5);
-            const thr = 3 / 16; // 2 / 8
-            if (d <= thr) {
-              lv = _lerp(64, 192, d / thr);
-            }
+          let mx = (x + Math.floor(j / 2)) % 4;
+          let my = (y + Math.floor(i / 4) * 0) % 4;
+          let pat = (mx == 0 && my == 0) || (mx == 2 && my == 2);
+          if (rr > 5 && ((j % 2) == 0)) {
+            r *= 0.5;
+            g *= 0.5;
+            b *= 0.5;
+          } else if (rr <= 5 && ((j % 2) != 0)) {
+            r *= 0.5;
+            g *= 0.5;
+            b *= 0.5;
           }
 
-          r = lv;
-          g = lv;
-          b = lv;
 
-          r = Math.max(0, Math.min(r, 255));
-          g = Math.max(0, Math.min(g, 255));
-          b = Math.max(0, Math.min(b, 255));
-          a = Math.max(0, Math.min(a, 255));
-          data.data[offset+0] = r;
+          if (pat && rr < 5.25) {
+            a = 0;
+          }
+          if (rr >= 6.5 + 1) {
+            a = 0;
+          }
+          data.data[offset] = r;
           data.data[offset+1] = g;
           data.data[offset+2] = b;
           data.data[offset+3] = a;
         }
-      }
-    }
-    c.putImageData(data, 0, 0);
-    console.log('make3 leave');
-  }
-
-  /**
-   * 明るくしたい場所は白アルファ
-   * 影は黒アルファチャンネル
-   * 無関係はalpha0
-   * 
-   * @param {HTMLCanvasElement} canvas 
-   */
-  async makeWater(param) {
-    console.log('makeWater called');
-    const w = param.size;
-    const h = w;
-    const canvas = new OffscreenCanvas(w, h);
-    const c = canvas.getContext('2d');
-
-    const data = c.getImageData(0, 0, w, h);
-
-    if (true) {
-      /**
-       * 中心から外までを1.0としたときの球半径
-       */
-      const rradius = 0.25;
-
-      const eradius = 0.01;
-      /**
-       * n ピクセル相当
-       */
-      const pn = 4 * 2 / param.size;
-
-      let leftblur = true;
-      let rightblur = true;
-      switch (param.tail) {
-      case 'e':
-        leftblur = true;
-        rightblur = true;
-        break;
-      case 'l':
-        leftblur = false;
-        rightblur = true;
-        break;
-      case 'r':
-        leftblur = true;
-        rightblur = false;
-        break;
-      case 'w':
-        leftblur = false;
-        rightblur = false;
-        break;
-      }
-
-      const tailLen = param.taillen;
-      const lastLen = param.lastlen;
-      const heightrate = param.heightrate;
-      const ishigh = param.ishigh;
-
-      for (let y = 0; y < h; ++y) {
-        for (let x = 0; x < w; ++x) {
-          const offset = (x + w * y) * 4;
-
-          let lv = 0; // デフォルトは0黒
-          let a = 0;
-
-          const rx = (x - w * 0.5) / (w * 0.5);
-          const ry = (h * 0.5 - y) / (h * 0.5);
-          const d = Math.sqrt(rx ** 2 + ry ** 2);
-          const bx = Math.abs(rx);
-
-          const ax = rx * 1;
-          let spec = 0;
-
-          /**
-           * 上半分の減衰
-           */
-          let rate = 1 - ry / lastLen;
-
-          if (ry > tailLen) { // 最後の上
-            let hr = 0.5 * rradius;
-            if (bx > hr) {
-              a = (hr + eradius + pn - bx) / pn;
-
-              if (rx > 0 && rightblur) {
-                a = 0;
-              }
-              if (rx < 0 && leftblur) {
-                a = 0;
-              }
-
-            } else { // 内側
-              const mx = bx / hr;
-              let z = Math.sqrt(1 - mx ** 2);
-              a = z;
-              lv = 1;
-            }
-            a = Math.max(0, Math.min(1, a));
-            a *= rate;
-
-          } else if (ry >= 0) { // 上半分
-            let ang = Math.PI * 2 * ry / tailLen * 0.5;
-            let hr = (Math.cos(ang) + 3) / 4 * rradius;
-
-            if (bx > hr) { // 外側
-              const diff = bx - hr;
-
-              let thr = eradius;
-              let k = 1;
-              if (leftblur && rx < 0) {
-                k = rate ** 6;
-              }
-              if (rightblur && rx > 0) {
-                k = rate ** 6;
-              }
-              thr *= k;
-
-              a = (thr + pn * k - diff) / (pn * k);
-            } else { // 内側
-              const mx = bx / hr;
-              let z = Math.sqrt(1 - mx ** 2);
-              a = z;
-
-              lv = 1; // 白
-            }
-            a = Math.max(0, Math.min(1, a));
-            a *= rate;
-
-          } else { // 下半分
-            let ay = ry * 0.98;
-            let ad = Math.sqrt(ax ** 2 + ay ** 2);
-            if (ad < rradius) { // 楕円の内側
-              if (d < rradius) { // 縁の内側
-                let z = Math.sqrt(1 - (d / rradius) ** 2);
-                a = z;
-
-                if (ishigh) {
-                  const q3 = Math.sqrt(1 / 3);
-                  const lightv = [-q3, -q3, +q3];
-                  let nv = [
-                    rx / rradius,
-                    ry / rradius,
-                    z,
-                  ];
-                  const dp = _dot(nv, lightv);
-                  const ref = [
-                    -lightv[0] + 2 * dp * nv[0],
-                    -lightv[1] + 2 * dp * nv[1],
-                    -lightv[2] + 2 * dp * nv[2],
-                  ];
-                  const viewv = _norm([
-                    0 - x,
-                    0 - y,
-                    (-5) - z,
-                  ]);
-                  const sp = Math.max(0, _dot(ref, viewv));
-                  spec = Math.pow(sp, 5);
-                }
-
-                lv = 1; // 白
-              } else { // 楕円の内側で円の外
-                lv = 0; // 黒
-                a = 1;
-              }
-
-            } else { // 下半分の外側
-              a = (rradius + eradius + pn - ad) / pn;
-              a = Math.max(0, Math.min(1, a));
-            }
-          }
-          a *= heightrate;
-          a += spec;
-
-          lv = Math.max(0, Math.min(lv * 255, 255));
-          a = Math.max(0, Math.min(a * 255, 255));
-          data.data[offset+0] = lv;
-          data.data[offset+1] = lv;
-          data.data[offset+2] = lv;
-          data.data[offset+3] = a;
         }
       }
     }
+
     c.putImageData(data, 0, 0);
-    console.log('makeWater leave');
-    return canvas;
+    console.log('make3 leave');
   }
 
   /**
@@ -696,16 +465,16 @@ class Misc {
     const cellw = this.cellw;
     const cellh = cellw;
 
-/**
- * 入力画像の幅
- */
+    /**
+     * 入力画像の幅
+     */
 //        const w = src.width;
 //        const h = src.height;
     const context = src.getContext('2d');
-/**
- * 書き出し先
- * @type {HTMLCanvasElement}
- */
+    /**
+     * 書き出し先
+     * @type {HTMLCanvasElement}
+     */
     const canvas = document.getElementById('subcanvas');
     const c = canvas.getContext('2d');
     canvas.width = cellw * scale;
@@ -810,12 +579,9 @@ class Misc {
     }
 
     {
-      const el = document.getElementById('idmake2');
+      const el = document.getElementById('idmakequat');
       el?.addEventListener('click', async () => {
-        const canvas = document.getElementById('maincanvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        await this.make2(canvas);
+        await this.makequat();
       });
     }
 
@@ -823,39 +589,9 @@ class Misc {
       const el = document.getElementById('idmake3');
       el?.addEventListener('click', async () => {
         const canvas = document.getElementById('maincanvas');
-        canvas.width = 1024;
-        canvas.height = 1024;
+        canvas.width = 16 * 8;
+        canvas.height = 16 * 8;
         await this.make3(canvas);
-      });
-    }
-
-    {
-      const el = document.getElementById('makewaterbt');
-      el?.addEventListener('click', async () => {
-        //const param = this.getCommon();
-
-
-        const canvas = document.getElementById('backcanvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        const param = {
-          size: 512,
-          taillen: 0.75,
-          //lastlen: 0.98,
-          lastlen: 1,
-          //taillen: 1,
-          //heightrate: 0.5,
-          heightrate: 0.75,
-          ishigh: false,
-          //ishigh: true,
-          tail: document.getElementById('tail')?.value || 'e',
-        };
-        const src = await this.makeWater(param);
-        const c = canvas.getContext('2d');
-        c.drawImage(src,
-          0, 0, src.width, src.height,
-          0, 0, canvas.width, canvas.height,
-        );
       });
     }
 

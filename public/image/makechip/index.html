@@ -5,10 +5,10 @@
     <title>チップ</title>
     <link rel="stylesheet" href="./index.css" />
   </head>
-  <body>
+  <body class="back">
     <div>
       <button class="pointer" id="idmake1">make chip</button>
-      <button class="pointer" id="idmake2">make2</button>
+      <button class="pointer" id="idmakequat">make quat</button>
       <button class="pointer" id="idmake3">make3</button>
     </div>
 
@@ -45,7 +45,6 @@
           <option value="r">右</option>
           <option value="w">長い</option>
         </select>
-        <button class="pointer" id="makewaterbt">makewater</button>
       </div>
 
     </div>
@@ -53,6 +52,7 @@
     <canvas id="maincanvas"></canvas>
     <canvas id="subcanvas"></canvas>
     <canvas id="backcanvas"></canvas>
+    <img src="./shootdot.png" id="shootdot" />
 
     <script type="module" src="./index.js"></script>
   </body>

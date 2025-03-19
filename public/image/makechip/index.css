@@ -1,4 +1,9 @@
 
+.back {
+  background-image: url('back.png');
+  background-repeat: repeat;
+}
+
 #backcanvas {
   background-color: darkgoldenrod;
 }
@@ -23,6 +28,8 @@
 }
 
 #maincanvas {
+  width: 256px;
+  height: 256px;
   border: solid 1px blue;
 }
 
