@@ -55,9 +55,10 @@ export class PrimitiveBuilder extends PMX.Maker {
   }
 
   /**
-   * 枚数
+   * @param {Object} param 
+   * @param {number} param.planenum 枚数
    */
-  makePlane(param) {
+  make(param) {
     const planenum = param.planenum;
     const d = new Date();
 

@@ -1,6 +1,7 @@
 /**
  * @file capsule8.js
  */
+// 未使用
 // make() で生成
 // sdef
 

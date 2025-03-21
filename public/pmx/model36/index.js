@@ -98,10 +98,10 @@ class Misc {
     this.STORAGE = 'model';
   }
 
-/**
- * 
- * @param {File} file 
- */
+  /**
+   * 
+   * @param {File} file 
+   */
   async parseFile(file) {
     const ab = await file.arrayBuffer();
     const parser = new PMX.Maker();
@@ -268,7 +268,7 @@ class Misc {
         nameEn: `plane${planenum}`,
       });
       const writer = new PrimitiveBuilder();
-      writer.makePlane(param);
+      writer.make(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}.pmx`);
       console.log('make plane', planenum);
