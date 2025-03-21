@@ -4,8 +4,9 @@
 
 import { BoxBuilder } from "./box.js";
 import { CylinderBuilder } from "./cylinder.js";
-import {PlateBuilder} from "./plate.js";
+import { PlateBuilder } from "./plate.js";
 import { PlaneDiaBuilder } from "./planedia.js";
+import { PrimitiveBuilder } from "./primitive.js";
 
 const _lim = (a, x, b) => {
   if (x < a) {
@@ -266,7 +267,7 @@ class Misc {
       Object.assign(param, {
         nameEn: `plane${planenum}`,
       });
-      const writer = new CapsuleBuilder();
+      const writer = new PrimitiveBuilder();
       writer.makePlane(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}.pmx`);
