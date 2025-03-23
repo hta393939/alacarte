@@ -253,7 +253,7 @@ class Misc {
 
   /**
    * 量子化する
-   * 
+   * 不使用
    */
   async makequat() {
     /**
@@ -379,6 +379,18 @@ class Misc {
           if (rr >= 6.5 + 1) {
             a = 0;
           }
+
+          if (i >= 2) {
+            let size = 16 * ((i >= 4) ? 2 : 1);
+            size = 16;
+            const ret = this.makeBarrier(x + j * 16, y + i * 16,
+              size);
+            r = ret[0];
+            g = ret[1];
+            b = ret[2];
+            a = ret[3];
+          }
+
           data.data[offset] = r;
           data.data[offset+1] = g;
           data.data[offset+2] = b;
@@ -390,6 +402,78 @@ class Misc {
 
     c.putImageData(data, 0, 0);
     console.log('make3 leave');
+  }
+
+  /**
+   * 
+   * @param {number} inx 
+   * @param {number} iny 
+   * @returns {number[]}
+   */
+  makeBarrier(inx, iny, size) {
+      const _atan = (x, y) => {
+        if (y === 0) {
+          return (x > 0) ? 0 : -180;
+        }
+        if (x === 0) {
+          return (y > 0) ? 90 : -90;
+        }
+        if (x < 0 && y > 0) {
+          return 180 - Math.atan2(y, -x) * 180 / Math.PI;
+        }
+        if (x < 0 && y < 0) {
+          return Math.atan2(y, x) * 180 / Math.PI;
+        }
+        if (x > 0 && y < 0) {
+          return -Math.atan2(-y, x) * 180 / Math.PI;
+        }
+        return Math.atan2(y, x) * 180 / Math.PI;
+      };
+
+      const smallr = 1.5 * size / 16;
+      let offset = 45 * Math.floor(inx / size) + 30;
+      let sx = inx % size;
+      let sy = iny % size;
+      let rx = sx - size / 2;
+      let ry = sy - (size / 2 - 1);
+      let rr = Math.sqrt(rx ** 2 + ry ** 2);
+      const ang = _atan(-ry, rx) * Math.PI / 180;
+      const scale = 3;
+      const adjust = 5 * size / 16
+        + smallr * Math.cos(ang * scale + (offset + 0 * 120) * Math.PI / 180);
+      const adjust2 = 5 * size / 16
+        + smallr * Math.cos(ang * scale + (offset + 180) * Math.PI / 180);
+
+    let f = (rr - adjust) ** 2;
+    let f2 = (rr - adjust2) ** 2;
+    const index = Math.floor(inx / (16 * 4)) + 2 * (Math.floor(iny / 16) & 1);
+    const cols = [
+      [255, 255, 255],
+      [0, 255, 0],
+      [255, 255, 0],
+      [255, 0, 0],
+    ];
+    const ret = [
+      ...(cols[index]), 255,
+    ];
+    //const thr = Math.sqrt(0.5) ** 2;
+    //const thr = Math.sqrt(0.37) ** 2; // 傾けないときこのぐらい
+    const thr = Math.sqrt(0.30) ** 2;
+    //ret[3] = (f < thr) ? 255 : 0;
+    ret[3] = (f < thr || f2 < thr) ? 255 : 0;
+    const fmax = (rr - Math.max(adjust, adjust2)) ** 2;
+    ret[3] = (fmax < thr) ? 255 : 0;
+
+    if (iny >= 96) {
+      if (ret[3] === 0) {
+        ret[0] = 0;
+        ret[1] = 0;
+        ret[2] = 0;
+        ret[3] = 255;
+      }
+    }
+
+    return ret;
   }
 
   /**
