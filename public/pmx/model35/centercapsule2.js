@@ -68,10 +68,7 @@ class CenterCapsule2 extends PMX.Maker {
   make(param) {
     console.log('make', param);
 
-    const useradius = param.useradius;
-    const useradius2 = param.useradius2;
-    const useradius4 = param.useradius4;
-    const useradius8 = param.useradius8;
+    //const useradius = param.useradius;
 
     /**
      * true でいいや
@@ -80,7 +77,7 @@ class CenterCapsule2 extends PMX.Maker {
     /**
      * false でいいや
      */
-    const usedynamic = false;
+    //const usedynamic = false;
     /**
      * 一次的に全
      */
@@ -170,7 +167,7 @@ class CenterCapsule2 extends PMX.Maker {
     let s = `${d.toLocaleString()} CenterCapsule.make forward\r\n`;
     s += `IK: ${_useIK}, 物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
-    s += `1/4化: ${useradius4}, 1/8化: ${useradius8}, フルコリジョン: ${usefull}\r\n`;
+    s += `フルコリジョン: ${usefull}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
@@ -226,15 +223,15 @@ class CenterCapsule2 extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.sin(vang);
-          let y = sn * rr;
+          let x = -sn * rr; // MARK: ok
           let z = cs * rr;
-          let x = -Math.cos(vang);
+          let y = -Math.cos(vang);
 
           v.n = this.normalize([x, y, z]);
           x *= adjustR;
           y *= adjustR;
           z *= adjustR;
-          x += -centerOffset;
+          y += -centerOffset;
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             (j / div),
@@ -263,12 +260,12 @@ class CenterCapsule2 extends PMX.Maker {
         }
       }
 
-      let bx = - centerOffset;
+      let by = - centerOffset;
       for (let h = 0; h < beltNum; ++h) { // まんなか。座標ループ
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
-          const px = bx + i * beltHeight / div;
-          const result = calcRadius((px - (-halfAllLength)) / (beltHeight * beltNum));
+          const py = by + i * beltHeight / div;
+          const result = calcRadius((py - (-halfAllLength)) / (beltHeight * beltNum));
           adjustR = result.r * capsuleR;
 
           for (let j = 0; j <= div; ++j) {
@@ -279,19 +276,19 @@ class CenterCapsule2 extends PMX.Maker {
 
             
             let an = this.normalize([
+              -0,
               result.nx,
-              0,
               result.nr,
             ]);
 
-            let x = an[0];
-            let y = sn * an[2];
+            let y = an[0];
+            let x = - sn * an[2];
             let z = cs * an[2];
 
             v.n = this.normalize([x, y, z]);
 
-            x = px;
-            y = sn * adjustR;
+            y = py;
+            x = - sn * adjustR;
             z = cs * adjustR;
 
             v.p = [x * scale, y * scale, z * scale];
@@ -313,14 +310,14 @@ class CenterCapsule2 extends PMX.Maker {
             v.weights = [1 - i / div,
               0, 0, 0];
             v.weights[1] = 1 - v.weights[0];
-            v.r0 = [bx * scale, 0, 0];
-            v.r1 = [(bx + beltHeight) * scale, 0, 0];
-            v.c = [x * scale, 0, 0];
+            v.r0 = [by * scale, 0, 0];
+            v.r1 = [(by + beltHeight) * scale, 0, 0];
+            v.c = [y * scale, 0, 0];
 
             this.vts.push(v);
           }
         }
-        bx += beltHeight;
+        by += beltHeight;
 
         for (let i = 0; i < div; ++i) {
           for (let j = 0; j < div; ++j) {
@@ -335,7 +332,7 @@ class CenterCapsule2 extends PMX.Maker {
       }
 
       vertexOffset = this.vts.length;
-      console.log('右半分', 'bx', bx, 'vertexOffset', vertexOffset);
+      console.log('上半分', 'by', by, 'vertexOffset', vertexOffset);
       adjustR = calcRadius(1).r * capsuleR;
       for (let i = 0; i <= div/4; ++i) { // 右半球 +Y
         for (let j = 0; j <= div; ++j) {
@@ -345,15 +342,15 @@ class CenterCapsule2 extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.cos(vang);
-          let y = sn * rr;
+          let x = - sn * rr;
           let z = cs * rr;
-          let x = Math.sin(vang);
+          let y = Math.sin(vang);
 
           v.n = this.normalize([x, y, z]);
           x *= adjustR;
           y *= adjustR;
           z *= adjustR;
-          x += centerOffset;
+          y += centerOffset;
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             (j / div),
@@ -412,8 +409,8 @@ class CenterCapsule2 extends PMX.Maker {
       rb.size = [0.05, 0.1, 0.05];
       rb.rot = [Math.PI * 30 / 180, 0, 0];
 
-      let x = 0;
-      let y = 3;
+      let y = 0;
+      let x = -3;
       let z = 3;
       rb.p = [x * scale, y * scale, z * scale];
       rb.size = [scale, scale, scale];
@@ -465,8 +462,8 @@ class CenterCapsule2 extends PMX.Maker {
         rb.type = PMX.Rigid.TYPE_STATIC; // 追従
         rb.shape = PMX.Rigid.SHAPE_SPHERE;
 
-        let x = beltHeight * 0.5 * i * dx;
-        let y = 0;
+        let y = beltHeight * 0.5 * i * dx;
+        let x = -0;
         let z = 0;
         rb.size = [scale, scale, scale];
         b.p = [x * scale, y * scale, z * scale];
