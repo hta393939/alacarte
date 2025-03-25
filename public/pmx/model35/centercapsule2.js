@@ -25,6 +25,9 @@ const _rad = (deg) => {
   return deg * Math.PI / 180;
 };
 
+/**
+ * 縦化
+ */
 class CenterCapsule2 extends PMX.Maker {
   constructor() {
     super();
