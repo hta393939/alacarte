@@ -436,6 +436,8 @@ class Misc {
 
   /**
    * 減色したい
+   * 未実装 16 で量子化．0,32,48,64, ... ,240,255 または 0,17,34, ... ,238, 255
+   * 多分前者
    * @param {HTMLCanvasElement} canvas 
    */
   async downColor(canvas) {
@@ -443,6 +445,10 @@ class Misc {
     const h = canvas.height;
     const c = canvas.getContext('2d');
     const img = c.getImageData(0, 0, w, h);
+    /**
+     * 量子化する場合
+     */
+    let _useq = true;
 
     /**
      * パレット
@@ -490,6 +496,19 @@ class Misc {
     const thrTable = await this.makeThrImage(w, h);
     console.log('thrTable', thrTable);
 
+    /**
+     * 0, 32, 48, 64, ... , 240, 255
+     * @param {number} v 
+     * @returns 
+     */
+    const _q16 = v => {
+      if (v <= 32) {
+        return (v < 16) ? 0 : 32;
+      }
+      let index = Math.floor((v + 8) / 16);
+      return Math.min(255, index * 16);
+    };
+
 //// パレットの作成
 // 8pxブロックの投票
     const palblocks = [];
@@ -517,9 +536,18 @@ class Misc {
         let gi = Math.floor(g / 8);
         let bi = Math.floor(b / 8);
         palblocks[ri][gi][bi].count += 1;
+
+        if (_useq) {
+          img.data[offset] = _q16(r);
+          img.data[offset+1] = _q16(g);
+          img.data[offset+2] = _q16(b);
+        }
       }
     }
 
+    if (_useq) { // NOTE: 量子化する場合
+      c.putImageData(img, 0, 0);
+    }
 
 
     const palnum = _cols.length;
