@@ -378,8 +378,21 @@ class CenterCapsule3 extends PMX.Maker {
     }
 
 //// 追加部分その1
+    let zOffset = 4;
     // yz 回転。手前 Z- から Z+
-    for (let foo = 0; foo < 16; ++foo) {
+    for (let foo = 0; foo < 11; ++foo) {
+      // 3-13, 14-24
+      let boneIndex = 3 + foo * 2;
+      /** Yオフセット */
+      let boneY = foo * 2;
+      if (boneIndex > 13) {
+        boneIndex += 1;
+        boneY = - (boneIndex - 14) / 2 * 2;
+      }
+      if (boneIndex === 14) {
+        continue;
+      }
+
       vertexOffset = this.vts.length;
       let adjustR = calcRadius(0).r * capsuleR;
       for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
@@ -391,14 +404,15 @@ class CenterCapsule3 extends PMX.Maker {
           const sn = Math.sin(hang);
           let rr = Math.sin(vang);
           let x = -sn * rr;
-          let z = cs * rr;
-          let y = -Math.cos(vang);
+          let y = - cs * rr; // MARK: - rot
+          let z = Math.cos(vang);
 
           v.n = this.normalize([x, y, z]);
           x *= adjustR;
           y *= adjustR;
           z *= adjustR;
-          y += -centerOffset;
+          y += boneY; // MARK: boneY
+          z += zOffset - centerOffset;
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             (j / div),
@@ -406,7 +420,8 @@ class CenterCapsule3 extends PMX.Maker {
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           v.joints = [
-            baseBoneIndex + (sideBoneNum * 1 - 1),
+            boneIndex,
+            //baseBoneIndex + (sideBoneNum * 1 - 1),
             0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
@@ -432,6 +447,7 @@ class CenterCapsule3 extends PMX.Maker {
       for (let h = 0; h < beltNum; ++h) { // まんなか。座標ループ
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
+          /** ボーン沿いの移動量 */
           const py = by + i * beltHeight / div;
           const result = calcRadius((py - (-halfAllLength)) / (beltHeight * beltNum));
           adjustR = result.r * capsuleR;
@@ -449,15 +465,15 @@ class CenterCapsule3 extends PMX.Maker {
               result.nr,
             ]);
 
-            let y = an[0];
+            let z = an[0];
             let x = - sn * an[2];
-            let z = cs * an[2];
+            let y = - cs * an[2]; // MARK: - rot
 
             v.n = this.normalize([x, y, z]);
 
-            y = py;
+            z = py + zOffset; // MARK: boneY
             x = - sn * adjustR;
-            z = cs * adjustR;
+            y = - cs * adjustR + boneY;
 
             v.p = [x * scale, y * scale, z * scale];
             v.uv = [
@@ -474,8 +490,14 @@ class CenterCapsule3 extends PMX.Maker {
               leftBone = fromCenter * 2 + baseBoneIndex + sideBoneNum;
               rightBone = leftBone + 2;
             }
-            v.joints = [leftBone, rightBone, 0, 0];
-            v.weights = [1 - i / div,
+            v.joints = [
+              boneIndex, 0,
+              //leftBone,
+              //rightBone,
+              0, 0];
+            v.weights = [
+              1,
+              //1 - i / div,
               0, 0, 0];
             v.weights[1] = 1 - v.weights[0];
             v.r0 = [by * scale, 0, 0];
@@ -511,21 +533,24 @@ class CenterCapsule3 extends PMX.Maker {
           const sn = Math.sin(hang);
           let rr = Math.cos(vang);
           let x = - sn * rr;
-          let z = cs * rr;
-          let y = Math.sin(vang);
+          let y = - cs * rr; // MARK: -rot
+          let z = Math.sin(vang);
 
           v.n = this.normalize([x, y, z]);
           x *= adjustR;
           y *= adjustR;
           z *= adjustR;
-          y += centerOffset;
+          z += zOffset + centerOffset; // MARK: boneY 太い方
+          y += boneY;
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             (j / div),
             i / div * 4 * capV + (1 - capV),
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [baseBoneIndex + sideBoneNum * 2 - 1,
+          v.joints = [
+            boneIndex,
+            //baseBoneIndex + sideBoneNum * 2 - 1,
             0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
@@ -547,7 +572,7 @@ class CenterCapsule3 extends PMX.Maker {
     }
 
 //// 追加部分その2
-    for (let foo = 0; foo < 16; ++foo) {
+    for (let foo = 0; foo < 16 * 0; ++foo) {
       vertexOffset = this.vts.length;
       let adjustR = calcRadius(0).r * capsuleR;
       for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
