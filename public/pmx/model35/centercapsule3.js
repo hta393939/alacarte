@@ -379,7 +379,7 @@ class CenterCapsule3 extends PMX.Maker {
 
 //// 追加部分その1
     const addR = 0.5;
-    let zOffset = 4;
+    let zOffset = 10 + 1.5;
     // yz 回転。手前 Z- から Z+
     for (let foo = 0; foo < 11; ++foo) {
       // 3-13, 14-24
@@ -394,6 +394,11 @@ class CenterCapsule3 extends PMX.Maker {
         continue;
       }
 
+      if (boneIndex === 24 || boneIndex === 13) {
+        continue; // 先端
+      }
+
+/*
       vertexOffset = this.vts.length;
       let adjustR = addR * capsuleR; // MARK: calc
       for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
@@ -429,6 +434,46 @@ class CenterCapsule3 extends PMX.Maker {
           this.vts.push(v);
         }
       }
+*/
+
+      vertexOffset = this.vts.length;
+      let adjustR = addR * capsuleR; // MARK: calc
+      for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
+        for (let j = 0; j <= div; ++j) {
+          const v = new PMX.Vertex();
+          let vang = Math.PI * 2 * i / div;
+          let hang = Math.PI * 2 * j / div;
+          const cs = Math.cos(hang);
+          const sn = Math.sin(hang);
+          let rr = Math.sin(vang);
+          let x = - sn * (2 - rr);
+          let y = - cs * (2 - rr);
+          let z = - Math.cos(vang);
+          const rootns = this.normalize([-sn * rr, -cs * rr, -z]);
+
+          v.n = [...rootns];
+          x *= adjustR;
+          y *= adjustR;
+          z *= adjustR;
+          y += boneY;
+          z += zOffset - centerOffset; // 細い方 ねっこ
+          v.p = [x * scale, y * scale, z * scale];
+          v.uv = [
+            (j / div),
+            i / (div / 4) * capV,
+          ];
+          v.deformType = PMX.Vertex.DEFORM_BDEF1;
+          v.joints = [
+            boneIndex,
+            //baseBoneIndex + (sideBoneNum * 1 - 1),
+            0, 0, 0];
+          v.weights = [1, 0, 0, 0];
+
+          this.vts.push(v);
+        }
+      }
+
+
       // 面の追加
       for (let i = 0; i < div / 4; ++i) {
         for (let j = 0; j < div; ++j) {
