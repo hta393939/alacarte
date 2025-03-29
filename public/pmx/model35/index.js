@@ -286,7 +286,7 @@ class Misc {
       console.log('makecentercapsule2 offsets');
     });
 
-    window.idmakecentercapsule3?.addEventListener('click', () => {
+    window.idmakecentercapsule3?.addEventListener('click', async () => {
       const param = this.getCommonOptions();
       const top = param.useradius ? 'r' : 'a';
       const d = param.denom;
@@ -310,7 +310,7 @@ class Misc {
         ],
       });
       const writer = new CenterCapsule3();
-      writer.make(param);
+      await writer.make(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}.pmx`);
       console.log('makecentercapsule3 offsets');

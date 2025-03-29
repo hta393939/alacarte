@@ -40,4 +40,52 @@ export class Util {
     c.drawImage(img, 0, 0);
   }
 
+  static qmul(a, b) {
+    const rea = a[3];
+    const reb = b[3];
+    return [
+      rea * b[0] + reb * a[0] + a[1] * b[2] - a[2] * b[1],
+      rea * b[1] + reb * a[1] + a[2] * b[0] - a[0] * b[2],
+      rea * b[2] + reb * a[2] + a[0] * b[1] - a[1] * b[0],
+      rea * reb - a[0] * b[0] - a[1] * b[1] - a[2] * b[2],
+    ];
+  }
+
+  /**
+   * 3次ベクトルをqで回転する
+   * @param {*} v 
+   * @param {*} q 
+   * @returns 
+   */
+  static vrotq(v, q) {
+    const a = Util.qmul(q, [...v, 0]);
+    const b = Util.qmul(a, [q[0], q[1], q[2], -q[3]]);
+    return [b[0], b[1], b[2]];
+  }
+
+  /**
+   * 
+   * @param {*} a 正規化後
+   * @param {*} b 正規化後
+   * @param {number} t bの重さ 
+   */
+  static nlerp(a, b, t) {
+    if (t <= 0) {
+      return [...a];
+    }
+    if (t >= 1) {
+      return [...b];
+    }
+    const cr = [
+      a[1] * b[2] - a[2] * b[1],
+      a[2] * b[0] - a[0] * b[2],
+      a[0] * b[1] - a[1] * b[0],
+    ];
+    const dp = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const ang = Math.acos(dp) * t;
+    const sn = Math.sin(ang * 0.5);
+    const q = [cr[0] * sn, cr[1] * sn, cr[2] * sn, Math.cos(ang * 0.5)];
+    return Util.vrotq(a, q);
+  }
+
 }

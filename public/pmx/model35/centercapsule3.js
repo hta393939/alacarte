@@ -65,8 +65,11 @@ class CenterCapsule3 extends PMX.Maker {
   /**
    * 中央から上の IK してみたい
    */
-  make(param) {
+  async make(param) {
     console.log('make', param);
+
+    const mod = await import('../../lib/util.js');
+    globalThis.Util = mod.Util;
 
     //const useradius = param.useradius;
 
@@ -214,7 +217,7 @@ class CenterCapsule3 extends PMX.Maker {
     let m = this.materials[0];
     {
       vertexOffset = this.vts.length;
-      let adjustR = 1 * capsuleR; // MARK: calc
+      let adjustR = 1 * capsuleR;
       for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
@@ -223,7 +226,7 @@ class CenterCapsule3 extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.sin(vang);
-          let x = -sn * rr; // MARK: ok
+          let x = -sn * rr;
           let z = cs * rr;
           let y = -Math.cos(vang);
 
@@ -266,7 +269,7 @@ class CenterCapsule3 extends PMX.Maker {
         for (let i = 0; i <= div; ++i) {
           const py = by + i * beltHeight / div;
           const result = calcRadius((py - (-halfAllLength)) / (beltHeight * beltNum));
-          adjustR = 1 * capsuleR; // MARK: calc
+          adjustR = 1 * capsuleR;
 
           for (let j = 0; j <= div; ++j) {
             const v = new PMX.Vertex();
@@ -333,7 +336,7 @@ class CenterCapsule3 extends PMX.Maker {
 
       vertexOffset = this.vts.length;
       console.log('上半分', 'by', by, 'vertexOffset', vertexOffset);
-      adjustR = 1 * capsuleR; // MARK: calc
+      adjustR = 1 * capsuleR;
       for (let i = 0; i <= div/4; ++i) { // 右半球 +Y
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
@@ -377,7 +380,7 @@ class CenterCapsule3 extends PMX.Maker {
 
     }
 
-//// 追加部分その1
+//// MARK: 追加部分その1
     const addR = 0.5;
     let zOffset = 10 + 1.5;
     // yz 回転。手前 Z- から Z+
@@ -399,7 +402,7 @@ class CenterCapsule3 extends PMX.Maker {
       }
 
       vertexOffset = this.vts.length;
-      let adjustR = addR * capsuleR; // MARK: calc
+      let adjustR = addR * capsuleR;
       for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
@@ -417,15 +420,23 @@ class CenterCapsule3 extends PMX.Maker {
           y *= adjustR;
           z = z * adjustR + zOffset - centerOffset; // 全体スケール倍前のモデル座標系
 
-          let sx = Math.sign(x) * (Math.abs(x) + 0.01);
+          let sx = x;
           let sy = y;
-          let sz = Math.sqrt((1 * capsuleR) ** 2 - x * x) + 0.01;
-          let sns = this.normalize([x, 0, z]);
+          let sz = Math.sqrt((1 * capsuleR) ** 2 - sx * sx);
+          let sns = this.normalize([sx, 0, sz]);
+          sx = Math.sign(sx) * (Math.abs(sx) + 0.01);
+          sz += 0.01;
           /** サーフェス側の比率 */
           let t = 1 - i / (div / 4);
 
-          // TODO: いずれqlerpで
-          v.n = this.normalize([0, 1, 2].map(v => rootns[v] * (1 - t) + sns[v] * t));
+          //v.n = this.normalize([0, 1, 2].map(v => rootns[v] * (1 - t) + sns[v] * t));
+          
+          v.n = globalThis.Util.nlerp(
+            rootns,
+            sns,
+            t,
+          );
+
           x = x * (1 - t) + sx * t;
           y = y * (1 - t) + sy * t;
           z = z * (1 - t) + sz * t;
@@ -471,7 +482,7 @@ class CenterCapsule3 extends PMX.Maker {
           /** ボーン沿いの移動量 */
           const py = by + i * beltHeight / div;
           const result = calcRadius((py - (-halfAllLength)) / (beltHeight * beltNum));
-          adjustR = addR * capsuleR; // MARK: calc
+          adjustR = addR * capsuleR;
 
           for (let j = 0; j <= div; ++j) {
             const v = new PMX.Vertex();
@@ -488,11 +499,11 @@ class CenterCapsule3 extends PMX.Maker {
 
             let z = an[0];
             let x = - sn * an[2];
-            let y = - cs * an[2]; // MARK: - rot
+            let y = - cs * an[2];
 
             v.n = this.normalize([x, y, z]);
 
-            z = py + zOffset; // MARK: boneY
+            z = py + zOffset;
             x = - sn * adjustR;
             y = - cs * adjustR + boneY;
 
