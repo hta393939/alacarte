@@ -398,44 +398,6 @@ class CenterCapsule3 extends PMX.Maker {
         continue; // 先端
       }
 
-/*
-      vertexOffset = this.vts.length;
-      let adjustR = addR * capsuleR; // MARK: calc
-      for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
-        for (let j = 0; j <= div; ++j) {
-          const v = new PMX.Vertex();
-          let vang = Math.PI * 2 * i / div;
-          let hang = Math.PI * 2 * j / div;
-          const cs = Math.cos(hang);
-          const sn = Math.sin(hang);
-          let rr = Math.sin(vang);
-          let x = -sn * rr;
-          let y = - cs * rr; // MARK: - rot
-          let z = - Math.cos(vang);
-
-          v.n = this.normalize([x, y, z]);
-          x *= adjustR;
-          y *= adjustR;
-          z *= adjustR;
-          y += boneY; // MARK: boneY
-          z += zOffset - centerOffset; // 細い方 ok
-          v.p = [x * scale, y * scale, z * scale];
-          v.uv = [
-            (j / div),
-            i / (div / 4) * capV,
-          ];
-          v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [
-            boneIndex,
-            //baseBoneIndex + (sideBoneNum * 1 - 1),
-            0, 0, 0];
-          v.weights = [1, 0, 0, 0];
-
-          this.vts.push(v);
-        }
-      }
-*/
-
       vertexOffset = this.vts.length;
       let adjustR = addR * capsuleR; // MARK: calc
       for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
@@ -451,12 +413,25 @@ class CenterCapsule3 extends PMX.Maker {
           let z = - Math.cos(vang);
           const rootns = this.normalize([-sn * rr, -cs * rr, -z]);
 
-          v.n = [...rootns];
           x *= adjustR;
           y *= adjustR;
-          z *= adjustR;
+          z = z * adjustR + zOffset - centerOffset; // 全体スケール倍前のモデル座標系
+
+          let sx = Math.sign(x) * (Math.abs(x) + 0.01);
+          let sy = y;
+          let sz = Math.sqrt((1 * capsuleR) ** 2 - x * x) + 0.01;
+          let sns = this.normalize([x, 0, z]);
+          /** サーフェス側の比率 */
+          let t = 1 - i / (div / 4);
+
+          // TODO: いずれqlerpで
+          v.n = this.normalize([0, 1, 2].map(v => rootns[v] * (1 - t) + sns[v] * t));
+          x = x * (1 - t) + sx * t;
+          y = y * (1 - t) + sy * t;
+          z = z * (1 - t) + sz * t;
+
           y += boneY;
-          z += zOffset - centerOffset; // 細い方 ねっこ
+          //z += zOffset - centerOffset; // 細い方 ねっこ
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
             (j / div),
