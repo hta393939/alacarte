@@ -593,7 +593,219 @@ class CenterCapsule3 extends PMX.Maker {
     }
 
 //// 追加部分その2 keep
+//const addR = 0.5;
+//let zOffset = 10 + 1.5;
+// yz 回転。手前 Z- から Z+
+for (let foo = 0; foo < 11 * 0; ++foo) {
+  // 3-13, 14-24
+  let boneIndex = 3 + foo * 2;
+  /** Yオフセット */
+  let boneY = - foo * 2;
+  if (boneIndex > 13) {
+    boneIndex += 1;
+    boneY = (boneIndex - 14) / 2 * 2;
+  }
+  if (boneIndex === 14) {
+    continue;
+  }
 
+  if (boneIndex === 24 || boneIndex === 13) {
+    continue; // 先端
+  }
+
+  vertexOffset = this.vts.length;
+  let adjustR = addR * capsuleR; // MARK: calc
+  for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
+    for (let j = 0; j <= div; ++j) {
+      const v = new PMX.Vertex();
+      let vang = Math.PI * 2 * i / div;
+      let hang = Math.PI * 2 * j / div;
+      const cs = Math.cos(hang);
+      const sn = Math.sin(hang);
+      let rr = Math.sin(vang);
+      let x = - sn * (2 - rr);
+      let y = - cs * (2 - rr);
+      let z = - Math.cos(vang);
+      const rootns = this.normalize([-sn * rr, -cs * rr, -z]);
+
+      x *= adjustR;
+      y *= adjustR;
+      z = z * adjustR + zOffset - centerOffset; // 全体スケール倍前のモデル座標系
+
+      let sx = Math.sign(x) * (Math.abs(x) + 0.01);
+      let sy = y;
+      let sz = Math.sqrt((1 * capsuleR) ** 2 - x * x) + 0.01;
+      let sns = this.normalize([x, 0, z]);
+      /** サーフェス側の比率 */
+      let t = 1 - i / (div / 4);
+
+      // TODO: いずれqlerpで
+      v.n = this.normalize([0, 1, 2].map(v => rootns[v] * (1 - t) + sns[v] * t));
+      x = x * (1 - t) + sx * t;
+      y = y * (1 - t) + sy * t;
+      z = z * (1 - t) + sz * t;
+
+      y += boneY;
+      //z += zOffset - centerOffset; // 細い方 ねっこ
+      v.p = [x * scale, y * scale, z * scale];
+      v.uv = [
+        (j / div),
+        i / (div / 4) * capV,
+      ];
+      v.deformType = PMX.Vertex.DEFORM_BDEF1;
+      v.joints = [
+        boneIndex,
+        //baseBoneIndex + (sideBoneNum * 1 - 1),
+        0, 0, 0];
+      v.weights = [1, 0, 0, 0];
+
+      this.vts.push(v);
+    }
+  }
+
+
+  // 面の追加
+  for (let i = 0; i < div / 4; ++i) {
+    for (let j = 0; j < div; ++j) {
+      let v0 = vertexOffset + (div + 1) * i + j;
+      let v1 = v0 + 1;
+      let v2 = v0 + (div + 1);
+      let v3 = v2 + 1;
+
+      //if (i !== 0) {
+        m.faces.push([v0, v2, v1]);
+      //}
+      m.faces.push([v1, v2, v3]);
+    }
+  }
+
+  let by = - centerOffset;
+  for (let h = 0; h < beltNum; ++h) { // まんなか。座標ループ
+    vertexOffset = this.vts.length;
+    for (let i = 0; i <= div; ++i) {
+      /** ボーン沿いの移動量 */
+      const py = by + i * beltHeight / div;
+      const result = calcRadius((py - (-halfAllLength)) / (beltHeight * beltNum));
+      adjustR = addR * capsuleR; // MARK: calc
+
+      for (let j = 0; j <= div; ++j) {
+        const v = new PMX.Vertex();
+        let hang = Math.PI * 2 * j / div;
+        const cs = Math.cos(hang);
+        const sn = Math.sin(hang);
+
+        
+        let an = this.normalize([
+          -0,
+          result.nx,
+          result.nr,
+        ]);
+
+        let z = an[0];
+        let x = - sn * an[2];
+        let y = - cs * an[2]; // MARK: - rot
+
+        v.n = this.normalize([x, y, z]);
+
+        z = py + zOffset; // MARK: boneY
+        x = - sn * adjustR;
+        y = - cs * adjustR + boneY;
+
+        v.p = [x * scale, y * scale, z * scale];
+        v.uv = [
+          (j / div),
+          i / div * beltV + capV,
+        ];
+        v.deformType = PMX.Vertex.DEFORM_SDEF;
+
+        let fromCenter = (halfBeltNum - 1 - h);
+        let rightBone = fromCenter * 2 + baseBoneIndex;
+        let leftBone = rightBone + 2;
+        if (h >= halfBeltNum) { // 右半分
+          fromCenter = h - halfBeltNum;
+          leftBone = fromCenter * 2 + baseBoneIndex + sideBoneNum;
+          rightBone = leftBone + 2;
+        }
+        v.joints = [
+          boneIndex, 0,
+          //leftBone,
+          //rightBone,
+          0, 0];
+        v.weights = [
+          1,
+          //1 - i / div,
+          0, 0, 0];
+        v.weights[1] = 1 - v.weights[0];
+        v.r0 = [by * scale, 0, 0];
+        v.r1 = [(by + beltHeight) * scale, 0, 0];
+        v.c = [y * scale, 0, 0];
+
+        this.vts.push(v);
+      }
+    }
+    by += beltHeight;
+    // 面の追加
+    for (let i = 0; i < div; ++i) {
+      for (let j = 0; j < div; ++j) {
+        let v0 = vertexOffset + (div + 1) * i + j;
+        let v1 = v0 + 1;
+        let v2 = v0 + (div + 1);
+        let v3 = v2 + 1;
+        m.faces.push([v0, v2, v1]);
+        m.faces.push([v2, v3, v1]);
+      }
+    }
+  }
+
+  vertexOffset = this.vts.length;
+  console.log('上半分', 'by', by, 'vertexOffset', vertexOffset);
+  adjustR = addR * capsuleR; // MARK: calc
+  for (let i = 0; i <= div/4; ++i) { // 右半球 +Y
+    for (let j = 0; j <= div; ++j) {
+      const v = new PMX.Vertex();
+      const vang = Math.PI * 2 * i / div;
+      const hang = Math.PI * 2 * j / div;
+      const cs = Math.cos(hang);
+      const sn = Math.sin(hang);
+      let rr = Math.cos(vang);
+      let x = - sn * rr;
+      let y = - cs * rr; // MARK: -rot
+      let z = Math.sin(vang);
+
+      v.n = this.normalize([x, y, z]);
+      x *= adjustR;
+      y *= adjustR;
+      z *= adjustR;
+      z += zOffset + centerOffset; // MARK: boneY 太い方
+      y += boneY;
+      v.p = [x * scale, y * scale, z * scale];
+      v.uv = [
+        (j / div),
+        i / div * 4 * capV + (1 - capV),
+      ];
+      v.deformType = PMX.Vertex.DEFORM_BDEF1;
+      v.joints = [
+        boneIndex,
+        //baseBoneIndex + sideBoneNum * 2 - 1,
+        0, 0, 0];
+      v.weights = [1, 0, 0, 0];
+
+      this.vts.push(v);
+    }          
+  }
+  // 面の追加
+  for (let i = 0; i < div / 4; ++i) {
+    for (let j = 0; j < div; ++j) {
+      let v0 = vertexOffset + (div + 1) * i + j;
+      let v1 = v0 + 1;
+      let v2 = v0 + (div + 1);
+      let v3 = v2 + 1;
+      m.faces.push([v0, v2, v1]);
+      m.faces.push([v2, v3, v1]);
+    }
+  } // 右の半球
+
+}
 
 
 //// 追加部分ここまで
