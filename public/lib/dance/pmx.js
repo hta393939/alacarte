@@ -764,67 +764,70 @@ class Rigid {
   static SHAPE_SPHERE = 0;
   static SHAPE_BOX = 1;
   static SHAPE_CAPSULE = 2;
-/**
- * ボーンの位置にセットされる
- */
+  /**
+   * ボーンの位置にセットされる
+   */
   static TYPE_STATIC = 0;
-/**
- * この物理でボーンを移動する
- */
+  /**
+   * この物理でボーンを移動する
+   */
   static TYPE_DYNAMIC = 1;
-/**
- * この物理が移動してボーンを位置合わせする
- */
+  /**
+   * この物理が移動してボーンを位置合わせする
+   */
   static TYPE_DYNAMIC_POS = 2;
 
   constructor() {
     this.nameJa = '剛体000';
     this.nameEn = 'rigid000';
-/**
- * -1 は関連ボーン無し
- */
+    /**
+     * -1 は関連ボーン無し
+     */
     this.bone = -1;
-/**
- * 関連ボーン名。ボーン名
- */
+    /**
+     * 関連ボーン名。ボーン名
+     */
     this._boneName = '';
-/**
- * 所属グループ #0～#15
- */
+    /**
+     * 所属グループ #0～#15
+     */
     this.group = 0;
-/**
- * 衝突するグループのフラグ。衝突する側でよい。GUI のチェックとは逆。
- * 上のビットが#15で下のビットが#0
- */
+    /**
+     * 衝突するグループのフラグ。衝突する側でよい。GUI のチェックとは逆。
+     * 上のビットが#15で下のビットが#0
+     */
     this.groupFlags = 0x7fff;
 
     this.shape = Rigid.SHAPE_BOX;
-/**
- * サイズ
- * 球の場合、半径
- * カプセルの場合、半径、内高さ、不使用
- * 箱の場合、
- */
+    /**
+     * サイズ
+     * 球の場合、半径
+     * カプセルの場合、半径、内高さ、不使用
+     * 箱の場合、
+     * @type {[number,number,number]}
+     */
     this.size = [1, 1, 1];
-/**
- * 位置
- */
+    /**
+     * 位置
+     * @type {[number,number,number]}
+     */
     this.p = [0, 0, 0];
-/**
- * 回転
- */
+    /**
+     * 回転。オイラーラジアン。
+     * @type {[number,number,number]}
+     */
     this.rot = [0, 0, 0];
-/**
- * 質量
- */
+    /**
+     * 質量
+     */
     this.mass = 2;
-/**
- * 移動減衰。0だと減衰しない。
- */
+    /**
+     * 移動減衰。0だと減衰しない。
+     */
     this.moveDamping = 0;
-/**
- * 回転減衰。0だと減衰しない。
- */
+    /**
+     * 回転減衰。0だと減衰しない。
+     */
     this.rotDamping = 0;
     this.pong = 0;
     this.friction = 0;
@@ -832,10 +835,34 @@ class Rigid {
     this.type = Rigid.TYPE_STATIC;
   }
 
-/**
- * GUI 数字で文字列を作成する
- * @returns {string}
- */
+  /**
+   * クローンを返す
+   */
+  clone() {
+    const body = new Rigid();
+    body.nameJa = this.nameJa;
+    body.nameEn = this.nameEn;
+    body.bone = this.bone;
+    body._boneName = this._boneName;
+    body.group = this.group;
+    body.groupFlags = this.groupFlags;
+    body.shape = this.shape;
+    body.size = [...this.size];
+    body.p = [...this.p];
+    body.rot = [...this.rot];
+    body.mass = this.mass;
+    body.moveDamping = this.moveDamping;
+    body.rotDamping = this.rotDamping;
+    body.pong = this.pong;
+    body.friction = this.friction;
+    body.type = this.type;
+    return body;
+  }
+
+  /**
+   * GUI 数字で文字列を作成する
+   * @returns {string}
+   */
   not() {
     let s = '';
     for (let i = 0; i < 16; ++i) {
@@ -849,10 +876,10 @@ class Rigid {
     return s;
   }
 
-/**
- * UI番号で指定する
- * @param {number} ui 1～16
- */
+  /**
+   * UI番号で指定する
+   * @param {number} ui 1～16
+   */
   setUIGroup(ui) {
     this.group = ui - 1;
   }
@@ -861,10 +888,10 @@ class Rigid {
     return this.group + 1;
   }
 
-/**
- * 非接触ビットを非接触UI番号列挙で上書きする
- * @param  {...number} uis 1～16
- */
+  /**
+   * 非接触ビットを非接触UI番号列挙で上書きする
+   * @param  {...number} uis 1～16
+   */
   setUINots(...uis) {
     let bits = 0xffff;
     for (const ui of uis) {
@@ -874,9 +901,9 @@ class Rigid {
     this.groupFlags = bits;
   }
 
-/**
- * 8 + 14
- */
+  /**
+   * 8 + 14
+   */
   toCSV() {
     const ss = [
       'PmxBody',
@@ -904,40 +931,40 @@ class Joint {
   constructor() {
     this.nameJa = 'ジョイント000';
     this.nameEn = 'joint000';
-/**
- * 常に6DOVの0
- */
+    /**
+     * 常に6DOVの0
+     */
     this.type = 0;
 
-/**
- * A剛体、B剛体のインデックス
- */
+    /**
+     * A剛体、B剛体のインデックス
+     */
     this.rigids = [-1, -1];
-/**
- * 剛体名
- */
+    /**
+     * 剛体名
+     */
     this._rigidName = ['', ''];
 
     this.p = [0, 0, 0];
-/**
-* ラジアン角
-*/
+    /**
+     * ラジアン角
+     */
     this.rot = [0, 0, 0];
     this.moveLower = [-9999, -9999, -9999];
     this.moveUpper = [ 9999,  9999,  9999];
-/**
- * 上限。ラジアンで指定する。
- * "-360度"～"+360度"を指定すると回転しなくなるので注意。
- */
+    /**
+     * 上限。ラジアンで指定する。
+     * "-360度"～"+360度"を指定すると回転しなくなるので注意。
+     */
     this.rotUpper = [ Math.PI,  Math.PI,  Math.PI];
     this.rotLower = [-Math.PI, -Math.PI, -Math.PI];
-/**
- * 移動のバネ
- */
+    /**
+     * 移動のバネ
+     */
     this.springMove = [0, 0, 0];
-/**
- * 回転のバネ
- */
+    /**
+     * 回転のバネ
+     */
     this.springRot  = [0, 0, 0];
   }
 
@@ -946,9 +973,9 @@ class Joint {
     this.moveLower = [0, 0, 0];
   }
 
-/**
- * 本当? 回転考慮しなくていいのだろうか?
- */
+  /**
+   * 本当? 回転考慮しなくていいのだろうか?
+   */
   lockRot() {
     this.rotUpper = [0, 0, 0];
     this.rotLower = [0, 0, 0];
@@ -991,9 +1018,9 @@ class ModelInfo {
   constructor() {
     this.modelJa = '';
     this.modelEn = '';
-/**
- * 改行は \r\n
- */
+    /**
+     * 改行は \r\n
+     */
     this.commentJa = '';
     this.commentEn = '';
   }
@@ -1048,7 +1075,7 @@ class Header {
 
 
 /**
- * サイズ格納は4バイトで固定する
+ * このライブラリではサイズ格納は4バイトで固定する
  */
 class PMXObject {
   constructor() {
@@ -1060,75 +1087,75 @@ class PMXObject {
       commentJa: '',
       commentEn: '',
     };
-/**
- * @type {Vertex[]}
- */
+    /**
+     * @type {Vertex[]}
+     */
     this.vts = [];
-/**
- * 面頂点が1次元配列で並んでいる
- * @type {number[]} 3の倍数個
- */
+    /**
+     * 面頂点が1次元配列で並んでいる
+     * @type {number[]} 3の倍数個
+     */
     this.faceIndices = [];
-/**
- * @type {Bone[]}
- */
+    /**
+     * @type {Bone[]}
+     */
     this.bones = [];
-/**
- * @type {string[]}
- */
+    /**
+     * @type {string[]}
+     */
     this.textures = [];
-/**
- * @type {Material[]}
- */
+    /**
+     * @type {Material[]}
+     */
     this.materials = [];
-/**
- * @type {Morph[]}
- */
+    /**
+     * @type {Morph[]}
+     */
     this.morphs = [];
-/**
- * @type {Frame[]}
- */
+    /**
+     * @type {Frame[]}
+     */
     this.frames = [];
-/**
- * @type {Rigid[]}
- */
+    /**
+     * @type {Rigid[]}
+     */
     this.rigids = [];
-/**
- * @type {Joint[]}
- */
+    /**
+     * @type {Joint[]}
+     */
     this.joints = [];
-/**
- * ソフト
- * @type {SoftBody[]}
- */
+    /**
+     * ソフト
+     * @type {SoftBody[]}
+     */
     this.softs = [];
 
-/**
- * カーソル位置(バイト)
- */
+    /**
+     * カーソル位置(バイト)
+     */
     this.c = 0;
 
-/**
- * 文字列
- */
+    /**
+     * 文字列
+     */
     this.encoding = 'UTF-8';
-/**
- * 追加UV数
- */
+    /**
+     * 追加UV数
+     */
     this.adduvnum = 0;
 
-/**
- * 頂点インデックスバイト数
- */
+    /**
+     * 頂点インデックスバイト数
+     */
     this.vtxbnum = 4;
     this.texbnum = 4;
-/**
- * 材質インデックスバイト数
- */
+    /**
+     * 材質インデックスバイト数
+     */
     this.mtlbnum = 4;
-/**
- * ボーンインデックスバイト数
- */
+    /**
+     * ボーンインデックスバイト数
+     */
     this.bonbnum = 4;
     this.mrpbnum = 4;
     this.rgdbnum = 4;
@@ -1170,12 +1197,12 @@ class Parser extends PMXObject {
     this.softs = [];
   }
 
-/**
- * 
- * @param {DataView} p 
- * @param {number} num 
- * @returns {number[]}
- */
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} num 
+   * @returns {number[]}
+   */
   readu32s(p, num) {
     const buf = new Uint32Array(num);
     for (let i = 0; i < num; ++i) {
@@ -1184,12 +1211,12 @@ class Parser extends PMXObject {
     }
     return buf;
   }
-/**
- * 
- * @param {DataView} p 
- * @param {number} num 
- * @returns {number[]}
- */
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} num 
+   * @returns {number[]}
+   */
   readu16s(p, num) {
     const buf = new Uint16Array(num);
     for (let i = 0; i < num; ++i) {
@@ -1198,12 +1225,12 @@ class Parser extends PMXObject {
     }
     return buf;
   }
-/**
- * 
- * @param {DataView} p 
- * @param {number} num 
- * @returns {number[]}
- */
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} num 
+   * @returns {number[]}
+   */
   readu8s(p, num) {
     const buf = new Uint8Array(num);
     for (let i = 0; i < num; ++i) {
@@ -1212,12 +1239,12 @@ class Parser extends PMXObject {
     }
     return buf;
   }
-/**
- * 
- * @param {DataView} p 
- * @param {number} num 
- * @returns {number[]}
- */
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} num 
+   * @returns {number[]}
+   */
   readf32s(p, num) {
     const buf = new Float32Array(num);
     for (let i = 0; i < num; ++i) {
@@ -1226,12 +1253,12 @@ class Parser extends PMXObject {
     }
     return buf;
   }
-/**
- * pmx 文字列を読み取る
- * @param {DataView} p 
- * @param {number} num 
- * @returns {string}
- */
+  /**
+   * pmx 文字列を読み取る
+   * @param {DataView} p 
+   * @param {number} num 
+   * @returns {string}
+   */
   readstr(p) {
     const num = p.getUint32(this.c, true);
     this.c += 4;
@@ -1249,12 +1276,12 @@ class Parser extends PMXObject {
     return s;
   }
 
-/**
- * インデックス整数読み取り用
- * @param {DataView} p 
- * @param {number} num 
- * @param {number} byteNum 
- */
+  /**
+   * インデックス整数読み取り用
+   * @param {DataView} p 
+   * @param {number} num 
+   * @param {number} byteNum 
+   */
   readints(p, num, byteNum) {
     switch(byteNum) {
       case 4:
@@ -1266,10 +1293,10 @@ class Parser extends PMXObject {
     }
   }
 
-/**
- * API. 
- * @param {ArrayBuffer} ab 
- */
+  /**
+   * API. 
+   * @param {ArrayBuffer} ab 
+   */
   parse(ab) {
     this.clear();
     const p = new DataView(ab);
@@ -1629,12 +1656,12 @@ class Maker extends Parser {
     super();
   }
 
-/**
- * 文字列を書き込む
- * @param {DataView} p 
- * @param {number} offset
- * @param {string} ins 
- */
+  /**
+   * 文字列を書き込む
+   * @param {DataView} p 
+   * @param {number} offset
+   * @param {string} ins 
+   */
   writestr(p, offset, ins) {
     if (this.encoding === 'UTF-8') {
     // UTF-8 のとき 16LE 変換必要だったら入れる
@@ -1656,13 +1683,13 @@ class Maker extends Parser {
     return 4 + num;
   }
 
-/**
- * 
- * @param {DataView} p 
- * @param {number} inoffset 
- * @param {number[]} fs 
- * @returns {number} 進んだバイト数
- */
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} inoffset 
+   * @param {number[]} fs 
+   * @returns {number} 進んだバイト数
+   */
   writefs(p, inoffset, fs) {
     let offset = 0;
     for (const f of fs) {
@@ -1672,13 +1699,13 @@ class Maker extends Parser {
     return offset;
   }
 
-/**
- * 
- * @param {DataView} p 
- * @param {offset} inoffset 
- * @param {number[]} vs 
- * @returns 
- */
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {offset} inoffset 
+   * @param {number[]} vs 
+   * @returns 
+   */
   write32s(p, inoffset, vs) {
     let offset = 0;
     for (const v of vs) {
@@ -1688,13 +1715,13 @@ class Maker extends Parser {
     return offset;
   }
 
-/**
-* 
-* @param {DataView} p 
-* @param {number} inoffset 
-* @param {number[]} vs 
-* @returns {number} 進んだバイト数
-*/
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} inoffset 
+   * @param {number[]} vs 
+   * @returns {number} 進んだバイト数
+   */
   write16s(p, inoffset, vs) {
     let offset = 0;
     for (const v of vs) {
@@ -1704,13 +1731,13 @@ class Maker extends Parser {
     return offset;
   }
 
-/**
-* 
-* @param {DataView} p 
-* @param {number} inoffset 
-* @param {number[]} vs 
-* @returns 
-*/
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} inoffset 
+   * @param {number[]} vs 
+   * @returns 
+   */
   write8s(p, inoffset, vs) {
     let offset = 0;
     for (const v of vs) {
@@ -1719,13 +1746,13 @@ class Maker extends Parser {
     }
     return offset;
   }
-/**
- * 
- * @param {DataView} p 
- * @param {number} inoffset 
- * @param {number[]} vs 
- * @param {number} byteNum 
- */
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} inoffset 
+   * @param {number[]} vs 
+   * @param {number} byteNum 
+   */
   writeints(p, inoffset, vs, byteNum) {
     switch(byteNum) {
     case 4:
@@ -1737,10 +1764,10 @@ class Maker extends Parser {
     }
   }
 
-/**
- * 現在の状態でバッファを作成する
- * @returns {ArrayBuffer[]}
- */
+  /**
+   * 現在の状態でバッファを作成する
+   * @returns {ArrayBuffer[]}
+   */
   makeBuffer() {
     const bufs = [];
     { // ヘッダ
@@ -1827,9 +1854,7 @@ class Maker extends Parser {
     }
 
     { // 面頂点数
-  /**
-  * 面数
-  */
+      /** 面数 */
       let facenum = 0;
       for (const v of this.materials) {
         facenum += v.faces.length;
@@ -2091,10 +2116,10 @@ class Maker extends Parser {
     return bufs;
   }
 
-/**
-* オフセットとバイト数にする
-* @param {ArrayBuffer[]} bufs 
-*/
+  /**
+   * オフセットとバイト数にする
+   * @param {ArrayBuffer[]} bufs 
+   */
   toOffsets(bufs) {
     const ret = {
       chunks: []

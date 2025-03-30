@@ -63,6 +63,21 @@ export class Util {
     return [b[0], b[1], b[2]];
   }
 
+  static cross(a, b) {
+    return [
+
+    ];
+  }
+
+  static newnorm(v) {
+    const sum = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);
+    if (sum === 0) {
+      return [...v];
+    }
+    const k = 1 / sum;
+    return [v[0] * k, v[1] * k, v[2] * k];
+  }
+
   /**
    * 
    * @param {*} a 正規化後
@@ -76,11 +91,11 @@ export class Util {
     if (t >= 1) {
       return [...b];
     }
-    const cr = [
+    const cr = Util.newnorm([
       a[1] * b[2] - a[2] * b[1],
       a[2] * b[0] - a[0] * b[2],
       a[0] * b[1] - a[1] * b[0],
-    ];
+    ]);
     const dp = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     const ang = Math.acos(dp) * t;
     const sn = Math.sin(ang * 0.5);
