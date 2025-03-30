@@ -386,7 +386,7 @@ class CenterCapsule3 extends PMX.Maker {
     const subCapsuleR = 0.49;
     let zOffset = 1.5;
     const subBeltNum = 1;
-    const subBeltHeight = beltHeight * 0.5;
+    const subBeltHeight = beltHeight * 0.25;
     // yz 回転。手前 Z- から Z+
     for (let foo = 0; foo < 11; ++foo) {
       // 3-13, 14-24
@@ -788,6 +788,10 @@ class CenterCapsule3 extends PMX.Maker {
 
           let subCap = (opt === 'tree') ? false : true;
           // TODO: 上下不使用分判定
+          if (i >= sideBoneNum - 2) {
+            subCap = false;
+          }
+
           if (subCap) { // 追加
             const body = rb.clone();
             const tail = 'sub';
@@ -796,11 +800,11 @@ class CenterCapsule3 extends PMX.Maker {
             body.shape = PMX.Rigid.SHAPE_CAPSULE;
             body.size = [
               subCapsuleR * scale, // 半径
-              subBeltNum * subBeltHeight * scale, // 内高さ
+              (capsuleR + subBeltNum * subBeltHeight) * scale, // 内高さ
               scale, // 不使用
             ];
             body.rot = [Math.PI * 0.5, 0, 0];
-            body.p[2] += (zOffset + subBeltNum * subBeltHeight * 0.5) * scale;
+            body.p[2] += (-capsuleR * 0.5 + zOffset + subBeltNum * subBeltHeight * 0.5) * scale;
             this.rigids.push(body);
           }
         }
