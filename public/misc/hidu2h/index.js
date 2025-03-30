@@ -44,6 +44,18 @@ class Misc {
   }
 
   /**
+   * 
+   * @param {number} sec 
+   */
+  sleep(sec) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000 * sec);
+    });
+  }
+
+  /**
    * オンオフ状態要求送信する
    */
   async getStatus() {
@@ -94,6 +106,7 @@ class Misc {
       const onOffByte = v.checked ? 1 : 0;
       const buf = Uint8Array.from([0x5d, 0, portByte, onOffByte, 0, 0, 0]);
       await this.device?.sendReport(this.reportID, buf); 
+      await this.sleep(1);
     }
     console.log('setStatus end');
   }
