@@ -41,6 +41,14 @@ class Misc {
         console.log('set success');
       });
     }
+
+    {
+      const el = document.getElementById('openusb');
+      el?.addEventListener('click', async () => {
+        await this.openUSB();
+        console.log('openUSB success');
+      });
+    }
   }
 
   /**
@@ -118,7 +126,8 @@ class Misc {
    */
   async openHub() {
     const param = {
-      filters: [{ vendorId: 0x2101, productId: 0x8501 }]
+//      filters: [{ vendorId: 0x2101, productId: 0x8501 }]
+      filters: []
     };
     const devices = await navigator.hid.requestDevice(param);
     const device = devices[0];
@@ -132,6 +141,21 @@ class Misc {
       console.log(ev.type, ev.data);
       this.checkUI(true, ev.data);
     });
+    return device;
+  }
+
+  async openUSB() {
+    const param = {
+//      filters: [{ vendorId: 0x2101, productId: 0x8501 }]
+      filters: []
+    };
+    const device = await navigator.usb.requestDevice(param);
+    if (device.opened) {
+      console.log('already usb open');
+    } else {
+      await device.open();
+      console.log('open usb success');
+    }
     return device;
   }
 
