@@ -407,7 +407,7 @@ class CenterCapsule3 extends PMX.Maker {
 
       vertexOffset = this.vts.length;
       let adjustR = subCapsuleR;
-      for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
+      for (let i = 0; i <= div / 4; ++i) { // 小さい方から大きい方へ 根本
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
           let vang = Math.PI * 2 * i / div;
@@ -417,7 +417,7 @@ class CenterCapsule3 extends PMX.Maker {
           let rr = Math.sin(vang);
           let x = - sn * (2 - rr);
           let y = - cs * (2 - rr);
-          let z = - Math.cos(vang);
+          let z = - Math.cos(vang); // -1 ～ 0
           const rootns = this.normalize([-sn * rr, -cs * rr, -z]);
 
           x *= adjustR;
@@ -426,20 +426,21 @@ class CenterCapsule3 extends PMX.Maker {
 
           let sx = x;
           let sy = y;
-          let sz = Math.sqrt((1 * capsuleR) ** 2 - sx * sx);
+          let sz = Math.sqrt((1 * capsuleR + 0.0) ** 2 - sx * sx);
           let sns = this.normalize([sx, 0, sz]);
-          sx = Math.sign(sx) * (Math.abs(sx) + 0.01 * 0);
-          sz += 0.01 * 0;
           /** サーフェス側の比率 */
           let t = 1 - i / (div / 4);
+          //if (j === 0 || j === div / 2 || j === div) {
+          //  t = 1;
+          //}
 
-          //v.n = this.normalize([0, 1, 2].map(v => rootns[v] * (1 - t) + sns[v] * t));
-          
+          v.n = this.normalize([0, 1, 2].map(v => rootns[v] * (1 - t) + sns[v] * t));
+/*          
           v.n = globalThis.Util.nlerp(
             rootns,
             sns,
             t,
-          );
+          ); */
 
           x = x * (1 - t) + sx * t;
           y = y * (1 - t) + sy * t;

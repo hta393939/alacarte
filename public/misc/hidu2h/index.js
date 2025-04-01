@@ -45,8 +45,9 @@ class Misc {
     {
       const el = document.getElementById('openusb');
       el?.addEventListener('click', async () => {
-        await this.openUSB();
-        console.log('openUSB success');
+        const device = await this.openUSB();
+        console.log('openUSB success', device);
+        this.device = device;
       });
     }
   }
@@ -146,7 +147,7 @@ class Misc {
 
   async openUSB() {
     const param = {
-//      filters: [{ vendorId: 0x2101, productId: 0x8501 }]
+//      filters: [{ vendorId: 0x0408, productId: 0x3047 }]
       filters: []
     };
     const device = await navigator.usb.requestDevice(param);
@@ -156,6 +157,25 @@ class Misc {
       await device.open();
       console.log('open usb success');
     }
+
+    // NIKON DSC COOLPIX S1100pj-PCD
+
+    // @see http://www.chokanji.com/developer/doc/brightv.r4/device/usbmgr.html
+    // Quanta なにこれw
+    // デバイスクラス 239 0xEF Miscellaneous
+    // interface 2つ endpoint in(デバイスからホストへ) 
+    // 1. packetSize 16 interrupt
+    //    14-1
+    // 2. 0 0個 代替インターフェース
+    //    1 in iso 128 
+    //    2 in iso 512
+    //    3 in iso 1024
+    //    4 in iso 2816
+    //    5 in iso 3072
+    //    6 in iso 4992
+    //    7 in iso 5116
+    // interface class 14-2 interface protocol 0
+
     return device;
   }
 
