@@ -428,13 +428,16 @@ class CenterCapsule3 extends PMX.Maker {
           let sy = y;
           let sz = Math.sqrt((1 * capsuleR + 0.0) ** 2 - sx * sx);
           let sns = this.normalize([sx, 0, sz]);
-          /** サーフェス側の比率 */
-          let t = 1 - i / (div / 4);
-          //if (j === 0 || j === div / 2 || j === div) {
-          //  t = 1;
-          //}
+          /** サブ側の比率 */
+          let t = i / (div / 4);
+          if (j === 0 || j === div / 2 || j === div) {
+            t = 1;
+          }
 
-          v.n = this.normalize([0, 1, 2].map(v => rootns[v] * (1 - t) + sns[v] * t));
+          //v.n = this.normalize([0, 1, 2].map(v => rootns[v] * (1 - t) + sns[v] * t));
+          v.n = globalThis.Util.halflerp(
+            sns, rootns, t, 2,
+          );
 /*          
           v.n = globalThis.Util.nlerp(
             rootns,
@@ -442,9 +445,9 @@ class CenterCapsule3 extends PMX.Maker {
             t,
           ); */
 
-          x = x * (1 - t) + sx * t;
-          y = y * (1 - t) + sy * t;
-          z = z * (1 - t) + sz * t;
+          x = x * t + sx * (1 - t);
+          y = y * t + sy * (1 - t);
+          z = z * t + sz * (1 - t);
 
           y += boneY;
           v.p = [x * scale, y * scale, z * scale];

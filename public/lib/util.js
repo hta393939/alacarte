@@ -53,8 +53,8 @@ export class Util {
 
   /**
    * 3次ベクトルをqで回転する
-   * @param {*} v 
-   * @param {*} q 
+   * @param {[number,number,number]} v 
+   * @param {[number,number,number,number]} q 
    * @returns 
    */
   static vrotq(v, q) {
@@ -65,23 +65,30 @@ export class Util {
 
   static cross(a, b) {
     return [
-
+      a[1] * b[2] - a[2] * b[1],
+      a[2] * b[0] - a[0] * b[2],
+      a[0] * b[1] - a[1] * b[0],
     ];
   }
 
+  /**
+   * 正規化した新しい配列を返す
+   * @param {[number,number,number]} v 
+   * @returns 
+   */
   static newnorm(v) {
-    const sum = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);
-    if (sum === 0) {
+    const len = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);
+    if (len === 0) {
       return [...v];
     }
-    const k = 1 / sum;
+    const k = 1 / len;
     return [v[0] * k, v[1] * k, v[2] * k];
   }
 
   /**
    * 
-   * @param {*} a 正規化後
-   * @param {*} b 正規化後
+   * @param {[number,number,number]} a 正規化後
+   * @param {[number,number,number]} b 正規化後
    * @param {number} t bの重さ 
    */
   static nlerp(a, b, t) {
@@ -91,16 +98,42 @@ export class Util {
     if (t >= 1) {
       return [...b];
     }
-    const cr = Util.newnorm([
-      a[1] * b[2] - a[2] * b[1],
-      a[2] * b[0] - a[0] * b[2],
-      a[0] * b[1] - a[1] * b[0],
-    ]);
+    const cr = Util.newnorm(Util.cross(a, b));
     const dp = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     const ang = Math.acos(dp) * t;
     const sn = Math.sin(ang * 0.5);
     const q = [cr[0] * sn, cr[1] * sn, cr[2] * sn, Math.cos(ang * 0.5)];
     return Util.vrotq(a, q);
+  }
+
+  /**
+   * 真ん中で近似する角度線形
+   * @param {[number,number,number]} a 正規化した後のベクトル
+   * @param {[number,number,number]} b 正規化した後のベクトル
+   * @param {number} t b の重さ
+   * @param {number} c 残り回数
+   */
+  static halflerp(a, b, t, c) {
+    if (t <= 0) {
+      return [...a];
+    }
+    if (t >= 1) {
+      return [...b];
+    }
+    if (c <= 0) {
+      return Util.newnorm([0, 1, 2].map(i => (a[i] * (1 - t) + b[i] * t)));
+    }
+
+    const half = Util.newnorm(
+      [0, 1, 2].map(i => a[i] + b[i])
+    );
+
+    if (t < 0.5) {
+      return Util.halflerp(a, half, t * 2, c - 1);
+    } else if (t > 0.5) {
+      return Util.halflerp(half, b, (t - 0.5) * 2, c - 1);
+    }
+    return half;
   }
 
 }
