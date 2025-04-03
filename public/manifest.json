@@ -6,7 +6,6 @@
     "service_worker": "chext/background.js"
   },
   "action": {
-
   },
   "permissions": [
     "tabs", "storage"

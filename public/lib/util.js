@@ -59,8 +59,12 @@ export class Util {
    */
   static vrotq(v, q) {
     const a = Util.qmul(q, [...v, 0]);
-    const b = Util.qmul(a, [q[0], q[1], q[2], -q[3]]);
+    const b = Util.qmul(a, [-q[0], -q[1], -q[2], q[3]]);
     return [b[0], b[1], b[2]];
+  }
+
+  static dot(a, b) {
+    return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
   }
 
   static cross(a, b) {
@@ -99,7 +103,7 @@ export class Util {
       return [...b];
     }
     const cr = Util.newnorm(Util.cross(a, b));
-    const dp = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const dp = Util.dot(a, b);
     const ang = Math.acos(dp) * t;
     const sn = Math.sin(ang * 0.5);
     const q = [cr[0] * sn, cr[1] * sn, cr[2] * sn, Math.cos(ang * 0.5)];

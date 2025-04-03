@@ -1,0 +1,17 @@
+{
+  "name": "recog",
+  "description": "Recog trial",
+  "version": "0.1.0",
+  "manifest_version": 3,
+
+  "action": {},
+  "permissions": [
+    "storage", "tabs", "activeTab"
+  ],
+  "content_scripts": [
+    {"matches": ["<all_urls>"],
+    "js": [
+      "index.js"
+    ]}
+  ]
+}

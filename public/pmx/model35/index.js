@@ -286,7 +286,7 @@ class Misc {
       console.log('makecentercapsule2 offsets');
     });
 
-    window.idmakecentercapsule3?.addEventListener('click', async () => {
+    window.idmakecentercapsulesub?.addEventListener('click', async () => {
       const param = this.getCommonOptions();
       const top = param.useradius ? 'r' : 'a';
       const d = param.denom;
@@ -303,17 +303,17 @@ class Misc {
       let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
       Object.assign(param, {
-        nameEn: `${top}${numtext}_centercapsule3_${param.belt}_${dtext}`,
+        nameEn: `${top}${numtext}_centercapsulesub_${param.belt}_${dtext}`,
         texturePath: [
           `tex/${top}${numtext}.png`,
           `tex/${top}${numtext}spa.png`,
         ],
       });
-      const writer = new CenterCapsule3();
+      const writer = new CenterCapsuleSub();
       await writer.make(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-      console.log('makecentercapsule3 offsets');
+      console.log('makecentercapsulesub offsets');
     });
 
     window.idmakecentercapsule4?.addEventListener('click', () => {

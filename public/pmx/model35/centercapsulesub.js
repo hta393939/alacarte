@@ -25,7 +25,7 @@ const _rad = (deg) => {
   return deg * Math.PI / 180;
 };
 
-class CenterCapsule3 extends PMX.Maker {
+class CenterCapsuleSub extends PMX.Maker {
   constructor() {
     super();
   }
@@ -434,16 +434,16 @@ class CenterCapsule3 extends PMX.Maker {
             t = 1;
           }
 
-          //v.n = this.normalize([0, 1, 2].map(v => rootns[v] * (1 - t) + sns[v] * t));
+          /*
           v.n = globalThis.Util.halflerp(
             sns, rootns, t, 2,
-          );
-/*          
+          ); */
+
           v.n = globalThis.Util.nlerp(
             rootns,
             sns,
             t,
-          ); */
+          );
 
           x = x * t + sx * (1 - t);
           y = y * t + sy * (1 - t);
@@ -879,11 +879,11 @@ class CenterCapsule3 extends PMX.Maker {
 
 if (typeof exports !== 'undefined') {
   if (typeof module !== 'undefined' && module.exports) {
-    exports.module = exports = CenterCapsule3;
+    exports.module = exports = CenterCapsuleSub;
   }
-  exports.CenterCapsule3 = CenterCapsule3;
+  exports.CenterCapsuleSub = CenterCapsuleSub;
 } else {
-  _global.CenterCapsule3 = CenterCapsule3;
+  _global.CenterCapsuleSub = CenterCapsuleSub;
 }
 
 })(globalThis);
