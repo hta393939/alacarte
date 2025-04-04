@@ -440,8 +440,8 @@ class CenterCapsuleSub extends PMX.Maker {
           ); */
 
           v.n = globalThis.Util.nlerp(
-            rootns,
             sns,
+            rootns,
             t,
           );
 
