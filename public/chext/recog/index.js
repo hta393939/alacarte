@@ -1,17 +1,25 @@
 
 class Misc {
   constructor() {
-    console.log('%c constructor 19:57', Misc.COL);
+    console.log('constructor 14:28');
   }
 
+  async post(obj) {
+    console.log('post');
+    const res = await chrome.runtime.sendMessage(
+      this.extid, obj);
+    console.log('post res', res);
+  }
 
   async initialize() {
     this.setListener();
 
     {
-      const parent = window.parent;
-      parent.postMessage({ type: 'ping' });
+      this.extid = location.host;
+      console.log('match', this.extid);
     }
+
+    this.post({ type: 'ping' });
   }
 
   makeList(data) {
@@ -46,9 +54,7 @@ class Misc {
     {
       const el = document.getElementById('reqlistbut');
       el?.addEventListener('click', () => {
-        const parent = window.parent;
-        console.log('parent', parent);
-        parent.postMessage({ type: 'reqlist' });
+        this.post({ type: 'reqlist' });
       });
     }
 

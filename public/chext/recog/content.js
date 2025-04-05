@@ -16,7 +16,7 @@ class Misc {
   setListener() {
     {
       window.addEventListener('message', async e => {
-        console.log('%c message', Misc.COL, e);
+        console.log('%c global message', Misc.COL, e);
         switch (e.data.type) {
           case 'recog':
             console.log('%c recog', Misc.COL, e.data);
@@ -53,12 +53,21 @@ class Misc {
 
     win.focus();
     {
+      { /*
+        const cs = await chrome.runtime.getContexts(['TAB']);
+        const obj = {
+          type: 'init',
+          param: `${cs[0].tabId}`,
+        };
+        win.postMessage(obj);
+      */ }
+
       win.addEventListener('message', e => {
         console.log('%c win message', Misc.COL, e);
       });
 
-      window.addEventListener('message', async e => {
-        console.log('%c window message', Misc.COL, e);
+      const handler = async e => {
+        console.log('%c handler message', Misc.COL, e);
         switch (e.data.type) {
           case 'video':
             console.log('%c recog', Misc.COL, e.data);
@@ -75,7 +84,9 @@ class Misc {
           default:
             break;
         }
-      });
+      };
+
+      chrome.runtime.onMessage.addListener(handler);
     }
   }
 
