@@ -1,15 +1,32 @@
 
 (function() {
 
+/**
+ * めんどい。
+ * a. やっぱり中に要素を追加する
+ *    位置がめんどくてやだなあ
+ * b. 開いたwindowとの通信を極める
+ *    この知識ももっておきたい気もするが。
+ * c. tabId なんとかする
+ *    リスト持つ?
+ */
 class Misc {
   static COL = 'color:#00cc00;';
   constructor() {
-    console.log('%c constructor 19:57', Misc.COL);
+    console.log('%c constructor 16:36', Misc.COL);
     this.win = null;
   }
 
   async initialize() {
+    globalThis._misc = this;
+
     this.setListener();
+  }
+
+  async send(obj) {
+    console.log('send');
+    const res = await chrome.runtime.sendMessage(obj);
+    console.log('res', res);
   }
 
   /** Alt + F1 で起動したい */
@@ -40,6 +57,11 @@ class Misc {
       });
     }
 
+    {
+      const obj = { type: 'ping' };
+      this.send(obj);
+    }
+
   }
 
   async openWindow() {
@@ -53,19 +75,6 @@ class Misc {
 
     win.focus();
     {
-      { /*
-        const cs = await chrome.runtime.getContexts(['TAB']);
-        const obj = {
-          type: 'init',
-          param: `${cs[0].tabId}`,
-        };
-        win.postMessage(obj);
-      */ }
-
-      win.addEventListener('message', e => {
-        console.log('%c win message', Misc.COL, e);
-      });
-
       const handler = async e => {
         console.log('%c handler message', Misc.COL, e);
         switch (e.data.type) {
@@ -76,17 +85,27 @@ class Misc {
           case 'reqlist':
             const ret = await this.search();
             console.log('%c search', Misc.COL, ret);
-            win.postMessage(ret);
+            win.postMessage(ret, '*');
             break;
           case 'ping':
             console.log('%c ping', Misc.COL, e.data);
+            win.postMessage({ type: 'pong' }, '*');
             break;
           default:
             break;
         }
       };
 
+      win.addEventListener('message', handler);
       chrome.runtime.onMessage.addListener(handler);
+    }
+
+    {
+      win.postMessage({
+        type: 'ping',
+        param: 'from content',
+      }, '*');
+      console.log('%c content win', Misc.COL, win, win.url);
     }
   }
 
@@ -126,6 +145,7 @@ class Misc {
     return ret;
   }
 
+
   /**
    * 
    * @param {MediaStream} stream 
@@ -136,9 +156,10 @@ class Misc {
     return recog;
   }
 
-  async startRecog() {
+  async startRecog(stream) {
     const recog = this.recog;
-    recog.start();
+    const track = stream.getAudioTracks()[0];
+    recog.start(track);
     console.log('startRecog');
   }
 

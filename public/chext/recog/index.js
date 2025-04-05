@@ -1,7 +1,7 @@
 
 class Misc {
   constructor() {
-    console.log('constructor 14:28');
+    console.log('constructor 19:03');
   }
 
   async post(obj) {
@@ -9,6 +9,14 @@ class Misc {
     const res = await chrome.runtime.sendMessage(
       this.extid, obj);
     console.log('post res', res);
+
+    const win = window.opener;
+    console.log('opener len', win?.length);
+    win.postMessage(obj, '*');
+    console.log('opener', win, /*win.url*/);
+    for (let i = 0; i < win?.length || 0; i++) {
+      win[i].postMessage(obj, '*');
+    }
   }
 
   async initialize() {
@@ -37,7 +45,7 @@ class Misc {
   setListener() {
     {
       window.addEventListener('message', (e) => {
-        console.log('message', e);
+        console.log('index message', e);
         switch (e.data.type) {
           case 'reslist':
             console.log('reslist', e.data);

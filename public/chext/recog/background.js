@@ -3,6 +3,20 @@ const COL = 'color:#3333ff';
 
 console.log('%c background', COL);
 
+/** タブ1個返す */
+const getTab = () => {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError);
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(tabs[0]);
+      }
+    });
+  });
+};
+
 chrome.action.onClicked.addListener((tab) => {
   const url = '../index.html';
   chrome.tabs.create({
@@ -15,7 +29,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   switch (request.type) {
     case 'reqlist':
       {
-        chrome.tabs.getCurrent()
+        getTab()
           .then(tab => {
             const tabId = tab.id;
             console.log('%c tab', COL, tab);
