@@ -7,25 +7,6 @@ class Misc {
     console.log('%c constructor 19:57', Misc.COL);
   }
 
-  async search() {
-    console.log('%c search', Misc.COL);
-    const qs = document.querySelectorAll('video');
-
-    let video = null;
-    for (const q of qs) {
-      const id = q.id;
-      console.log('%c video', Misc.COL,
-        id, video.playbackRate, video.videoWidth, video.videoHeight, video.currentTime);
-      video = q;
-    }
-
-    if (!video) {
-      console.log('%c no video found', Misc.COL);
-      return;
-    }
-
-    console.log('%c search', Misc.COL);
-  }
 
   async initialize() {
     this.setListener();
@@ -33,9 +14,38 @@ class Misc {
     setTimeout(async () => {
       await this.search();
     }, 5000);
+
+    {
+      const parent = window.parent;
+      parent.postMessage({ type: 'ping' });
+    }
+  }
+
+  makeList(data) {
+    const list = document.createElement('ul');
+    for (const item of data) {
+      const li = document.createElement('li');
+      li.textContent = item;
+      list.appendChild(li);
+    }
+    return list;
   }
 
   setListener() {
+    {
+      window.addEventListener('message', (e) => {
+        console.log('%c message', Misc.COL, e);
+        switch (e.data.type) {
+          case 'video':
+            console.log('%c recog', Misc.COL, e.data);
+            this.makeList(e.data);
+            break;
+          default:
+            break;
+        }
+      });
+    }
+
     {
       const el = document.getElementById('enumvoice');
       el?.addEventListener('click', () => {
@@ -63,22 +73,6 @@ class Misc {
         this.startCapture();
       });
     }
-  }
-
-  /**
-   * 
-   * @param {MediaStream} stream 
-   */
-  async readyRecog() {
-    console.log('readyRecog');
-    const recog = new webkitSpeechRecognition();
-    return recog;
-  }
-
-  async startRecog() {
-    const recog = this.recog;
-    recog.start();
-    console.log('startRecog');
   }
 
 }
