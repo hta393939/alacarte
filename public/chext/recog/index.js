@@ -1,8 +1,5 @@
 
-(function() {
-
 class Misc {
-  static COL = 'color:#00cc00;';
   constructor() {
     console.log('%c constructor 19:57', Misc.COL);
   }
@@ -11,10 +8,6 @@ class Misc {
   async initialize() {
     this.setListener();
 
-    setTimeout(async () => {
-      await this.search();
-    }, 5000);
-
     {
       const parent = window.parent;
       parent.postMessage({ type: 'ping' });
@@ -22,8 +15,10 @@ class Misc {
   }
 
   makeList(data) {
+    const { vs } = data;
+
     const list = document.createElement('ul');
-    for (const item of data) {
+    for (const item of vs) {
       const li = document.createElement('li');
       li.textContent = item;
       list.appendChild(li);
@@ -34,11 +29,13 @@ class Misc {
   setListener() {
     {
       window.addEventListener('message', (e) => {
-        console.log('%c message', Misc.COL, e);
+        console.log('message', e);
         switch (e.data.type) {
-          case 'video':
-            console.log('%c recog', Misc.COL, e.data);
-            this.makeList(e.data);
+          case 'reslist':
+            console.log('reslist', e.data);
+            const el = this.makeList(e.data);
+            window.videolist.textContent = '';
+            window.videolist.appendChild(el);
             break;
           default:
             break;
@@ -47,37 +44,17 @@ class Misc {
     }
 
     {
-      const el = document.getElementById('enumvoice');
+      const el = document.getElementById('reqlistbut');
       el?.addEventListener('click', () => {
-        this.enumVoice();
+        const parent = window.parent;
+        console.log('parent', parent);
+        parent.postMessage({ type: 'reqlist' });
       });
     }
 
-    {
-      const el = document.getElementById('saytext');
-      el?.addEventListener('click', () => {
-        this.say(window.text.value);
-      });
-    }
-
-    {
-      const el = document.getElementById('openwindow');
-      el?.addEventListener('click', () => {
-        this.openWindow();
-      });
-    }
-
-    {
-      const el = document.getElementById('cap');
-      el?.addEventListener('click', () => {
-        this.startCapture();
-      });
-    }
   }
 
 }
 
 const misc = new Misc();
 misc.initialize();
-
-})();

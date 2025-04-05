@@ -8,10 +8,7 @@
   height: 6rem;
 }
 
-#mainvideo {
-  border: solid 1px black;
-  width: 320px;
-  height: 180px;
-  padding: 0;
+.pointer {
+  cursor: pointer;
 }
 

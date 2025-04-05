@@ -53,8 +53,12 @@ class Misc {
 
     win.focus();
     {
-      win.addEventListener('message', async e => {
+      win.addEventListener('message', e => {
         console.log('%c win message', Misc.COL, e);
+      });
+
+      window.addEventListener('message', async e => {
+        console.log('%c window message', Misc.COL, e);
         switch (e.data.type) {
           case 'video':
             console.log('%c recog', Misc.COL, e.data);
@@ -80,7 +84,7 @@ class Misc {
     const qs = document.querySelectorAll('video');
 
     const ret = {
-      type: 'video',
+      type: 'reslist',
       vs: [],
     };
     let video = null;
