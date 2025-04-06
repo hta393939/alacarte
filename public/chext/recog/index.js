@@ -39,6 +39,11 @@ class Misc {
       li.textContent = item;
       list.appendChild(li);
     }
+    if (vs.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'no video';
+      list.appendChild(li);
+    }
     return list;
   }
 

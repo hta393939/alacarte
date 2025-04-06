@@ -1,14 +1,18 @@
 
 const COL = 'color:#3333ff';
 
-console.log('%c background', COL);
+console.log('%c background start', COL);
 
 /** タブ1個返す */
 const getTab = () => {
   return new Promise((resolve, reject) => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const param = {
+      active: true, lastFocusedWindow: true,
+    };
+    chrome.tabs.query(param, (tabs) => {
+      console.log('%c query callback', COL, tabs);
       if (chrome.runtime.lastError) {
-        console.error(chrome.runtime.lastError);
+        console.error('background error', chrome.runtime.lastError);
         reject(chrome.runtime.lastError);
       } else {
         resolve(tabs[0]);
@@ -25,7 +29,7 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('%c message', COL);
+  console.log('%c background message', COL);
   switch (request.type) {
     case 'reqlist':
       {

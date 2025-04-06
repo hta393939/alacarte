@@ -13,25 +13,33 @@
 class Misc {
   static COL = 'color:#00cc00;';
   constructor() {
-    console.log('%c constructor 16:36', Misc.COL);
+    console.log('%c constructor 14:38', Misc.COL);
     this.win = null;
   }
 
   async initialize() {
+    // さすがに無理だった
     globalThis._misc = this;
 
     this.setListener();
+
+    {
+      document.body.dataset['extrecogfoo'] = `foo ${new Date().toLocaleTimeString()}`;
+    }
   }
 
   async send(obj) {
-    console.log('send');
+    console.log('%c send', Misc.COL);
     const res = await chrome.runtime.sendMessage(obj);
-    console.log('res', res);
+    console.log('%v res', Misc.COL, res);
+
+    this.win.postMessage(obj, '*');
+    console.log('%c send', Misc.COL);
   }
 
   /** Alt + F1 で起動したい */
   setListener() {
-    {
+    { /*
       window.addEventListener('message', async e => {
         console.log('%c global message', Misc.COL, e);
         switch (e.data.type) {
@@ -43,7 +51,7 @@ class Misc {
             break;
         }
       })
-    }
+    */ }
 
     {
       window.addEventListener('keyup', async (e) => {
@@ -53,12 +61,18 @@ class Misc {
           if (e.altKey) {
             this.openWindow();
           }
+        } else if (key === 'f2') {
+          if (e.altKey) {
+            const data = await this.search();
+            console.log('%c search', Misc.COL, data);
+            this.send(data);
+          }
         }
       });
     }
 
     {
-      const obj = { type: 'ping' };
+      const obj = { type: 'ping', param: 'from content' };
       this.send(obj);
     }
 
@@ -72,6 +86,7 @@ class Misc {
       alert('ポップアップがブロックされました。');
       return;
     }
+    this.win = win;
 
     win.focus();
     {
@@ -109,39 +124,43 @@ class Misc {
     }
   }
 
+  /**
+   * 
+   * @param {HTMLElement} el 
+   */
+  async searchIFrame(el, data) {
+    const qs = el.querySelectorAll('iframe');
+    const vs = el.querySelectorAll('video');
+    for (const v of vs) {
+      const obj = {
+        type: 'video',
+        video: v,
+        videoid: v.id,
+        videoWidth: v.videoWidth,
+        videoHeight: v.videoHeight,
+        currentTime: v.currentTime,
+        playbackRate: v.playbackRate,
+        href: v.src,
+        frame: el,
+      };
+      data.vs.push(obj);
+    }
+    for (const q of qs) {
+      const inner = q.contentWindow;
+      this.searchIFrame(inner, data);  
+    }
+  }
+
   async search() {
     console.log('%c search', Misc.COL);
-    const qs = document.querySelectorAll('video');
-
     const ret = {
       type: 'reslist',
+      href: location.href,
       vs: [],
     };
-    let video = null;
-    for (const q of qs) {
-      const id = q.id;
-      console.log('%c video', Misc.COL,
-        id, video.playbackRate, video.videoWidth, video.videoHeight, video.currentTime);
-      video = q;
-      {
-        const obj = {
-          id: id,
-          playbackRate: video.playbackRate,
-          videoWidth: video.videoWidth,
-          videoHeight: video.videoHeight,
-          currentTime: video.currentTime,
-        };
-        ret.vs.push(obj);
-        console.log('%c video', Misc.COL, obj);
-      }
-    }
+    this.searchIFrame(document.body, ret);
 
-    if (!video) {
-      console.log('%c no video found', Misc.COL);
-      return;
-    }
-
-    console.log('%c search', Misc.COL);
+    console.log('%c search', Misc.COL, ret);
     return ret;
   }
 
