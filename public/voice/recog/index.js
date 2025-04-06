@@ -62,9 +62,10 @@ class Misc {
     }
 
     {
-      const el = document.getElementById('cap');
-      el?.addEventListener('click', () => {
-        this.startCapture();
+      const el = document.getElementById('startcap');
+      el?.addEventListener('click', async () => {
+        const stream = await this.startCapture();
+        this.stream = stream;
       });
     }
 
@@ -90,8 +91,7 @@ class Misc {
       video: true,
     };
     const stream = await navigator.mediaDevices.getDisplayMedia(opt);
-    window.mainvideo.srcObject = stream;
-    await window.mainvideo.play();
+    return stream;
   }
 
   openWindow() {
@@ -112,8 +112,7 @@ class Misc {
   }
 
   async getTrack() {
-    const video = document.getElementById('targetvideo');
-    const stream = video.captureStream();
+    const stream = this.stream;
     const track = stream.getAudioTracks()[0];
     return track;
   }
@@ -133,6 +132,7 @@ class Misc {
     });
     recog.addEventListener('end', ev => {
       console.log(ev.type);
+      recog.start(); // end の後に再度startする
     });
 
     recog.addEventListener('speechstart', ev => {
@@ -145,7 +145,8 @@ class Misc {
       console.log(ev.type);
     });
     recog.addEventListener('result', ev => {
-      console.log(ev.type, ev.results);
+      console.log(ev.type);
+      this.processResults(ev.results);
     });
     recog.addEventListener('nomatch', ev => {
       console.log(ev.type, ev.results);
@@ -154,6 +155,10 @@ class Misc {
       console.log(ev.type, ev.error, 'message', ev.message);
       // error = 'no-speech' など
     });
+
+    recog.language = 'ja-JP';
+    //recog.interimResults = true;
+    //recog.continuous = true;
 
     return recog;
   }
@@ -165,6 +170,21 @@ class Misc {
 
     recog.start(track);
     console.log('startRecog');
+  }
+
+  async processResults(results) {
+    for (const result of results) {
+      if (result.confidence == 0) {
+        continue; // 信頼度0は無視
+      }
+      if (!result.isFinal) {
+        continue; // 確定していないものは無視
+      }
+      const transcript = result[0].transcript;
+      if (transcript) {
+        console.log(result[0].transcript);
+      }
+    }
   }
 
 }
