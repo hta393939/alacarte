@@ -29,7 +29,7 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('%c background message', COL);
+  console.log('%c background message', COL, request, sender);
   switch (request.type) {
     case 'reqlist':
       {

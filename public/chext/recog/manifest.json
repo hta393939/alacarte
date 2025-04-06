@@ -1,7 +1,7 @@
 {
   "name": "recog",
   "description": "Recog trial",
-  "version": "0.2.10",
+  "version": "0.2.12",
   "manifest_version": 3,
 
   "action": {},
@@ -12,7 +12,9 @@
     {"matches": ["<all_urls>"],
     "js": [
       "content.js"
-    ]}
+    ],
+    "all_frames": true
+  }
   ],
   "background": {
     "service_worker": "background.js"

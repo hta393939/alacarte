@@ -23,7 +23,7 @@ class Misc {
 
     this.setListener();
 
-    {
+    { // all_frames: false のときはトップフレームのみ
       document.body.dataset['extrecogfoo'] = `foo ${new Date().toLocaleTimeString()}`;
     }
   }
@@ -31,10 +31,12 @@ class Misc {
   async send(obj) {
     console.log('%c send', Misc.COL);
     const res = await chrome.runtime.sendMessage(obj);
-    console.log('%v res', Misc.COL, res);
+    console.log('%c res', Misc.COL, res);
 
-    this.win.postMessage(obj, '*');
-    console.log('%c send', Misc.COL);
+    if (this.win) {
+      this.win.postMessage(obj, '*');
+      console.log('%c send', Misc.COL);
+    }
   }
 
   /** Alt + F1 で起動したい */
@@ -65,6 +67,15 @@ class Misc {
           if (e.altKey) {
             const data = await this.search();
             console.log('%c search', Misc.COL, data);
+            if (data.vs.length > 0) {
+              console.log('%c search', Misc.COL, data.vs.length);
+              const recog = await this.readyRecog();
+              this.recog = recog;
+              const video = data.vs[0].video;
+              const stream = video.captureStream();
+              await this.startRecog(stream);
+            }
+
             this.send(data);
           }
         }
@@ -129,26 +140,39 @@ class Misc {
    * @param {HTMLElement} el 
    */
   async searchIFrame(el, data) {
-    const qs = el.querySelectorAll('iframe');
-    const vs = el.querySelectorAll('video');
-    for (const v of vs) {
-      const obj = {
-        type: 'video',
-        video: v,
-        videoid: v.id,
-        videoWidth: v.videoWidth,
-        videoHeight: v.videoHeight,
-        currentTime: v.currentTime,
-        playbackRate: v.playbackRate,
-        href: v.src,
-        frame: el,
-      };
-      data.vs.push(obj);
+    if (!el) {
+      return;
     }
-    for (const q of qs) {
-      const inner = q.contentWindow;
-      this.searchIFrame(inner, data);  
+
+    try {
+      const qs = el.querySelectorAll('iframe');
+      const vs = el.querySelectorAll('video');
+      for (const v of vs) {
+        const obj = {
+          type: 'video',
+          video: v,
+          videoid: v.id,
+          videoWidth: v.videoWidth,
+          videoHeight: v.videoHeight,
+          currentTime: v.currentTime,
+          playbackRate: v.playbackRate,
+          href: v.src,
+          frame: el,
+        };
+        data.vs.push(obj);
+      }
+      for (const q of qs) {
+        const inner = q.contentWindow;
+        // 外から中を見るのはセーフではないのか
+        console.log('%c searchIFrame', Misc.COL, inner);
+        this.searchIFrame(inner, data);
+        console.log('%c searchIFrame done', Misc.COL);
+      }
+
+    } catch (e) {
+      console.error('%c searchIFrame', Misc.COL, e);
     }
+
   }
 
   async search() {
@@ -172,9 +196,51 @@ class Misc {
   async readyRecog() {
     console.log('readyRecog');
     const recog = new webkitSpeechRecognition();
+
+    recog.addEventListener('start', (ev) => {
+      console.log('%c start', Misc.COL, ev.type);
+    });
+    recog.addEventListener('end', ev => {
+      console.log('%c end', Misc.COL, ev.type);
+
+      setTimeout(() => {
+        recog.start();
+        console.log('%c restart', Misc.COL);
+      }
+      , 100);
+    });
+
+    recog.addEventListener('speechstart', ev => {
+      console.log(ev.type);
+    });
+    recog.addEventListener('soundstart', (ev) => {
+      console.log(ev.type);
+    });
+    recog.addEventListener('audiostart', (ev) => {
+      console.log(ev.type);
+    });
+    recog.addEventListener('result', ev => {
+      console.log('%c result', Misc.COL, ev.type, ev.results);
+    });
+    recog.addEventListener('nomatch', ev => {
+      console.log(ev.type, ev.results);
+    });
+    recog.addEventListener('error', ev => {
+      console.log(ev.type, ev.error, 'message', ev.message);
+      // error = 'no-speech' など
+    });
+
+    recog.continuous = true;
+    recog.interimResults = true;
+    recog.lang = 'ja-JP';
+
     return recog;
   }
 
+  /**
+   * 
+   * @param {MediaStream} stream 
+   */
   async startRecog(stream) {
     const recog = this.recog;
     const track = stream.getAudioTracks()[0];
