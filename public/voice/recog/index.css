@@ -1,0 +1,21 @@
+
+.pointer {
+  cursor: pointer;
+}
+
+.num6 {
+  width: 6em;
+}
+
+#numberselement {
+  width: 50vw;
+  height: 6rem;
+}
+
+#mainvideo {
+  border: solid 1px black;
+  width: 320px;
+  height: 180px;
+  padding: 0;
+}
+

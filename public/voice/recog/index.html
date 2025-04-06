@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>speech recog</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div>
+      <div>
+ブラウザで鳴っていないのでタブキャプチャで音が取れない;;
+        <div id="innerview"></div>
+        <div id="element"></div>
+      </div>
+      <div>
+        <div>ビデオ</div>
+        <button class="pointer" id="readyrecogbut">認識用意</button>
+        <button class="pointer" id="startrecogbut">認識開始</button>
+        <video src="DSCN0716.MOV" id="targetvideo" controls playsinline></video>
+
+        <textarea id="text">
+我々は新たに、世界をおびやかす敵が到来した時に備え
+国境を超え利害を排除し
+国同士が一丸となって敵を打ち倒すため
+新たな組織を結成した。
+五王国、ことさま事案対策用、戦略救命部隊。通称は守護神の名に由来し、
+王様戦隊キングオージャーとする。
+        </textarea>
+        <button id="enumvoice">列挙する</button>
+        <button id="saytext">発音する</button>
+        <button id="openwindow">開く</button>
+        <button id="replay">再生開始</button>
+        <button id="cap">キャプチャ</button>
+      </div>
+      <div>
+        <div id="imelement"></div>
+      </div>
+      <div>
+        <div id="resultelement"></div>
+      </div>
+      <div>
+        <video id="mainvideo" autoplay controls playsinline></video>
+      </div>
+    </div>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
+
