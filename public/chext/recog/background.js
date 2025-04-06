@@ -21,12 +21,14 @@ const getTab = () => {
   });
 };
 
+/*
 chrome.action.onClicked.addListener((tab) => {
   const url = '../index.html';
   chrome.tabs.create({
     url,
   });
 });
+*/
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('%c background message', COL, request, sender);
