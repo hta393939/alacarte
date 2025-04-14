@@ -238,7 +238,8 @@ class Misc {
     /**
      * 本家にあわせて {|}
      */
-    const reyomi = /(?<fw>[^\{]*)<(?<display>[^\{\}]*)\|(?<yomi>[^\{\}]*)\>(?<bw>.*)/;
+    //const reyomi = /(?<fw>[^\{]*)<(?<display>[^\{\}]*)\|(?<yomi>[^\{\}]*)\>(?<bw>.*)/;
+    const reyomi = /(?<fw>[^\{]*)\{(?<display>[^\{\}\|]*)\|(?<yomi>[^\{\}\|]*)\}(?<bw>.*)/;
 
     const lines = instr.split('\n');
     let obj = null;
