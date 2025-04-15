@@ -437,6 +437,8 @@ class Misc {
           {
             const te = new AVIUTL.AUText();
             te.setText(say.text);
+            //te.data0.font = `Noto Sans JP Black`;
+            te.data0.spacing_y = 12;
             te.data.layer = startLayer + 5 + mod; // +5, +6
             te.data.start = timeCounter + 1;
             te.data.end = te.data.start + len - 1;
