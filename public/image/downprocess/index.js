@@ -273,6 +273,13 @@ class Misc {
       0, 0, w, h,
       0, 0, w * scale, h * scale,
     );
+
+    {
+      const el = document.getElementById('subview');
+      if (el) {
+        el.textContent = `${w}x${h}`;
+      }
+    }
   }
 
   async openImage() {
@@ -290,6 +297,13 @@ class Misc {
 
     const canvas = document.getElementById('maincanvas');
     await this.loadFileToCanvas(file, canvas);
+
+    {
+      const el = document.getElementById('filenameview');
+      if (el) {
+        el.textContent = file.name;
+      }
+    }
   }
 
   /**
