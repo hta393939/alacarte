@@ -1,0 +1,45 @@
+
+#backcanvas {
+  background-color: darkgoldenrod;
+}
+
+.drop {
+  background-color: #f0f0ff;
+  border: dashed 4px black;
+  margin: 1rem;
+  padding: 1rem;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 1rem;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.toright {
+  display: flex;
+  flex-direction: row;
+}
+
+#maincanvas {
+  border: solid 1px blue;
+}
+
+#subcanvas {
+  border: solid 1px red;
+}
+
+.minithumb {
+  max-width: min(200px, 40vw);
+}
+
+#openimagebut {
+  width: 90vw;
+  height: 2em;
+}
+
+#applybut {
+  width: max(20vw, 6em);
+  height: 2em;
+}

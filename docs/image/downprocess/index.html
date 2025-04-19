@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>加工</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div>
+      <button class="pointer" id="openimagebut">openimage</button>
+    </div>
+
+    <div class="drop">画像変換 Drop file</div>
+
+    <div>
+      <div class="toright">
+        <div>
+          <button class="pointer" id="applybut">加工</button>
+        </div>
+
+        <div class="toright">
+        <div>処理方法</div>
+        <select id="methodsel" class="pointer">
+          <option value="quantize" selected>quantize</option>
+          <option value="down">down</option>
+        </select>
+        </div>
+
+        <div class="toright">
+          <div>量子化</div>
+          <select id="qstepsel" class="pointer">
+            <option value="1">1step 256</option>
+            <option value="17">17step 16</option>
+            <option value="37" selected>37step 8</option>
+            <option value="51">51step 6</option>
+          </select>
+        </div>
+
+        <div class="toright">
+          <div>縮小目的サイズ</div>
+          <select id="downsizesel" class="pointer">
+            <option value="-1">変更無し</option>
+            <option value="64">64へ</option>
+            <option value="128" selected>128へ</option>
+            <option value="256">256へ</option>
+          </select>
+        </div>
+
+        <div class="toright">
+          <div>後倍</div>
+          <select id="afterdotsel" class="pointer">
+            <option value="1">変更無し</option>
+            <option value="2" selected>2pxドット</option>
+            <option value="4">4pxドット</option>
+            <option value="8">8pxドット</option>
+          </select>
+        </div>
+ 
+      </div>
+
+      <!--
+      <div class="toright">
+        <div>スケール</div>
+        <input class="pointer" type="range" id="scale" value="4" min="1" max="16" />
+        <div id="scaleview"></div>
+      </div>
+      <div class="toright">
+        <div>セル横</div>
+        <input class="pointer" type="range" id="cellx" value="0" min="0" max="8" />
+        <div id="cellxview"></div>
+      </div>
+      <div class="toright">
+        <div>セル縦</div>
+        <input class="pointer" type="range" id="celly" value="0" min="0" max="8" />
+        <div id="cellyview"></div>
+      </div>
+      <div class="toright">
+        <div>1セルサイズ</div>
+        <input class="pointer" type="range" id="cellw" value="16" min="8" max="32" />
+        <div id="cellwview"></div>
+      </div>
+    -->
+
+    </div>
+
+    <div class="aaatoright">
+
+      <div class="toright">
+        <canvas class="minithumb" id="maincanvas"></canvas>
+        <div class="tobottom">
+          <div id="filenameview"></div>
+          <div id="subview"></div>
+        </div>
+        <canvas id="subcanvas"></canvas>
+      </div>
+      <canvas id="backcanvas"></canvas>
+
+    </div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
