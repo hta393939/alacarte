@@ -275,6 +275,38 @@ class Misc {
     );
   }
 
+  async openImage() {
+    const file = await globalThis.showOpenFilePicker({
+      types: [
+        {
+          description: 'Image files',
+          accept: {
+            'image/*': ['.png', '.jpg', '.jpeg'],
+          },
+        },
+      ],
+    });
+    const canvas = document.getElementById('maincanvas');
+    await this.loadFileToCanvas(file[0], canvas);
+  }
+
+  /**
+   * すでに存在する maincanvas に処理を適用する
+   */
+  applyForMain() {
+    const src = document.getElementById('maincanvas');
+    const setting = this.gatherSetting();
+    switch (setting.method) {
+      case 'quantize':
+        this.convByQ(setting);
+        return;
+      case 'down':
+        this.miniScale(src);
+        this.downColor(src);
+        return;
+    }
+  }
+
   /**
    * 
    * @param {File} file 
@@ -369,17 +401,15 @@ class Misc {
     }
 
     {
-      const el = document.getElementById('idmake1');
+      const el = document.getElementById('openimagebut');
       el?.addEventListener('click', async () => {
-        const canvas = await this.make1();
-        const dst = document.getElementById('maincanvas');
-        if (!dst) {
-          return;
-        }
-        dst.width = canvas.width;
-        dst.height = canvas.height;
-        const c = dst?.getContext('2d');
-        c.drawImage(canvas, 0, 0, dst.width, dst.height);
+        this.openImage();
+      });
+    }
+    {
+      const el = document.getElementById('applybut');
+      el?.addEventListener('click', async () => {
+        this.applyForMain();
       });
     }
 

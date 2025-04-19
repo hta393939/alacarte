@@ -31,5 +31,15 @@
 }
 
 .minithumb {
-  max-width: 200px;
+  max-width: min(200px, 40vw);
+}
+
+#openimagebut {
+  width: 90vw;
+  height: 2em;
+}
+
+#applybut {
+  width: max(20vw, 6em);
+  height: 2em;
 }

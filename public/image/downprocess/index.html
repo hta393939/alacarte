@@ -2,20 +2,22 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>減色プロセス</title>
+    <title>加工</title>
     <link rel="stylesheet" href="./index.css" />
   </head>
   <body>
     <div>
-      <button class="pointer" id="idmake1">make1</button>
+      <button class="pointer" id="openimagebut">openimage</button>
     </div>
 
-    <div class="drop">減色する Drop file</div>
+    <div class="drop">画像変換 Drop file</div>
 
     <div>
-      <div>色変換</div>
+      <div class="toright">
+        <div>
+          <button class="pointer" id="applybut">加工</button>
+        </div>
 
-      <div>
         <div class="toright">
         <div>処理方法</div>
         <select id="methodsel" class="pointer">
@@ -34,7 +36,7 @@
           </select>
         </div>
 
-        <div>
+        <div class="toright">
           <div>縮小目的サイズ</div>
           <select id="downsizesel" class="pointer">
             <option value="-1">変更無し</option>
@@ -45,7 +47,7 @@
           </select>
         </div>
 
-        <div>
+        <div class="toright">
           <div>後倍</div>
           <select id="afterdotsel" class="pointer">
             <option value="1">変更無し</option>
@@ -76,15 +78,6 @@
         <div>1セルサイズ</div>
         <input class="pointer" type="range" id="cellw" value="16" min="8" max="32" />
         <div id="cellwview"></div>
-      </div>
-
-      <div>
-        <select id="tail" class="pointer">
-          <option value="e" selected>短</option>
-          <option value="l">左</option>
-          <option value="r">右</option>
-          <option value="w">長い</option>
-        </select>
       </div>
 
     </div>
