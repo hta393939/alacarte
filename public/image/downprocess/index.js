@@ -200,12 +200,12 @@ class Misc {
   }
 
   /**
-   * 
-   * @param {HTMLCanvasElement} src 
+   * 指定スケールで拡大する
+   * @param {HTMLCanvasElement} src 元
+   * @param {HTMLCanvasElement} dst 先
+   * @param {number} scale スケール
    */
-  scaleImage(src) {
-    const scale = this.scale;
-
+  scaleImage(src, dst, scale) {
     const cellx = this.cellx;
     const celly = this.celly;
     const cellw = this.cellw;
@@ -217,21 +217,17 @@ class Misc {
 //        const w = src.width;
 //        const h = src.height;
     const context = src.getContext('2d');
-    /**
-     * 書き出し先
-     * @type {HTMLCanvasElement}
-     */
-    const canvas = document.getElementById('subcanvas');
-    const c = canvas.getContext('2d');
-    canvas.width = cellw * scale;
-    canvas.height = cellh * scale;
+
+    const c = dst.getContext('2d');
+    dst.width = cellw * scale;
+    dst.height = cellh * scale;
     const cx = cellx * cellw;
     const cy = celly * cellh;
     console.log(cx, cy, cellw, cellh);
     const dat = context.getImageData(cx, cy, cellw, cellh);
 
     let backs = [-1, -1, -1];
-    if (true) {
+    if (false) {
       let ft = (0 + 0 * 0) * 4;
       backs[0] = dat.data[ft];
       backs[1] = dat.data[ft+1];
@@ -257,6 +253,29 @@ class Misc {
   }
 
   /**
+   * 指定スケールで拡大する
+   * @param {HTMLCanvasElement} src 元
+   * @param {HTMLCanvasElement} dst 先
+   * @param {number} scale スケール
+   */
+  scaleImageSimple(src, dst, scale) {
+    /**
+     * 入力画像の幅
+     */
+    const w = src.width;
+    const h = src.height;
+    dst.width = w * scale;
+    dst.height = h * scale;
+    const c = dst.getContext('2d');
+    // 拡大フィルタ
+    c.imageSmoothingEnabled = false;
+    c.drawImage(src,
+      0, 0, w, h,
+      0, 0, w * scale, h * scale,
+    );
+  }
+
+  /**
    * 
    * @param {File} file 
    */
@@ -271,13 +290,15 @@ class Misc {
       canvas.height = img.height;
       const c = canvas.getContext('2d');
       c.drawImage(img, 0, 0);
-      this.scaleImage(canvas);
+
+      const dst = document.getElementById('subcanvas');
+      this.scaleImage(canvas, dst, this.scale);
     });
     img.src = URL.createObjectURL(file);
   }
 
   gatherSetting() {
-    const ret = { qstep: 1, downsize: 0 };
+    const ret = { qstep: 1, downsize: 0, afterdot: 1 };
     {
       const el = document.getElementById('downsizesel');
       if (el) {
@@ -528,6 +549,9 @@ class Misc {
       }
     }
     dstc.putImageData(dstimg, 0, 0);
+
+    const last = document.getElementById('backcanvas');
+    this.scaleImageSimple(dstcanvas, last, this.scale);
   }
 
   /**
