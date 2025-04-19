@@ -276,7 +276,7 @@ class Misc {
   }
 
   async openImage() {
-    const file = await globalThis.showOpenFilePicker({
+    const fileHandle = await globalThis.showOpenFilePicker({
       types: [
         {
           description: 'Image files',
@@ -286,14 +286,16 @@ class Misc {
         },
       ],
     });
+    const file = await fileHandle[0].getFile();
+
     const canvas = document.getElementById('maincanvas');
-    await this.loadFileToCanvas(file[0], canvas);
+    await this.loadFileToCanvas(file, canvas);
   }
 
   /**
    * すでに存在する maincanvas に処理を適用する
    */
-  applyForMain() {
+  async applyForMain() {
     const src = document.getElementById('maincanvas');
     const setting = this.gatherSetting();
     switch (setting.method) {
@@ -301,8 +303,14 @@ class Misc {
         this.convByQ(setting);
         return;
       case 'down':
-        this.miniScale(src);
-        this.downColor(src);
+        {
+          const mid = document.getElementById('subcanvas');
+          await this.miniScale(src, mid);
+          await this.downColor(mid);
+          this.scaleImageSimple(mid,
+            document.getElementById('backcanvas'),
+            setting.afterdot);
+        }
         return;
     }
   }
@@ -330,23 +338,24 @@ class Misc {
   }
 
   gatherSetting() {
-    const ret = { qstep: 1, downsize: 0, afterdot: 1 };
+    const ret = { method: 'quantize', qstep: 1, downsize: 0, afterdot: 1 };
     {
-      const el = document.getElementById('downsizesel');
+      const el = document.getElementById('methodsel');
       if (el) {
-        const val = Number.parseFloat(el.value);
-        if (Number.isFinite(val)) {
-          ret.downsize = val;
-        }
+        ret.method = el.value;
       }
     }
-    {
-      const el = document.getElementById('qstepsel');
-      if (el) {
-        const val = Number.parseFloat(el.value);
-        if (Number.isFinite(val)) {
-          ret.qstep = val;
-        }
+
+    for (const k of [
+      'downsize', 'afterdot', 'qstep',
+    ]) {
+      const el = document.getElementById(`${k}sel`);
+      if (!el) {
+        continue;
+      }
+      const val = Number.parseFloat(el.value);
+      if (Number.isFinite(val)) {
+        ret[k] = val;
       }
     }
 
@@ -368,20 +377,7 @@ class Misc {
         const canvas = document.getElementById('maincanvas');
         await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
 
-        const setting = this.gatherSetting();
-        const selel = document.getElementById('methodsel');
-        switch (selel.value) {
-          case 'quantize':
-            this.convByQ(setting);
-            return;
-          case 'down':
-            this.miniScale(canvas);
-            this.downColor(canvas);
-            return;
-        }
-
-        this.miniScale(canvas);
-        this.downColor(canvas);
+        this.applyForMain();
       });
     }
 
@@ -391,6 +387,9 @@ class Misc {
       const el = document.getElementById(`${k}`);
       const viewel = document.getElementById(`${k}view`);
       const _update = () => {
+        if (!el) {
+          return;
+        }
         this[k] = Number.parseFloat(el.value);
         viewel.textContent = this[k];
       };
@@ -403,12 +402,13 @@ class Misc {
     {
       const el = document.getElementById('openimagebut');
       el?.addEventListener('click', async () => {
-        this.openImage();
+        await this.openImage();
+        this.applyForMain();
       });
     }
     {
       const el = document.getElementById('applybut');
-      el?.addEventListener('click', async () => {
+      el?.addEventListener('click', () => {
         this.applyForMain();
       });
     }
@@ -416,13 +416,13 @@ class Misc {
   }
 
   /**
-   * 
+   * 縦横ともに256以下になるまで半分にする
    * @param {HTMLCanvasElement} canvas 
+   * @param {HTMLCanvasElement} dst
    */
-  miniScale(canvas) {
+  miniScale(canvas, dst) {
     let w = canvas.width;
     let h = canvas.height;
-    const c = canvas.getContext('2d');
     while (w > 256 || h > 256) {
       w *= 0.5;
       h *= 0.5;
@@ -430,14 +430,13 @@ class Misc {
     w = Math.floor(w);
     h = Math.floor(h);
 
-    const mid = new OffscreenCanvas(w, h);
-    const midc = mid.getContext('2d');
-    midc.drawImage(canvas, 0, 0, canvas.width, canvas.height,
+    dst.width = w;
+    dst.height = h;
+    const dstc = dst.getContext('2d');
+    dstc.drawImage(canvas,
+      0, 0, canvas.width, canvas.height,
       0, 0, w, h,
     );
-    canvas.width = w;
-    canvas.height = h;
-    c.drawImage(mid, 0, 0);
   }
 
   /**
@@ -538,8 +537,7 @@ class Misc {
 
   convByQ(param) {
     /** 画素値に対する事前量子化想定 */
-    let _qstep = param.qstep;
-    const _downsize = param.downsize;
+    const { qstep, downsize } = param;
     console.log('%c convByQ', 'color:blue', param);
 
     const canvas = window.maincanvas;
@@ -548,9 +546,16 @@ class Misc {
     let calcw = w;
     let calch = h;
     const dstcanvas = window.subcanvas;
-    if (_downsize > 0) {
-      calcw = _downsize;
-      calch = Math.floor(h * calcw / w);
+    if (downsize > 0) {
+//      calcw = _downsize;
+//      calch = Math.floor(h * calcw / w);
+      if (w > h) {
+        calch = downsize;
+        calcw = Math.floor(w * calch / h);
+      } else {
+        calcw = downsize;
+        calch = Math.floor(h * calcw / w);
+      }
     }
     dstcanvas.width = calcw;
     dstcanvas.height = calch;
@@ -567,10 +572,10 @@ class Misc {
         let b = dstimg.data[ft+2];
         let a = dstimg.data[ft+3];
 
-        r = this.toq(r, _qstep);
-        g = this.toq(g, _qstep);
-        b = this.toq(b, _qstep);
-        a = this.toq(a, _qstep);
+        r = this.toq(r, qstep);
+        g = this.toq(g, qstep);
+        b = this.toq(b, qstep);
+        a = this.toq(a, qstep);
 
         dstimg.data[ft]   = r;
         dstimg.data[ft+1] = g;
@@ -581,7 +586,7 @@ class Misc {
     dstc.putImageData(dstimg, 0, 0);
 
     const last = document.getElementById('backcanvas');
-    this.scaleImageSimple(dstcanvas, last, this.scale);
+    this.scaleImageSimple(dstcanvas, last, param.afterdot);
   }
 
   /**
