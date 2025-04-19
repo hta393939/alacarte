@@ -15,6 +15,37 @@
     <div>
       <div>色変換</div>
 
+      <div>
+        <div class="toright">
+        <div>処理方法</div>
+        <select id="methodsel" class="pointer">
+          <option value="quantize" selected>quantize</option>
+          <option value="down">down</option>
+        </select>
+        </div>
+
+        <div class="toright">
+          <div>量子化</div>
+          <select id="qstepsel" class="pointer">
+            <option value="1">1step 256</option>
+            <option value="17">17step 16</option>
+            <option value="37" selected>37step 8</option>
+            <option value="51">51step 6</option>
+          </select>
+        </div>
+
+        <div>
+          <div>縮小目的サイズ</div>
+          <select id="downsizesel" class="pointer">
+            <option value="-1">変更無し</option>
+            <option value="32" selected>32へ</option>
+            <option value="64">64へ</option>
+            <option value="128">128へ</option>
+            <option value="256">256へ</option>
+          </select>
+        </div>
+      </div>
+
       <div class="toright">
         <div>スケール</div>
         <input class="pointer" type="range" id="scale" value="4" min="1" max="16" />
@@ -47,7 +78,7 @@
 
     </div>
 
-    <canvas id="maincanvas"></canvas>
+    <canvas class="minithumb" id="maincanvas"></canvas>
     <canvas id="subcanvas"></canvas>
     <canvas id="backcanvas"></canvas>
 

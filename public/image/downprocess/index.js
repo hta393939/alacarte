@@ -276,6 +276,30 @@ class Misc {
     img.src = URL.createObjectURL(file);
   }
 
+  gatherSetting() {
+    const ret = { qstep: 1, downsize: 0 };
+    {
+      const el = document.getElementById('downsizesel');
+      if (el) {
+        const val = Number.parseFloat(el.value);
+        if (Number.isFinite(val)) {
+          ret.downsize = val;
+        }
+      }
+    }
+    {
+      const el = document.getElementById('qstepsel');
+      if (el) {
+        const val = Number.parseFloat(el.value);
+        if (Number.isFinite(val)) {
+          ret.qstep = val;
+        }
+      }
+    }
+
+    return ret;
+  }
+
   setListener() {
     {
       const el = window;
@@ -288,8 +312,20 @@ class Misc {
         ev.preventDefault();
         ev.stopPropagation();
         ev.dataTransfer.dropEffect = 'copy';
-        const canvas = document.getElementById('subcanvas');
+        const canvas = document.getElementById('maincanvas');
         await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
+
+        const setting = this.gatherSetting();
+        const selel = document.getElementById('methodsel');
+        switch (selel.value) {
+          case 'quantize':
+            this.convByQ(setting);
+            return;
+          case 'down':
+            this.miniScale(canvas);
+            this.downColor(canvas);
+            return;
+        }
 
         this.miniScale(canvas);
         this.downColor(canvas);
@@ -432,6 +468,66 @@ class Misc {
 
   len(x, y, z) {
     return Math.sqrt(x ** 2 + y ** 2 + z ** 2);
+  }
+
+  /**
+   * 量子化
+   * @param {number} v 0～255
+   * @param {number} step 
+   * @returns {number}
+   */
+  toq(v, step) {
+    if (step <= 1) {
+      return v;
+    }
+    const half = step / 2;
+    const mod = Math.floor((v + half) / step);
+    return Math.min(255, mod * step);
+  }
+
+  convByQ(param) {
+    /** 画素値に対する事前量子化想定 */
+    let _qstep = param.qstep;
+    const _downsize = param.downsize;
+    console.log('%c convByQ', 'color:blue', param);
+
+    const canvas = window.maincanvas;
+    const w = canvas.width;
+    const h = canvas.height;
+    let calcw = w;
+    let calch = h;
+    const dstcanvas = window.subcanvas;
+    if (_downsize > 0) {
+      calcw = _downsize;
+      calch = Math.floor(h * calcw / w);
+    }
+    dstcanvas.width = calcw;
+    dstcanvas.height = calch;
+    const dstc = dstcanvas.getContext('2d');
+    dstc.drawImage(canvas,
+      0, 0, w, h,
+      0, 0, calcw, calch);
+    const dstimg = dstc.getImageData(0, 0, calcw, calch);
+    for (let i = 0; i < h; ++i) {
+      for (let j = 0; j < w; ++j) {
+        let ft = (j + i * w) * 4;
+        let r = dstimg.data[ft];
+        let g = dstimg.data[ft+1];
+        let b = dstimg.data[ft+2];
+        let a = dstimg.data[ft+3];
+
+        r = this.toq(r, _qstep);
+        g = this.toq(g, _qstep);
+        b = this.toq(b, _qstep);
+        a = this.toq(a, _qstep);
+
+        dstimg.data[ft]   = r;
+        dstimg.data[ft+1] = g;
+        dstimg.data[ft+2] = b;
+        dstimg.data[ft+3] = a;
+      }
+    }
+    dstc.putImageData(dstimg, 0, 0);
   }
 
   /**

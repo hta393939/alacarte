@@ -30,3 +30,6 @@
   border: solid 1px red;
 }
 
+.minithumb {
+  max-width: 200px;
+}
