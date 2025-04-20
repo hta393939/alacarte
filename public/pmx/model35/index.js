@@ -92,10 +92,10 @@ class Misc {
     this.STORAGE = 'model';
   }
 
-/**
- * 
- * @param {File} file 
- */
+  /**
+   * 
+   * @param {File} file 
+   */
   async parseFile(file) {
     const ab = await file.arrayBuffer();
     const parser = new PMX.Maker();
@@ -112,6 +112,7 @@ class Misc {
 
   getCommonOptions() {
     const param = {
+      frictionfactor: Number.parseFloat(document.getElementById('frictionfactor')?.value ?? 0),
       texprefix: document.getElementById('texprefix')?.value || 'a',
       belt: Number.parseFloat(document.getElementById('belt')?.value ?? 1),
       pow2: Number.parseFloat(document.getElementById('pow2element')?.value ?? -3),
@@ -130,6 +131,7 @@ class Misc {
     };
     param.scale = 2 ** param.pow2;
     param.denom = 1 / param.scale;
+    param.friction = this.factorToFric(param.frictionfactor);
 
     param.fwrate = 1;
     if (param.useradius) {
@@ -159,6 +161,7 @@ class Misc {
       useradius: 1,
       usephy: 0,
       usedynamic: 0,
+      frictionfactor: 103,
     };
     for (const key in param) {
       const el = document.getElementById(key);
@@ -180,6 +183,7 @@ class Misc {
       texprefix: 'w',
       pow2element: -3,
       belt: 10,
+      frictionfactor: 103,
     };
     try {
       const obj = JSON.parse(s);
@@ -198,6 +202,20 @@ class Misc {
     }
     console.log('loadSetting', param);
     return param;
+  }
+
+  /**
+   * 摩擦変換 0-100 -> 0.0-1.0
+   * 101 -> 10
+   * 103 -> 1000
+   * @param {number} factor 
+   * @returns {number}
+   */
+  factorToFric(factor) {
+    if (factor >= 101) {
+      return 10 ** (factor - 100);
+    }
+    return factor / 100;
   }
 
   init() {
@@ -368,30 +386,6 @@ class Misc {
       console.log('bon offsets', offsets);
     });
 
-    const makePlanes = (planenum) => {
-      const param = {
-        planenum,
-      };
-      Object.assign(param, {
-        nameEn: `plane${planenum}`,
-      });
-      const writer = new CapsuleBuilder();
-      writer.makePlane(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-      console.log('make plane', planenum);
-    };
-
-    window.idmake1?.addEventListener('click', () => {
-      makePlanes(1);
-    });
-    window.idmake10?.addEventListener('click', () => {
-      makePlanes(10);
-    });
-    window.idmake100?.addEventListener('click', () => {
-      makePlanes(100);
-    });
-
     window.idmakelockchain?.addEventListener('click', () => {
       const param = this.getCommonOptions();
       let top = 'a'; // param.texprefix
@@ -501,7 +495,7 @@ class Misc {
       });
     }
 
-    for (const k of ['belt', /*'denom'*/]) {
+    for (const k of ['belt', /*'frictionfactor'*/]) {
       const el = document.getElementById(k);
       const elview = document.getElementById(`${k}view`);
       const _update = () => {
@@ -515,9 +509,20 @@ class Misc {
       const denomview = document.getElementById('denomview');
       const scaleview = document.getElementById('scaleview');
       const _update = () => {
-        const pow2 = Number.parseFloat(el.value);
-        denomview.textContent = (1 / (2 ** pow2)).toFixed(6);
-        scaleview.textContent = (2 ** pow2).toFixed(6);
+        const val = Number.parseFloat(el.value);
+        denomview.textContent = (1 / (2 ** val)).toFixed(6);
+        scaleview.textContent = (2 ** val).toFixed(6);
+      };
+      el?.addEventListener('input', _update);
+      _update();
+    }
+
+    {
+      const el = document.getElementById('frictionfactor');
+      const frictionfactorview = document.getElementById('frictionfactorview');
+      const _update = () => {
+        const val = Number.parseFloat(el.value);
+        frictionfactorview.textContent = this.factorToFric(val);
       };
       el?.addEventListener('input', _update);
       _update();

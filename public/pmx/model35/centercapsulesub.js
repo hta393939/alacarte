@@ -71,7 +71,8 @@ class CenterCapsuleSub extends PMX.Maker {
     const mod = await import('../../lib/util.js');
     globalThis.Util = mod.Util;
 
-    //const useradius = param.useradius;
+    /** @type {number} 摩擦 */
+    const _friction = param.friction;
 
     /**
      * true でいいや
@@ -745,7 +746,7 @@ class CenterCapsuleSub extends PMX.Maker {
           break;
 
         default:
-          rb.friction = 1000;
+          rb.friction = _friction;
           rb.mass = 0.002; // 重量
           rb.setUIGroup(RIGID_DEFAULT_GROUP);
           rb.setUINots(1, 2, // UI3 とは当たる
