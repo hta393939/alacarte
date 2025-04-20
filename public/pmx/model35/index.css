@@ -1,4 +1,3 @@
-@charset "UTF-8";
 
 canvas {
   border: solid 1px green;
@@ -27,6 +26,13 @@ summary, button, .pt, input[type="range"] {
   font-weight: bold;
   padding: 2em;
   border-radius: 2em;
+}
+
+.box {
+  margin: 0.25em;
+  border: solid 1px black;
+  border-radius: 1em;
+  padding: 0.25em;
 }
 
 #canvast {

@@ -172,6 +172,7 @@ class CenterCapsuleSub extends PMX.Maker {
     s += `IK: ${_useIK}, 物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
     s += `フルコリジョン: ${usefull}\r\n`;
+    s += `摩擦: ${_friction}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 

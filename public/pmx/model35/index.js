@@ -304,24 +304,17 @@ class Misc {
       console.log('makecentercapsule2 offsets');
     });
 
+    // Y軸にたてたもの
     window.idmakecentercapsulesub?.addEventListener('click', async () => {
       const param = this.getCommonOptions();
-      const top = param.useradius ? 'r' : 'a';
+
+      const top = (param.friction < 1000) ? 's' : 'a';
       const d = param.denom;
       let numtext = _pad(13, 3);
-      if (param.useradius2) {
-        numtext = _pad(23, 3);
-      }
-      if (param.useradius4) {
-        numtext = _pad(43, 3);
-      }
-      if (param.useradius8) {
-        numtext = _pad(83, 3);
-      }
       let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
       Object.assign(param, {
-        nameEn: `${top}${numtext}_centercapsulesub_${param.belt}_${dtext}`,
+        nameEn: `${top}${numtext}_centercapsulesub_${param.belt}_${dtext}_${_pad(param.frictionfactor, 3)}`,
         texturePath: [
           `tex/${top}${numtext}.png`,
           `tex/${top}${numtext}spa.png`,
