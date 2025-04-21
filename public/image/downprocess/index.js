@@ -316,6 +316,12 @@ class Misc {
       case 'quantize':
         this.convByQ(setting);
         return;
+      case 'gray':
+        this.gray(setting);
+        return;
+      case 'colorgray':
+        this.colorgray(setting);
+        return;
       case 'down':
         {
           const mid = document.getElementById('subcanvas');
@@ -550,6 +556,114 @@ class Misc {
   }
 
   convByQ(param) {
+    /** 画素値に対する事前量子化想定 */
+    const { qstep, downsize } = param;
+    console.log('%c convByQ', 'color:blue', param);
+
+    const canvas = window.maincanvas;
+    const w = canvas.width;
+    const h = canvas.height;
+    let calcw = w;
+    let calch = h;
+    const dstcanvas = window.subcanvas;
+    if (downsize > 0) {
+//      calcw = _downsize;
+//      calch = Math.floor(h * calcw / w);
+      if (w > h) {
+        calch = downsize;
+        calcw = Math.floor(w * calch / h);
+      } else {
+        calcw = downsize;
+        calch = Math.floor(h * calcw / w);
+      }
+    }
+    dstcanvas.width = calcw;
+    dstcanvas.height = calch;
+    const dstc = dstcanvas.getContext('2d');
+    dstc.drawImage(canvas,
+      0, 0, w, h,
+      0, 0, calcw, calch);
+    const dstimg = dstc.getImageData(0, 0, calcw, calch);
+    for (let i = 0; i < h; ++i) {
+      for (let j = 0; j < w; ++j) {
+        let ft = (j + i * w) * 4;
+        let r = dstimg.data[ft];
+        let g = dstimg.data[ft+1];
+        let b = dstimg.data[ft+2];
+        let a = dstimg.data[ft+3];
+
+        r = this.toq(r, qstep);
+        g = this.toq(g, qstep);
+        b = this.toq(b, qstep);
+        a = this.toq(a, qstep);
+
+        dstimg.data[ft]   = r;
+        dstimg.data[ft+1] = g;
+        dstimg.data[ft+2] = b;
+        dstimg.data[ft+3] = a;
+      }
+    }
+    dstc.putImageData(dstimg, 0, 0);
+
+    const last = document.getElementById('backcanvas');
+    this.scaleImageSimple(dstcanvas, last, param.afterdot);
+  }
+
+  gray(param) {
+    /** 画素値に対する事前量子化想定 */
+    const { qstep, downsize } = param;
+    console.log('%c convByQ', 'color:blue', param);
+
+    const canvas = window.maincanvas;
+    const w = canvas.width;
+    const h = canvas.height;
+    let calcw = w;
+    let calch = h;
+    const dstcanvas = window.subcanvas;
+    if (downsize > 0) {
+//      calcw = _downsize;
+//      calch = Math.floor(h * calcw / w);
+      if (w > h) {
+        calch = downsize;
+        calcw = Math.floor(w * calch / h);
+      } else {
+        calcw = downsize;
+        calch = Math.floor(h * calcw / w);
+      }
+    }
+    dstcanvas.width = calcw;
+    dstcanvas.height = calch;
+    const dstc = dstcanvas.getContext('2d');
+    dstc.drawImage(canvas,
+      0, 0, w, h,
+      0, 0, calcw, calch);
+    const dstimg = dstc.getImageData(0, 0, calcw, calch);
+    for (let i = 0; i < h; ++i) {
+      for (let j = 0; j < w; ++j) {
+        let ft = (j + i * w) * 4;
+        let r = dstimg.data[ft];
+        let g = dstimg.data[ft+1];
+        let b = dstimg.data[ft+2];
+        let a = dstimg.data[ft+3];
+
+        r = this.toq(r, qstep);
+        g = this.toq(g, qstep);
+        b = this.toq(b, qstep);
+        a = this.toq(a, qstep);
+
+        dstimg.data[ft]   = r;
+        dstimg.data[ft+1] = g;
+        dstimg.data[ft+2] = b;
+        dstimg.data[ft+3] = a;
+      }
+    }
+    dstc.putImageData(dstimg, 0, 0);
+
+    const last = document.getElementById('backcanvas');
+    this.scaleImageSimple(dstcanvas, last, param.afterdot);
+  }
+
+  colorgray(param) {
     /** 画素値に対する事前量子化想定 */
     const { qstep, downsize } = param;
     console.log('%c convByQ', 'color:blue', param);
