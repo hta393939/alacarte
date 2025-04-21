@@ -28,7 +28,10 @@ class Em { // 非公式
       this._servo1 = await service.getCharacteristic(_uuid('e511'));
       this._servo2 = await service.getCharacteristic(_uuid('e512'));
       this._buzzer = await service.getCharacteristic(_uuid('e521'));
+      // notify と read が true
       this._other = await service.getCharacteristic(_uuid('e525'));
+
+      console.log('_other', this._other);
     } catch (e) {
       console.error(`_initialize catch`, e.message);
     }
@@ -108,6 +111,37 @@ class Em { // 非公式
     }
   }
 
+  async action_2() {
+    try {
+      let robotId = this.getDefaultRobotId();
+      await this.connectEmbot(robotId);
+      const blockInfo = { type: 'led', id: 2, value: 'on' };
+      await this.sendToEmbot(robotId, blockInfo);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async _startswitch(char) {
+    char.addEventListener('characteristicvaluechanged', (event) => {
+      const value = event.target.value.getUint8(0);
+      console.log(`${event.type}: ${value}`);
+      this.applySwitch(value === 0 ? true : false); // 0: on, 1: off
+    });
+    await char.startNotifications();
+    console.log(`startNotifications success`);
+
+    await char.readValue();
+  }
+
+  async action_3() {
+    try {
+      await this._startswitch(this._other);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async applySwitch(onoff) {
     const el = document.getElementById('switchview');
     if (!el) {
@@ -121,7 +155,8 @@ const em = new Em();
 const _start = async () => {
   try {
     await em._initialize();
-    await em.action_1();
+    await em.action_2();
+    await em.action_3();
   } catch (e) {
     em.showError(e.message);
   }
