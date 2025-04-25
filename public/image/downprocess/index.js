@@ -810,21 +810,17 @@ class Misc {
      * @returns 
      */
     const _q16 = v => {
-      if (v <= 32) {
-        return (v < 16) ? 0 : 32;
-      }
-      let index = Math.floor((v + 8) / 16);
-      return Math.min(255, index * 16);
+      return Math.floor((v + 17 * 0.5) / 17) * 17;
     };
 
 //// パレットの作成
 // 8pxブロックの投票
     const palblocks = [];
-    for (let r = 0; r < 32; ++r) {
+    for (let r = 0; r < 16; ++r) {
       const rs = [];
-      for (let g = 0; g < 32; ++g) {
+      for (let g = 0; g < 16; ++g) {
         const bs = [];
-        for (let b = 0; b < 32; ++b) {
+        for (let b = 0; b < 16; ++b) {
           const obj = {
             count: 0,
           };
@@ -840,13 +836,13 @@ class Misc {
         let r = img.data[offset  ];
         let g = img.data[offset+1];
         let b = img.data[offset+2];
-        let ri = Math.floor(r / 8);
-        let gi = Math.floor(g / 8);
-        let bi = Math.floor(b / 8);
+        let ri = _q16(r) / 17;
+        let gi = _q16(g) / 17;
+        let bi = _q16(b) / 17;
         palblocks[ri][gi][bi].count += 1;
 
         if (_useq) {
-          img.data[offset] = _q16(r);
+          img.data[offset ] = _q16(r);
           img.data[offset+1] = _q16(g);
           img.data[offset+2] = _q16(b);
         }
@@ -1033,7 +1029,6 @@ class Misc {
 
   /**
    * 減色したい
-   * 未実装 16 で量子化．0,32,48,64, ... ,240,255 または 0,17,34, ... ,238, 255
    * @param {HTMLCanvasElement} canvas 
    */
   async downByPalette(canvas) {
@@ -1052,21 +1047,21 @@ class Misc {
      */
     const _cols = [
       {cs:[0,0,0]}, // 黒
-      {cs:[255,128,0]},
-      {cs:[255,192,128]},
-      {cs:[255,224,192]},
-      {cs:[192,192,128]},
-      {cs:[192,128,96]}, // pick
-      {cs:[128,128,0]},
-      {cs:[160,160,160]},
-      {cs:[128,128,128]},
-      {cs:[96,96,96]},
+      {cs:[255,136,0]},
+      {cs:[255,204,136]},
+      {cs:[255,221,192]},
+      {cs:[204,204,136]},
+      {cs:[204,136,102]}, // pick
+      {cs:[136,136,0]},
+      {cs:[170,153,153]},
+      {cs:[136,136,13]},
+      {cs:[102,102,102]},
       {cs:[255,255,255]}, // 白
-      {cs:[192,192,192]},
-      {cs:[224,224,224]},
-      {cs:[160,128,128]}, // picl
-      {cs:[224,160,128]}, // pick
-      {cs:[0,192,0]}, // 緑唯一
+      {cs:[204,204,204]},
+      {cs:[221,221,221]},
+      {cs:[170,136,136]}, // pick
+      {cs:[221,170,136]}, // pick
+      {cs:[0,204,0]}, // 緑唯一
     ];
 
     const table = [
@@ -1098,29 +1093,27 @@ class Misc {
     let nump = modp * modp;
 
     const thrTable = await this.makeThrImage(w, h);
-    console.log('thrTable', thrTable);
+    //console.log('thrTable', thrTable);
 
     /**
-     * 0, 32, 48, 64, ... , 240, 255
+     * 0, 17, 34, 51, ... , 238, 255
      * @param {number} v 
-     * @returns 
+     * @returns {number}
      */
     const _q16 = v => {
-      if (v <= 32) {
-        return (v < 16) ? 0 : 32;
-      }
-      let index = Math.floor((v + 8) / 16);
-      return Math.min(255, index * 16);
+      let index = Math.floor((v + 17 * 0.5) / 17);
+      return index * 17;
     };
 
 //// パレットの作成
+    const pals = [];
 // 8pxブロックの投票
     const palblocks = [];
-    for (let r = 0; r < 32; ++r) {
+    for (let r = 0; r < 16; ++r) {
       const rs = [];
-      for (let g = 0; g < 32; ++g) {
+      for (let g = 0; g < 16; ++g) {
         const bs = [];
-        for (let b = 0; b < 32; ++b) {
+        for (let b = 0; b < 16; ++b) {
           const obj = {
             count: 0,
           };
@@ -1130,22 +1123,25 @@ class Misc {
       }
       palblocks.push(rs);
     }
-    for (let y = 0; y < 0; ++y) {
-      for (let x = 0; x < 0; ++x) {
+    // 投票
+    let sx = 0;
+    let sw = w;
+    sx = w * 1 / 8;
+    sw = w * 6 / 8;
+    for (let y = 0; y < h; ++y) {
+      for (let x = sx; x < sx + sw; ++x) {
         let offset = (x + w * y) * 4;
         let r = img.data[offset  ];
         let g = img.data[offset+1];
         let b = img.data[offset+2];
-        let ri = Math.floor(r / 8);
-        let gi = Math.floor(g / 8);
-        let bi = Math.floor(b / 8);
+        let ri = _q16(r) / 17;
+        let gi = _q16(g) / 17;
+        let bi = _q16(b) / 17;
         palblocks[ri][gi][bi].count += 1;
 
-        if (_useq) {
-          img.data[offset] = _q16(r);
-          img.data[offset+1] = _q16(g);
-          img.data[offset+2] = _q16(b);
-        }
+        //img.data[offset  ] = _q16(r);
+        //img.data[offset+1] = _q16(g);
+        //img.data[offset+2] = _q16(b);
       }
     }
 
@@ -1153,6 +1149,66 @@ class Misc {
       c.putImageData(img, 0, 0);
     }
 
+    {
+      //palblocks[0][0][0].count = 999999;
+      palblocks[2][2][2].count = 999999;
+      //palblocks[8][8][8].count = 999999;
+      palblocks[15][15][15].count = 999999;
+    }
+
+    for (let r = 0; r < 16; ++r) {
+      for (let g = 0; g < 16; ++g) {
+        for (let b = 0; b < 16; ++b) {
+          const obj = {
+            r: r * 17,
+            g: g * 17,
+            b: b * 17,
+            a: 255,
+            vote: palblocks[r][g][b].count,
+          };
+
+          let down = false;
+          if (r <= 7 && g <= 7 && b <= 7) {
+            down = true; // 暗い方を除外
+          }
+          if (b > g && b > r) {
+            down = true; // 青の除外
+          }
+          if (r === 1 && g === 1 && b === 15) {
+            down = false; // 唯一の青系
+          }
+          if (r === 2 && g === 2 && b === 2) {
+            down = false; // 黒は残す
+          }
+          if (down) {
+            obj.vote = -1;
+          }
+
+          pals.push(obj);
+        }
+      }
+    }
+
+    pals.sort((a, b) => {
+      return (b.vote - a.vote);
+    });
+
+    for (let i = 0; i < pals.length; ++i) {
+      for (let j = i + 1; j < pals.length; ++j) {
+        let dist =
+          Math.abs(pals[j].r - pals[i].r) * 77
+          + Math.abs(pals[j].g - pals[i].g) * 150
+          + Math.abs(pals[j].b - pals[i].b) * 29;
+        dist /= 256;
+        if (dist < 17 * 3) {
+          pals.splice(j, 1);
+          console.log('del', j);
+        }
+      }
+    }
+
+    pals.splice(16);
+    console.log('pals', pals);
 
     const palnum = _cols.length;
     for (let i = 0; i < palnum; ++i) {
@@ -1187,7 +1243,7 @@ class Misc {
         _lines.push(obj);
       }
     }
-    console.log('_line', _lines);
+    //console.log('_line', _lines);
 
 //// 決定
     /**
@@ -1289,6 +1345,7 @@ class Misc {
       return minLine;
     };
 
+    // 最小で決定
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
         let offset = (x + w * y) * 4;
@@ -1297,34 +1354,29 @@ class Misc {
         let b = img.data[offset+2];
         let a = img.data[offset+3];
 
-        const line = _calcCost(r, g, b);
-        console.log(line, x, y);
-
-        if (line.index !== 2) {
-          r = line.cs[0];
-          g = line.cs[1];
-          b = line.cs[2];
-        } else {
-          const rate = line.elm * nump / line.len;
-          const thr = thrTable[x + w * y];
-          if (rate < thr) {
-            r = line.scs[0];
-            g = line.scs[1];
-            b = line.scs[2];
-          } else {
-            r = line.dcs[0];
-            g = line.dcs[1];
-            b = line.dcs[2];
+        let minCost = 9999999;
+        let index = 0;
+        for (let i = 0; i < 16; ++i) {
+          const dist =
+            (pals[i].r - r) ** 2
+            + (pals[i].g - g) ** 2
+            + (pals[i].b - b) ** 2;
+          if (dist <= minCost) {
+            minCost = dist;
+            index = i;
           }
         }
 
-        img.data[offset  ] = r;
-        img.data[offset+1] = g;
-        img.data[offset+2] = b;
-        img.data[offset+3] = a;
+        const result = pals[index];
+        img.data[offset  ] = result.r;
+        img.data[offset+1] = result.g;
+        img.data[offset+2] = result.b;
+        img.data[offset+3] = result.a;
       }
     }
     c.putImageData(img, 0, 0);
+
+    console.log('downByPalette');
   }
 
 }
