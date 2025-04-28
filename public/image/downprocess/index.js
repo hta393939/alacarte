@@ -1199,7 +1199,10 @@ class Misc {
       return (b.vote - a.vote);
     });
 
+    // 全体が暗いとあんまりよくない
+
     const thr = 17 * 1; // ok 1
+    //const thr = 17 * 2; // 2 NG
     for (let i = 0; i < pals.length; ++i) {
       // 後ろからカット
       for (let j = pals.length - 1; j >= i + 1; --j) {
