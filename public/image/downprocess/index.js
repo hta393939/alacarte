@@ -1174,8 +1174,14 @@ class Misc {
           if (b > g && b > r) {
             down = true; // 青の除外
           }
+          if (g > r && g > b) {
+            down = true; // 緑の除外
+          }
           if (r === 1 && g === 1 && b === 15) {
             down = false; // 唯一の青系
+          }
+          if (r === 1 && g === 15 && b === 1) {
+            down = false; // 唯一の緑系
           }
           if (r === 2 && g === 2 && b === 2) {
             down = false; // 黒は残す
@@ -1193,14 +1199,16 @@ class Misc {
       return (b.vote - a.vote);
     });
 
+    const thr = 17 * 1; // ok 1
     for (let i = 0; i < pals.length; ++i) {
-      for (let j = i + 1; j < pals.length; ++j) {
+      // 後ろからカット
+      for (let j = pals.length - 1; j >= i + 1; --j) {
         let dist =
           Math.abs(pals[j].r - pals[i].r) * 77
           + Math.abs(pals[j].g - pals[i].g) * 150
           + Math.abs(pals[j].b - pals[i].b) * 29;
         dist /= 256;
-        if (dist < 17 * 3) {
+        if (dist < thr && pals.length > 16) {
           pals.splice(j, 1);
           console.log('del', j);
         }
