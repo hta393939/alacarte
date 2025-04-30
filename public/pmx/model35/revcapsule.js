@@ -252,7 +252,7 @@ class RevCapsule extends PMX.Maker {
             x *= -ri;
             y *= -ri;
             z *= -ri;
-            y += 1;
+            //y += 1;
           } else {
             vang = Math.PI * 2 * (i - allNum / 2) / (allNum / 2 * 2);
             hang = Math.PI * 2 * j / div;

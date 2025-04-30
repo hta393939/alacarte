@@ -122,6 +122,7 @@ class Misc {
        * ik 書き出しするかどうか
        */
       useik: document.getElementById('useikelement')?.checked,
+      fwrate: Number.parseFloat(document.getElementById('fwrate')?.value ?? 1),
       useradius: document.getElementById('useradius')?.checked,
       useradius2: document.getElementById('useradius2')?.checked,
       useradius4: document.getElementById('useradius4')?.checked,
@@ -133,10 +134,10 @@ class Misc {
     param.denom = 1 / param.scale;
     param.friction = this.factorToFric(param.frictionfactor);
 
-    param.fwrate = 1;
-    if (param.useradius) {
-      param.fwrate = Math.sqrt(2) * 0.5;
-    }
+    //param.fwrate = 1;
+    //if (param.useradius) {
+      //param.fwrate = Math.sqrt(2) * 0.5;
+    //}
 
     param.bwrate = 1;
     if (param.useradius2) {
