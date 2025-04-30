@@ -316,11 +316,27 @@ class Misc {
       case 'quantize':
         this.convByQ(setting);
         return;
+      case 'gray':
+        this.gray(setting);
+        return;
+      case 'colorgray':
+        this.colorgray(setting);
+        return;
       case 'down':
         {
           const mid = document.getElementById('subcanvas');
           await this.miniScale(src, mid);
           await this.downColor(mid);
+          this.scaleImageSimple(mid,
+            document.getElementById('backcanvas'),
+            setting.afterdot);
+        }
+        return;
+      case 'downbypalette':
+        {
+          const mid = document.getElementById('subcanvas');
+          await this.miniScale(src, mid);
+          await this.downByPalette(mid);
           this.scaleImageSimple(mid,
             document.getElementById('backcanvas'),
             setting.afterdot);
@@ -604,6 +620,129 @@ class Misc {
   }
 
   /**
+   * グレースケール
+   * @param {*} param 
+   */
+  gray(param) {
+    /** 画素値に対する事前量子化想定 */
+    const { downsize } = param;
+    console.log('%c convByQ', 'color:blue', param);
+
+    const canvas = window.maincanvas;
+    const w = canvas.width;
+    const h = canvas.height;
+    let calcw = w;
+    let calch = h;
+    const dstcanvas = window.subcanvas;
+    if (downsize > 0) {
+      if (w > h) {
+        calch = downsize;
+        calcw = Math.floor(w * calch / h);
+      } else {
+        calcw = downsize;
+        calch = Math.floor(h * calcw / w);
+      }
+    }
+    dstcanvas.width = calcw;
+    dstcanvas.height = calch;
+    const dstc = dstcanvas.getContext('2d');
+    dstc.drawImage(canvas,
+      0, 0, w, h,
+      0, 0, calcw, calch);
+    const dstimg = dstc.getImageData(0, 0, calcw, calch);
+    for (let i = 0; i < calch; ++i) {
+      for (let j = 0; j < calcw; ++j) {
+        let ft = (j + i * calcw) * 4;
+        let r = dstimg.data[ft];
+        let g = dstimg.data[ft+1];
+        let b = dstimg.data[ft+2];
+        let a = dstimg.data[ft+3];
+
+        let lv = r * 77 + g * 150 + b * 29 + 128;
+        lv = Math.floor(lv / 256);
+        if (lv === 1) {
+          lv = 0;
+        }
+
+        dstimg.data[ft]   = lv;
+        dstimg.data[ft+1] = lv;
+        dstimg.data[ft+2] = lv;
+        dstimg.data[ft+3] = a;
+      }
+    }
+    dstc.putImageData(dstimg, 0, 0);
+
+    const last = document.getElementById('backcanvas');
+    this.scaleImageSimple(dstcanvas, last, param.afterdot);
+  }
+
+  colorgray(param) {
+    /** 画素値に対する事前量子化想定 */
+    const { qstep, downsize } = param;
+    console.log('%c colorgray', 'color:blue', param);
+
+    const canvas = window.maincanvas;
+    const w = canvas.width;
+    const h = canvas.height;
+    let calcw = w;
+    let calch = h;
+    const dstcanvas = window.subcanvas;
+    if (downsize > 0) {
+      if (w > h) {
+        calch = downsize;
+        calcw = Math.floor(w * calch / h);
+      } else {
+        calcw = downsize;
+        calch = Math.floor(h * calcw / w);
+      }
+    }
+    dstcanvas.width = calcw;
+    dstcanvas.height = calch;
+    const dstc = dstcanvas.getContext('2d');
+    dstc.drawImage(canvas,
+      0, 0, w, h,
+      0, 0, calcw, calch);
+    const dstimg = dstc.getImageData(0, 0, calcw, calch);
+
+
+
+    for (let i = 0; i < calch; ++i) {
+      for (let j = 0; j < calcw; ++j) {
+        let ft = (j + i * calcw) * 4;
+        let r = dstimg.data[ft];
+        let g = dstimg.data[ft+1];
+        let b = dstimg.data[ft+2];
+        let a = dstimg.data[ft+3];
+        let lv = r * 77 + g * 150 + b * 29 + 128;
+        lv = Math.floor(lv / 256);
+        let dist = Math.sqrt(
+            ((lv - r) * 77 / 65536) ** 2
+          + ((lv - g) * 150 / 65536) ** 2
+          + ((lv - b) * 29 / 65536) ** 2);
+        if (dist > 0.01) {
+          r = lv;
+          g = lv;
+          b = 0;
+        } else {
+          r = lv;
+          g = lv;
+          b = lv;
+        }
+        console.log(dist);
+
+        dstimg.data[ft]   = r;
+        dstimg.data[ft+1] = g;
+        dstimg.data[ft+2] = b;
+        dstimg.data[ft+3] = a;
+      }
+    }
+    dstc.putImageData(dstimg, 0, 0);
+
+    const last = document.getElementById('backcanvas');
+    this.scaleImageSimple(dstcanvas, last, param.afterdot);
+  }
+
+  /**
    * 減色したい
    * 未実装 16 で量子化．0,32,48,64, ... ,240,255 または 0,17,34, ... ,238, 255
    * 多分前者
@@ -671,21 +810,17 @@ class Misc {
      * @returns 
      */
     const _q16 = v => {
-      if (v <= 32) {
-        return (v < 16) ? 0 : 32;
-      }
-      let index = Math.floor((v + 8) / 16);
-      return Math.min(255, index * 16);
+      return Math.floor((v + 17 * 0.5) / 17) * 17;
     };
 
 //// パレットの作成
 // 8pxブロックの投票
     const palblocks = [];
-    for (let r = 0; r < 32; ++r) {
+    for (let r = 0; r < 16; ++r) {
       const rs = [];
-      for (let g = 0; g < 32; ++g) {
+      for (let g = 0; g < 16; ++g) {
         const bs = [];
-        for (let b = 0; b < 32; ++b) {
+        for (let b = 0; b < 16; ++b) {
           const obj = {
             count: 0,
           };
@@ -701,13 +836,13 @@ class Misc {
         let r = img.data[offset  ];
         let g = img.data[offset+1];
         let b = img.data[offset+2];
-        let ri = Math.floor(r / 8);
-        let gi = Math.floor(g / 8);
-        let bi = Math.floor(b / 8);
+        let ri = _q16(r) / 17;
+        let gi = _q16(g) / 17;
+        let bi = _q16(b) / 17;
         palblocks[ri][gi][bi].count += 1;
 
         if (_useq) {
-          img.data[offset] = _q16(r);
+          img.data[offset ] = _q16(r);
           img.data[offset+1] = _q16(g);
           img.data[offset+2] = _q16(b);
         }
@@ -890,6 +1025,369 @@ class Misc {
       }
     }
     c.putImageData(img, 0, 0);
+  }
+
+  /**
+   * 減色したい
+   * @param {HTMLCanvasElement} canvas 
+   */
+  async downByPalette(canvas) {
+    const w = canvas.width;
+    const h = canvas.height;
+    const c = canvas.getContext('2d');
+    const img = c.getImageData(0, 0, w, h);
+    /**
+     * 量子化する場合
+     */
+    let _useq = true;
+
+    /**
+     * パレット
+     * 素直にピックした方が良さそうだった。
+     */
+    const _cols = [
+      {cs:[0,0,0]}, // 黒
+      {cs:[255,136,0]},
+      {cs:[255,204,136]},
+      {cs:[255,221,192]},
+      {cs:[204,204,136]},
+      {cs:[204,136,102]}, // pick
+      {cs:[136,136,0]},
+      {cs:[170,153,153]},
+      {cs:[136,136,13]},
+      {cs:[102,102,102]},
+      {cs:[255,255,255]}, // 白
+      {cs:[204,204,204]},
+      {cs:[221,221,221]},
+      {cs:[170,136,136]}, // pick
+      {cs:[221,170,136]}, // pick
+      {cs:[0,204,0]}, // 緑唯一
+    ];
+
+    const table = [
+      [ 0,  1,  2,  3],
+      [ 8,  9, 10, 11],
+      [ 4,  5,  6,  7],
+      [12, 13, 14, 15],
+    ];
+    /*
+    const table = [
+      [ 0,  8,  2, 10],
+      [12,  4, 14,  6],
+      [ 3, 11,  1,  9],
+      [15,  7, 13,  5],
+    ]; */
+
+    const table8 = [
+      [ 0,32, 8,40, 2,34,10,42],
+      [48,16,56,24,50,18,58,26],
+      [12,44, 4,36,14,46, 6,38],
+      [60,28,52,20,62,30,54,22],
+      [ 3,35,11,43, 1,33, 9,41],
+      [51,19,59,27,49,17,57,25],
+      [15,47, 7,39,13,45, 5,37],
+      [63,31,55,23,61,29,53,21],
+    ];
+    let use8 = true;
+    let modp = use8 ? 8 : 4;
+    let nump = modp * modp;
+
+    const thrTable = await this.makeThrImage(w, h);
+    //console.log('thrTable', thrTable);
+
+    /**
+     * 0, 17, 34, 51, ... , 238, 255
+     * @param {number} v 
+     * @returns {number}
+     */
+    const _q16 = v => {
+      let index = Math.floor((v + 17 * 0.5) / 17);
+      return index * 17;
+    };
+
+//// パレットの作成
+    const pals = [];
+// 8pxブロックの投票
+    const palblocks = [];
+    for (let r = 0; r < 16; ++r) {
+      const rs = [];
+      for (let g = 0; g < 16; ++g) {
+        const bs = [];
+        for (let b = 0; b < 16; ++b) {
+          const obj = {
+            count: 0,
+          };
+          bs.push(obj);
+        }
+        rs.push(bs);
+      }
+      palblocks.push(rs);
+    }
+    // 投票
+    let sx = 0;
+    let sw = w;
+    sx = w * 1 / 8;
+    sw = w * 6 / 8;
+    for (let y = 0; y < h; ++y) {
+      for (let x = sx; x < sx + sw; ++x) {
+        let offset = (x + w * y) * 4;
+        let r = img.data[offset  ];
+        let g = img.data[offset+1];
+        let b = img.data[offset+2];
+        let ri = _q16(r) / 17;
+        let gi = _q16(g) / 17;
+        let bi = _q16(b) / 17;
+        palblocks[ri][gi][bi].count += 1;
+
+        //img.data[offset  ] = _q16(r);
+        //img.data[offset+1] = _q16(g);
+        //img.data[offset+2] = _q16(b);
+      }
+    }
+
+    if (_useq) { // NOTE: 量子化する場合
+      c.putImageData(img, 0, 0);
+    }
+
+    {
+      //palblocks[0][0][0].count = 999999;
+      palblocks[2][2][2].count = 999999;
+      //palblocks[8][8][8].count = 999999;
+      palblocks[15][15][15].count = 999999;
+    }
+
+    for (let r = 0; r < 16; ++r) {
+      for (let g = 0; g < 16; ++g) {
+        for (let b = 0; b < 16; ++b) {
+          const obj = {
+            r: r * 17,
+            g: g * 17,
+            b: b * 17,
+            a: 255,
+            vote: palblocks[r][g][b].count,
+          };
+
+          let down = false;
+          if (r <= 7 && g <= 7 && b <= 7) {
+            down = true; // 暗い方を除外
+          }
+          if (b > g && b > r) {
+            down = true; // 青の除外
+          }
+          if (g > r && g > b) {
+            down = true; // 緑の除外
+          }
+          if (r === 1 && g === 1 && b === 15) {
+            down = false; // 唯一の青系
+          }
+          if (r === 1 && g === 15 && b === 1) {
+            down = false; // 唯一の緑系
+          }
+          if (r === 2 && g === 2 && b === 2) {
+            down = false; // 黒は残す
+          }
+          if (down) {
+            obj.vote = -1;
+          }
+
+          pals.push(obj);
+        }
+      }
+    }
+
+    pals.sort((a, b) => {
+      return (b.vote - a.vote);
+    });
+
+    // 全体が暗いとあんまりよくない
+
+    const thr = 17 * 1; // ok 1
+    //const thr = 17 * 2; // 2 NG
+    for (let i = 0; i < pals.length; ++i) {
+      // 後ろからカット
+      for (let j = pals.length - 1; j >= i + 1; --j) {
+        let dist =
+          Math.abs(pals[j].r - pals[i].r) * 77
+          + Math.abs(pals[j].g - pals[i].g) * 150
+          + Math.abs(pals[j].b - pals[i].b) * 29;
+        dist /= 256;
+        if (dist < thr && pals.length > 16) {
+          pals.splice(j, 1);
+          console.log('del', j);
+        }
+      }
+    }
+
+    pals.splice(16);
+    console.log('pals', pals);
+
+    const palnum = _cols.length;
+    for (let i = 0; i < palnum; ++i) {
+      const col = _cols[i];
+      const luma = col.cs[0] * 77 + col.cs[1] * 150 + col.cs[2] * 29;
+      col.luma = luma;
+    }
+
+// 線分の構成
+    /**
+     * @type {LineObj[]}
+     */
+    const _lines = [];
+    for (let i = 0; i < palnum; ++i) {
+      for (let j = i + 1; j < palnum; ++j) {
+        const obj = {
+          s: _cols[i],
+          d: _cols[j],
+        };
+        if (obj.s.luma > obj.d.luma) {
+          const tmp = obj.s;
+          obj.s = obj.d;
+          obj.d = tmp;
+        }
+        const diff = [
+          obj.d.cs[0] - obj.s.cs[0],
+          obj.d.cs[1] - obj.s.cs[1],
+          obj.d.cs[2] - obj.s.cs[2],
+        ];
+        obj.len = this.len(...diff);
+        obj.dir = this.newNorm(...diff);
+        _lines.push(obj);
+      }
+    }
+    //console.log('_line', _lines);
+
+//// 決定
+    /**
+     * 
+     * @param {number} inr 
+     * @param {number} ing 
+     * @param {number} inb 
+     * @returns {LineResult}
+     */
+    const _calcCost = (inr, ing, inb) => {
+      let minCost = 10 ** 9;
+      /**
+       * @type {LineResult | null}
+       */
+      let minLine = null;
+
+      /**
+       * 線分と色のコストを返す
+       * @param {LineObj} line 
+       * @param {number} r 
+       * @param {number} g 
+       * @param {number} b 
+       * @returns {LineCost}
+       */
+      const _calc = (line, r, g, b) => {
+        const diffs = [
+          r - line.s.cs[0],
+          g - line.s.cs[1],
+          b - line.s.cs[2],
+        ];
+        const diffd = [
+          r - line.d.cs[0],
+          g - line.d.cs[1],
+          b - line.d.cs[2],
+        ];
+        /**
+         * s点からd点へ向かう成分
+         */
+        const elm =
+          + diffs[0] * line.dir[0]
+          + diffs[1] * line.dir[1]
+          + diffs[2] * line.dir[2];
+        const dist = [
+          diffs[0] - line.dir[0] * elm,
+          diffs[1] - line.dir[1] * elm,
+          diffs[2] - line.dir[2] * elm,
+        ];
+
+        const lens = [
+          this.len(...diffs),
+          this.len(...diffd),
+          this.len(...dist),
+        ];
+
+        const result = new LineCost();
+        result.elm = elm;
+        result.index = 0;
+        result.cs = [...line.s.cs];
+        result.cost = lens[0];
+
+        if (lens[0] > lens[1]) {
+          result.index = 1;
+          result.cs = [...line.d.cs];
+          result.cost = lens[1];
+        }
+        // TODO: 一番近い色を採用する半径
+        const nearThr = 8 * 4 * 2;
+        if (lens[result.index] < nearThr) {
+          result.cost = Math.sqrt(result.cost);
+          return result;
+        }
+
+        if (elm < 0 || elm > line.len) {
+          result.cost *= 10;
+          return result;
+        }
+
+        // TODO: 線分コスト定義
+        //let linecost = lens[2] + lens[0] + lens[1];
+        let linecost = lens[2] * 4 + (lens[0] + lens[1]) * 1;
+        result.index = 2;
+        result.cost = linecost;
+        return result;
+      };
+
+      for (const line of _lines) {
+        const result = _calc(line, inr, ing, inb);
+        if (result.cost <= minCost) {
+          minCost = result.cost;
+          minLine = new LineResult();
+          minLine.index = result.index;
+          minLine.cs = [...result.cs];
+          minLine.elm = result.elm;
+          minLine.len = line.len;
+          minLine.scs = [...line.s.cs];
+          minLine.dcs = [...line.d.cs];
+        }
+      }
+      return minLine;
+    };
+
+    // 最小で決定
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let offset = (x + w * y) * 4;
+        let r = img.data[offset  ];
+        let g = img.data[offset+1];
+        let b = img.data[offset+2];
+        let a = img.data[offset+3];
+
+        let minCost = 9999999;
+        let index = 0;
+        for (let i = 0; i < 16; ++i) {
+          const dist =
+            (pals[i].r - r) ** 2
+            + (pals[i].g - g) ** 2
+            + (pals[i].b - b) ** 2;
+          if (dist <= minCost) {
+            minCost = dist;
+            index = i;
+          }
+        }
+
+        const result = pals[index];
+        img.data[offset  ] = result.r;
+        img.data[offset+1] = result.g;
+        img.data[offset+2] = result.b;
+        img.data[offset+3] = result.a;
+      }
+    }
+    c.putImageData(img, 0, 0);
+
+    console.log('downByPalette');
   }
 
 }

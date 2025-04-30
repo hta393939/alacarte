@@ -21,8 +21,11 @@
         <div class="toright">
         <div>処理方法</div>
         <select id="methodsel" class="pointer">
-          <option value="quantize" selected>quantize</option>
+          <option value="quantize">quantize</option>
           <option value="down">down</option>
+          <option value="gray">gray</option>
+          <option value="colorgray">colorgray</option>
+          <option value="downbypalette" selected>downbypalette</option>
         </select>
         </div>
 
@@ -86,14 +89,20 @@
     <div class="aaatoright">
 
       <div class="toright">
-        <canvas class="minithumb" id="maincanvas"></canvas>
+        <div>
+          <canvas class="minithumb" id="maincanvas"></canvas>
+        </div>
         <div class="tobottom">
           <div id="filenameview"></div>
           <div id="subview"></div>
         </div>
-        <canvas id="subcanvas"></canvas>
+        <div>
+          <canvas id="subcanvas"></canvas>
+        </div>
       </div>
-      <canvas id="backcanvas"></canvas>
+      <div>
+        <canvas id="backcanvas"></canvas>
+      </div>
 
     </div>
 
