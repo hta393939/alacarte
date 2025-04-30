@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>連番からスキップ取り出しする</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+
+    <div></div>
+    <div>chrome または edge でのみ使用可能</div>
+
+    <div>
+      <div>
+        <div id="innerview"></div>
+        <div id="element"></div>
+      </div>
+      <div>
+        <canvas id="maincanvas"></canvas>
+
+        <input type="number" min="0" max="30" value="0" id="startcount" />
+        <input type="number" min="1" max="30" value="1" id="addcount" />
+        <input type="number" min="1" max="30" value="10" id="outcount" />
+
+        <button id="openwindow">開く</button>
+        <button id="opendir">ワーキングフォルダを指定する</button>
+        <input id="idsrc" value="src" />
+        <input id="iddst" value="dst" />
+        <button id="retry">リトライする</button>
+        <div>
+          <div id="processingview"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
+

@@ -1,0 +1,28 @@
+
+.pointer {
+  cursor: pointer;
+}
+
+.num6 {
+  width: 6em;
+}
+
+#numberselement {
+  width: 50vw;
+  height: 6rem;
+}
+
+.drop {
+  margin: 1em;
+  border: dashed 4px black;
+  border-radius: 2rem;
+  padding: 1em;
+  text-align: center;
+  font-weight: bold;
+}
+
+#maincanvas {
+  max-height: 128px;
+}
+
+
