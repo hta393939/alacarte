@@ -327,34 +327,25 @@ class Misc {
       console.log('makecentercapsulesub offsets');
     });
 
-    window.idmakecentercapsule4?.addEventListener('click', () => {
+    window.idmakerevcapsule?.addEventListener('click', () => {
       const param = this.getCommonOptions();
       const top = param.useradius ? 'r' : 'a';
       const d = param.denom;
-      let numtext = _pad(13, 3);
-      if (param.useradius2) {
-        numtext = _pad(23, 3);
-      }
-      if (param.useradius4) {
-        numtext = _pad(43, 3);
-      }
-      if (param.useradius8) {
-        numtext = _pad(83, 3);
-      }
+      let numtext = _pad(6, 3);
       let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
       Object.assign(param, {
-        nameEn: `${top}${numtext}_centercapsule4_${param.belt}_${dtext}`,
+        nameEn: `${top}${numtext}_revcapsule_${param.belt}_${dtext}`,
         texturePath: [
           `tex/${top}${numtext}.png`,
           `tex/${top}${numtext}spa.png`,
         ],
       });
-      const writer = new CenterCapsule4();
+      const writer = new RevCapsule();
       writer.make(param);
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-      console.log('makecentercapsule4 offsets');
+      console.log('makerevcapsule offsets');
     });
 
     window.idmakephycapsule?.addEventListener('click', () => {
