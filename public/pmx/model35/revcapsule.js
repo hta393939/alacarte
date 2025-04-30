@@ -86,10 +86,6 @@ class RevCapsule extends PMX.Maker {
      * 一次的に全
      */
     const usefull = true;
-    /**
-     * ik 書き出しするかどうか
-     */
-    const _useIK = param.useik;
 
     const _belt = param.belt || 10;
 
@@ -168,8 +164,8 @@ class RevCapsule extends PMX.Maker {
 
     this.head.nameEn = param.nameEn;
     this.head.nameJa = this.head.nameEn;
-    let s = `${d.toLocaleString()} CenterCapsule.make forward\r\n`;
-    s += `IK: ${_useIK}, 物理有り: ${_usePhy}, \r\n`;
+    let s = `${d.toLocaleString()} RevCapsule.make forward\r\n`;
+    s += `物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
     s += `フルコリジョン: ${usefull}\r\n`;
     this.head.commentEn = s;
