@@ -71,6 +71,7 @@ class RevCapsule extends PMX.Maker {
   make(param) {
     console.log('make', param);
 
+    // param.fwRate の値で決まる
     //const useradius = param.useradius;
 
     /**
@@ -132,14 +133,14 @@ class RevCapsule extends PMX.Maker {
       const bwTarget = param.bwrate;
 
       const fw = 0.4;
-      let amp = (1 - bwTarget) * 0.5;
+      let bwAmp = (1 - bwTarget) * 0.5;
       let fwAmp = (1 - fwTarget) * 0.5;
-      let center = 1 - amp;
+      let bwCenter = 1 - bwAmp;
       let fwCenter = 1 - fwAmp;
       //let fwPower = 1 / 4;
       //let fwPower = 1 / 2;
       let fwPower = 1;
-      if (t < fw) { // 前半
+      if (t < fw) { // 前半 リバース側
         const ang = Math.pow(t / fw, fwPower) * Math.PI;
         let u = - Math.cos(ang) * fwAmp + fwCenter;
 
@@ -156,10 +157,10 @@ class RevCapsule extends PMX.Maker {
       }
       // 後半 あってる
       const ang = (t - fw) / (1 - fw) * Math.PI;
-      let u = Math.cos(ang) * amp + center;
+      let u = Math.cos(ang) * bwAmp + bwCenter;
 
       const tx = beltHeight * beltNum;
-      const tr = - Math.sin(ang) * Math.PI / (1 - fw) * amp;
+      const tr = - Math.sin(ang) * Math.PI / (1 - fw) * bwAmp;
 
       return {r: u, nx: -tr, nr: tx};
     };
@@ -216,6 +217,95 @@ class RevCapsule extends PMX.Maker {
     let vertexOffset = 0;
     let m = this.materials[0];
     {
+// MARK: 最初の半分
+      vertexOffset = this.vts.length;
+      let adjustR = calcRadius(0).r * capsuleR;
+
+      const allNum = div / 4 * 4;
+      /** 外側半径 */
+      const rt = 1 / 4;
+      /** 内側半径 */
+      const ri = 1 / 2;
+
+      for (let i = 0; i <= allNum; ++i) { // 下半球 -Y
+        for (let j = 0; j <= div; ++j) {
+          const v = new PMX.Vertex();
+          let vang = Math.PI * 2 * i / div;
+          let hang = Math.PI * 2 * j / div;
+          let cs = Math.cos(hang);
+          let sn = Math.sin(hang);
+          let rr = Math.sin(vang);
+          let x = -sn * rr;
+          let z = cs * rr;
+          let y = -Math.cos(vang);
+
+          if (i < allNum / 2) {// 曲1
+            vang = Math.PI * 2 * i / (allNum / 2 * 4);
+            hang = Math.PI * 2 * j / div;
+            cs = Math.cos(hang);
+            sn = Math.sin(hang);
+            rr = Math.sin(vang);
+            x = -sn * rr * -1;
+            z =  cs * rr * -1;
+            y = Math.cos(vang) * -1;
+            v.n = this.normalize([x, y, z]);
+            x *= -ri;
+            y *= -ri;
+            z *= -ri;
+            y += 1;
+          } else {
+            vang = Math.PI * 2 * (i - allNum / 2) / (allNum / 2 * 2);
+            hang = Math.PI * 2 * j / div;
+            cs = Math.cos(hang);
+            sn = Math.sin(hang);
+            rr = -Math.cos(vang);
+            x = -sn * rr;
+            z =  cs * rr;
+            y = -Math.sin(vang);
+            v.n = this.normalize([x, y, z]);
+            x *=  rt;
+            y *=  rt;
+            z *=  rt;
+            x += -sn * (ri + rt);
+            z +=  cs * (ri + rt);
+          }
+
+          x *= adjustR;
+          y *= adjustR;
+          z *= adjustR;
+          y += -centerOffset;
+          v.p = [x * scale, y * scale, z * scale];
+          v.uv = [
+            (j / div),
+            i / (div / 4) / 4 * capV, // TODO: MARK: /4) / 4 でいいのか? 
+          ];
+          v.deformType = PMX.Vertex.DEFORM_BDEF1;
+          v.joints = [
+            baseBoneIndex + (sideBoneNum * 1 - 1),
+            0, 0, 0];
+          v.weights = [1, 0, 0, 0];
+
+          this.vts.push(v);
+        }
+      }
+      for (let i = 0; i < allNum; ++i) {
+        for (let j = 0; j < div; ++j) {
+          let v0 = vertexOffset + (div + 1) * i + j;
+          let v1 = v0 + 1;
+          let v2 = v0 + (div + 1);
+          let v3 = v2 + 1;
+
+          // 元
+          m.faces.push([v0, v2, v1]);
+          m.faces.push([v1, v2, v3]);
+
+          //m.faces.push([v0, v1, v2]);
+          //m.faces.push([v1, v3, v2]);
+        }
+      }
+
+
+/*
       vertexOffset = this.vts.length;
       let adjustR = calcRadius(0).r * capsuleR;
       for (let i = 0; i <= div / 4; ++i) { // 左半球 -X
@@ -226,7 +316,7 @@ class RevCapsule extends PMX.Maker {
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.sin(vang);
-          let x = -sn * rr; // MARK: ok
+          let x = -sn * rr;
           let z = cs * rr;
           let y = -Math.cos(vang);
 
@@ -262,6 +352,8 @@ class RevCapsule extends PMX.Maker {
           m.faces.push([v1, v2, v3]);
         }
       }
+*/
+
 
       let by = - centerOffset;
       for (let h = 0; h < beltNum; ++h) { // まんなか。座標ループ
@@ -376,7 +468,7 @@ class RevCapsule extends PMX.Maker {
           m.faces.push([v0, v2, v1]);
           m.faces.push([v2, v3, v1]);
         }
-      } // 右の半球
+      } // 上の半球
 
     }
 

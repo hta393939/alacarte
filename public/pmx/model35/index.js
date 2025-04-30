@@ -332,6 +332,15 @@ class Misc {
       const top = param.useradius ? 'r' : 'a';
       const d = param.denom;
       let numtext = _pad(6, 3);
+      if (param.useradius2) {
+        numtext = _pad(26, 3);
+      }
+      if (param.useradius4) {
+        numtext = _pad(46, 3);
+      }
+      if (param.useradius8) {
+        numtext = _pad(86, 3);
+      }
       let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
       Object.assign(param, {
