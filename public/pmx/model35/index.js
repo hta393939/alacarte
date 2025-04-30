@@ -330,18 +330,35 @@ class Misc {
 
     window.idmakerevcapsule?.addEventListener('click', () => {
       const param = this.getCommonOptions();
-      const top = param.useradius ? 'r' : 'a';
+      let top = 'a';
       const d = param.denom;
-      let numtext = _pad(6, 3);
+      let num = 6;
+      switch (param.fwrate) {
+        case 0.5:
+          top = 'r';
+          num += 500;
+          break;
+        case 1:
+          top = 'a';
+          num += 100;
+          break;
+        case 2:
+          top = 'r';
+          num += 200;
+          break;
+        default:
+          top = 'r';
+          num += 700;
+          break;
+      }
       if (param.useradius2) {
-        numtext = _pad(26, 3);
+        num += 20;
+      } else if (param.useradius4) {
+        num += 40;
+      } else if (param.useradius8) {
+        num += 80;
       }
-      if (param.useradius4) {
-        numtext = _pad(46, 3);
-      }
-      if (param.useradius8) {
-        numtext = _pad(86, 3);
-      }
+      const numtext = _pad(num, 3);
       let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
       Object.assign(param, {
