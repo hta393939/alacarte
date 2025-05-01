@@ -330,24 +330,20 @@ class Misc {
 
     window.idmakerevcapsule?.addEventListener('click', () => {
       const param = this.getCommonOptions();
-      let top = 'a';
+      let top = 'r';
       const d = param.denom;
       let num = 6;
       switch (param.fwrate) {
         case 0.5:
-          top = 'r';
           num += 500;
           break;
         case 1:
-          top = 'a';
           num += 100;
           break;
         case 2:
-          top = 'r';
           num += 200;
           break;
         default:
-          top = 'r';
           num += 700;
           break;
       }

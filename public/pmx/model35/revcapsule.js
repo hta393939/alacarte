@@ -218,10 +218,11 @@ class RevCapsule extends PMX.Maker {
       let adjustR = calcRadius(0).r * capsuleR;
 
       const allNum = div / 4 * 4;
-      /** 外側半径 */
-      const rt = 1 / 4;
+
       /** 内側半径 */
-      const ri = 1 / 2;
+      const ri = Math.sqrt(0.5);
+      /** 外側半径 */
+      const rt = (1 - ri) / 2;
 
       for (let i = 0; i <= allNum; ++i) { // 下半球 -Y
         for (let j = 0; j <= div; ++j) {
@@ -235,7 +236,7 @@ class RevCapsule extends PMX.Maker {
           let z = cs * rr;
           let y = -Math.cos(vang);
 
-          if (i < allNum / 2) {// 曲1
+          if (i < allNum / 2) {// 内
             vang = Math.PI * 2 * i / (allNum / 2 * 4);
             hang = Math.PI * 2 * j / div;
             cs = Math.cos(hang);
@@ -425,7 +426,7 @@ class RevCapsule extends PMX.Maker {
       vertexOffset = this.vts.length;
       console.log('上半分', 'by', by, 'vertexOffset', vertexOffset);
       adjustR = calcRadius(1).r * capsuleR;
-      for (let i = 0; i <= div/4; ++i) { // 右半球 +Y
+      for (let i = 0; i <= div/4; ++i) { // 上半球 +Y
         for (let j = 0; j <= div; ++j) {
           const v = new PMX.Vertex();
           const vang = Math.PI * 2 * i / div;
