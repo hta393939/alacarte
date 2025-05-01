@@ -30,20 +30,24 @@ class Misc {
    */
   async moveAndFile(dirHandle) {
     this.root = dirHandle;
+    let srcDir = null;
     let dstDir = null;
     /** @type {FileSystemFileHandle[]} */
     const images = [];
 
-    const reImage = /^imag.*\.jpg$/;
+    const reImage = /^image[^\.]*\.(?<ext>[^\.]+)$/;
     // ルートフォルダ内から列挙
     for await (const h of dirHandle.values()) {
       if (h.kind === 'directory') {
-        if (h.name === 'test') {
+        if (h.name === 'dst') {
           dstDir = h;
-        }       
+        } else if (h.name === 'src') {
+          srcDir = h;
+        }
         console.log('dir', h.name);
-        continue;
       }
+    }
+    for await (const h of srcDir.values()) {
       const m = reImage.exec(h.name);
       if (!m) {
         continue;
@@ -51,7 +55,7 @@ class Misc {
       images.push(h);           
       console.log('file', h.name);
     }
-    if (!dstDir) {
+    if (!srcDir || !dstDir) {
       return;
     }
 
@@ -69,6 +73,7 @@ class Misc {
     // 移動
     let count = 0;
     for await (const h of images) {
+      //let name = h.name;
       let name = `image${String(count).padStart(5, '0')}.jpg`;
       while (true) {
         if (dstNames.indexOf(name) < 0) {
@@ -77,7 +82,7 @@ class Misc {
         count++;
         name = `image${String(count).padStart(5, '0')}.jpg`;
       }
-/*
+
       // ソース
       const srcFile = await h.getFile();
       const srcBuf = await srcFile.arrayBuffer();
@@ -86,12 +91,12 @@ class Misc {
       const writer = await dstFile.createWritable();
       await writer.write(srcBuf);
       await writer.close();
-      */
+      
       console.log('write', h.name, name);
       dstNames.push(name);
 
       { // 削除
-        //await dstDir.remove(h.name);
+        await h.remove();
       }
     }
     console.log('done');
