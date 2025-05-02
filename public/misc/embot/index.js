@@ -84,44 +84,6 @@ class Em { // 非公式
   }
   end() {}
 
-  async action_1() {
-    try {
-      let blockInfo = '';
-      let robotId = this.getDefaultRobotId();
-      await this.connectEmbot(robotId);
-      blockInfo = { type: 'led', id: 2, value: 'on' };
-      await this.sendToEmbot(robotId, blockInfo);
-      blockInfo = { type: 'octave', value: '52' };
-      await this.sendToEmbot(robotId, blockInfo);
-      blockInfo = { type: 'servo', id: 1, value: '0' };
-      await this.sendToEmbot(robotId, blockInfo);
-      await this.sleep(2);
-      blockInfo = { type: 'servo', id: 1, value: '45' };
-      await this.sendToEmbot(robotId, blockInfo);
-      await this.sleep(2);
-      blockInfo = { type: 'servo', id: 1, value: '90' };
-      await this.sendToEmbot(robotId, blockInfo);
-      await this.sleep(2);
-      blockInfo = { type: 'octave', value: '0' };
-      await this.sendToEmbot(robotId, blockInfo);
-      blockInfo = { type: 'led', value: 'off' };
-      await this.sendToEmbot(robotId, blockInfo);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async action_2() {
-    try {
-      let robotId = this.getDefaultRobotId();
-      await this.connectEmbot(robotId);
-      const blockInfo = { type: 'led', id: 2, value: 'on' };
-      await this.sendToEmbot(robotId, blockInfo);
-    } catch (error) {
-      throw error;
-    }
-  }
-
   async _startswitch(char) {
     char.addEventListener('characteristicvaluechanged', (event) => {
       const value = event.target.value.getUint8(0);
@@ -147,7 +109,12 @@ class Em { // 非公式
     if (!el) {
       return;
     }
-    el.textContent = `${new Date().toLocaleTimeString()} ${onoff ? 'on' : 'off'}`;
+    const onoffStr = onoff ? 'on' : 'off';
+    el.textContent = `${new Date().toLocaleTimeString()} ${onoffStr}`;
+
+    const robotId = this.getDefaultRobotId();
+    const blockInfo = { type: 'led', id: 1, value: onoffStr };
+    await this.sendToEmbot(robotId, blockInfo);
   }
 
 }
@@ -155,7 +122,6 @@ const em = new Em();
 const _start = async () => {
   try {
     await em._initialize();
-    await em.action_2();
     await em.action_3();
   } catch (e) {
     em.showError(e.message);
