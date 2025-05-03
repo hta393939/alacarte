@@ -28,10 +28,7 @@ class Em { // 非公式
       this._servo1 = await service.getCharacteristic(_uuid('e511'));
       this._servo2 = await service.getCharacteristic(_uuid('e512'));
       this._buzzer = await service.getCharacteristic(_uuid('e521'));
-      // notify と read が true
-      this._other = await service.getCharacteristic(_uuid('e525'));
-
-      console.log('_other', this._other);
+      this._switch = await service.getCharacteristic(_uuid('e525'));
     } catch (e) {
       console.error(`_initialize catch`, e.message);
     }
@@ -98,19 +95,19 @@ class Em { // 非公式
 
   async action_3() {
     try {
-      await this._startswitch(this._other);
+      await this._startswitch(this._switch);
     } catch (error) {
       throw error;
     }
   }
 
   async applySwitch(onoff) {
-    const el = document.getElementById('switchview');
-    if (!el) {
-      return;
-    }
     const onoffStr = onoff ? 'on' : 'off';
-    el.textContent = `${new Date().toLocaleTimeString()} ${onoffStr}`;
+
+    const el = document.getElementById('switchview');
+    if (el) {
+      el.textContent = `${new Date().toLocaleTimeString()} ${onoffStr}`;
+    }
 
     const robotId = this.getDefaultRobotId();
     const blockInfo = { type: 'led', id: 1, value: onoffStr };
