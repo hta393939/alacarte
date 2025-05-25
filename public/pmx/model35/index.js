@@ -110,6 +110,9 @@ class Misc {
     await navigator.clipboard.writeText(str);
   }
 
+  /**
+   * 共通のファクターや数値の生成
+   */
   getCommonOptions() {
     const param = {
       frictionfactor: Number.parseFloat(document.getElementById('frictionfactor')?.value ?? 0),
@@ -134,20 +137,45 @@ class Misc {
     param.denom = 1 / param.scale;
     param.friction = this.factorToFric(param.frictionfactor);
 
+    {
     //param.fwrate = 1;
     //if (param.useradius) {
       //param.fwrate = Math.sqrt(2) * 0.5;
     //}
+      let num = 0;
+      switch (param.fwrate) {
+        case 0.5:
+          num = 500;
+          break;
+        case 1:
+          num = 100;
+          break;
+        case 2:
+          num = 200;
+          break;
+        default: // 端数を気にしないために
+          num = 700;
+          break;
+      }
+      param.fwrateadd = num;
+    }
 
-    param.bwrate = 1;
-    if (param.useradius2) {
-      param.bwrate = 0.5;
-    }
-    if (param.useradius4) {
-      param.bwrate = 0.25;
-    }
-    if (param.useradius8) {
-      param.bwrate = 0.125;
+    {
+      param.bwrate = 1;
+      let num = 10;
+      if (param.useradius2) {
+        param.bwrate = 0.5;
+        num = 20;
+      }
+      if (param.useradius4) {
+        param.bwrate = 0.25;
+        num = 40;
+      }
+      if (param.useradius8) {
+        param.bwrate = 0.125;
+        num = 80;
+      }
+      param.bwrateadd = num;
     }
 
     return param;
@@ -275,24 +303,17 @@ class Misc {
       console.log('makecentercapsule offsets');
     });
 
+    // Y軸
     window.idmakecentercapsule2?.addEventListener('click', () => {
       const param = this.getCommonOptions();
-      const top = param.useradius ? 'r' : 'a';
+      const top = (param.friction < 100) ? 's' : 'a';
       const d = param.denom;
-      let numtext = _pad(13, 3);
-      if (param.useradius2) {
-        numtext = _pad(23, 3);
-      }
-      if (param.useradius4) {
-        numtext = _pad(43, 3);
-      }
-      if (param.useradius8) {
-        numtext = _pad(83, 3);
-      }
+      let num = 3 + param.fwrateadd + param.bwrateadd;
+      const numtext = _pad(num, 3);
       let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 
       Object.assign(param, {
-        nameEn: `${top}${numtext}_centercapsule2_${param.belt}_${dtext}`,
+        nameEn: `${top}${numtext}_centercapsule2_${param.belt}_${dtext}_${_pad(param.frictionfactor, 3)}`,
         texturePath: [
           `tex/${top}${numtext}.png`,
           `tex/${top}${numtext}spa.png`,
@@ -309,7 +330,7 @@ class Misc {
     window.idmakecentercapsulesub?.addEventListener('click', async () => {
       const param = this.getCommonOptions();
 
-      const top = (param.friction < 1000) ? 's' : 'a';
+      const top = (param.friction < 100) ? 's' : 'a';
       const d = param.denom;
       let numtext = _pad(13, 3);
       let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
@@ -328,32 +349,12 @@ class Misc {
       console.log('makecentercapsulesub offsets');
     });
 
+    // 修正後未確認
     window.idmakerevcapsule?.addEventListener('click', () => {
       const param = this.getCommonOptions();
       let top = 'r';
       const d = param.denom;
-      let num = 6;
-      switch (param.fwrate) {
-        case 0.5:
-          num += 500;
-          break;
-        case 1:
-          num += 100;
-          break;
-        case 2:
-          num += 200;
-          break;
-        default:
-          num += 700;
-          break;
-      }
-      if (param.useradius2) {
-        num += 20;
-      } else if (param.useradius4) {
-        num += 40;
-      } else if (param.useradius8) {
-        num += 80;
-      }
+      let num = 6 + param.fwrateadd + param.bwrateadd;
       const numtext = _pad(num, 3);
       let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
 

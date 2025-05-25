@@ -146,10 +146,12 @@
 		if flag {
 			_out += 1
 
+			// search same dir
 			name1 = same_dir + "\\" + name
 			exist name1
 			bytenum = strsize
 			if bytenum <= 0 {     
+				// search common
 		        name1 = common_dir + "\\" + name
 		        exist name1
 		        bytenum = strsize
