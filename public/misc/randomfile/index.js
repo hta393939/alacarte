@@ -6,6 +6,13 @@ const _pad = (v, n = 2) => {
 class Misc {
   constructor() {
     this.dst = '';
+    /**
+     * カウンタ
+     */
+    this.count = 0;
+    /**
+     * カウンタ
+     */
     this.startcount = 0;
     this.addcount = 1;
     /**
@@ -13,18 +20,31 @@ class Misc {
      */
     this.outcount = 1;
     this.maxcount = -1;
+    /**
+     * @type {FileSystemDirectoryHandle}
+     */
     this.dstdh = null;
-    this.prefix = 'data';
+    this.prefix = 'd_';
+    /**
+     * @type {Uint8Array}
+     */
+    this.buf = null;
   }
 
   async initialize() {
     this.setListener();
   }
 
-/**
- * 
- * @param {FileSystemDirectoryHandle} dirHandle 
- */
+  async openDir() {
+    const opt = { mode: 'readwrite' };
+    const dirh = await window.showDirectoryPicker(opt);
+    this.dstdh = dirh;
+  }
+
+  /**
+   * 
+   * @param {FileSystemDirectoryHandle} dirHandle 
+   */
   async processDir(dirHandle) {
     this.root = dirHandle;
     this.addcount = Number.parseFloat(document.getElementById('idaddcount')?.value || 1);
@@ -41,21 +61,18 @@ class Misc {
     this.skipSelect();
   }
 
-  makeFilename(num) {
-    return `${this.prefix}${_pad(num, this.num)}.${this.ext}`;
-  }
-
   /**
-   * 1GB分+16個を作成する
+   * 1GB分+16バイトを作成する
    * @returns 
    */
   readyBuffer() {
     const g1 = 0x400 * 0x400 * 0x400;
-    const num = g1 / 4 + 16;
-    const buf = new Uint32Array(num);
+    const num = g1 + 16;
+    const buf = new Uint8Array(num);
+    const view = new Uint32Array(buf, num / 4);
     for (let i = 0; i < num; ++i) {
       let val = Math.random() * 0xffffffff;
-      buf[i] = val;
+      view[i] = val;
     }
     return buf;
   }
@@ -64,10 +81,31 @@ class Misc {
     const isG = document.getElementById('isg')?.checked;
     const num = Number.parseFloat(document.getElementById('mul')?.value);
 
-    const dirh = null;
-    const name = `${this.prefix}_${_pad(100, 5)}.dat`;
-    const fh = await dirh.getEntry();
-    await this.writeOneFile(isG, num, fh);
+    if (!Number.isFinite(num)) {
+      return;
+    }
+    if (!this.buf) {
+      this.buf = this.readyBuffer();
+    }
+
+    /**
+     * @type {FileSystemDirectoryHandle}
+     */
+    const dirh = this.dstdh;
+    for (let i = 0; i < 10; ++i) {
+      const name = `${this.prefix}_${_pad(this.count, 5)}.dat`;
+      this.count += 1;
+      try {
+        const fh = await dirh.getFileHandle(name, { create: false });
+        console.log('exist', name);
+        continue;
+      } catch (e) {
+        // Do nothing.
+      }
+      const fh = await dirh.getFileHandle(name, { create: true });
+      await this.writeOneFile(isG, num, fh);
+      break;
+    }
   }
 
   /**
@@ -86,15 +124,15 @@ class Misc {
   /**
    * 
    * @param {FileSystemFileHandle} fh 
-   * @param {ArrayBuffer} buf 
+   * @param {Uint8Array} buf 
    * @param {number} unit 塊バイト数
    * @param {number} mul 
    */
   async writeFile(fh, buf, unit, mul) {
     const ws = await fh.createWritable();
     for (let i = 0; i < mul; ++i) {
-      const view = buf.slice(i, i + unit);
-      await ws.write(view);  
+      const view = buf.subarray(i, i + unit);
+      await ws.write(view);
     }
     await ws.close();
   }
@@ -131,8 +169,7 @@ class Misc {
       const el = document.getElementById('opendir');
       el?.addEventListener('click', async () => {
         const dirHandle = await this.openDir();
-        this.dirHandle = dirHandle;
-        await this.processDir(dirHandle);
+        this.dstdh = dirHandle;
       });
     }
     { // リトライ
