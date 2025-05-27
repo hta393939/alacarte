@@ -3,6 +3,11 @@
   cursor: pointer;
 }
 
+.toright {
+  display: flex;
+  flex-direction: row;
+}
+
 .num6 {
   width: 6em;
 }

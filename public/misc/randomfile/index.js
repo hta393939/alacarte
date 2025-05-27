@@ -38,7 +38,7 @@ class Misc {
   async openDir() {
     const opt = { mode: 'readwrite' };
     const dirh = await window.showDirectoryPicker(opt);
-    this.dstdh = dirh;
+    return dirh;
   }
 
   /**
@@ -69,15 +69,18 @@ class Misc {
     const g1 = 0x400 * 0x400 * 0x400;
     const num = g1 + 16;
     const buf = new Uint8Array(num);
-    const view = new Uint32Array(buf, num / 4);
-    for (let i = 0; i < num; ++i) {
+    const view = new DataView(buf.buffer);
+    //const view = new Uint32Array(buf, 0, num / 4);
+    for (let i = 0; i < num / 4; ++i) {
       let val = Math.random() * 0xffffffff;
-      view[i] = val;
+      view.setUint32(i * 4, val, true);
     }
     return buf;
   }
 
   async outputOne() {
+    console.log('outputOne');
+
     const isG = document.getElementById('isg')?.checked;
     const num = Number.parseFloat(document.getElementById('mul')?.value);
 
@@ -165,13 +168,21 @@ class Misc {
       });
     }
 
-    { // ワーキングディレクトリで指定するタイプ。うまくいく。
+    { // ワーキングディレクトリで指定するタイプ。
       const el = document.getElementById('opendir');
       el?.addEventListener('click', async () => {
         const dirHandle = await this.openDir();
         this.dstdh = dirHandle;
       });
     }
+
+    { // リトライ
+      const el = document.getElementById('go1');
+      el?.addEventListener('click', async () => {
+        await this.outputOne();
+      });
+    }
+
     { // リトライ
       const el = document.getElementById('retry');
       el?.addEventListener('click', async () => {
@@ -179,7 +190,7 @@ class Misc {
       });
     }
 
-    for (const k of ['startcount', 'addcount', 'outcount']) {
+    for (const k of ['startcount', 'addcount', 'outcount', 'mul']) {
       const el = document.getElementById(k);
       const _update = () => {
         const val = Number.parseFloat(el.value);
