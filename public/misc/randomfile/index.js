@@ -119,6 +119,7 @@ class Misc {
    */
   async writeOneFile(isG, num, fh) {
     console.log('writeOneFile');
+    //let unit = isG ? 0x400 * 0x400 * 0x400 : 0x400 * 0x400 * 1;
     let unit = isG ? 0x400 * 0x400 * 0x400 : 0x400 * 0x400 * 16;
     await this.writeFile(fh, this.buf, unit, num);
     console.log('writeOneFile');
