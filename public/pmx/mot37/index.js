@@ -99,10 +99,15 @@ class MotionData {
 }
 
 class Misc {
+  static XAXIS = 0;
+  static YAXIS = 1;
+  static ZAXIS = 2;
+
   constructor() {
 
     this.param = {
       sec: 6,
+      step: 10,
     };
 
     this.names = [
@@ -212,6 +217,31 @@ class Misc {
       });
     }
 
+    {
+      const el = document.getElementById('gomotion1');
+      el?.addEventListener('click', () => {
+        this.downloadMotion1();
+      });
+    }
+    {
+      const el = document.getElementById('gomotion2');
+      el?.addEventListener('click', () => {
+        this.downloadMotion2();
+      });
+    }
+    {
+      const el = document.getElementById('gomotion3');
+      el?.addEventListener('click', () => {
+        this.downloadMotion3();
+      });
+    }
+    {
+      const el = document.getElementById('gomotion4');
+      el?.addEventListener('click', () => {
+        this.downloadMotion4();
+      });
+    }
+
   }
 
   gatherParam() {
@@ -233,8 +263,8 @@ class Misc {
   /**
    * 
    */
-  async downloadMotion() {
-    console.log('downloadMotion');
+  async downloadMotion_keep() {
+    console.log('downloadMotion keep');
     const param = this.gatherParam();
     const motionData = new MotionData();
 
@@ -284,6 +314,64 @@ class Misc {
 
     const ab = await this.makeFile(motionData);
     this.downloadFile(new Blob([ab]), `a.vmd`);
+  }
+
+  /**
+   * 
+   */
+  async downloadMotion2() {
+    console.log('downloadMotion2');
+    const param = this.gatherParam();
+    const motionData = new MotionData();
+
+    const { step } = param;
+
+    const deg1 = 90;
+    const poses = {
+      p0: [deg1, -deg1, -deg1, deg1, 0],
+      p1: [0, 0, 0, 0, 0],
+      pt: [0, 0, 0, 0, 0],
+    };
+
+    { // モーション
+      for (let i = 0; i <= 3; ++i) {
+        let frame = i * step;
+        for (let j = 0; j <= 4; ++j) {
+          const obj = new Bone();
+          obj.frame = frame;
+          obj.name = `b0${15 + j * 2}tree`;
+
+          let sgn = (((j + i) & 1) !== 0) ? -1 : 1;
+
+          switch (j) {
+          case 0:
+            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            break;
+          case 1:
+            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            break;
+          case 2:
+            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            break;
+          case 3:
+            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            break;
+          case 4:
+            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            break;
+          }
+
+          motionData.bones.push(obj);
+        }
+      }
+
+    }
+    {
+      
+    }
+
+    const ab = await this.makeFile(motionData);
+    this.downloadFile(new Blob([ab]), `a2.vmd`);
   }
 
   /**
