@@ -13,8 +13,9 @@ const _pad = (v, n = 2) => {
  * @returns 
  */
 const _qaxis = (index, deg) => {
-  let cs = Math.cos(deg * Math.PI / 180 * 0.5);
-  let sn = Math.sin(deg * Math.PI / 180 * 0.5);
+  const ang = deg * Math.PI / 180 * 0.5;
+  let cs = Math.cos(ang);
+  let sn = Math.sin(ang);
   const ret = [0, 0, 0, cs];
   ret[index] = sn;
   return ret;
@@ -108,6 +109,8 @@ class Misc {
     this.param = {
       sec: 6,
       step: 10,
+      repeatnum: 1,
+      ampdeg: 90,
     };
 
     this.names = [
@@ -207,13 +210,6 @@ class Misc {
           name = `${m.groups['base']}`;
         }
         this.downloadFile(new Blob([ab]), name);
-      });
-    }
-
-    {
-      const el = document.getElementById('go');
-      el?.addEventListener('click', () => {
-        this.downloadMotion();
       });
     }
 
@@ -324,19 +320,25 @@ class Misc {
     const param = this.gatherParam();
     const motionData = new MotionData();
 
-    const { step } = param;
+    const { step, repeatnum, ampdeg } = param;
 
-    const deg1 = 90;
+    const deg1 = ampdeg;
     const poses = {
       p0: [deg1, -deg1, -deg1, deg1, 0],
       p1: [0, 0, 0, 0, 0],
       pt: [0, 0, 0, 0, 0],
     };
 
-    { // モーション
-      for (let i = 0; i <= 3; ++i) {
-        let frame = i * step;
-        for (let j = 0; j <= 4; ++j) {
+    let keyoffsets = [8, 8, 8, 6];
+    for (let n = 0; n < repeatnum; ++n) { // モーション
+      const kon = keyoffsets.length;
+      for (let i = 0; i <= kon; ++i) {
+        if (i === kon && n < repeatnum -1) {
+          continue;
+        }
+
+        let frame = n * 30 + keyoffsets[i];
+        for (let j = 0; j <= 4; ++j) { // ボーンループ
           const obj = new Bone();
           obj.frame = frame;
           obj.name = `b0${15 + j * 2}tree`;
@@ -345,19 +347,19 @@ class Misc {
 
           switch (j) {
           case 0:
-            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
             break;
           case 1:
-            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
             break;
           case 2:
-            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
             break;
           case 3:
-            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
             break;
           case 4:
-            obj.q = _qaxis(Misc.ZAXIS, 90 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
             break;
           }
 

@@ -11,8 +11,20 @@
       <div>
         <div class="toright">
           <div>フレーム間隔</div>
-          <input id="step" type="range" />
+          <input id="step" type="range" min="1" value="1" />
           <div id="stepview"></div>
+        </div>
+
+        <div class="toright">
+          <div>繰り返し回数</div>
+          <input id="repeatnum" type="range" min="1" value="1" max="100" />
+          <div id="repeatnumview"></div>
+        </div>
+
+        <div class="toright">
+          <div>振幅度数</div>
+          <input id="ampdeg" type="range" min="-90" value="90" max="90" />
+          <div id="ampdegview"></div>
         </div>
 
         <div>
