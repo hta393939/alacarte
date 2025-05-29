@@ -111,6 +111,8 @@ class Misc {
       step: 10,
       repeatnum: 1,
       ampdeg: 90,
+      maxframe: 300,
+      loopsec: 1,
     };
 
     this.names = [
@@ -211,6 +213,25 @@ class Misc {
         }
         this.downloadFile(new Blob([ab]), name);
       });
+    }
+
+    for (const k in this.param) {
+      const el = document.getElementById(k);
+      const viewel = document.getElementById(`${k}view`);
+      if (!el || !viewel) {
+        continue;
+      }
+      const _update = () => {
+        const val = Number.parseFloat(el.value);
+        if (!Number.isFinite(val)) {
+          return;
+        }
+        viewel.textContent = `${val}`;
+      };
+      el.addEventListener('input', () => {
+        _update();
+      });
+      _update();
     }
 
     {
@@ -320,46 +341,75 @@ class Misc {
     const param = this.gatherParam();
     const motionData = new MotionData();
 
-    const { step, repeatnum, ampdeg } = param;
+    const { step, repeatnum, ampdeg, maxframe } = param;
 
-    const deg1 = ampdeg;
+    let deg1 = ampdeg;
+    let deg2 = ampdeg;
     const poses = {
       p0: [deg1, -deg1, -deg1, deg1, 0],
       p1: [0, 0, 0, 0, 0],
       pt: [0, 0, 0, 0, 0],
     };
 
-    let keyoffsets = [8, 8, 8, 6];
-    for (let n = 0; n < repeatnum; ++n) { // モーション
+//// モーション
+    for (let n = 0; n < repeatnum * 0 + 11; ++n) {
+      let keydurs = [8, 8, 8, 6];
+      let keyoffsets = [0];
+      for (let i = 0; i < keydurs.length; ++i) {
+        let val = keydurs[i];
+        keyoffsets.push(keyoffsets[keyoffsets.length - 1] + val);
+      }
+
       const kon = keyoffsets.length;
       for (let i = 0; i <= kon; ++i) {
         if (i === kon && n < repeatnum -1) {
           continue;
         }
-
         let frame = n * 30 + keyoffsets[i];
-        for (let j = 0; j <= 4; ++j) { // ボーンループ
+        if (frame > maxframe) {
+          break;
+        }
+
+        const subbones = [
+          `b008tree`, // backward
+          `b010tree`,
+          `b012tree`, // top
+          `b019tree`, // forward
+          `b021tree`,
+          `b023tree`, // top
+        ];
+        for (let j = 0; j <= 5; ++j) { // ボーンループ
           const obj = new Bone();
           obj.frame = frame;
-          obj.name = `b0${15 + j * 2}tree`;
+          //obj.name = `b0${15 + j * 2}tree`;
+          obj.name = subbones[j];
 
-          let sgn = (((j + i) & 1) !== 0) ? -1 : 1;
+          let sgn1 = 0;
+          let sgn2 = 0;
+          if ((i & 1) === 0) { // even
+            sgn2 = (i === 0 || i === 2 || i === 4) ? 1 : -1;
+          } else { // odd
+            sgn1 = (i === 1 || i === 3 || i === 5) ? 1 : -1;
+          }
 
           switch (j) {
           case 0:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);
             break;
           case 1:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
             break;
           case 2:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);
             break;
           case 3:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);
             break;
           case 4:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn);
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
+            break;
+          case 5:
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);            
             break;
           }
 
@@ -368,8 +418,7 @@ class Misc {
       }
 
     }
-    {
-      
+    { // 表情無し
     }
 
     const ab = await this.makeFile(motionData);
