@@ -380,7 +380,10 @@ class Misc {
           `b021tree`,
           `b023tree`, // top
         ];
-        const degs = [
+        /**
+         * upper degs
+         */
+        let degs = [
           21, 21, 21, -90, +90, -90
         ];
 
