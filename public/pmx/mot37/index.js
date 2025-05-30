@@ -105,7 +105,6 @@ class Misc {
   static ZAXIS = 2;
 
   constructor() {
-
     this.param = {
       sec: 6,
       step: 10,
@@ -113,6 +112,7 @@ class Misc {
       ampdeg: 90,
       maxframe: 300,
       loopsec: 1,
+      seed: 1,
     };
 
     this.names = [
@@ -141,6 +141,19 @@ class Misc {
    */
   async initialize() {
     this.setListener();
+  }
+
+  seed(seed) {
+    this.param.seed = seed;
+  }
+
+  rnd() {
+    let x = this.param.seed;
+    const A = 214013;
+    const C = 2531011;
+    x = x * A + C;
+    this.param.seed = x & 0xffffffff;
+    return ((x>>16)&32767);
   }
 
   /**
@@ -341,7 +354,9 @@ class Misc {
     const param = this.gatherParam();
     const motionData = new MotionData();
 
-    const { step, repeatnum, ampdeg, maxframe } = param;
+    const { step, repeatnum, ampdeg, maxframe, seed } = param;
+
+    const filename = `u2_${seed}.vmd`;
 
     let deg1 = ampdeg;
     let deg2 = ampdeg;
@@ -373,9 +388,12 @@ class Misc {
         // Y +++ 21
         // Y -+- 90
         const subbones = [
+          `b006tree`,
           `b008tree`, // backward
           `b010tree`,
           `b012tree`, // top
+
+          `b017tree`,
           `b019tree`, // forward
           `b021tree`,
           `b023tree`, // top
@@ -384,10 +402,10 @@ class Misc {
          * upper degs
          */
         let degs = [
-          21, 21, 21, -90, +90, -90
+          21, 21, 21, 21, -90, -90, +90, -90
         ];
 
-        for (let j = 0; j <= 5; ++j) { // ボーンループ
+        for (let j = 0; j < 8; ++j) { // ボーンループ
           const obj = new Bone();
           obj.frame = frame;
           //obj.name = `b0${15 + j * 2}tree`;
@@ -404,21 +422,28 @@ class Misc {
           const q2 = _qaxis(Misc.YAXIS, degs[j]);
           switch (j) {
           case 0:
-            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
+            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn2);
             break;
           case 1:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
-            break;
-          case 2:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);
-            break;
-          case 3:
             obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
             break;
-          case 4:
+          case 2:
             obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
             break;
+          case 3:
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);
+            break;
+
+          case 4:
+            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn2);
+            break;
           case 5:
+            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
+            break;
+          case 6:
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
+            break;
+          case 7:
             obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);            
             break;
           }
@@ -433,7 +458,123 @@ class Misc {
     }
 
     const ab = await this.makeFile(motionData);
-    this.downloadFile(new Blob([ab]), `a2.vmd`);
+    this.downloadFile(new Blob([ab]), filename);
+  }
+
+  /**
+   * topology chanllenge
+   */
+  async downloadMotion3() {
+    console.log('downloadMotion3');
+    const param = this.gatherParam();
+    const motionData = new MotionData();
+
+    const { step, loopsec, repeatnum, ampdeg, maxframe, seed } = param;
+
+    const filename = `u3_${seed}.vmd`;
+
+    let deg1 = ampdeg;
+    let deg2 = ampdeg;
+    /**
+     * 1ループフレーム数
+     */
+    let lfn = 30 * loopsec;
+    const poses = {
+      p0: [deg1, -deg1, -deg1, deg1, 0],
+      p1: [0, 0, 0, 0, 0],
+      pt: [0, 0, 0, 0, 0],
+    };
+
+    //// モーション
+    for (let n = 0; n < 21; ++n) {
+      let keydurs = [8, 8, 8, 6];
+      let keyoffsets = [0];
+      for (let i = 0; i < keydurs.length; ++i) {
+        let val = keydurs[i];
+        keyoffsets.push(keyoffsets[keyoffsets.length - 1] + val);
+      }
+
+      const kon = keyoffsets.length;
+      for (let i = 0; i <= kon; ++i) {
+        let frame = n * lfn + keyoffsets[i];
+        if (frame > maxframe) {
+          break;
+        }
+
+        // Y +++ 21
+        // Y -+- 90
+        const subbones = [
+          `b006tree`,
+          `b008tree`, // backward
+          `b010tree`,
+          `b012tree`, // top
+
+          `b017tree`,
+          `b019tree`, // forward
+          `b021tree`,
+          `b023tree`, // top
+        ];
+        /**
+         * upper degs
+         */
+        let degs = [
+          21, 21, 21, 21, -90, -90, +90, -90
+        ];
+
+        for (let j = 0; j < 8; ++j) { // ボーンループ
+          const obj = new Bone();
+          obj.frame = frame;
+          //obj.name = `b0${15 + j * 2}tree`;
+          obj.name = subbones[j];
+
+          let sgn1 = 0;
+          let sgn2 = 0;
+          if ((i & 1) === 0) { // even
+            sgn2 = (i === 0 || i === 4 || i === 8) ? 1 : -1;
+          } else { // odd
+            sgn1 = (i === 1 || i === 5 || i === 9) ? 1 : -1;
+          }
+
+          const q2 = _qaxis(Misc.YAXIS, degs[j]);
+          switch (j) {
+          case 0:
+            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn2);
+            break;
+          case 1:
+            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
+            break;
+          case 2:
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
+            break;
+          case 3:
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);
+            break;
+
+          case 4:
+            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn2);
+            break;
+          case 5:
+            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
+            break;
+          case 6:
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
+            break;
+          case 7:
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);            
+            break;
+          }
+          obj.q = _qmul(obj.q, q2);
+
+          motionData.bones.push(obj);
+        }
+      }
+
+    }
+    { // 表情無し
+    }
+
+    const ab = await this.makeFile(motionData);
+    this.downloadFile(new Blob([ab]), filename);
   }
 
   /**
