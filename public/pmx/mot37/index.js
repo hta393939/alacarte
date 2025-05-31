@@ -153,7 +153,7 @@ class Misc {
     const C = 2531011;
     x = x * A + C;
     this.param.seed = x & 0xffffffff;
-    return ((x>>16)&32767);
+    return ((x>>16) & 32767);
   }
 
   /**
@@ -272,6 +272,45 @@ class Misc {
       });
     }
 
+  }
+
+  /**
+   * 三角関数の値を返す
+   * @param {number} topo 
+   * @param {number} n 
+   * @returns 
+   */
+  gettri(topo, n) {
+    let v = (topo + 100 * n) % n;
+    if (v === 0) {
+      return { cos: 1, sin: 0 };
+    }
+    if (v === n / 2) {
+      return { cos: -1, sin: 0 };
+    }
+    if (v === n / 4) {
+      return { cos: 0, sin: 1 };
+    }
+    if (v === n * 3 / 4) {
+      return { cos: 0, sin: -1 };
+    }
+
+    const q2 = Math.sqrt(0.5);
+    if (v === n / 8) {
+      return { cos: q2, sin: q2 };
+    }
+    if (v === n * 3 / 8) {
+      return { cos: -q2, sin: q2 };
+    }
+    if (v === n * 5 / 8) {
+      return { cos: -q2, sin: -q2};
+    }
+    if (v === n * 7 / 8) {
+      return { cos: q2, sin: -q2 };
+    }
+
+    const ang = topo * 2 * Math.PI / n;
+    return { cos: Math.cos(ang), sin: Math.sin(ang) };
   }
 
   gatherParam() {
@@ -462,7 +501,8 @@ class Misc {
   }
 
   /**
-   * topology chanllenge
+   * topology challenge
+   * トポロジーが違うとフレームが違うのでかなりめんどいな...
    */
   async downloadMotion3() {
     console.log('downloadMotion3');
@@ -481,94 +521,94 @@ class Misc {
     let lfn = 30 * loopsec;
 
     //// モーション
-    for (let n = 0; n < 21; ++n) {
-      let keydurs = [8, 8, 8, 6];
-      let keyoffsets = [0];
-      for (let i = 0; i < keydurs.length; ++i) {
-        let val = keydurs[i];
-        keyoffsets.push(keyoffsets[keyoffsets.length - 1] + val);
+
+    let boneNum = 10;
+    const bkvs = [];
+    for (let i = 0; i < boneNum; ++i) {
+      let kvs = [];
+      // トポロジーの決定
+      let rn = lfn;
+      let rv = 0;
+      while (rv === 0 || rv === lfn * 0.5) {
+        rv = this.rnd() % rn; // 0 と lfn * 0.5 は個数が変わってめんどいので
+      }
+      //console.log('rv', rv);
+
+      const cs = this.gettri(rv, lfn);
+      // cos が減少していく範囲なら true
+      const dec = (rv < lfn * 0.5);
+      if (dec) {
+        kvs.push({ key: 0, val: cs.cos });
+        const t1 = lfn * 0.5 - rv;
+        kvs.push({ key: t1, val: -1 });
+        kvs.push({ key: t1 + lfn * 0.5, val: 1 });
+        //kvs.push({ key: lfn, val: cs.cos });
+      } else {
+        kvs.push({ key: 0, val: cs.cos });
+        const t1 = lfn - rv;
+        kvs.push({ key: t1, val: 1 });
+        kvs.push({ key: t1 + lfn * 0.5, val: -1 });
+        //kvs.push({ key: lfn, val: cs.cos });
       }
 
-      const kon = keyoffsets.length;
-      for (let i = 0; i <= kon; ++i) {
-        let frame = n * lfn + keyoffsets[i];
-        if (frame > maxframe) {
-          break;
-        }
+      bkvs.push(kvs);
+    }
+    console.log('bkvs', bkvs);
 
-        // Y +++ 21
-        // Y -+- 90
-        const subbones = [
-          `b004tree`,
-          `b006tree`,
-          `b008tree`, // backward
-          `b010tree`,
-          `b012tree`, // top
+    for (let j = 0; j < boneNum; ++j) { // ボーンループ
+      /**
+       * ボーンごと key, val
+       */
+      const kvs = bkvs[j];
+      for (let n = 0; n < 21; ++n) { // 30 * 21 あれば十分
+        const kon = kvs.length;
+        for (let i = 0; i < kon; ++i) {
+          const kv = kvs;
+          let frame = n * lfn + kv.key;
+          if (frame > maxframe) {
+            break;
+          }
 
-          `b015tree`,
-          `b017tree`,
-          `b019tree`, // forward
-          `b021tree`,
-          `b023tree`, // top
-        ];
-        /**
-         * upper degs
-         */
-        let degs = [
-          0, 21, 21, 21, 21, 0, -90, -90, +90, -90
-        ];
+          // Y +++ 21
+          // Y -+- 90
+          const subbones = [
+            `b004tree`,
+            `b006tree`,
+            `b008tree`, // backward
+            `b010tree`,
+            `b012tree`, // top
 
-        for (let j = 0; j < 10; ++j) { // ボーンループ
+            `b015tree`,
+            `b017tree`,
+            `b019tree`, // forward
+            `b021tree`,
+            `b023tree`, // top
+          ];
+          /**
+           * upper degs
+           */
+          let degs = [
+            0, 21, 21, 21, 21, 0, -90, -90, +90, -90
+          ];
+
+
           let obj = new Bone();
           obj.frame = frame;
-          //obj.name = `b0${15 + j * 2}tree`;
           obj.name = subbones[j];
-
-          let sgn1 = 0;
-          let sgn2 = 0;
-          if ((i & 1) === 0) { // even
-            sgn2 = (i === 0 || i === 4 || i === 8) ? 1 : -1;
-          } else { // odd
-            sgn1 = (i === 1 || i === 5 || i === 9) ? 1 : -1;
-          }
 
           const q2 = _qaxis(Misc.YAXIS, degs[j]);
           switch (j) {
           case 0:
-            obj = null;
-            break;
-          case 1:
-            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn2);
-            break;
-          case 2:
-            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
-            break;
-          case 3:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
-            break;
-          case 4:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);
-            break;
-
           case 5:
             obj = null;
             break;
 
-          case 6:
-            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn2);
-            break;
-          case 7:
-            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
-            break;
-          case 8:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
-            break;
-          case 9:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);            
+          default:
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * kv.val);
             break;
           }
 
-          if (!obj.q) {
+          if (!obj) {
             continue;
           }
           obj.q = _qmul(obj.q, q2);
@@ -580,8 +620,11 @@ class Misc {
     { // 表情無し
     }
 
+    // 再ソートいらなさそう
+
     const ab = await this.makeFile(motionData);
     this.downloadFile(new Blob([ab]), filename);
+    console.log('downloadMotion3', motionData);
   }
 
   /**
