@@ -479,11 +479,6 @@ class Misc {
      * 1ループフレーム数
      */
     let lfn = 30 * loopsec;
-    const poses = {
-      p0: [deg1, -deg1, -deg1, deg1, 0],
-      p1: [0, 0, 0, 0, 0],
-      pt: [0, 0, 0, 0, 0],
-    };
 
     //// モーション
     for (let n = 0; n < 21; ++n) {
@@ -504,11 +499,13 @@ class Misc {
         // Y +++ 21
         // Y -+- 90
         const subbones = [
+          `b004tree`,
           `b006tree`,
           `b008tree`, // backward
           `b010tree`,
           `b012tree`, // top
 
+          `b015tree`,
           `b017tree`,
           `b019tree`, // forward
           `b021tree`,
@@ -518,11 +515,11 @@ class Misc {
          * upper degs
          */
         let degs = [
-          21, 21, 21, 21, -90, -90, +90, -90
+          0, 21, 21, 21, 21, 0, -90, -90, +90, -90
         ];
 
-        for (let j = 0; j < 8; ++j) { // ボーンループ
-          const obj = new Bone();
+        for (let j = 0; j < 10; ++j) { // ボーンループ
+          let obj = new Bone();
           obj.frame = frame;
           //obj.name = `b0${15 + j * 2}tree`;
           obj.name = subbones[j];
@@ -538,33 +535,43 @@ class Misc {
           const q2 = _qaxis(Misc.YAXIS, degs[j]);
           switch (j) {
           case 0:
-            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn2);
+            obj = null;
             break;
           case 1:
-            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
+            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn2);
             break;
           case 2:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
+            obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
             break;
           case 3:
+            obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
+            break;
+          case 4:
             obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);
             break;
 
-          case 4:
+          case 5:
+            obj = null;
+            break;
+
+          case 6:
             obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn2);
             break;
-          case 5:
+          case 7:
             obj.q = _qaxis(Misc.ZAXIS, -deg1 * sgn1);
             break;
-          case 6:
+          case 8:
             obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn2);
             break;
-          case 7:
+          case 9:
             obj.q = _qaxis(Misc.ZAXIS, deg1 * sgn1);            
             break;
           }
-          obj.q = _qmul(obj.q, q2);
 
+          if (!obj.q) {
+            continue;
+          }
+          obj.q = _qmul(obj.q, q2);
           motionData.bones.push(obj);
         }
       }
