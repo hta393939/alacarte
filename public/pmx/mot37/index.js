@@ -563,7 +563,7 @@ class Misc {
       for (let n = 0; n < 21; ++n) { // 30 * 21 あれば十分
         const kon = kvs.length;
         for (let i = 0; i < kon; ++i) {
-          const kv = kvs;
+          const kv = kvs[i];
           let frame = n * lfn + kv.key;
           if (frame > maxframe) {
             break;
