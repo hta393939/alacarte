@@ -315,9 +315,10 @@ class CenterCapsuleSub extends PMX.Maker {
             v.weights = [1 - i / div,
               0, 0, 0];
             v.weights[1] = 1 - v.weights[0];
-            v.r0 = [by * scale, 0, 0];
-            v.r1 = [(by + beltHeight) * scale, 0, 0];
-            v.c = [y * scale, 0, 0];
+
+            v.r0 = [0, by * scale, 0];
+            v.r1 = [0, (by + beltHeight) * scale, 0];
+            v.c = [0, y * scale, 0];
 
             this.vts.push(v);
           }
@@ -541,9 +542,10 @@ class CenterCapsuleSub extends PMX.Maker {
               //1 - i / div,
               0, 0, 0];
             v.weights[1] = 1 - v.weights[0];
-            v.r0 = [by * scale, 0, 0];
-            v.r1 = [(by + subBeltHeight) * scale, 0, 0];
-            v.c = [y * scale, 0, 0];
+            // 使用していない
+            v.r0 = [0, by * scale, 0];
+            v.r1 = [0, (by + subBeltHeight) * scale, 0];
+            v.c = [0, y * scale, 0];
 
             this.vts.push(v);
           }

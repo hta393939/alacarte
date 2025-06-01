@@ -85,10 +85,6 @@ class CenterCapsule2 extends PMX.Maker {
      * 一次的に全
      */
     const usefull = true;
-    /**
-     * ik 書き出しするかどうか
-     */
-    const _useIK = param.useik;
 
     const _belt = param.belt || 10;
 
@@ -168,17 +164,17 @@ class CenterCapsule2 extends PMX.Maker {
     this.head.nameEn = param.nameEn;
     this.head.nameJa = this.head.nameEn;
     let s = `${d.toLocaleString()} CenterCapsule.make forward\r\n`;
-    s += `IK: ${_useIK}, 物理有り: ${_usePhy}, \r\n`;
+    s += `物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
     s += `フルコリジョン: ${usefull}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
-/**
- * すべての親 0 メッシュ無し
- * 操作中心 1 メッシュ無し
- * センター 2 多分メッシュ無し
- */
+    /**
+     * すべての親 0 メッシュ無し
+     * 操作中心 1 メッシュ無し
+     * センター 2 多分メッシュ無し
+     */
     /**
      * ベースボーンインデックス
      * @default 3
@@ -313,9 +309,10 @@ class CenterCapsule2 extends PMX.Maker {
             v.weights = [1 - i / div,
               0, 0, 0];
             v.weights[1] = 1 - v.weights[0];
-            v.r0 = [by * scale, 0, 0];
-            v.r1 = [(by + beltHeight) * scale, 0, 0];
-            v.c = [y * scale, 0, 0];
+
+            v.r0 = [0, by * scale, 0]; // 下
+            v.r1 = [0, (by + beltHeight) * scale, 0]; // 上
+            v.c = [0, y * scale, 0];
 
             this.vts.push(v);
           }
@@ -489,29 +486,6 @@ class CenterCapsule2 extends PMX.Maker {
         b.parent = rb.bone - 1;
 
         switch (i) {
-        case -1:
-          b.layer = 1;
-          b.nameJa = 'ik';
-          b.nameEn = 'ik';
-          b.parent = 0; // 全ての親
-          rb = null;
-          b.bits |= PMX.Bone.BIT_IK;
-          b.ikTargetBone = 0;
-          b.p = [...this.bones[b.ikTargetBone].p];
-          b.ikLoopCount = 40;
-          b.ikLimitation = 2; // 約114度
-          // ターゲットボーンを含まない
-          for (let j = 4; j <= boneIndex - 3; j += 2) {
-            const ik = new PMX.IKLink();
-            ik.linkBone = j;
-            ik.isLimitation = 1;
-            const deg = 179;
-            ik.upper = [ _rad(deg),  _rad(deg),  _rad(deg)];
-            ik.lower = [-_rad(deg), -_rad(deg), -_rad(deg)];
-            b.ikLinks.push(ik);
-          }
-          break;
-
         default:
           rb.friction = 1000;
           rb.mass = 0.002; // 重量
