@@ -113,6 +113,8 @@ class Misc {
       maxframe: 300,
       loopsec: 1,
       seed: 1,
+      crosstype: 1,
+      usemirror: false,
     };
 
     this.names = [
@@ -313,6 +315,10 @@ class Misc {
     return { cos: Math.cos(ang), sin: Math.sin(ang) };
   }
 
+  evenfloor(x) {
+    return Math.floor(x / 2) * 2;
+  }
+
   gatherParam() {
     const ks = Object.keys(this.param);
     for (const key of ks) {
@@ -322,6 +328,7 @@ class Misc {
       }
       const val = Number.parseFloat(el.value);
       if (!Number.isFinite(val)) {
+        this.param[key] = val.checked;
         continue;
       }
       this.param[key] = val;
@@ -506,48 +513,65 @@ class Misc {
    */
   async downloadMotion3() {
     console.log('downloadMotion3');
+    const na = Number.NaN;
+
     const param = this.gatherParam();
     const motionData = new MotionData();
 
-    const { step, loopsec, repeatnum, ampdeg, maxframe, seed } = param;
+    const { step, loopsec, repeatnum, ampdeg, maxframe, seed, usemirror,
+      crosstype,
+    } = param;
 
-    const filename = `u3_${seed}.vmd`;
-
-    let deg1 = ampdeg;
-    let deg2 = ampdeg;
     /**
      * 1ループフレーム数
      */
     let lfn = 30 * loopsec;
 
-    //// モーション
+    const crossaxis = Misc.YAXIS;
+    const motionaxis = Misc.ZAXIS;
 
+    //// モーション
     let boneNum = 10;
+    for (let lr = 0; lr < usemirror ? 2 : 1; ++lr) {
+      const lrstrs = ['l', 'r', ''];
+      const filename = `u3_${lrstrs[usemirror ? lr : 2]}${seed}.vmd`;
+      const lrsgn = [1, -1][lr];
+
+      let deg1 = ampdeg;
+      let deg2 = ampdeg;
+
+
     const bkvs = [];
+    /**
+     * 2の倍数に揃える場合
+     */
+    const evened = false;
     for (let i = 0; i < boneNum; ++i) {
       let kvs = [];
       // トポロジーの決定
-      let rn = lfn;
+      let rn = evened ? lfn * 0.5 : lfn;
       let rv = 0;
       while (rv === 0 || rv === lfn * 0.5) {
-        rv = this.rnd() % rn; // 0 と lfn * 0.5 は個数が変わってめんどいので
+        const val = this.rnd() % rn; // 0 と lfn * 0.5 は個数が変わってめんどいので
+        rv = val * (evened ? 2 : 1);
       }
       //console.log('rv', rv);
 
       const cs = this.gettri(rv, lfn);
       // cos が減少していく範囲なら true
       const dec = (rv < lfn * 0.5);
+      const halfAdd = lfn * 0.5;
       if (dec) {
         kvs.push({ key: 0, val: cs.cos });
         const t1 = lfn * 0.5 - rv;
         kvs.push({ key: t1, val: -1 });
-        kvs.push({ key: t1 + lfn * 0.5, val: 1 });
+        kvs.push({ key: t1 + halfAdd, val: 1 });
         //kvs.push({ key: lfn, val: cs.cos });
       } else {
         kvs.push({ key: 0, val: cs.cos });
         const t1 = lfn - rv;
         kvs.push({ key: t1, val: 1 });
-        kvs.push({ key: t1 + lfn * 0.5, val: -1 });
+        kvs.push({ key: t1 + halfAdd, val: -1 });
         //kvs.push({ key: lfn, val: cs.cos });
       }
 
@@ -569,8 +593,6 @@ class Misc {
             break;
           }
 
-          // Y +++ 21
-          // Y -+- 90
           const subbones = [
             `b004tree`,
             `b006tree`,
@@ -584,47 +606,42 @@ class Misc {
             `b021tree`,
             `b023tree`, // top
           ];
+
           /**
-           * upper degs
+           * 垂直軸度数
            */
           let degs = [
-            0, 21, 21, 21, 21, 0, -90, -90, +90, -90
+            [na,  0,  0,  0,  0, na,   0,   0,   0,   0 ],
+            [na, 21, 21, 21, 21, na, -90, -90, +90, -90 ], // upper degs
+            [na, na, na, na, na, na, -90, -90, +90, -90 ], // lower degs
+            [na, na, na, na, na,  0,   0,   0,   0,   0 ], // plane
           ];
-
 
           let obj = new Bone();
           obj.frame = frame;
           obj.name = subbones[j];
 
-          const q2 = _qaxis(Misc.YAXIS, degs[j]);
-          switch (j) {
-          case 0:
-          case 5:
-            obj = null;
-            break;
-
-          default:
-            obj.q = _qaxis(Misc.ZAXIS, deg1 * kv.val);
-            break;
-          }
-
-          if (!obj) {
+          const crossdeg = degs[crosstype][j];
+          if (!Number.isFinite(crossdeg)) {
             continue;
           }
+          const q2 = _qaxis(crossaxis, crossdeg);
+          obj.q = _qaxis(motionaxis, deg1 * kv.val * lrsgn);
           obj.q = _qmul(obj.q, q2);
           motionData.bones.push(obj);
         }
       }
 
     }
-    { // 表情無し
+
+      { // 表情無し
+      }
+
+      // 再ソートいらない
+      const ab = await this.makeFile(motionData);
+      this.downloadFile(new Blob([ab]), filename);
     }
-
-    // 再ソートいらなさそう
-
-    const ab = await this.makeFile(motionData);
-    this.downloadFile(new Blob([ab]), filename);
-    console.log('downloadMotion3', motionData);
+    console.log('downloadMotion3');
   }
 
   /**
