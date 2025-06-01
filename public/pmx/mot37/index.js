@@ -113,6 +113,7 @@ class Misc {
       maxframe: 300,
       loopsec: 1,
       seed: 1,
+      motiontype: 1,
       crosstype: 1,
       usemirror: false,
     };
@@ -315,6 +316,11 @@ class Misc {
     return { cos: Math.cos(ang), sin: Math.sin(ang) };
   }
 
+  /**
+   * 2の倍数にfloorする
+   * @param {number} x 
+   * @returns 
+   */
   evenfloor(x) {
     return Math.floor(x / 2) * 2;
   }
@@ -328,7 +334,7 @@ class Misc {
       }
       const val = Number.parseFloat(el.value);
       if (!Number.isFinite(val)) {
-        this.param[key] = val.checked;
+        this.param[key] = el.checked;
         continue;
       }
       this.param[key] = val;
@@ -516,12 +522,10 @@ class Misc {
     const na = Number.NaN;
 
     const param = this.gatherParam();
-    const motionData = new MotionData();
-
     const { step, loopsec, repeatnum, ampdeg, maxframe, seed, usemirror,
+      motiontype,
       crosstype,
     } = param;
-
     /**
      * 1ループフレーム数
      */
@@ -532,20 +536,46 @@ class Misc {
 
     //// モーション
     let boneNum = 10;
-    for (let lr = 0; lr < usemirror ? 2 : 1; ++lr) {
+    for (let lr = 0; lr < (usemirror ? 2 : 1); ++lr) {
+      const motionData = new MotionData();
+
       const lrstrs = ['l', 'r', ''];
       const filename = `u3_${lrstrs[usemirror ? lr : 2]}${seed}.vmd`;
       const lrsgn = [1, -1][lr];
 
-      let deg1 = ampdeg;
-      let deg2 = ampdeg;
+      const subbones = [
+        { name: `b004tree` },
+        { name: `b006tree` },
+        { name: `b008tree` }, // backward
+        { name: `b010tree` },
+        { name: `b012tree` }, // top
 
+        { name: `b015tree` },
+        { name: `b017tree` },
+        { name: `b019tree` }, // forward
+        { name: `b021tree` },
+        { name: `b023tree` }, // top
+      ];
+      const motiondegs = [
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 2],
+      ];
+      /**
+       * 垂直軸度数
+       */
+      const crossdegs = [
+        [na,  0,  0,  0,  0, na,   0,   0,   0,   0 ],
+        [na, 21, 21, 21, 21, na, -90, -90, +90, -90 ], // upper degs
+        [na, na, na, na, na, na, -90, -90, +90, -90 ], // lower degs
+        [na, na, na, na, na,  0,   0,   0,   0,   0 ], // plane
+      ];
 
-    const bkvs = [];
-    /**
-     * 2の倍数に揃える場合
-     */
-    const evened = false;
+      const bkvs = [];
+      /**
+       * 2の倍数に揃える場合
+       */
+      const evened = false;
     for (let i = 0; i < boneNum; ++i) {
       let kvs = [];
       // トポロジーの決定
@@ -593,40 +623,17 @@ class Misc {
             break;
           }
 
-          const subbones = [
-            `b004tree`,
-            `b006tree`,
-            `b008tree`, // backward
-            `b010tree`,
-            `b012tree`, // top
-
-            `b015tree`,
-            `b017tree`,
-            `b019tree`, // forward
-            `b021tree`,
-            `b023tree`, // top
-          ];
-
-          /**
-           * 垂直軸度数
-           */
-          let degs = [
-            [na,  0,  0,  0,  0, na,   0,   0,   0,   0 ],
-            [na, 21, 21, 21, 21, na, -90, -90, +90, -90 ], // upper degs
-            [na, na, na, na, na, na, -90, -90, +90, -90 ], // lower degs
-            [na, na, na, na, na,  0,   0,   0,   0,   0 ], // plane
-          ];
-
           let obj = new Bone();
           obj.frame = frame;
-          obj.name = subbones[j];
+          obj.name = subbones[j].name;
 
-          const crossdeg = degs[crosstype][j];
+          const motiondeg = motiondegs[motiontype][j];
+          const crossdeg = crossdegs[crosstype][j];
           if (!Number.isFinite(crossdeg)) {
             continue;
           }
           const q2 = _qaxis(crossaxis, crossdeg);
-          obj.q = _qaxis(motionaxis, deg1 * kv.val * lrsgn);
+          obj.q = _qaxis(motionaxis, motiondeg * kv.val * lrsgn);
           obj.q = _qmul(obj.q, q2);
           motionData.bones.push(obj);
         }

@@ -326,7 +326,7 @@ class Misc {
       console.log('makecentercapsule2 offsets');
     });
 
-    // Y軸にたてたもの
+    // サブ有り
     window.idmakecentercapsulesub?.addEventListener('click', async () => {
       const param = this.getCommonOptions();
 
@@ -349,7 +349,7 @@ class Misc {
       console.log('makecentercapsulesub offsets');
     });
 
-    // 修正後未確認
+    // 前半リバース
     window.idmakerevcapsule?.addEventListener('click', () => {
       const param = this.getCommonOptions();
       let top = 'r';
