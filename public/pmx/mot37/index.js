@@ -116,6 +116,7 @@ class Misc {
       motiontype: 1,
       crosstype: 1,
       usemirror: false,
+      floorn: 2,
     };
 
     this.names = [
@@ -317,12 +318,12 @@ class Misc {
   }
 
   /**
-   * 2の倍数にfloorする
+   * nの倍数にfloorする
    * @param {number} x 
    * @returns 
    */
-  evenfloor(x) {
-    return Math.floor(x / 2) * 2;
+  nfloor(x, n) {
+    return Math.floor(x / n) * n;
   }
 
   gatherParam() {
@@ -522,10 +523,14 @@ class Misc {
     const na = Number.NaN;
 
     const param = this.gatherParam();
-    const { step, loopsec, repeatnum, ampdeg, maxframe, seed, usemirror,
+    const {
+      step, loopsec, repeatnum, ampdeg, maxframe, seed, usemirror,
+      floorn,
       motiontype,
       crosstype,
     } = param;
+    // 1 or 2 or 6
+
     /**
      * 1ループフレーム数
      */
@@ -540,7 +545,7 @@ class Misc {
       const motionData = new MotionData();
 
       const lrstrs = ['l', 'r', ''];
-      const filename = `u3_${lrstrs[usemirror ? lr : 2]}${seed}.vmd`;
+      const filename = `u3_${floorn}${lrstrs[usemirror ? lr : 2]}${seed}.vmd`;
       const lrsgn = [1, -1][lr];
 
       const subbones = [
@@ -572,74 +577,73 @@ class Misc {
       ];
 
       const bkvs = [];
-      /**
-       * 2の倍数に揃える場合
-       */
-      const evened = false;
-    for (let i = 0; i < boneNum; ++i) {
-      let kvs = [];
-      // トポロジーの決定
-      let rn = evened ? lfn * 0.5 : lfn;
-      let rv = 0;
-      while (rv === 0 || rv === lfn * 0.5) {
-        const val = this.rnd() % rn; // 0 と lfn * 0.5 は個数が変わってめんどいので
-        rv = val * (evened ? 2 : 1);
-      }
-      //console.log('rv', rv);
-
-      const cs = this.gettri(rv, lfn);
-      // cos が減少していく範囲なら true
-      const dec = (rv < lfn * 0.5);
-      const halfAdd = lfn * 0.5;
-      if (dec) {
-        kvs.push({ key: 0, val: cs.cos });
-        const t1 = lfn * 0.5 - rv;
-        kvs.push({ key: t1, val: -1 });
-        kvs.push({ key: t1 + halfAdd, val: 1 });
-        //kvs.push({ key: lfn, val: cs.cos });
-      } else {
-        kvs.push({ key: 0, val: cs.cos });
-        const t1 = lfn - rv;
-        kvs.push({ key: t1, val: 1 });
-        kvs.push({ key: t1 + halfAdd, val: -1 });
-        //kvs.push({ key: lfn, val: cs.cos });
-      }
-
-      bkvs.push(kvs);
-    }
-    console.log('bkvs', bkvs);
-
-    for (let j = 0; j < boneNum; ++j) { // ボーンループ
-      /**
-       * ボーンごと key, val
-       */
-      const kvs = bkvs[j];
-      for (let n = 0; n < 21; ++n) { // 30 * 21 あれば十分
-        const kon = kvs.length;
-        for (let i = 0; i < kon; ++i) {
-          const kv = kvs[i];
-          let frame = n * lfn + kv.key;
-          if (frame > maxframe) {
-            break;
-          }
-
-          let obj = new Bone();
-          obj.frame = frame;
-          obj.name = subbones[j].name;
-
-          const motiondeg = motiondegs[motiontype][j];
-          const crossdeg = crossdegs[crosstype][j];
-          if (!Number.isFinite(crossdeg)) {
-            continue;
-          }
-          const q2 = _qaxis(crossaxis, crossdeg);
-          obj.q = _qaxis(motionaxis, motiondeg * kv.val * lrsgn);
-          obj.q = _qmul(obj.q, q2);
-          motionData.bones.push(obj);
+      for (let i = 0; i < boneNum; ++i) {
+        let kvs = [];
+        // トポロジーの決定
+        let rn = Math.floor(lfn / 2 / floorn);
+        let rv = 0;
+        while (rv === 0 || rv === lfn * 0.5) {
+          const val = this.rnd() % rn; // 0 と lfn * 0.5 は個数が変わってめんどいので
+          rv = val * floorn;
         }
-      }
+        const inc = (this.rnd() % 2) * 2 - 1;
+        //console.log('rv', rv);
 
-    }
+        // cos が減少していく範囲なら true
+        const halfAdd = this.nfloor(lfn * 0.5, floorn);
+        if (inc < 0) {
+          const t1 = lfn * 0.5 - rv;
+          const cs = this.gettri(t1, lfn);
+          kvs.push({ key: 0, val: cs.cos });
+
+          kvs.push({ key: t1, val: -1 });
+          kvs.push({ key: t1 + halfAdd, val: 1 });
+          //kvs.push({ key: lfn, val: cs.cos });
+        } else {
+          const t1 = lfn - rv;
+          const cs = this.gettri(0, lfn);
+          kvs.push({ key: 0, val: cs.cos });
+
+          kvs.push({ key: t1, val: 1 });
+          kvs.push({ key: t1 + halfAdd, val: -1 });
+          //kvs.push({ key: lfn, val: cs.cos });
+        }
+
+        bkvs.push(kvs);
+      }
+      console.log('bkvs', bkvs);
+
+      for (let j = 0; j < boneNum; ++j) { // ボーンループ
+        /**
+         * ボーンごと key, val
+         */
+        const kvs = bkvs[j];
+        for (let n = 0; n < 21; ++n) { // 30 * 21 あれば十分
+          const kon = kvs.length;
+          for (let i = 0; i < kon; ++i) {
+            const kv = kvs[i];
+            let frame = n * lfn + kv.key;
+            if (frame > maxframe) {
+              break;
+            }
+
+            let obj = new Bone();
+            obj.frame = frame;
+            obj.name = subbones[j].name;
+
+            const motiondeg = motiondegs[motiontype][j];
+            const crossdeg = crossdegs[crosstype][j];
+            if (!Number.isFinite(crossdeg)) {
+              continue;
+            }
+            const q2 = _qaxis(crossaxis, crossdeg);
+            obj.q = _qaxis(motionaxis, motiondeg * kv.val * lrsgn);
+            obj.q = _qmul(obj.q, q2);
+            motionData.bones.push(obj);
+          }
+        }
+
+      }
 
       { // 表情無し
       }
