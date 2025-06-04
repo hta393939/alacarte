@@ -13,6 +13,10 @@
   flex-direction: column;
 }
 
+.onewidth {
+  width: 1em;
+}
+
 .drop {
   border: dashed 4px black;
   border-radius: 1rem;

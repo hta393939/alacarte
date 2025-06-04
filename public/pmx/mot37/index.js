@@ -545,7 +545,7 @@ class Misc {
       const motionData = new MotionData();
 
       const lrstrs = ['l', 'r', ''];
-      const filename = `u3_${floorn}${lrstrs[usemirror ? lr : 2]}${seed}.vmd`;
+      const filename = `m3${crosstype}_${lfn}_${floorn}_${lrstrs[usemirror ? lr : 2]}${seed}.vmd`;
       const lrsgn = [1, -1][lr];
 
       const subbones = [
