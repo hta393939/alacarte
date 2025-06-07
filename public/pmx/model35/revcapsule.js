@@ -210,6 +210,14 @@ class RevCapsule extends PMX.Maker {
       this.materials.push(m);
     }
 
+    /** 頂点モーフ */
+    const mouth = new PMX.Morph();
+    this.morphs.push(mouth);
+    mouth.nameJa = 'close';
+    mouth.nameEn = 'close';
+    mouth.panel = PMX.Morph.PANEL_MOUTH;
+    mouth.type = PMX.Morph.TYPE_VERTEX;
+
     let vertexOffset = 0;
     let m = this.materials[0];
     {
@@ -283,6 +291,13 @@ class RevCapsule extends PMX.Maker {
           v.weights = [1, 0, 0, 0];
 
           this.vts.push(v);
+
+          {
+            const vm = new PMX.VertexMorph();
+            vm.target = this.vts.length - 1;
+            vm.offset = [-v.p[0], 0, -v.p[2]];
+            mouth.vertexMorphs.push(vm);
+          }
         }
       }
       for (let i = 0; i < allNum; ++i) {
@@ -695,9 +710,10 @@ class RevCapsule extends PMX.Maker {
         } else if (i === 1) {
           f.nameJa = '表情';
           f.specialFlag = 1;
+          f.morphs.push(0);
         } else if (i === 2) {
           f.nameJa = '色';
-          f.morphs.push(0, 1, 2);
+          f.morphs.push(1, 2, 3);
         } else {
           for (let j = 1; j < this.bones.length; ++j) {
             f.bones.push(j);

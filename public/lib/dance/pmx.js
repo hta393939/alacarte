@@ -536,19 +536,19 @@ class VertexMorph {
   constructor() {
     this._parentName = '';
     this._index = 0;
-/**
- * 頂点インデックス
- */
+    /**
+     * 頂点インデックス
+     */
     this.target = 0;
-/**
- * 座標オフセット
- */
+    /**
+     * 座標オフセット
+     */
     this.offset = [0, 0, 0];
   }
-/**
- * 1行返す
- * @returns {string}
- */
+  /**
+   * 1行返す
+   * @returns {string}
+   */
   toCSV() {
     const ss = [
       'PmxVertexMorph',
@@ -566,15 +566,21 @@ class VertexMorph {
  */
 class Morph {
   static PANEL_SYSTEM = 0;
-/**
- * まゆげ
- */
+  /**
+   * まゆげ
+   */
   static PANEL_B = 1;
   static PANEL_EYE = 2;
+  /**
+   * 口
+   */
   static PANEL_MOUTH = 3;
   static PANEL_ETC = 4;
 
   static TYPE_GROUP = 0;
+  /**
+   * 頂点
+   */
   static TYPE_VERTEX = 1;
   static TYPE_BONE = 2;
   static TYPE_UV = 3;
@@ -582,21 +588,21 @@ class Morph {
   static TYPE_UV2 = 5;
   static TYPE_UV3 = 6;
   static TYPE_UV4 = 7;
-/**
- * 材質モーフ
- */
+  /**
+   * 材質モーフ
+   */
   static TYPE_MATERIAL = 8;
   constructor() {
     this._index = 0;
     this.nameJa = 'mr000';
     this.nameEn = 'mr000';
-/**
- * @type {number}
- */
+    /**
+     * @type {number}
+     */
     this.panel = Morph.PANEL_ETC;
-/**
- * @type {number}
- */
+    /**
+     * @type {number}
+     */
     this.type = Morph.TYPE_VERTEX;
 
     /**
@@ -607,17 +613,17 @@ class Morph {
 
     this.groupMorphs = [];
 
-/**
- * @type {VertexMorph[]}
- */
+    /**
+     * @type {VertexMorph[]}
+     */
     this.vertexMorphs = [];
 
     this.boneMorphs = [];
 
     this.uvMorphs = [];
-/**
- * @type {MaterialMorph[]}
- */
+    /**
+     * @type {MaterialMorph[]}
+     */
     this.materialMorphs = [];
   }
 
@@ -1994,6 +2000,11 @@ class Maker extends Parser {
         case Morph.TYPE_GROUP:
           break;
         case Morph.TYPE_VERTEX:
+          c += this.write32s(p, c, [m.vertexMorphs.length]);
+          for (const one of m.vertexMorphs) {
+            c += this.writeints(p, c, [one.target], this.vtxbnum);
+            c += this.writefs(p, c, [...one.offset]);
+          }
           break;
         case Morph.TYPE_BONE:
           break;
