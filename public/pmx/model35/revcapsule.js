@@ -293,9 +293,10 @@ class RevCapsule extends PMX.Maker {
           this.vts.push(v);
 
           {
+            const rate = 1.0;
             const vm = new PMX.VertexMorph();
             vm.target = this.vts.length - 1;
-            vm.offset = [-v.p[0], 0, -v.p[2]];
+            vm.offset = [-v.p[0] * rate, 0, -v.p[2] * rate];
             mouth.vertexMorphs.push(vm);
           }
         }
@@ -419,9 +420,21 @@ class RevCapsule extends PMX.Maker {
             v.weights[1] = 1 - v.weights[0];
             v.r0 = [0, by * scale, 0];
             v.r1 = [0, (by + beltHeight) * scale, 0];
-            v.c = [0, y * scale, 0];
+            v.c  = [0, y * scale, 0];
 
             this.vts.push(v);
+
+            {
+              const t = (y - (-beltHeight * halfBeltNum)) / (beltHeight * 2);
+              const p = (1 - Math.cos(t * Math.PI)) * 0.5;
+              const rate = (1 - p) * 1.0 + p * 0.0;
+              if (0 <= t && t <= 1 && 0 < rate) {
+                const vm = new PMX.VertexMorph();
+                vm.target = this.vts.length - 1;
+                vm.offset = [-v.p[0] * rate, 0, -v.p[2] * rate];
+                mouth.vertexMorphs.push(vm);
+              }
+            }
           }
         }
         by += beltHeight;
