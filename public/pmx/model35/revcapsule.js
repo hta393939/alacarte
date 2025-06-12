@@ -425,7 +425,8 @@ class RevCapsule extends PMX.Maker {
             this.vts.push(v);
 
             {
-              const t = (y - (-beltHeight * halfBeltNum)) / (beltHeight * 2);
+              const changeRange = beltHeight * 1;
+              const t = (y - (-beltHeight * halfBeltNum)) / changeRange;
               const p = (1 - Math.cos(t * Math.PI)) * 0.5;
               const rate = (1 - p) * 1.0 + p * 0.0;
               if (0 <= t && t <= 1 && 0 < rate) {

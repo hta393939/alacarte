@@ -286,24 +286,24 @@ class Misc {
    */
   gettri(topo, n) {
     let v = (topo + 100 * n) % n;
-    if (v === 0) {
+    if (v === 0) { // 0deg
       return { cos: 1, sin: 0 };
     }
-    if (v === n / 2) {
+    if (v === n / 2) { // 180deg
       return { cos: -1, sin: 0 };
     }
-    if (v === n / 4) {
+    if (v === n / 4) { // 90deg
       return { cos: 0, sin: 1 };
     }
-    if (v === n * 3 / 4) {
+    if (v === n * 3 / 4) { // 270deg
       return { cos: 0, sin: -1 };
     }
 
     const q2 = Math.sqrt(0.5);
-    if (v === n / 8) {
+    if (v === n / 8) { // 45deg
       return { cos: q2, sin: q2 };
     }
-    if (v === n * 3 / 8) {
+    if (v === n * 3 / 8) { // 135deg
       return { cos: -q2, sin: q2 };
     }
     if (v === n * 5 / 8) {
@@ -601,7 +601,7 @@ class Misc {
           //kvs.push({ key: lfn, val: cs.cos });
         } else {
           const t1 = lfn - rv;
-          const cs = this.gettri(0, lfn);
+          const cs = this.gettri(t1, lfn);
           kvs.push({ key: 0, val: cs.cos });
 
           kvs.push({ key: t1, val: 1 });
