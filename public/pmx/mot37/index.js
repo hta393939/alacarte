@@ -156,8 +156,8 @@ class Misc {
     const A = 214013;
     const C = 2531011;
     x = x * A + C;
-    this.param.seed = x & 0xffffffff;
-    return ((x>>16) & 32767);
+    this.param.seed = x % (1 ** 32);
+    return ((Math.floor(x / 65536)) & 32767);
   }
 
   /**
@@ -565,6 +565,7 @@ class Misc {
         [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
         [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
         [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 2],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 3],
       ];
       /**
        * 垂直軸度数
@@ -574,6 +575,7 @@ class Misc {
         [na, 21, 21, 21, 21, na, -90, -90, +90, -90 ], // upper degs
         [na, na, na, na, na, na, -90, -90, +90, -90 ], // lower degs
         [na, na, na, na, na,  0,   0,   0,   0,   0 ], // plane
+        [na, na, na, na, na, na,  na,  na,   0,   0 ], // 2
       ];
 
       const bkvs = [];
