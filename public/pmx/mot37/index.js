@@ -156,7 +156,13 @@ class Misc {
     const A = 214013;
     const C = 2531011;
     x = x * A + C;
-    this.param.seed = x % (1 ** 32);
+    this.param.seed = x % (2 ** 32);
+    {
+      const el = document.getElementById('inseedview');
+      if (el) {
+        el.textContent = `${this.param.seed} ${new Date().toLocaleTimeString()}`;
+      }
+    }
     return ((Math.floor(x / 65536)) & 32767);
   }
 
@@ -524,7 +530,9 @@ class Misc {
 
     const param = this.gatherParam();
     const {
-      step, loopsec, repeatnum, ampdeg, maxframe, seed, usemirror,
+      step, loopsec, repeatnum, ampdeg, maxframe,
+      seed,
+      usemirror,
       floorn,
       motiontype,
       crosstype,
@@ -545,7 +553,8 @@ class Misc {
       const motionData = new MotionData();
 
       const lrstrs = ['l', 'r', ''];
-      const filename = `m3${crosstype}_${lfn}_${floorn}_${lrstrs[usemirror ? lr : 2]}${seed}.vmd`;
+      const seed16 = seed.toString(16).padStart(8, '0');
+      const filename = `m3${crosstype}_${lfn}_${floorn}_${lrstrs[usemirror ? lr : 2]}${seed16}.vmd`;
       const lrsgn = [1, -1][lr];
 
       const subbones = [
