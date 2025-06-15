@@ -28,7 +28,7 @@ class Misc {
     this.setListener();
 
     this.enumVoice();
-// テスト
+    // テスト
     const buf = this.strToSJIS('漢字abc');
     console.log('buf', buf);
   }
@@ -54,6 +54,19 @@ class Misc {
         }
         q.textContent = speaker[k];
       }
+      {
+        const k = 'styles';
+        const q = clone.querySelector(`.${k}`);
+        if (q) {
+          let s = ``;
+          for (const v of speaker[k]) {
+            s += `,${v.name}`;
+            delete v.type;
+          }
+          q.textContent = `${s}`;
+        }
+      }
+
       parent.appendChild(clone);
     }
   }

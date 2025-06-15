@@ -12,6 +12,10 @@
   flex-direction: row;
 }
 
+.onerem {
+  width: 1rem;
+}
+
 #numberselement {
   width: 50vw;
   height: 6rem;
