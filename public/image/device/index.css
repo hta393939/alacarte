@@ -1,0 +1,46 @@
+
+.pointer {
+  cursor: pointer;
+}
+
+.toright {
+  display: flex;
+  flex-direction: row;
+}
+
+.tobottom {
+  display: flex;
+  flex-direction: column;
+}
+
+.spacing {
+  width: 0.5rem;
+}
+
+html {
+  background-color: black;
+}
+
+body {
+  margin: 0;
+  border: none;
+  padding: 0;
+
+  overflow: hidden;
+
+  width: 100vw;
+  height: 100vh;
+
+  background-color: black;
+}
+
+#maincanvas {
+  margin: 0;
+  border: none;
+  padding: 0;
+/*  background-image: url('./check256_32.png'); */
+
+  width: 100%;
+  height: 100%;
+}
+
