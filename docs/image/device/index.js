@@ -4,12 +4,15 @@
 
 class Misc {
   constructor() {
+    this.x = 0;
+    this.y = 0;
+    this.z = 0;
   }
 
   async initialize() {
     this.setListener();
 
-    this.draw();
+    //this.draw();
   }
 
   draw() {
@@ -56,12 +59,38 @@ class Misc {
 
     {
       const el = document.body;
-      el?.addEventListener('click', () => {
-        this.fullscreen();
+      el?.addEventListener('click', async (ev) => {
+        const cx = ev.clientX;
+        const cy = ev.clientY;
+
+        if (cx < 400) {
+          await this.fullscreen();
+          this.ready();
+        } else {
+          this.startIMU();
+        }
       });
     }
 
     this.ready();
+  }
+
+  async startIMU() {
+    if (this.imu) {
+      return;
+    }
+
+    const sensor = new Accelerometer();
+    this.imu = sensor;
+    sensor.addEventListener((reading) => {
+      const x = sensor.x;
+      const y = sensor.y;
+      const z = sensor.z;
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    });
+    sensor.start();
   }
 
   async fullscreen() {
@@ -71,10 +100,14 @@ class Misc {
   ready() {
     const canvas = document.getElementById('maincanvas');
     const dpr = window.devicePixelRatio;
+    // デバイス解像度を取得するようにする
+    const sw = window.screen.width;
+    const sh = window.screen.height;
+
     const cw = document.documentElement.clientWidth;
     const ch = document.documentElement.clientHeight;
-    const w = Math.ceil(cw * dpr);
-    const h = Math.ceil(ch * dpr);
+    const w = Math.ceil(sw * dpr);
+    const h = Math.ceil(sh * dpr);
     canvas.width = w;
     canvas.height = h;
 
@@ -111,6 +144,9 @@ class Misc {
     c.font = `Normal 40px Consolas`;
     c.fillText(`${w} ${h} ${dpr}`, w / 2, h / 2);
 
+    c.fillStyle = 'rgb(0,128,255)';
+    c.fillText(`${this.x.toFixed(3)} ${this.y.toFixed(3)} ${this.z.toFixed(3)}`, w / 2, h / 2 - 60);
+
     let s = `${'012345678a112345678a212345678a312345678a4'}`;
     const oncol = 'rgb(168, 243, 255)'; // 液晶点火
     c.font = `Bold 80px Sans Serif`;
@@ -118,6 +154,14 @@ class Misc {
     c.fillText(s, 100 + 4, 100 + 4);
     c.fillStyle = oncol;
     c.fillText(s, 100, 100);
+  }
+
+  /**
+   * 
+   * @param {CanvasRenderingContext2D} c 
+   */
+  withGlyph(c) {
+
   }
 
 }
