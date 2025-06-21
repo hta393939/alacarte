@@ -40,9 +40,14 @@ class Misc {
   async initialize() {
     this.setListener();
 
-    //this.draw();
-    const canvas = await this.loadImage('./gqdot.png');
-    this.dotcanvas = canvas;
+    {
+      const canvas = await this.loadImage('./gqdot.png');
+      this.dotcanvas = canvas;
+    }
+    {
+      const canvas = await this.loadImage('./gqdot3.png');
+      this.dot3canvas = canvas;
+    }
 
     this.update();
   }
@@ -222,6 +227,15 @@ class Misc {
       c.fillStyle = 'rgb(0,128,255)';
       c.fillText(`${this.x.toFixed(3)} ${this.y.toFixed(3)} ${this.z.toFixed(3)}`, w / 2, h / 2 - 60);
     }
+  }
+
+  /**
+   * 
+   * @param {OffscreenCanvas} canvas 
+   * @param {HTMLCanvasElement} dstcanvas 
+   */
+  updateFont(canvas, dstcanvas) {
+
   }
 
   /**
