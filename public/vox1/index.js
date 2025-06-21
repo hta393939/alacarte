@@ -16,6 +16,10 @@ class Misc {
      */
     this.speakerid = 3;
     /**
+     * Voidoll
+     */
+    this.voidid = 89;
+    /**
      * VOICEVOX ベースアドレス
      */
     this.base = 'http://127.0.0.1:50021';
@@ -60,7 +64,7 @@ class Misc {
         if (q) {
           let s = ``;
           for (const v of speaker[k]) {
-            s += `,${v.name}`;
+            s += `,${v.name}:${v.id}`;
             delete v.type;
           }
           q.textContent = `${s}`;
@@ -208,9 +212,10 @@ class Misc {
     {
       const el = document.getElementById('saytext');
       el?.addEventListener('click', () => {
-        this.speakerid = Number.parseInt(window.speakerid.value);
-        //this.say('こんにちなのだ', true);
-        this.say(window.text.value, true);
+        const speakerid = Number.parseInt(window.speakerid.value);
+        this.speakerid = speakerid;
+        //this.say('こんにちなのだ', true, speakerid);
+        this.say(window.text.value, true, speakerid);
       });
     }
 
@@ -243,6 +248,7 @@ class Misc {
    * @param {string} instr 
    */
   parseZndml(instr) {
+    let speakerid = this.speakerid;
     const ret = {
       says: [],
       pathprefix: '',
@@ -284,7 +290,14 @@ class Misc {
         case '@pathprefix':
           ret.pathprefix = ss[1];
           break;
-        case '@speaker':
+        case '@speakerid':
+          {
+            const speakeridval = Number.parseInt(ss[1]);
+            if (Number.isFinite(speakeridval)) {
+              speakerid = speakeridval;
+              console.log('speakerid', speakerid);
+            }
+          }
           break;
         case '@postpadding':
           {
@@ -316,6 +329,7 @@ class Misc {
           text: '',
           yomi: '',
           keep: line,
+          speakerid,
         };
       }
 
@@ -432,7 +446,7 @@ class Misc {
         let waveBinary = null;
         if (useVox) {
           try {
-            waveBinary = await this.say(say.yomi, false);
+            waveBinary = await this.say(say.yomi, false, say.speakerid);
           } catch (ec) {
             console.warn('catch', ec.message, 'name', name);
           }
