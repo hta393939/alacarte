@@ -12,7 +12,8 @@ class Misc {
     this.z = 0;
 
     this.shx = 4;
-    this.shy = 8;
+    this.shy = 4;
+    //this.shy = 8;
 
     /**
      * 情報表示するしない
@@ -27,6 +28,8 @@ class Misc {
     this.prets = 0;
 
     this.mode = Misc.MODE_NONE;
+
+    this.images = [];
 
     this.col = {
       body: 'rgb(32, 82, 111)', // 筐体
@@ -43,12 +46,18 @@ class Misc {
     this.setListener();
 
     {
-      const canvas = await this.loadImage('./gqdot.png');
+      const canvas = await this.loadImage('./gqdot0.png');
       this.dotcanvas = canvas;
+      this.images.push(canvas);
     }
     {
-      const canvas = await this.loadImage('./gqdot3.png');
+      const canvas = await this.loadImage('./gqdot1.png');
       this.dot3canvas = canvas;
+      this.images.push(canvas);
+    }
+    {
+      const canvas = await this.loadImage('./gqdot2.png');
+      this.images.push(canvas);
     }
 
     this.update();
@@ -102,7 +111,7 @@ class Misc {
             this.fullscreen();
             this.startIMU();
           } else {
-            this.is0 = 1 - this.is0;
+            this.is0 = (this.is0 + 1) % 3;
           }
         } else {
           if (cy < ch * 0.5) {
@@ -220,14 +229,18 @@ class Misc {
     let canvas = this.dotcanvas;
     let second = null;
     let minute = null;
+    let notext = false;
     if (this.mode === Misc.MODE_ONOFF) {
       // 1時間余り
       const mod = this.curts % (1000 * 60 * 60);
       second = Math.floor(mod / 1000);
       minute = Math.floor(second / 60);
-      canvas = (((minute + this.is0) % 2) === 0) ? this.dotcanvas : this.dot3canvas;
+      canvas = this.images[(minute + this.is0) % 3];
+      if ((second % 60) <= 0) {
+        notext = true;
+      }
     }
-    this.updateDot(canvas, dstcanvas);
+    this.updateDot(canvas, dstcanvas, notext);
 
     if (this.isinfo) {
       // 追加描画
@@ -259,8 +272,9 @@ class Misc {
    * 
    * @param {OffscreenCanvas} canvas 
    * @param {HTMLCanvasElement} dstcanvas
+   * @param {boolean} notext
    */
-  updateDot(canvas, dstcanvas) {
+  updateDot(canvas, dstcanvas, notext) {
     const mode = this.mode;
 
     const w = canvas.width;
@@ -274,20 +288,27 @@ class Misc {
 
     let shx = this.shx;
     let shy = this.shy;
-    if (this.isx) {
+    //if (this.isx) {
+    if (0) {
       // -1.0: 向こうへ垂直 0.0: 上向き平置き、1.0: 垂直
       let t = Math.min(1, this.x / (9.8 - 0.8));
       const ang = Math.asin(t);
       shy = Math.sin(ang) * this.shy;
     }
 
-    console.log('us', w, h, offsety);
+    //console.log('us', w, h, offsety);
 
     dstc.fillStyle = this.col.off;
     dstc.fillRect(0, offsety, w * bl, h * bl);
     for (let i = 0; i < 2; ++i) {
       for (let y = 0; y < h; ++y) {
         for (let x = 0; x < w; ++x) {
+          if (notext) {
+            if (8 * 4 <= x && x < 144) {
+              continue;
+            }
+          }
+
           let offset = (x + w * y) * 4;
           let r = data.data[offset];
           let g = data.data[offset+1];
