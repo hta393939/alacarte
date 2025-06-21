@@ -4,17 +4,22 @@ class Misc {
   static MODE_PROGRESS = 'progress';
 
   constructor() {
+    /**
+     * ざっくり 9.8 ベース
+     */
     this.x = 0;
     this.y = 0;
     this.z = 0;
 
     this.shx = 4;
-    this.shy = 4;
+    this.shy = 8;
 
     /**
      * 情報表示するしない
      */
     this.isinfo = 1;
+
+    this.isx = 1;
 
     this.curts = 0;
     this.prets = 0;
@@ -23,8 +28,8 @@ class Misc {
 
     this.col = {
       body: 'rgb(32, 82, 111)', // 筐体
-      //onshadow: 'rgb(67, 158, 176)', // 点火影 ピック時
-      onshadow: 'rgb(47, 128, 156)', // 点火影
+      onshadow: 'rgb(67, 158, 176)', // 点火影 ピック時
+      //onshadow: 'rgb(47, 128, 156)', // 点火影
 
       off: 'rgb(9,46,63)', // 液晶無点火
       on: 'rgb(168, 243, 255)', // 液晶点火
@@ -95,7 +100,7 @@ class Misc {
           if (cy < ch * 0.5) {
             this.isinfo = 1 - this.isinfo;
           } else {
-            this.startIMU();
+            this.isx = 1 - this.isx;
           }
         }
       });
@@ -195,6 +200,11 @@ class Misc {
     c.fillStyle = 'black';
     c.fillRect(-16, -16, dw + 32, dh + 32);
 
+    {
+      c.fillStyle = 'white';
+      c.fillRect(0, 0, dw, 2);
+    }
+
     this.updateDot(canvas, dstcanvas);
 
     if (this.isinfo) {
@@ -231,8 +241,19 @@ class Misc {
     const bl = 12;
     const offsety = (1080 - 40 * bl) * 0.5;
 
+    let shx = this.shx;
+    let shy = this.shy;
+    if (this.isx) {
+      // -1.0: 向こうへ垂直 0.0: 上向き平置き、1.0: 垂直
+      let t = Math.min(1, this.x / (9.8 - 0.8));
+      const ang = Math.asin(t);
+      shy = Math.sin(ang) * this.shy;
+    }
+
     console.log('us', w, h, offsety);
 
+    dstc.fillStyle = this.col.off;
+    dstc.fillRect(0, offsety, w * bl, h * bl);
     for (let i = 0; i < 2; ++i) {
       for (let y = 0; y < h; ++y) {
         for (let x = 0; x < w; ++x) {
@@ -244,25 +265,27 @@ class Misc {
 
           let bx = x * bl;
           let by = y * bl;
-          if (r < 128) {
-            continue;
-          }
-          let col = this.col.on;
-          if (r >= 128) {
-            col = this.col.on;
-            if (i === 0) {
-              this.col.onshadow;
+          let col = 'rgba(0,0,0,0)';
+          if (i === 0) {
+            if (r >= 128) {
+              col = this.col.onshadow;
+            } else {
+              continue;
+            }
+          } else {
+            if (r >= 128) {
+              col = this.col.on;
+            } else {
               continue;
             }
           }
-
 
           dstc.fillStyle = col;
           let cx = bx + 1;
           let cy = by + 1;
           if (i === 0) {
-            cx += this.shx;
-            cy += this.shy;
+            cx += shx;
+            cy += shy;
           }
           cy += offsety;
           dstc.fillRect(cx, cy, bl - 2, bl - 2);
