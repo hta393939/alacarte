@@ -12,7 +12,8 @@ class Misc {
     this.z = 0;
 
     this.shx = 4;
-    this.shy = 8;
+    this.shy = 4;
+    //this.shy = 8;
 
     /**
      * 情報表示するしない
@@ -21,10 +22,14 @@ class Misc {
 
     this.isx = 1;
 
+    this.is0 = 0;
+
     this.curts = 0;
     this.prets = 0;
 
     this.mode = Misc.MODE_NONE;
+
+    this.images = [];
 
     this.col = {
       body: 'rgb(32, 82, 111)', // 筐体
@@ -40,9 +45,20 @@ class Misc {
   async initialize() {
     this.setListener();
 
-    //this.draw();
-    const canvas = await this.loadImage('./gqdot.png');
-    this.dotcanvas = canvas;
+    {
+      const canvas = await this.loadImage('./gqdot0.png');
+      this.dotcanvas = canvas;
+      this.images.push(canvas);
+    }
+    {
+      const canvas = await this.loadImage('./gqdot1.png');
+      this.dot3canvas = canvas;
+      this.images.push(canvas);
+    }
+    {
+      const canvas = await this.loadImage('./gqdot2.png');
+      this.images.push(canvas);
+    }
 
     this.update();
   }
@@ -93,14 +109,20 @@ class Misc {
         if (cx < cw * 0.5) {
           if (cy < ch * 0.5) {
             this.fullscreen();
-          } else {
             this.startIMU();
+          } else {
+            this.is0 = (this.is0 + 1) % 3;
           }
         } else {
           if (cy < ch * 0.5) {
             this.isinfo = 1 - this.isinfo;
           } else {
-            this.isx = 1 - this.isx;
+            //this.isx = 1 - this.isx;
+            if (this.mode === Misc.MODE_NONE) {
+              this.mode = Misc.MODE_ONOFF;
+            } else {
+              this.mode = Misc.MODE_NONE;
+            }
           }
         }
       });
@@ -116,7 +138,7 @@ class Misc {
 
     {
       const dst = document.getElementById('maincanvas');
-      this.updateScreen(this.dotcanvas, dst);
+      this.updateScreen(dst);
     }
   }
 
@@ -190,7 +212,7 @@ class Misc {
    * @param {*} canvas 
    * @param {HTMLCanvasElement} dstcanvas 
    */
-  updateScreen(canvas, dstcanvas) {
+  updateScreen(dstcanvas) {
     const nowts = Date.now();
     this.curts = nowts;
 
@@ -202,10 +224,23 @@ class Misc {
 
     {
       c.fillStyle = 'white';
-      c.fillRect(0, 0, dw, 2);
+      c.fillRect(0, 0, dw, 2 + 4);
     }
-
-    this.updateDot(canvas, dstcanvas);
+    let canvas = this.dotcanvas;
+    let second = null;
+    let minute = null;
+    let notext = false;
+    if (this.mode === Misc.MODE_ONOFF) {
+      // 1時間余り
+      const mod = this.curts % (1000 * 60 * 60);
+      second = Math.floor(mod / 1000);
+      minute = Math.floor(second / 60);
+      canvas = this.images[(minute + this.is0) % 3];
+      if ((second % 60) <= 0) {
+        notext = true;
+      }
+    }
+    this.updateDot(canvas, dstcanvas, notext);
 
     if (this.isinfo) {
       // 追加描画
@@ -217,7 +252,7 @@ class Misc {
       const dpr = window.devicePixelRatio;
       const w = dw;
       const h = dh;
-      c.fillText(`${w} ${h} ${dpr}`, w / 2, h / 2);
+      c.fillText(`${w} ${h} ${dpr} ${this.is0} ${this.mode} ${minute}:${second % 60}`, w / 2, h / 2);
 
       c.fillStyle = 'rgb(0,128,255)';
       c.fillText(`${this.x.toFixed(3)} ${this.y.toFixed(3)} ${this.z.toFixed(3)}`, w / 2, h / 2 - 60);
@@ -227,9 +262,19 @@ class Misc {
   /**
    * 
    * @param {OffscreenCanvas} canvas 
-   * @param {HTMLCanvasElement} dstcanvas
+   * @param {HTMLCanvasElement} dstcanvas 
    */
-  updateDot(canvas, dstcanvas) {
+  updateFont(canvas, dstcanvas) {
+
+  }
+
+  /**
+   * 
+   * @param {OffscreenCanvas} canvas 
+   * @param {HTMLCanvasElement} dstcanvas
+   * @param {boolean} notext
+   */
+  updateDot(canvas, dstcanvas, notext) {
     const mode = this.mode;
 
     const w = canvas.width;
@@ -243,20 +288,27 @@ class Misc {
 
     let shx = this.shx;
     let shy = this.shy;
-    if (this.isx) {
+    //if (this.isx) {
+    if (0) {
       // -1.0: 向こうへ垂直 0.0: 上向き平置き、1.0: 垂直
       let t = Math.min(1, this.x / (9.8 - 0.8));
       const ang = Math.asin(t);
       shy = Math.sin(ang) * this.shy;
     }
 
-    console.log('us', w, h, offsety);
+    //console.log('us', w, h, offsety);
 
     dstc.fillStyle = this.col.off;
     dstc.fillRect(0, offsety, w * bl, h * bl);
     for (let i = 0; i < 2; ++i) {
       for (let y = 0; y < h; ++y) {
         for (let x = 0; x < w; ++x) {
+          if (notext) {
+            if (8 * 4 <= x && x < 144) {
+              continue;
+            }
+          }
+
           let offset = (x + w * y) * 4;
           let r = data.data[offset];
           let g = data.data[offset+1];
