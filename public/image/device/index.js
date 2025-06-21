@@ -246,13 +246,10 @@ class Misc {
     c.fillStyle = 'black';
     c.fillRect(-16, -16, dw + 32, dh + 32);
 
-    {
-      c.fillStyle = 'white';
-      c.fillRect(0, 0 - 16, dw, 6 + 16);
-    }
-    {
-      c.fillStyle = 'white';
-      c.fillRect(0, dh - 6, dw, 6 + 16);
+    { // えー;;
+      c.fillStyle = 'rgb(240,240,240)';
+      c.fillRect(0, 0, dw, 6);
+      c.fillRect(0, dh - 6, dw, 6);
     }
     let canvas = this.images[this.is0];
     let second = null;
@@ -280,7 +277,7 @@ class Misc {
       const dpr = window.devicePixelRatio;
       const w = dw;
       const h = dh;
-      c.fillText(`${w} ${h} ${dpr} ${this.is0} ${this.mode} ${Math.floor(second/60)}:${second % 60}`, w / 2, h / 2);
+      c.fillText(`1 ${w} ${h} ${dpr} ${this.is0} ${this.mode} ${Math.floor(second/60)}:${second % 60}`, w / 2, h / 2);
 
       c.fillStyle = 'rgb(0,128,255)';
       c.fillText(`${this.dursec} ${this.x.toFixed(3)} ${this.y.toFixed(3)} ${this.z.toFixed(3)}`, w / 2, h / 2 - 60);
