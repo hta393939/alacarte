@@ -135,13 +135,14 @@ class Misc {
   /**
    * VOICEVOX へ要求して結果を受け取る
    * @param {string} text 
-   * @param {boolean} replay 
+   * @param {boolean} replay
+   * @param {number} speakerid 
    * @returns 
    */
-  async say(text, replay) {
+  async say(text, replay, speakerid) {
     let param = {};
     const sp = new URLSearchParams();
-    sp.append('speaker', this.speakerid);
+    sp.append('speaker', speakerid);
     sp.append('text', text);
     {
       const sendobj = {
