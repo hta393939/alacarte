@@ -19,10 +19,18 @@ class Misc {
      * 情報表示するしない
      */
     this.isinfo = 1;
-
-    this.isx = 1;
-
+    /**
+     * 無効中
+     */
+    this.isx = 0;
+    /**
+     * 画像位相
+     */
     this.is0 = 0;
+    /**
+     * 更新間隔
+     */
+    this.dursec = 60;
 
     this.curts = 0;
     this.prets = 0;
@@ -106,14 +114,14 @@ class Misc {
         const cw = document.documentElement.clientWidth;
         const ch = document.documentElement.clientHeight;
 
-        if (cx < cw * 0.5) {
+        if (cx < cw / 3) { // 左端
           if (cy < ch * 0.5) {
             this.fullscreen();
             this.startIMU();
           } else {
             this.is0 = (this.is0 + 1) % 3;
           }
-        } else {
+        } else if (cx > cw * 2 / 3) { // 右端
           if (cy < ch * 0.5) {
             this.isinfo = 1 - this.isinfo;
           } else {
@@ -123,6 +131,22 @@ class Misc {
             } else {
               this.mode = Misc.MODE_NONE;
             }
+          }
+        } else {
+          if (cy < ch * 0.5) {
+            switch (this.dursec) {
+              case 60:
+                this.dursec = 30;
+                break;
+              case 30:
+                this.dursec = 10;
+                break;
+              case 10:
+                this.dursec = 60;
+                break;
+            }
+          } else {
+
           }
         }
       });
@@ -224,19 +248,23 @@ class Misc {
 
     {
       c.fillStyle = 'white';
-      c.fillRect(0, 0, dw, 2 + 4);
+      c.fillRect(0, 0 - 16, dw, 6 + 16);
     }
-    let canvas = this.dotcanvas;
+    {
+      c.fillStyle = 'white';
+      c.fillRect(0, dh - 6, dw, 6 + 16);
+    }
+    let canvas = this.images[this.is0];
     let second = null;
-    let minute = null;
     let notext = false;
     if (this.mode === Misc.MODE_ONOFF) {
       // 1時間余り
       const mod = this.curts % (1000 * 60 * 60);
       second = Math.floor(mod / 1000);
-      minute = Math.floor(second / 60);
-      canvas = this.images[(minute + this.is0) % 3];
-      if ((second % 60) <= 0) {
+      const dursec = this.dursec;
+      const tick = Math.floor(second / dursec);
+      canvas = this.images[(tick + this.is0) % 3];
+      if ((second % dursec) <= 0) {
         notext = true;
       }
     }
@@ -252,10 +280,10 @@ class Misc {
       const dpr = window.devicePixelRatio;
       const w = dw;
       const h = dh;
-      c.fillText(`${w} ${h} ${dpr} ${this.is0} ${this.mode} ${minute}:${second % 60}`, w / 2, h / 2);
+      c.fillText(`${w} ${h} ${dpr} ${this.is0} ${this.mode} ${Math.floor(second/60)}:${second % 60}`, w / 2, h / 2);
 
       c.fillStyle = 'rgb(0,128,255)';
-      c.fillText(`${this.x.toFixed(3)} ${this.y.toFixed(3)} ${this.z.toFixed(3)}`, w / 2, h / 2 - 60);
+      c.fillText(`${this.dursec} ${this.x.toFixed(3)} ${this.y.toFixed(3)} ${this.z.toFixed(3)}`, w / 2, h / 2 - 60);
     }
   }
 
