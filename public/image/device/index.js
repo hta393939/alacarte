@@ -1,43 +1,62 @@
-/**
- * @file index.js
- */
-
 class Misc {
+  static MODE_NONE = 'none';
+  static MODE_ONOFF = 'onoff';
+  static MODE_PROGRESS = 'progress';
+
   constructor() {
     this.x = 0;
     this.y = 0;
     this.z = 0;
+
+    this.shx = 4;
+    this.shy = 4;
+
+    /**
+     * 情報表示するしない
+     */
+    this.isinfo = 1;
+
+    this.curts = 0;
+    this.prets = 0;
+
+    this.mode = Misc.MODE_NONE;
+
+    this.col = {
+      body: 'rgb(32, 82, 111)', // 筐体
+      //onshadow: 'rgb(67, 158, 176)', // 点火影 ピック時
+      onshadow: 'rgb(47, 128, 156)', // 点火影
+
+      off: 'rgb(9,46,63)', // 液晶無点火
+      on: 'rgb(168, 243, 255)', // 液晶点火
+      cyan: 'rgb(0,128,255)',
+    };
   }
 
   async initialize() {
     this.setListener();
 
     //this.draw();
+    const canvas = await this.loadImage('./gqdot.png');
+    this.dotcanvas = canvas;
+
+    this.update();
   }
 
-  draw() {
-    const w = 256;
-    const h = 256;
-    const size = 32;
-    /**
-     * @type {HTMLCanvasElement}
-     */
-    const canvas = document.getElementById('subcanvas');
-    canvas.width = w;
-    canvas.height = h;
-    const c = canvas.getContext('2d');
-    c.fillStyle = '#ddddcc';
-    c.fillRect(0, 0, w, h);
-    c.fillStyle = '#cccccc';
-    for (let i = 0; i < 16; ++i) {
-      for (let j = 0; j < 16; ++j) {
-        const val = (j & 1) + (i & 1);
-        if (val & 1) {
-          continue;
-        }
-        c.fillRect(i * size, j * size, size, size);
-      }
-    }
+  loadImage(url) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.addEventListener('load', () => {
+        const w = image.width;
+        const h = image.height;
+        const canvas = new OffscreenCanvas(w, h);
+        const c = canvas.getContext('2d');
+        c.drawImage(image, 0, 0);
+        console.log('loadImage two');
+        resolve(canvas);
+      });
+      image.src = url;
+      console.log('loadImage one');
+    });
   }
 
   setListener() {
@@ -63,15 +82,37 @@ class Misc {
         const cx = ev.clientX;
         const cy = ev.clientY;
 
-        if (cx < 400) {
-          this.fullscreen();
+        const cw = document.documentElement.clientWidth;
+        const ch = document.documentElement.clientHeight;
+
+        if (cx < cw * 0.5) {
+          if (cy < ch * 0.5) {
+            this.fullscreen();
+          } else {
+            this.startIMU();
+          }
         } else {
-          this.startIMU();
+          if (cy < ch * 0.5) {
+            this.isinfo = 1 - this.isinfo;
+          } else {
+            this.startIMU();
+          }
         }
       });
     }
 
     this.ready();
+  }
+
+  update() {
+    requestAnimationFrame(() => {
+      this.update();
+    });
+
+    {
+      const dst = document.getElementById('maincanvas');
+      this.updateScreen(this.dotcanvas, dst);
+    }
   }
 
   async startIMU() {
@@ -81,7 +122,7 @@ class Misc {
 
     const sensor = new Accelerometer();
     this.imu = sensor;
-    sensor.addEventListener((reading) => {
+    sensor.addEventListener('reading', ev => {
       const x = sensor.x;
       const y = sensor.y;
       const z = sensor.z;
@@ -93,7 +134,11 @@ class Misc {
   }
 
   async fullscreen() {
-    await document.body.requestFullscreen();
+    try {
+      await document.exitFullscreen();
+    } catch (e) {
+      await document.body.requestFullscreen();
+    }
   }
 
   ready() {
@@ -133,34 +178,97 @@ class Misc {
     }
     c.putImageData(data, 0, 0);
 
-    const bodycol = 'rgb(32, 82, 111)'; // 筐体
-    const onshadowcol = 'rgb(67, 158, 176)'; // 点火影
-
-    c.fillStyle = 'rgb(9,46,63)'; // 液晶無点火
-    c.fillRect(0, 0, w, h * 0.5);
-
-    c.fillStyle = 'red';
-    c.font = `Normal 40px Consolas`;
-    c.fillText(`${w} ${h} ${dpr}`, w / 2, h / 2);
-
-    c.fillStyle = 'rgb(0,128,255)';
-    c.fillText(`${this.x.toFixed(3)} ${this.y.toFixed(3)} ${this.z.toFixed(3)}`, w / 2, h / 2 - 60);
-
-    let s = `${'012345678a112345678a212345678a312345678a4'}`;
-    const oncol = 'rgb(168, 243, 255)'; // 液晶点火
-    c.font = `Bold 80px Sans Serif`;
-    c.fillStyle = onshadowcol;
-    c.fillText(s, 100 + 4, 100 + 4);
-    c.fillStyle = oncol;
-    c.fillText(s, 100, 100);
   }
 
   /**
    * 
-   * @param {CanvasRenderingContext2D} c 
+   * @param {*} canvas 
+   * @param {HTMLCanvasElement} dstcanvas 
    */
-  withGlyph(c) {
+  updateScreen(canvas, dstcanvas) {
+    const nowts = Date.now();
+    this.curts = nowts;
 
+    const c = dstcanvas.getContext('2d');
+    const dw = dstcanvas.width;
+    const dh = dstcanvas.height;
+    c.fillStyle = 'black';
+    c.fillRect(-16, -16, dw + 32, dh + 32);
+
+    this.updateDot(canvas, dstcanvas);
+
+    if (this.isinfo) {
+      // 追加描画
+      c.fillStyle = 'red';
+      c.font = `Normal 40px Consolas`;
+      c.textAlign = 'left';
+      c.textBaseline = 'top';
+      
+      const dpr = window.devicePixelRatio;
+      const w = dw;
+      const h = dh;
+      c.fillText(`${w} ${h} ${dpr}`, w / 2, h / 2);
+
+      c.fillStyle = 'rgb(0,128,255)';
+      c.fillText(`${this.x.toFixed(3)} ${this.y.toFixed(3)} ${this.z.toFixed(3)}`, w / 2, h / 2 - 60);
+    }
+  }
+
+  /**
+   * 
+   * @param {OffscreenCanvas} canvas 
+   * @param {HTMLCanvasElement} dstcanvas
+   */
+  updateDot(canvas, dstcanvas) {
+    const mode = this.mode;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const c = canvas.getContext('2d');
+    const data = c.getImageData(0, 0, w, h);
+    const dstc = dstcanvas.getContext('2d');
+
+    const bl = 12;
+    const offsety = (1080 - 40 * bl) * 0.5;
+
+    console.log('us', w, h, offsety);
+
+    for (let i = 0; i < 2; ++i) {
+      for (let y = 0; y < h; ++y) {
+        for (let x = 0; x < w; ++x) {
+          let offset = (x + w * y) * 4;
+          let r = data.data[offset];
+          let g = data.data[offset+1];
+          let b = data.data[offset+2];
+          let a = data.data[offset+3];
+
+          let bx = x * bl;
+          let by = y * bl;
+          if (r < 128) {
+            continue;
+          }
+          let col = this.col.on;
+          if (r >= 128) {
+            col = this.col.on;
+            if (i === 0) {
+              this.col.onshadow;
+              continue;
+            }
+          }
+
+
+          dstc.fillStyle = col;
+          let cx = bx + 1;
+          let cy = by + 1;
+          if (i === 0) {
+            cx += this.shx;
+            cy += this.shy;
+          }
+          cy += offsety;
+          dstc.fillRect(cx, cy, bl - 2, bl - 2);
+        }
+      }
+    }
   }
 
 }
