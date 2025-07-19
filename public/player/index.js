@@ -4,6 +4,8 @@
 
 class Misc {
   constructor() {
+    this.cur = null;
+    this.tunes = null;
   }
 
   async initialize() {
@@ -23,12 +25,14 @@ class Misc {
       files: [],
     };
     await this.enumFile(dh, '', obj);
+    // ソートできない???
     obj.files.sort((a, b) => {
-      return a.treename < b.treename;
+      return (a.treename < b.treename);
     });
     console.log('openDir', dh.name, obj);
 
     await this.listFile(obj);
+    this.tunes = obj;
   }
 
   /**
@@ -103,14 +107,14 @@ class Misc {
         this.openDir();
       });
     }
-/*
+
     {
-      const el = document.getElementById('saytext');
-      el?.addEventListener('click', () => {
-        this.say(window.text.value);
+      const el = document.getElementById('main');
+      el?.addEventListener('ended', (ev) => {
+        console.log(ev.type, ev);
       });
     }
-
+/*
     {
       const el = document.getElementById('openwindow');
       el?.addEventListener('click', () => {

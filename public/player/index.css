@@ -24,12 +24,20 @@ body {
     width: 18vw;
     height: 9vw;
   }
+  #opendir {
+    width: 36vw;
+    height: 9vw;
+  }
 }
 
 @media (orientation: landscape) {
   .but {
     cursor: pointer;
     width: 8vw;
+    height: 4vw;
+  }
+  #opendir {
+    width: 16vw;
     height: 4vw;
   }
 }
