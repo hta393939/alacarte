@@ -533,14 +533,14 @@ class Misc {
       step, loopsec, repeatnum, ampdeg, maxframe,
       seed,
       usemirror,
-      floorn,
+      floorn, // 1 or 2 or 6
       motiontype,
       crosstype,
     } = param;
     // 1 or 2 or 6
 
     /**
-     * 1ループフレーム数
+     * 1ループフレーム数。30, 60 など
      */
     let lfn = 30 * loopsec;
 
@@ -587,11 +587,15 @@ class Misc {
         [na, na, na, na, na, na,  na,  na,   0,   0 ], // 2
       ];
 
+      /**
+       * 位相用乱数の候補数
+       */
+      const rn = Math.floor(lfn / 2 / floorn);
       const bkvs = [];
       for (let i = 0; i < boneNum; ++i) {
         let kvs = [];
         // トポロジーの決定
-        let rn = Math.floor(lfn / 2 / floorn);
+
         let rv = 0;
         while (rv === 0 || rv === lfn * 0.5) {
           const val = this.rnd() % rn; // 0 と lfn * 0.5 は個数が変わってめんどいので
@@ -622,15 +626,16 @@ class Misc {
 
         bkvs.push(kvs);
       }
-      console.log('bkvs', bkvs);
+      console.log('rn', rn, 'bkvs', bkvs);
 
       for (let j = 0; j < boneNum; ++j) { // ボーンループ
         /**
          * ボーンごと key, val
          */
         const kvs = bkvs[j];
-        for (let n = 0; n < 21; ++n) { // 30 * 21 あれば十分
-          const kon = kvs.length;
+        const kon = kvs.length;
+        for (let n = 0; n < 21; ++n) { // ループグループ。(30 or 60) * 21 あれば十分
+
           for (let i = 0; i < kon; ++i) {
             const kv = kvs[i];
             let frame = n * lfn + kv.key;
@@ -656,14 +661,13 @@ class Misc {
 
       }
 
-      { // 表情無し
-      }
+      {} // 表情無し
 
       // 再ソートいらない
       const ab = await this.makeFile(motionData);
       this.downloadFile(new Blob([ab]), filename);
     }
-    console.log('downloadMotion3');
+    console.log('downloadMotion3 end');
   }
 
   /**
