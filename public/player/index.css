@@ -1,6 +1,11 @@
 
-.pt {
+.pointer {
   cursor: pointer;
+}
+
+.toright {
+  display: flex;
+  flex-direction: row;
 }
 
 body {
@@ -13,3 +18,18 @@ body {
   padding: 0;
 }
 
+@media (orientation: portrait) {
+  .but {
+    cursor: pointer;
+    width: 18vw;
+    height: 9vw;
+  }
+}
+
+@media (orientation: landscape) {
+  .but {
+    cursor: pointer;
+    width: 8vw;
+    height: 4vw;
+  }
+}

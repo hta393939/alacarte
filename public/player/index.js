@@ -8,29 +8,6 @@ class Misc {
 
   async initialize() {
     this.setListener();
-
-    const dpr = window.devicePixelRatio;
-    {
-      let s = '';
-      s += `${window.innerWidth}`;
-      s += `x${window.innerHeight}`;
-      const el = window.innerview;
-      el.textContent = s;
-    }
-
-    {
-      const canvas = document.getElementById('main');
-      canvas.width = 640 * dpr;
-      canvas.height = 360 * dpr;
-      const c = canvas.getContext('2d');
-      let fam = 'BIZ UDPゴシック';
-      c.font = `normal 32px ${fam}`;
-      c.fillStyle = '#000000';
-      let s = `五王国`;
-      c.fillText(s, 64, 64);
-    }
-
-    this.enumVoice();
   }
 
   /**
@@ -46,11 +23,16 @@ class Misc {
       files: [],
     };
     await this.enumFile(dh, '', obj);
+    obj.files.sort((a, b) => {
+      return a.treename < b.treename;
+    });
     console.log('openDir', dh.name, obj);
+
+    await this.listFile(obj);
   }
 
   /**
-   * 
+   * リカーシブ
    * @param {FileSystemDirectoryHandle} dh 
    */
   async enumFile(dh, treename, inobj) {
@@ -69,30 +51,59 @@ class Misc {
       const obj = {
         treename: `${treename}/${name}`,
         handle: v,
+        name,
       };
       inobj.files.push(obj);
     }
   }
 
-  setListener() {
-    window.addEventListener('message', ev => {
-      switch(ev.data.type) {
-      case 'a':
-        break;
-      case 'b':
-        break;
-      case 'c':
-        break;
+  /**
+   * 
+   * @param {{files:any[]}} inobj 
+   */
+  async listFile(inobj) {
+    const parent = document.getElementById('tunelist');
+    parent.textContent = '';
+    const el = document.getElementById('tunetempl');
+    for (const v of inobj.files) {
+      const clone = document.importNode(el.content, true);
+      {
+        const q = clone.querySelector('.tune');
+        if (q) {
+          q.dataset['treename'] = q.treename;
+        }
       }
-    });
+      {
+        const q = clone.querySelector('.name');
+        if (q) {
+          q.textContent = v.name;
+        }
+      }
+      {
 
+      }
+      parent.appendChild(clone);
+    }
+  }
+
+  /**
+   * 
+   * @param {string} treename 
+   */
+  async search(treename) {
+    const obj = this.tunes;
+    const found = obj.files.find(v => v.treename === treename);
+    return found;
+  }
+
+  setListener() {
     {
       const el = document.getElementById('opendir');
       el?.addEventListener('click', () => {
         this.openDir();
       });
     }
-
+/*
     {
       const el = document.getElementById('saytext');
       el?.addEventListener('click', () => {
@@ -105,7 +116,7 @@ class Misc {
       el?.addEventListener('click', () => {
         this.openWindow();
       });
-    }
+    }*/
   }
 
 }

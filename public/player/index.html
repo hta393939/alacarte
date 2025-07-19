@@ -6,13 +6,17 @@
     <link rel="stylesheet" href="./index.css" />
   </head>
   <body>
-    <div id="innerview"></div>
-
     <div>
-      <button class="pt" id="opendir">フォルダを開く</button>
+      <button class="pointer" id="opendir">フォルダを開く</button>
     </div>
 
     <div>
+      <div>
+        <button class="but butleft">left</button>
+        <button class="but butright">right</button>
+        <button class="but butup">up</button>
+        <button class="but butdown">down</button>
+      </div>
       <audio id="main" controls></audio>
     </div>
 
@@ -22,8 +26,8 @@
 
     <div>
       <template id="tunetempl">
-        <div class="tune">
-          <label class="pt"><input class="pt target" /></label>
+        <div class="tune toright">
+          <label class="pointer"><input type="checkbox" class="pt target" /></label>
           <div class="name"></div>
           <div class=""></div>
           <div class=""></div>
