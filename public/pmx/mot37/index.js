@@ -582,7 +582,7 @@ class Misc {
       const crossdegs = [
         [na,  0,  0,  0,  0, na,   0,   0,   0,   0 ],
         [na, 21, 21, 21, 21, na, -90, -90, +90, -90 ], // upper degs
-        [na, na, na, na, na, na, -90, -90, +90, -90 ], // lower degs
+        [na, na, na, na, na, 90, -90, -90, +90, -11 ], // lower degs
         [na, na, na, na, na,  0,   0,   0,   0,   0 ], // plane
         [na, na, na, na, na, na,  na,  na,   0,   0 ], // 2
       ];

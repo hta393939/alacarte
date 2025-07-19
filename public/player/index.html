@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <title>player</title>
@@ -7,11 +7,30 @@
   </head>
   <body>
     <div id="innerview"></div>
-    <canvas id="main"></ascanvas>
+
+    <div>
+      <button class="pt" id="opendir">フォルダを開く</button>
+    </div>
+
+    <div>
+      <audio id="main" controls></audio>
+    </div>
+
+    <div>
+      <div id="tunelist"></div>
+    </div>
+
+    <div>
+      <template id="tunetempl">
+        <div class="tune">
+          <label class="pt"><input class="pt target" /></label>
+          <div class="name"></div>
+          <div class=""></div>
+          <div class=""></div>
+        </div>
+      </template>
+    </div>
 
     <script src="./index.js"></script>
   </body>
 </html>
-
-
-

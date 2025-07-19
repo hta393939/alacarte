@@ -33,26 +33,45 @@ class Misc {
     this.enumVoice();
   }
 
-  async enumVoice() {
-    const voices = window.speechSynthesis.getVoices();
-    for (const voice of voices) {
-      if (!voice.lang.toLocaleLowerCase().includes('ja')) {
-        continue;
-      }
-      console.log(voice);
-      if (voice.name.toLocaleLowerCase().includes('nanami')) {
-        this.selectVoice = voice;
-      }
-    }
+  /**
+   * フォルダを開いて列挙する
+   */
+  async openDir() {
+    const opt = { mode: 'read' };
+    const dh = await window.showDirectoryPicker(opt);
+    this.dh = dh;
+
+    const obj = {
+      dirs: [],
+      files: [],
+    };
+    await this.enumFile(dh, '', obj);
+    console.log('openDir', dh.name, obj);
   }
 
-  async say(text) {
-    const synth = window.speechSynthesis;
-    const utt = new SpeechSynthesisUtterance(text);
-    if (this.selectVoice) {
-      utt.voice = this.selectVoice;
+  /**
+   * 
+   * @param {FileSystemDirectoryHandle} dh 
+   */
+  async enumFile(dh, treename, inobj) {
+    {
+      const obj = {
+        treename,
+        handle: dh,
+      };
+      inobj.dirs.push(obj);
     }
-    synth.speak(utt);
+    for await (const [name, v] of dh.entries()) {
+      if (v.kind === 'directory') {
+        await this.enumFile(dh, `${treename}/${name}`, inobj);
+        continue;
+      }
+      const obj = {
+        treename: `${treename}/${name}`,
+        handle: v,
+      };
+      inobj.files.push(obj);
+    }
   }
 
   setListener() {
@@ -68,9 +87,9 @@ class Misc {
     });
 
     {
-      const el = document.getElementById('enumvoice');
+      const el = document.getElementById('opendir');
       el?.addEventListener('click', () => {
-        this.enumVoice();
+        this.openDir();
       });
     }
 
@@ -93,6 +112,3 @@ class Misc {
 
 const misc = new Misc();
 misc.initialize();
-
-
-
