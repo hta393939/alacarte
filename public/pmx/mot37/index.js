@@ -575,16 +575,19 @@ class Misc {
         [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
         [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 2],
         [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 3],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 4],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 5],
       ];
       /**
        * 垂直軸度数
        */
       const crossdegs = [
-        [na,  0,  0,  0,  0, na,   0,   0,   0,   0 ],
-        [na, 21, 21, 21, 21, na, -90, -90, +90, -90 ], // upper degs
-        [na, na, na, na, na, 90, -90, -90, +90, -11 ], // lower degs
-        [na, na, na, na, na,  0,   0,   0,   0,   0 ], // plane
-        [na, na, na, na, na, na,  na,  na,   0,   0 ], // 2
+        [na,  0,  0,  0,  0,  na,   0,   0,   0,   0 ],
+        [na, 21, 21, 21, 21,  na, -90, -90, +90, -90 ], // upper degs
+        [na, na, na, na, na, +90, -90, -90, +90, -21 ], // lower degs
+        [na, na, na, na, na,   0,   0,   0,   0,   0 ], // plane
+        [na, na, na, na, na,  na,  na,  na,   0,   0 ], // 2
+        [na, na, na, na, na, +90, -90, -90, +90, -90 ], // upper degs thin
       ];
 
       /**
