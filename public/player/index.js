@@ -16,9 +16,14 @@ class Misc {
 
     this.setListener();
 
-    const db = new Db();
-    this.db = db;
-    await db.init();
+    if (false) {
+      const db = new Db();
+      this.db = db;
+      await db.init('player_alacarte', 1,
+        ['handle', 'parameter']
+      );
+      console.log('db start');
+    }
   }
 
   /**
@@ -36,12 +41,16 @@ class Misc {
     await this.enumFile(dh, '', obj);
     // ソートできない???
     obj.files.sort((a, b) => {
-      return (a.treename < b.treename);
+      return (a.treename > b.treename) ? 1 : 0;
     });
     console.log('openDir', dh.name, obj);
 
     await this.listFile(obj);
     this.tunes = obj;
+
+    {
+      //const result = this.db.write();
+    }
   }
 
   /**
@@ -68,6 +77,12 @@ class Misc {
       };
       inobj.files.push(obj);
     }
+  }
+
+  async clearDB() {
+    const db = this.db;
+    await db.clear();
+    console.log('clearDB');
   }
 
   /**
@@ -123,13 +138,13 @@ class Misc {
         console.log(ev.type, ev);
       });
     }
-/*
+
     {
-      const el = document.getElementById('openwindow');
+      const el = document.getElementById('cleardb');
       el?.addEventListener('click', () => {
-        this.openWindow();
+        this.clearDB();
       });
-    }*/
+    }
   }
 
   /**

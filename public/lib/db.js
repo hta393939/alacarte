@@ -1,15 +1,32 @@
+
 export class Db {
   constructor() {
-  this.db = null;
-  this.dbname = null;
-  this.dbver = null;
+    this.db = null;
+    /**
+     * @type {string}
+     */
+    this.dbname = null;
+    /**
+     * @type {number}
+     */
+    this.dbver = null;
+  }
+
+  clear() {
+    const req = window.indexedDB.deleteDatabase(this.dbname);
+    req.addEventListener('success', ev => {
+      console.log(ev.type, ev);
+    });
+    req.addEventListener('error', ev => {
+      console.log(ev.type, ev);
+    });
   }
 
   /**
    * 
    * @param {string} dbname 
    * @param {number} dbver 
-   * @param {string[]} dbstore 
+   * @param {string[]} dbstores 
    */
   init(dbname, dbver, dbstores) {
     return new Promise((resolve, reject) => {
