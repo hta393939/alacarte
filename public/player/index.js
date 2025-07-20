@@ -2,14 +2,23 @@
  * @file index.js
  */
 
+import {Db} from '../lib/db.js';
+
 class Misc {
   constructor() {
     this.cur = null;
     this.tunes = null;
+    this.db = null;
   }
 
   async initialize() {
+    const sp = new URLSearchParams(location.href);
+
     this.setListener();
+
+    const db = new Db();
+    this.db = db;
+    await db.init();
   }
 
   /**
@@ -121,6 +130,20 @@ class Misc {
         this.openWindow();
       });
     }*/
+  }
+
+  /**
+   * 
+   * @param {FileSystemHandle} h 
+   * @param {FileSystemFileHandle} fh
+   */
+  async reqPermission(h) {
+    const opt = { mode: 'read' };
+    const res = await h.requestPermission(opt);
+    if (res === 'granted') {
+      return true;
+    }
+    return false;
   }
 
 }
