@@ -7,6 +7,38 @@ const _pad = (v, n = 2) => {
 };
 
 /**
+ * 全体で正規化した新しい配列を返す
+ * @param {number[]} vec 
+ * @returns 
+ */
+const _norm = vec => {
+  let sum = 0.0;
+  for (const v of vec) {
+    sum += v ** 2;
+  }
+  const k = (sum > 0.0) ? 1 / Math.sqrt(sum) : 0;
+  return vec.map(v => v * k);
+};
+
+/**
+ * 
+ * @param {[number,number,number]} vec 
+ * @param {number} deg 
+ * @returns 
+ */
+const _qvecaxis = (vec, deg) => {
+  const ang = deg * Math.PI * 0.5 / 180;
+  let cs = Math.cos(ang);
+  let sn = Math.sin(ang);
+  const ret = _norm(vec);
+  ret[0] *= sn;
+  ret[1] *= sn;
+  ret[2] *= sn;
+  ret[3] = cs;
+  return ret;
+};
+
+/**
  * クォータニオンを取得
  * @param {number} index 0,1,2 
  * @param {number} deg 
@@ -412,8 +444,10 @@ class Misc {
     console.log('downloadMotionRot');
     const param = this.gatherParam();
     const motionData = new MotionData();
-
-    const deg1 = 90;
+    /**
+     * 半径度
+     */
+    const deg1 = 6;
     const poses = {
       p0: [deg1, -deg1, -deg1, deg1, 0],
       p1: [0, 0, 0, 0, 0],
@@ -424,20 +458,25 @@ class Misc {
       const len = 20;
       for (let i = 0; i <= len; ++i) {
         let frame = i * 1;
-        const turnmod = (i >= len * 0.5) ? (len - i) : i;
-        let xdeg = 6 * turnmod / (len * 0.5);
-        let ydeg = 6 * turnmod / (len * 0.5);
-
+        let topo = (i % len) / len;
+        const ang = topo * Math.PI * 2;
         for (let j = 0; j <= 1; ++j) {
           const obj = new Bone();
           obj.frame = frame;
           obj.name = ['右胸', '左胸'][j];
 
-          let sgn = ((j & 1) === 0) ? -1 : 1;
+          let sgn = ((j & 1) === 0) ? 1 : -1;
 
-          const xq = _qaxis(0, xdeg);
-          const yq = _qaxis(1, ydeg * sgn);
-          obj.q = _qmul(xq, yq);
+          const xq = _qaxis(Misc.XAXIS, deg1);
+          const circleq = _qvecaxis(
+            [
+              Math.cos(ang * sgn),
+              Math.sin(ang * sgn),
+              0,
+              0,
+            ],
+            deg1);
+          obj.q = _qmul(xq, circleq);
 
           motionData.bones.push(obj);
         }
@@ -445,7 +484,7 @@ class Misc {
 
     }
     const ab = await this.makeFile(motionData);
-    this.downloadFile(new Blob([ab]), `rot.vmd`);
+    this.downloadFile(new Blob([ab]), `rot_${deg1}.vmd`);
   }
 
   /**
@@ -751,6 +790,14 @@ class Misc {
         '右': [0x89, 0x45],
         '胸': [0x8B, 0xB9],
         '左': [0x8D, 0xB6],
+        'セ': [0x83, 0x5A],
+        'ン': [0x83, 0x93],
+        'タ': [0x83, 0x5E],
+        'ー': [0x81, 0x5B],
+        '全': [0x91, 0x53],
+        'て': [0x82, 0xC4],
+        'の': [0x82, 0xCC],
+        '親': [0x90, 0x65],
       };
 
       for (let i = 0; i < num; ++i) {
