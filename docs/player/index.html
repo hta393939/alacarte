@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>player</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div class="toright">
+      <button class="pointer" id="opendir">フォルダを開く</button>
+      <div class="but"></div>
+      <button class="pointer" id="cleardb">DB削除</button>
+    </div>
+
+    <div>
+      <div>
+        <button class="but" id="butleft">left</button>
+        <button class="but" id="butright">right</button>
+        <button class="but" id="butdown">-</button>
+        <button class="but" id="butup">+</button>
+        <label class="pointer"><input type="checkbox" class="pointer" id="exceptsame" />重複除外</label>
+      </div>
+      <div id="tuneinfo"></div>
+      <audio id="main" controls></audio>
+    </div>
+
+    <div>
+      <div id="tunelist"></div>
+    </div>
+
+    <div>
+      <template id="tunetempl">
+        <div class="tune toright">
+          <label class="pointer"><input type="checkbox" class="pointer target" checked /></label>
+          <div class="name"></div>
+          <button class="settune pointer">再生する</button>
+          <div class=""></div>
+        </div>
+      </template>
+    </div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
