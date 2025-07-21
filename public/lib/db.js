@@ -1,7 +1,7 @@
 
 export class Db {
   constructor() {
-    this.db = null;
+    //this.db = null;
     /**
      * @type {string}
      */
@@ -39,18 +39,44 @@ export class Db {
         for (const dbstore of dbstores) {
           const store = db.createObjectStore(dbstore, { keyPath: 'key' });
         }
-        resolve({});
+      });
+      openreq.addEventListener('success', ev => {
+        console.log(ev.type, 'open');
+        const db = openreq.result;
+        resolve(db);
       });
       openreq.addEventListener('error', ev => {
+        console.log(ev.type, 'open');
         reject(ev);
       });
     });
   }
 
-  async read() {
-
+  /**
+   * 
+   * @param {IDBDatabase} db 
+   * @param {string} storename 
+   */
+  async read(db, storename) {
+    const tran = db.transaction([storename]);
+    const store = tran.objectStore(storename);
+    const req = store.getAll();
+    return new Promise((resolve, reject) => {
+      req.addEventListener('success', ev => {
+        console.log(ev.type, 'read');
+        resolve(ev.target);
+      });
+      req.addEventListener('error', ev => {
+        console.log(ev.type, 'error');
+        reject(ev);
+      });
+    });
   }
 
+  /**
+   * 
+   * @returns {Promise<IDBDatabase>}
+   */
   getDB() {
     return new Promise((resolve, reject) => {
       const openreq = window.indexedDB.open(this.dbname);
@@ -67,16 +93,23 @@ export class Db {
   /**
    * 
    * @param {IDBDatabase} db 
+   * @param {strng} storename 
+   * @param {object} val 
    */
-  async write(db) {
-    const tran = db.transaction('store', 'readwrite');
-    const store = tran.objectStore('store');
-    const req = store.add(value, key);
-    req.addEventListener('success', ev => {
-      console.log(ev.type, ev.target);
-    });
-    req.addEventListener('error', ev => {
-      console.log(ev.type, ev.target);
+  async write(db, storename, val) {
+    return new Promise((resolve, reject) => {
+      const tran = db.transaction(storename, 'readwrite');
+      const store = tran.objectStore(storename);
+      const req = store.add(val);
+      req.addEventListener('success', ev => {
+        console.log(ev.type, ev.target);
+        resolve(ev.target);
+      });
+      req.addEventListener('error', ev => {
+        console.log(ev.type, ev.target);
+
+        reject(ev);
+      });
     });
   }
 

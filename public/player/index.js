@@ -16,14 +16,48 @@ class Misc {
 
     this.setListener();
 
-    if (false) {
-      const db = new Db();
-      this.db = db;
-      await db.init('player_alacarte', 1,
+    if (true) {
+      const dbinstance = new Db();
+      this.db = dbinstance;
+      await this.db.init('player_alacarte', 1,
         ['handle', 'parameter']
       );
       console.log('db start');
+      const db = await this.db.getDB();
+      // どっちにせよハンドルを要求する
+      const result = await this.db.read(db, 'handle', 'first');
+      //const result = await db.read('handle', 'key');
+      // permission 出てくれるかなあ
+      console.log('read', result, result.result.length);
+      for (const val of result.result) {
+        console.log('val', val);
+      }
     }
+  }
+
+  /**
+   * プレイヤーにファイルをセットする
+   * @param {string} treename 
+   * @returns 
+   */
+  async setTune(treename) {
+    const el = document.getElementById('main');
+    if (!el) {
+      return;
+    }
+    if (el.src) {
+      URL.revokeObjectURL(el.src);
+      el.src = null;
+    }
+
+    const obj = this.search(treename);
+    if (!obj) {
+      return;
+    }
+    const file = await obj.handle.getFile();
+
+    this.starting = treename;
+    el.src = URL.createObjectURL(file);
   }
 
   /**
@@ -49,7 +83,14 @@ class Misc {
     this.tunes = obj;
 
     {
-      //const result = this.db.write();
+      const handleobj = {
+        key: `__${dh.name}`, // in-line
+        name: dh.name,
+        handle: dh,
+      };
+      const db = await this.db.getDB();
+      const result = await this.db.write(db, 'handle', handleobj);
+      console.log('write', result);
     }
   }
 
