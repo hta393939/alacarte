@@ -260,7 +260,7 @@ class Misc {
     {
       const el = document.getElementById('gomotion1');
       el?.addEventListener('click', () => {
-        this.downloadMotion1();
+        this.downloadMotionRot();
       });
     }
     {
@@ -403,6 +403,49 @@ class Misc {
 
     const ab = await this.makeFile(motionData);
     this.downloadFile(new Blob([ab]), `a.vmd`);
+  }
+
+  /**
+   * 
+   */
+  async downloadMotionRot() {
+    console.log('downloadMotionRot');
+    const param = this.gatherParam();
+    const motionData = new MotionData();
+
+    const deg1 = 90;
+    const poses = {
+      p0: [deg1, -deg1, -deg1, deg1, 0],
+      p1: [0, 0, 0, 0, 0],
+      pt: [0, 0, 0, 0, 0],
+    };
+
+    { // モーション
+      const len = 20;
+      for (let i = 0; i <= len; ++i) {
+        let frame = i * 1;
+        const turnmod = (i >= len * 0.5) ? (len - i) : i;
+        let xdeg = 6 * turnmod / (len * 0.5);
+        let ydeg = 6 * turnmod / (len * 0.5);
+
+        for (let j = 0; j <= 1; ++j) {
+          const obj = new Bone();
+          obj.frame = frame;
+          obj.name = ['右胸', '左胸'][j];
+
+          let sgn = ((j & 1) === 0) ? -1 : 1;
+
+          const xq = _qaxis(0, xdeg);
+          const yq = _qaxis(1, ydeg * sgn);
+          obj.q = _qmul(xq, yq);
+
+          motionData.bones.push(obj);
+        }
+      }
+
+    }
+    const ab = await this.makeFile(motionData);
+    this.downloadFile(new Blob([ab]), `rot.vmd`);
   }
 
   /**
@@ -693,20 +736,53 @@ class Misc {
   async makeFile(motionData) {
     const buf = new ArrayBuffer(1024 * 128);
     const p = new DataView(buf);
+    /**
+     * 全体バイナリ中のオフセットバイト位置
+     */
     let c = 0;
 
     /**
      * 
      * @param {string} ascii 
-     * @param {number} num 
+     * @param {number} num 全体のバイト数
      */
     const writeText = (ascii, num) => {
-      const len = ascii.length;
+      const u2b = {
+        '右': [0x89, 0x45],
+        '胸': [0x8B, 0xB9],
+        '左': [0x8D, 0xB6],
+      };
+
       for (let i = 0; i < num; ++i) {
-        const chr = (i < len) ? ascii.codePointAt(i) : 0;
-        p.setUint8(c, chr);
-        c += 1;
+        p.setUint8(c + i, 0);
       }
+      const endPos = c + num;
+
+      const len = ascii.length;
+      for (let i = 0; i < len; ++i) {
+        if (c >= endPos) {
+          continue;
+        }
+
+        const pt = ascii.codePointAt(i);
+        if (pt <= 0x7f) {
+          p.setUint8(c, pt);
+          c += 1;
+          continue;
+        }
+
+        const over = String.fromCodePoint(pt);
+        const bs = u2b[over];
+        if (bs) {
+          for (const bin of bs) {
+            p.setUint8(c, bin);
+            c += 1;
+          }
+          continue;
+        }
+        console.warn('無視', over);
+      }
+      c = endPos;
     };
 
     {
