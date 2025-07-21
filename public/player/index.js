@@ -68,7 +68,7 @@ class Misc {
       el.src = null;
     }
 
-    const obj = this.search(treename);
+    const obj = await this.search(treename);
     if (!obj) {
       return;
     }
@@ -95,6 +95,10 @@ class Misc {
 
     await this.listFile(obj);
     this.tunes = obj;
+
+    {
+      await this.setTune(obj.files[0].treename);
+    }
 
     {
       const handleobj = {
