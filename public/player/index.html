@@ -14,11 +14,13 @@
 
     <div>
       <div>
-        <button class="but butleft">left</button>
-        <button class="but butright">right</button>
-        <button class="but butup">up</button>
-        <button class="but butdown">down</button>
+        <button class="but" id="butleft">left</button>
+        <button class="but" id="butright">right</button>
+        <button class="but" id="butdown">-</button>
+        <button class="but" id="butup">+</button>
+        <label class="pointer"><input type="checkbox" class="pointer" id="exceptsame" />重複除外</label>
       </div>
+      <div id="tuneinfo"></div>
       <audio id="main" controls></audio>
     </div>
 
@@ -31,7 +33,7 @@
         <div class="tune toright">
           <label class="pointer"><input type="checkbox" class="pointer target" checked /></label>
           <div class="name"></div>
-          <div class=""></div>
+          <button class="settune pointer">再生する</button>
           <div class=""></div>
         </div>
       </template>

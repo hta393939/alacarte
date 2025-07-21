@@ -9,6 +9,8 @@ class Misc {
     this.cur = null;
     this.tunes = null;
     this.db = null;
+
+    this.volume100 = 50;
   }
 
   async initialize() {
@@ -59,23 +61,52 @@ class Misc {
    * @returns 
    */
   async setTune(treename) {
+    /**
+     * @type {HTMLAudioElement}
+     */
     const el = document.getElementById('main');
     if (!el) {
       return;
     }
     if (el.src) {
       URL.revokeObjectURL(el.src);
-      el.src = null;
+      this.currentTree = null;
     }
 
-    const obj = await this.search(treename);
+    const obj = await this.search(treename, 0);
     if (!obj) {
       return;
     }
     const file = await obj.handle.getFile();
 
     this.starting = treename;
+    this.currentTree = treename;
+    this.setVolume(this.volume100);
     el.src = URL.createObjectURL(file);
+    el.addEventListener('canplaythrough', ev => {
+      el.play();
+    }, { once: true });
+
+    {
+      const info = document.getElementById('tuneinfo');
+      if (info) {
+        info.textContent = `${obj.name}`;
+      }
+    }
+  }
+
+  /**
+   * ボリュームをセットする
+   * @param {number} vol100 
+   * @returns 
+   */
+  setVolume(vol100) {
+    const el = document.getElementById('main');
+    if (!el) {
+      return;
+    }
+    this.volume100 = Math.max(0, Math.min(100, vol100));
+    el.volume = this.volume100 / 100;
   }
 
   /**
@@ -89,7 +120,7 @@ class Misc {
     await this.enumFile(dh, '', obj);
     // ソートできない???
     obj.files.sort((a, b) => {
-      return (a.treename > b.treename) ? 1 : 0;
+      return (a.treename > b.treename) ? 1 : -1;
     });
     console.log('openDir', dh.name, obj);
 
@@ -162,7 +193,7 @@ class Misc {
       {
         const q = clone.querySelector('.tune');
         if (q) {
-          q.dataset['treename'] = q.treename;
+          q.dataset['treename'] = v.treename;
         }
       }
       {
@@ -172,7 +203,12 @@ class Misc {
         }
       }
       {
-
+        const q = clone.querySelector('.settune');
+        if (q) {
+          q.addEventListener('click', async ev => {
+            this.setTune(v.treename);
+          });
+        }
       }
       parent.appendChild(clone);
     }
@@ -181,10 +217,16 @@ class Misc {
   /**
    * 
    * @param {string} treename 
+   * @param {number} add 
    */
-  async search(treename) {
+  async search(treename, add) {
     const obj = this.tunes;
-    const found = obj.files.find(v => v.treename === treename);
+    const index = obj.files.findIndex(v => v.treename === treename);
+    if (index < 0) {
+      return null;
+    }
+    const num = obj.files.length;
+    const found = obj.files[(index + add) % num];
     return found;
   }
 
@@ -201,8 +243,23 @@ class Misc {
 
     {
       const el = document.getElementById('main');
-      el?.addEventListener('ended', (ev) => {
+      el?.addEventListener('ended', async (ev) => {
         console.log(ev.type, ev);
+        const treename = await this.search(this.currentTree, 1);
+        await this.setTune(treename);
+      });
+    }
+
+    {
+      const el = document.getElementById('butup');
+      el?.addEventListener('click', () => {
+        this.setVolume(this.volume100 + 10);
+      });
+    }
+    {
+      const el = document.getElementById('butdown');
+      el?.addEventListener('click', () => {
+        this.setVolume(this.volume100 - 10);
       });
     }
 
