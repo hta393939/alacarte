@@ -13,12 +13,19 @@ export class Db {
   }
 
   clear() {
-    const req = window.indexedDB.deleteDatabase(this.dbname);
-    req.addEventListener('success', ev => {
-      console.log(ev.type, ev);
-    });
-    req.addEventListener('error', ev => {
-      console.log(ev.type, ev);
+    return new Promise((resolve, reject) => {
+      const req = window.indexedDB.deleteDatabase(this.dbname);
+      req.addEventListener('blocked', ev => {
+        console.log(ev.type, 'clear');
+      });
+      req.addEventListener('success', ev => {
+        console.log(ev.type, ev, req.result); // 成功したら null
+        resolve(ev);
+      });
+      req.addEventListener('error', ev => {
+        console.log(ev.type, ev);
+        reject(ev);
+      });
     });
   }
 
@@ -93,14 +100,32 @@ export class Db {
   /**
    * 
    * @param {IDBDatabase} db 
+   */
+  async closeDB(db) {
+    db.close();
+  }
+
+  /**
+   * 
+   * @param {IDBDatabase} db 
    * @param {strng} storename 
    * @param {object} val 
    */
   async write(db, storename, val) {
     return new Promise((resolve, reject) => {
       const tran = db.transaction(storename, 'readwrite');
+      tran.addEventListener('complete', ev => {
+        console.log(ev.type, 'write');
+      });
+      tran.addEventListener('abort', ev => {
+        console.log(ev.type, 'write');
+      });
+      tran.addEventListener('error', ev => {
+        console.log(ev.type, 'write');
+      });
+
       const store = tran.objectStore(storename);
-      const req = store.add(val);
+      const req = store.put(val);
       req.addEventListener('success', ev => {
         console.log(ev.type, ev.target);
         resolve(ev.target);

@@ -24,13 +24,31 @@ class Misc {
       );
       console.log('db start');
       const db = await this.db.getDB();
-      // どっちにせよハンドルを要求する
-      const result = await this.db.read(db, 'handle', 'first');
-      //const result = await db.read('handle', 'key');
-      // permission 出てくれるかなあ
-      console.log('read', result, result.result.length);
-      for (const val of result.result) {
-        console.log('val', val);
+
+      try {
+        // どっちにせよハンドルを要求する
+        const result = await this.db.read(db, 'handle', 'first');
+        //const result = await db.read('handle', 'key');
+        // permission 出てくれるかなあ
+        console.log('read', result, result.result.length);
+        for (const val of result.result) {
+          console.log('val', val);
+          const permResult = await this.reqPermission(val.handle)
+            .catch(err => {
+              console.warn('reqPermission catch', err);
+            });
+          console.log('permResult', permResult);
+          if (permResult) {
+            this.dh = val.handle;
+          }
+        }
+      } catch (ec) {
+        console.warn('db read', ec);
+      }
+      await this.db.closeDB(db);
+
+      if (this.dh) {
+        this.openDir(this.dh);
       }
     }
   }
@@ -63,11 +81,7 @@ class Misc {
   /**
    * フォルダを開いて列挙する
    */
-  async openDir() {
-    const opt = { mode: 'read' };
-    const dh = await window.showDirectoryPicker(opt);
-    this.dh = dh;
-
+  async openDir(dh) {
     const obj = {
       dirs: [],
       files: [],
@@ -89,8 +103,13 @@ class Misc {
         handle: dh,
       };
       const db = await this.db.getDB();
-      const result = await this.db.write(db, 'handle', handleobj);
-      console.log('write', result);
+      try {
+        const result = await this.db.write(db, 'handle', handleobj);
+        console.log('write', result);
+      } catch (ec) {
+        console.warn('db write', ec);
+      }
+      await this.db.closeDB(db);
     }
   }
 
@@ -121,9 +140,9 @@ class Misc {
   }
 
   async clearDB() {
-    const db = this.db;
-    await db.clear();
     console.log('clearDB');
+    const result = await this.db.clear();
+    console.log('clearDB', result);
   }
 
   /**
@@ -168,8 +187,11 @@ class Misc {
   setListener() {
     {
       const el = document.getElementById('opendir');
-      el?.addEventListener('click', () => {
-        this.openDir();
+      el?.addEventListener('click', async () => {
+        const opt = { mode: 'read' };
+        const dh = await window.showDirectoryPicker(opt);
+        this.dh = dh;
+        this.openDir(dh);
       });
     }
 
