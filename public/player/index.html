@@ -8,18 +8,19 @@
   <body>
     <div class="toright">
       <button class="pointer" id="opendir">フォルダを開く</button>
-      <div class="but"></div>
+      <button class="but" id="reaccess">*</button>
       <button class="pointer" id="cleardb">DB削除</button>
     </div>
 
     <div>
       <div>
-        <button class="but" id="butleft">left</button>
-        <button class="but" id="butright">right</button>
+        <button class="but" id="butleft">&lt;</button>
+        <button class="but" id="butright">&gt;</button>
         <button class="but" id="butdown">-</button>
         <button class="but" id="butup">+</button>
-        <label class="pointer"><input type="checkbox" class="pointer" id="exceptsame" />重複除外</label>
+        <label class="pointer"><input checked type="checkbox" class="pointer" id="exceptsame" />重複除外</label>
       </div>
+      <div id="processinfo"></div>
       <div id="tuneinfo"></div>
       <audio id="main" controls></audio>
     </div>

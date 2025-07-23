@@ -13,6 +13,19 @@ class Misc {
     this.volume100 = 50;
   }
 
+  /**
+   * 
+   * @param {string} str 
+   */
+  setProcessInfo(str) {
+    const el = document.getElementById('processinfo');
+    if (!el) {
+      return;
+    }
+    //el.classList.add('');
+    el.textContent = `${new Date().toLocaleTimeString()} ${str}`;
+  }
+
   async initialize() {
     const sp = new URLSearchParams(location.href);
 
@@ -25,33 +38,7 @@ class Misc {
         ['handle', 'parameter']
       );
       console.log('db start');
-      const db = await this.db.getDB();
-
-      try {
-        // どっちにせよハンドルを要求する
-        const result = await this.db.read(db, 'handle', 'first');
-        //const result = await db.read('handle', 'key');
-        // permission 出てくれるかなあ
-        console.log('read', result, result.result.length);
-        for (const val of result.result) {
-          console.log('val', val);
-          const permResult = await this.reqPermission(val.handle)
-            .catch(err => {
-              console.warn('reqPermission catch', err);
-            });
-          console.log('permResult', permResult);
-          if (permResult) {
-            this.dh = val.handle;
-          }
-        }
-      } catch (ec) {
-        console.warn('db read', ec);
-      }
-      await this.db.closeDB(db);
-
-      if (this.dh) {
-        this.openDir(this.dh);
-      }
+      this.setProcessInfo('db start');
     }
   }
 
@@ -148,6 +135,37 @@ class Misc {
     }
   }
 
+  async reaccess() {
+    console.log('reaccess');
+      const db = await this.db.getDB();
+      try {
+
+        // どっちにせよハンドルを要求する
+        const result = await this.db.read(db, 'handle', 'first');
+        //const result = await db.read('handle', 'key');
+        // permission 出てくれるかなあ
+        console.log('read', result, result.result.length);
+        for (const val of result.result) {
+          console.log('val', val);
+          const permResult = await this.reqPermission(val.handle)
+            .catch(err => {
+              console.warn('reqPermission catch', err);
+            });
+          console.log('permResult', permResult);
+          if (permResult) {
+            this.dh = val.handle;
+          }
+        }
+      } catch (ec) {
+        console.warn('db read', ec);
+      }
+      await this.db.closeDB(db);
+
+      if (this.dh) {
+        this.openDir(this.dh);
+      }
+  }
+
   /**
    * リカーシブ
    * @param {FileSystemDirectoryHandle} dh 
@@ -174,10 +192,23 @@ class Misc {
     }
   }
 
+  /**
+   * TODO: 消しづらいので store 2つの中身を全部消すかも
+   */
   async clearDB() {
     console.log('clearDB');
     const result = await this.db.clear();
     console.log('clearDB', result);
+  }
+
+  /**
+   * 
+   * @param {string} storename 
+   */
+  async emptyStore(storename) {
+    console.log('emptyStore', storename);
+    const result = await this.db.emptyStore(storename);
+    console.log('emptyStore');
   }
 
   /**
@@ -245,8 +276,15 @@ class Misc {
       const el = document.getElementById('main');
       el?.addEventListener('ended', async (ev) => {
         console.log(ev.type, ev);
-        const treename = await this.search(this.currentTree, 1);
-        await this.setTune(treename);
+        const result = await this.search(this.currentTree, 1);
+        await this.setTune(result?.treename);
+      });
+    }
+
+    {
+      const el = document.getElementById('reaccess');
+      el?.addEventListener('click', () => {
+        this.reaccess();
       });
     }
 
@@ -265,7 +303,9 @@ class Misc {
 
     {
       const el = document.getElementById('cleardb');
-      el?.addEventListener('click', () => {
+      el?.addEventListener('click', async () => {
+        await this.emptyStore('parameter').catch(ec => { console.warn('parameter', ec); });
+        await this.emptyStore('handle').catch(ec => { console.warn('handle', ec); });
         this.clearDB();
       });
     }

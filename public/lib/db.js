@@ -108,6 +108,40 @@ export class Db {
   /**
    * 
    * @param {IDBDatabase} db 
+   * @param {string} storename 
+   */
+  emptyStore(db, storename) {
+    // 未実装
+    return new Promise((resolve, reject) => {
+      const tran = db.transaction(storename, 'readwrite');
+      tran.addEventListener('complete', ev => {
+        console.log(ev.type, 'empty');
+      });
+      tran.addEventListener('abort', ev => {
+        console.log(ev.type, 'empty');
+      });
+      tran.addEventListener('error', ev => {
+        console.log(ev.type, 'empty');
+      });
+
+      const store = tran.objectStore(storename);
+      const req = store.clear();
+      req.addEventListener('success', ev => {
+        console.log(ev.type, ev.target);
+        resolve(ev.target);
+      });
+      req.addEventListener('error', ev => {
+        console.log(ev.type, ev.target);
+
+        reject(ev);
+      });
+    });
+
+  }
+
+  /**
+   * 
+   * @param {IDBDatabase} db 
    * @param {strng} storename 
    * @param {object} val 
    */
