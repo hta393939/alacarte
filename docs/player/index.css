@@ -27,6 +27,7 @@ body {
     cursor: pointer;
     width: 18vw;
     height: 9vw;
+    font-size: 9vw;
   }
   #opendir, #cleardb {
     width: 36vw;
@@ -39,6 +40,7 @@ body {
     cursor: pointer;
     width: 8vw;
     height: 4vw;
+    font-size: 4vw;
   }
   #opendir, #cleardb {
     width: 16vw;
