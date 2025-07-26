@@ -197,6 +197,9 @@ class Misc {
    */
   async clearDB() {
     console.log('clearDB');
+    await this.emptyStore('parameter');
+    await this.emptyStore('handle');
+
     const result = await this.db.clear();
     console.log('clearDB', result);
   }
@@ -207,8 +210,14 @@ class Misc {
    */
   async emptyStore(storename) {
     console.log('emptyStore', storename);
-    const result = await this.db.emptyStore(storename);
-    console.log('emptyStore');
+    try {
+      const db = await this.db.getDB();
+      const result = await this.db.emptyStore(db, storename);
+      return result;
+    } catch (ec) {
+      console.warn('emptyStore catch', ec);
+    }
+    return null;
   }
 
   /**
