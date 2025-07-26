@@ -111,7 +111,6 @@ export class Db {
    * @param {string} storename 
    */
   emptyStore(db, storename) {
-    // 未実装
     return new Promise((resolve, reject) => {
       const tran = db.transaction(storename, 'readwrite');
       tran.addEventListener('complete', ev => {
