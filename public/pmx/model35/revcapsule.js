@@ -88,6 +88,10 @@ class RevCapsule extends PMX.Maker {
     const usefull = true;
 
     const _belt = param.belt || 10;
+    /**
+     * 内メッシュカット
+     */
+    const _cut = true;
 
     const d = new Date();
     /**
@@ -168,6 +172,7 @@ class RevCapsule extends PMX.Maker {
     s += `物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
     s += `フルコリジョン: ${usefull}\r\n`;
+    s += `カット: ${_cut}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
@@ -302,6 +307,10 @@ class RevCapsule extends PMX.Maker {
         }
       }
       for (let i = 0; i < allNum; ++i) {
+        if (i < allNum / 2 && _cut) {
+          continue;
+        }
+
         for (let j = 0; j < div; ++j) {
           let v0 = vertexOffset + (div + 1) * i + j;
           let v1 = v0 + 1;
