@@ -176,11 +176,11 @@ class CenterCapsuleSub extends PMX.Maker {
     this.head.commentEn = s;
     this.head.commentJa = s;
 
-/**
- * すべての親 0 メッシュ無し
- * 操作中心 1 メッシュ無し
- * センター 2 多分メッシュ無し
- */
+    /**
+     * すべての親 0 メッシュ無し
+     * 操作中心 1 メッシュ無し
+     * センター 2 多分メッシュ無し
+     */
     /**
      * ベースボーンインデックス
      * @default 3
@@ -616,27 +616,18 @@ class CenterCapsuleSub extends PMX.Maker {
 
 //// 追加部分ここまで
 
-
-    /**
-     * 一切衝突しないグループ(1-origin)
-     */
+    /** 一切衝突しないグループ(1-origin) */
     const RIGID_IGNORE_GROUP = 14;
 
-    /**
-     * 普通の衝突グループ(1-origin UI)
-     */
+    /** 普通の衝突グループ(1-origin UI) */
     const RIGID_DEFAULT_GROUP = 4;
 
     this.textures.push(...param.texturePath);
 
     for (let i = 0; i <= 2; ++i) { // ボーン
-      /**
-       * ボーン
-       */
+      /** ボーン */
       let b = new PMX.Bone();
-      /**
-       * 剛体
-       */
+      /** 剛体 */
       let rb = new PMX.Rigid();
       // 関連ボーンのインデックス
       rb.bone = i;

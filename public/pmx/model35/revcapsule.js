@@ -667,7 +667,7 @@ class RevCapsule extends PMX.Maker {
 
           // 半径、不使用
           rb.size = [
-            capsuleR * calcRadius((x - (-halfAllLength)) / (beltHeight * beltNum)).r * scale,
+            capsuleR * calcRadius((y - (-halfAllLength)) / (beltHeight * beltNum)).r * scale,
             scale,
             scale,
           ];

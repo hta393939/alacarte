@@ -264,6 +264,7 @@ class CenterCapsule2 extends PMX.Maker {
         vertexOffset = this.vts.length;
         for (let i = 0; i <= div; ++i) {
           const py = by + i * beltHeight / div;
+          // 半径
           const result = calcRadius((py - (-halfAllLength)) / (beltHeight * beltNum));
           adjustR = result.r * capsuleR;
 
@@ -377,28 +378,20 @@ class CenterCapsule2 extends PMX.Maker {
 
     }
 
-    /**
-     * 一切衝突しないグループ(1-origin)
-     */
+    /** 一切衝突しないグループ(1-origin) */
     const RIGID_IGNORE_GROUP = 14;
 
-    /**
-     * 普通の衝突グループ(1-origin UI)
-     */
+    /** 普通の衝突グループ(1-origin UI) */
     const RIGID_DEFAULT_GROUP = 4;
 
     this.textures.push(...param.texturePath);
 
     for (let i = 0; i <= 2; ++i) { // ボーン
-      /**
-       * ボーン
-       */
+      /** ボーン */
       let b = new PMX.Bone();
-      /**
-       * 剛体
-       */
+      /** 剛体 */
       let rb = new PMX.Rigid();
-// 関連ボーンのインデックス
+      // 関連ボーンのインデックス
       rb.bone = i;
       rb.type = PMX.Rigid.TYPE_STATIC;
       rb.nameEn = `rb${_pad(i, 3)}`;
@@ -472,9 +465,7 @@ class CenterCapsule2 extends PMX.Maker {
           | PMX.Bone.BIT_VISIBLE;
         bits |= PMX.Bone.BIT_CONTROL;
         b.bits = bits;
-        /**
-         * odd が tree
-         */
+        /** odd が tree */
         let opt = ((i & 1) === 0) ?
           'effleaf' : 'tree';
         const index = this.bones.length;
@@ -512,9 +503,9 @@ class CenterCapsule2 extends PMX.Maker {
             b.parent = baseBoneIndex - 1;
           }
 
-          // 半径、不使用
+          // 半径と他2つは不使用
           rb.size = [
-            capsuleR * calcRadius((x - (-halfAllLength)) / (beltHeight * beltNum)).r * scale,
+            capsuleR * calcRadius((y - (-halfAllLength)) / (beltHeight * beltNum)).r * scale,
             scale,
             scale,
           ];
