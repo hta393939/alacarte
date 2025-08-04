@@ -88,10 +88,8 @@ class RevCapsule extends PMX.Maker {
     const usefull = true;
 
     const _belt = param.belt || 10;
-    /**
-     * 内メッシュカット
-     */
-    const _cut = true;
+    /** 内メッシュカット @type {boolean} */
+    const _usecut = param.usecut ?? true;
 
     const d = new Date();
     /**
@@ -172,7 +170,7 @@ class RevCapsule extends PMX.Maker {
     s += `物理有り: ${_usePhy}, \r\n`;
     s += `scale: ${scale}, div: ${div}, beltNum: ${beltNum}\r\n`;
     s += `フルコリジョン: ${usefull}\r\n`;
-    s += `カット: ${_cut}\r\n`;
+    s += `カット: ${_usecut}\r\n`;
     this.head.commentEn = s;
     this.head.commentJa = s;
 
@@ -307,7 +305,7 @@ class RevCapsule extends PMX.Maker {
         }
       }
       for (let i = 0; i < allNum; ++i) {
-        if (i < allNum / 2 && _cut) {
+        if (i < allNum / 2 && _usecut) {
           continue;
         }
 

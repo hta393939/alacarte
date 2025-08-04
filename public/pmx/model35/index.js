@@ -121,9 +121,7 @@ class Misc {
       pow2: Number.parseFloat(document.getElementById('pow2element')?.value ?? -3),
 //            denom: Number.parseFloat(document.getElementById('denom')?.value ?? 1),
       usephy: document.getElementById('usephyelement')?.checked,
-      /**
-       * ik 書き出しするかどうか
-       */
+      /** ik 書き出しするかどうか */
       useik: document.getElementById('useikelement')?.checked,
       fwrate: Number.parseFloat(document.getElementById('fwrate')?.value ?? 1),
       useradius: document.getElementById('useradius')?.checked,
@@ -132,6 +130,7 @@ class Misc {
       useradiusq: document.getElementById('useradius4')?.checked,
       useradius8: document.getElementById('useradius8')?.checked,
       usedynamic: document.getElementById('usedynamic')?.checked,
+      usecut: document.getElementById('usecut')?.checked,
     };
     param.scale = 2 ** param.pow2;
     param.denom = 1 / param.scale;
@@ -191,6 +190,7 @@ class Misc {
       usephy: 0,
       usedynamic: 0,
       frictionfactor: 103,
+      usecut: 1,
     };
     for (const key in param) {
       const el = document.getElementById(key);

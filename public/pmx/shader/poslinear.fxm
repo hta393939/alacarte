@@ -1,32 +1,25 @@
 // @file poslinear.fxm
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//  MikuMikuMoving用サンプルシェーダ
-//  2013/05/01
-//
-////////////////////////////////////////////////////////////////////////////////////////////////
 // パラメータ宣言
 
 float _xk<
   string UIName = "X係数";
   string UIWidget = "Numeric";
-  float UIMin = -1.0;
-  float UIMax = 1.0;
+  float UIMin = -10.0;
+  float UIMax = 10.0;
 > = float(0.0);
 
 float _yk<
   string UIName = "Y係数";
   string UIWidget = "Numeric";
-  float UIMin = -1.0;
-  float UIMax = 1.0;
+  float UIMin = -10.0;
+  float UIMax = 10.0;
 > = float(1.0);
 
 float _zk<
   string UIName = "Z係数";
   string UIWidget = "Numeric";
-  float UIMin = -1.0;
-  float UIMax = 1.0;
+  float UIMin = -10.0;
+  float UIMax = 10.0;
 > = float(0.0);
 
 float _offset<
@@ -50,14 +43,28 @@ float _end<
   float UIMax = 1000.0;
 > = float(-0.1);
 
+bool _usecol<
+  string UIName = "色使用";
+> = bool(true);
+
 float3 _col<
   string UIName = "色";
   string UIWidget = "Color";
 > = float3(0.0, 0.0, 0.0);
 
+float _alpha<
+  string UIName = "アルファ";
+  string UIWidget = "Slider";
+  float UIMax = 1.0;
+  float UIMin = 0.0;
+> = float(1.0);
+
 bool _model<
   string UIName = "モデル座標系";
-//  string UIWidget = "Spinner";
+> = bool(false);
+
+bool _incoord<
+  string UIName = "IN座標系";
 > = bool(false);
 
 float4x4 WorldViewMatrix:WORLDVIEW;
@@ -176,8 +183,10 @@ VS_OUTPUT Basic_VS(MMM_SKINNING_INPUT IN, uniform bool useTexture, uniform bool 
 	}
 
   // NOTE: 補正してない
-  if (_model) {
-     Out.vPos = SkinOut.Position.xyz;
+  if (_incoord) {
+    Out.vPos = float4(IN.Pos.xyz, 1.0);
+  } else if (_model) {
+     Out.vPos = float4(SkinOut.Position.xyz, 1.0);
   } else {
     Out.vPos = mul(SkinOut.Position.xyz, WorldMatrix);
   }
@@ -301,9 +310,13 @@ float4 Basic_PS(VS_OUTPUT IN, uniform bool useTexture, uniform bool useSphereMap
     } else if (t < 0.0) {
       t = 0.0;
     }
-    //float3 _col2 = float3(0.0, 0.0, 0.0);
-    float3 _lcol = _col * t + Color.rgb * (1.0 - t);
-    Color.rgb = _lcol;
+
+    if (_usecol) {
+      //float3 _col2 = float3(0.0, 0.0, 0.0);
+      float3 _lcol = _col * t + Color.rgb * (1.0 - t);
+      Color.rgb = _lcol;
+    }
+    Color.a = _alpha * t + Color.a * (1.0 - t);
   }
 
 	return Color;
