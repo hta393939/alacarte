@@ -756,6 +756,169 @@ class Misc {
   }
 
   /**
+   * fw bw
+   * 全ての親 0,0,0
+   * 全->センター 0,8,0
+   * センター->上半身 0, 11.8375, 0
+   * 上半身２ 0, 13.8625, 0
+   * センター->下半身 0, 10.7125, 0
+   * 全て->左足ＩＫ  1.133447, 1.1625, 0.01978527
+   * 全て->右足ＩＫ -1.133448, 1.1625, 0.01978525
+   * 左足ＩＫ->左つま先  1.14111, 0, -1.3
+   * 右足ＩＫ->右つま先 -1.14111, 0, -1.3
+   * 対象1: 
+   * 対象2: 
+   */
+  async downloadMotion4() {
+    console.log('downloadMotion4');
+    const na = Number.NaN;
+
+    const param = this.gatherParam();
+    const {
+      step, loopsec, repeatnum, ampdeg, maxframe,
+      seed,
+      usemirror,
+      floorn, // 1 or 2 or 6
+      motiontype,
+      crosstype,
+    } = param;
+    // 1 or 2 or 6
+
+    /** 1ループフレーム数。30, 60 など */
+    let lfn = 30 * loopsec;
+
+    const crossaxis = Misc.YAXIS;
+    const motionaxis = Misc.ZAXIS;
+
+    //// モーション
+    let boneNum = 10;
+    {
+      const lr = 0;
+      const lrsgn = 1;
+
+      const motionData = new MotionData();
+
+      const lrstrs = ['l', 'r', ''];
+      const seed16 = seed.toString(16).padStart(8, '0');
+      const filename = `m3${crosstype}_${lfn}_${floorn}_${lrstrs[usemirror ? lr : 2]}${seed16}.vmd`;
+
+      const subbones = [
+        { name: `全ての親` },
+        { name: `センサー` },
+        { name: `左足ＩＫ` }, // backward
+        { name: `右足ＩＫ` },
+        { name: `b012tree` }, // top
+
+        { name: `b015tree` },
+        { name: `b017tree` },
+        { name: `b019tree` }, // forward
+        { name: `b021tree` },
+        { name: `b023tree` }, // top
+      ];
+      const motiondegs = [
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 2],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 3],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 4],
+        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 5],
+      ];
+      /**
+       * 垂直軸度数
+       */
+      const crossdegs = [
+        [na,  0,  0,  0,  0,  na,   0,   0,   0,   0 ],
+        [na, 21, 21, 21, 21,  na, -90, -90, +90, -90 ], // upper degs
+        [na, na, na, na, na, +90, -90, -90, +90, -21 ], // lower degs
+        [na, na, na, na, na,   0,   0,   0,   0,   0 ], // plane
+        [na, na, na, na, na,  na,  na,  na,   0,   0 ], // 2
+        [na, na, na, na, na, +90, -90, -90, +90, -90 ], // upper degs thin
+      ];
+
+      /**
+       * 位相用乱数の候補数
+       */
+      const rn = Math.floor(lfn / 2 / floorn);
+      const bkvs = [];
+      for (let i = 0; i < boneNum; ++i) {
+        let kvs = [];
+        // トポロジーの決定
+
+        let rv = 0;
+        while (rv === 0 || rv === lfn * 0.5) {
+          const val = this.rnd() % rn; // 0 と lfn * 0.5 は個数が変わってめんどいので
+          rv = val * floorn;
+        }
+        const inc = (this.rnd() % 2) * 2 - 1;
+        //console.log('rv', rv);
+
+        // cos が減少していく範囲なら true
+        const halfAdd = this.nfloor(lfn * 0.5, floorn);
+        if (inc < 0) {
+          const t1 = lfn * 0.5 - rv;
+          const cs = this.gettri(t1, lfn);
+          kvs.push({ key: 0, val: cs.cos });
+
+          kvs.push({ key: t1, val: -1 });
+          kvs.push({ key: t1 + halfAdd, val: 1 });
+          //kvs.push({ key: lfn, val: cs.cos });
+        } else {
+          const t1 = lfn - rv;
+          const cs = this.gettri(t1, lfn);
+          kvs.push({ key: 0, val: cs.cos });
+
+          kvs.push({ key: t1, val: 1 });
+          kvs.push({ key: t1 + halfAdd, val: -1 });
+          //kvs.push({ key: lfn, val: cs.cos });
+        }
+
+        bkvs.push(kvs);
+      }
+      console.log('rn', rn, 'bkvs', bkvs);
+
+      for (let j = 0; j < boneNum; ++j) { // ボーンループ
+        /**
+         * ボーンごと key, val
+         */
+        const kvs = bkvs[j];
+        const kon = kvs.length;
+        for (let n = 0; n < 21; ++n) { // ループグループ。(30 or 60) * 21 あれば十分
+
+          for (let i = 0; i < kon; ++i) {
+            const kv = kvs[i];
+            let frame = n * lfn + kv.key;
+            if (frame > maxframe) {
+              break;
+            }
+
+            let obj = new Bone();
+            obj.frame = frame;
+            obj.name = subbones[j].name;
+
+            const motiondeg = motiondegs[motiontype][j];
+            const crossdeg = crossdegs[crosstype][j];
+            if (!Number.isFinite(crossdeg)) {
+              continue;
+            }
+            const q2 = _qaxis(crossaxis, crossdeg);
+            obj.q = _qaxis(motionaxis, motiondeg * kv.val * lrsgn);
+            obj.q = _qmul(obj.q, q2);
+            motionData.bones.push(obj);
+          }
+        }
+
+      }
+
+      {} // 表情無し
+
+      // 再ソートいらない
+      const ab = await this.makeFile(motionData);
+      this.downloadFile(new Blob([ab]), filename);
+    }
+    console.log('downloadMotion4 end');
+  }
+
+  /**
    * 
    * @param {Blob} blob 
    * @param {string} name 
@@ -806,6 +969,9 @@ class Misc {
         '足': [0x91, 0xAB],
         'Ｉ': [0x82, 0x68],
         'Ｋ': [0x82, 0x6A],
+        'つ': [0x00, 0x00],
+        'ま': [0x00, 0x00],
+        '先': [0x00, 0x00],
       };
 
       for (let i = 0; i < num; ++i) {
