@@ -776,8 +776,6 @@ class Misc {
     const param = this.gatherParam();
     const {
       step, loopsec, repeatnum, ampdeg, maxframe,
-      seed,
-      usemirror,
       floorn, // 1 or 2 or 6
       motiontype,
       crosstype,
@@ -793,23 +791,17 @@ class Misc {
     //// モーション
     let boneNum = 10;
     {
-      const lr = 0;
-      const lrsgn = 1;
-
       const motionData = new MotionData();
-
-      const lrstrs = ['l', 'r', ''];
-      const seed16 = seed.toString(16).padStart(8, '0');
-      const filename = `m3${crosstype}_${lfn}_${floorn}_${lrstrs[usemirror ? lr : 2]}${seed16}.vmd`;
+      const filename = `mb${crosstype}_${lfn}_${floorn}.vmd`;
 
       const subbones = [
         { name: `全ての親` },
         { name: `センサー` },
-        { name: `左足ＩＫ` }, // backward
+        { name: `左足ＩＫ` },
         { name: `右足ＩＫ` },
-        { name: `b012tree` }, // top
+        { name: `左つま先ＩＫ` },
 
-        { name: `b015tree` },
+        { name: `右つま先ＩＫ` },
         { name: `b017tree` },
         { name: `b019tree` }, // forward
         { name: `b021tree` },
@@ -827,7 +819,7 @@ class Misc {
        * 垂直軸度数
        */
       const crossdegs = [
-        [na,  0,  0,  0,  0,  na,   0,   0,   0,   0 ],
+        [ 0,  0,  0,  0,  0,   0,  na,  na,  na,  na ],
         [na, 21, 21, 21, 21,  na, -90, -90, +90, -90 ], // upper degs
         [na, na, na, na, na, +90, -90, -90, +90, -21 ], // lower degs
         [na, na, na, na, na,   0,   0,   0,   0,   0 ], // plane
@@ -969,9 +961,9 @@ class Misc {
         '足': [0x91, 0xAB],
         'Ｉ': [0x82, 0x68],
         'Ｋ': [0x82, 0x6A],
-        'つ': [0x00, 0x00],
-        'ま': [0x00, 0x00],
-        '先': [0x00, 0x00],
+        'つ': [0x82, 0xC2],
+        'ま': [0x82, 0xDC],
+        '先': [0x90, 0xE6],
       };
 
       for (let i = 0; i < num; ++i) {
