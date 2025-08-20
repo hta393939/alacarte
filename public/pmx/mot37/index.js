@@ -71,6 +71,69 @@ const _qmul = (a, b) => {
   return ret;
 };
 
+class V3 {
+  constructor(_x = 0, _y = 0, _z = 0) {
+    this.x = _x;
+    this.y = _y;
+    this.z = _z;
+  }
+  length() {
+    return Math.sqrt(this.x ** 2 + this.y ** 2 + this.z ** 2);
+  }
+  clone() {
+    const ret = new V3(this.x, this.y, this.z);
+    return ret;
+  }
+  asArray() {
+    return [this.x, this.y, this.z];
+  }
+  /** @param {V3} b */
+  dot(b) {
+    return (this.x * b.x + this.y * b.y + this.z * b.z);
+  }
+  /** 破壊 */
+  normalize() {
+    const len = this.length();
+    if (len != 0) {
+      const k = 1 / len;
+      this.x *= k;
+      this.y *= k;
+      this.z *= k;
+    }
+    return this;
+  }
+  /** 破壊 */
+  add(b) {
+    this.x += b.x;
+    this.y += b.y;
+    this.z += b.z;
+    return this;
+  }
+  sub(b) {
+    this.x -= b.x;
+    this.y -= b.y;
+    this.z -= b.z;
+    return this;
+  }
+  /** 破壊 */
+  mulk(k) {
+    this.x *= k;
+    this.y *= k;
+    this.z *= k;
+    return this;
+  }
+  /** 破壊 */
+  addk(b, k) {
+    this.x += b.x * k;
+    this.y += b.y * k;
+    this.z += b.z * k;
+    return this;
+  }
+  distance(b) {
+    return this.clone().sub(b).length();
+  }
+}
+
 class Bone {
   constructor() {
     this.name = '';
@@ -88,6 +151,13 @@ class Bone {
      * morph only
      */
     this.weight = 0;
+
+    this._wp = [0, 0, 0];
+    this._wq = [0, 0, 0, 1];
+    /**
+     * @type {Bone}
+     */
+    this._parent = null;
   }
 
   makeArray() {
@@ -109,6 +179,17 @@ class Bone {
       x[2], y[2], z[2], r[2], x[3], y[3], z[3], r[3], 1, 0, 0,
     ];
   }
+
+  /**
+   * 
+   */
+  apply() {
+    const parent = this._parent || new Bone();
+    // 回転と平行移動
+
+    // _wp, _wq を更新する
+  }
+
 }
 
 class MotionData {
@@ -756,6 +837,37 @@ class Misc {
   }
 
   /**
+   * IKもどき
+   * @param {V3} wtp
+   */
+  resolve(ps, wtp) {
+    const calcs = [...ps];
+
+    // wtp に _target が来るように
+    let minerr = 123456;
+    let mindegs = [0, 0, 0];
+    for (let i = 0; i < 100; ++i) {
+      const cands = [0, 0, 0];
+      for (let j = 0; j < 3; ++j) {
+        const index = [0,1,8][j];
+        const xdeg = 0;
+        mindegs[j] = xdeg;
+
+        // 計算する
+      }
+      const err = wtp.distance(calcs.wpos[8]);
+      if (err <= minerr) {
+        minerr = err;
+        mindegs = [...cands];
+      }
+    }
+
+    // mindegs から構築する
+    return mindegs;
+    //return calcs;
+  }
+
+  /**
    * fw bw
    * 全ての親 0,0,0
    * 全->センター 0,8,0
@@ -795,17 +907,21 @@ class Misc {
       const filename = `mb${crosstype}_${lfn}_${floorn}.vmd`;
 
       const subbones = [
-        { name: `全ての親` },
-        { name: `センサー` },
-        { name: `左足ＩＫ` },
-        { name: `右足ＩＫ` },
-        { name: `左つま先ＩＫ` },
+        { name: `全ての親`, wpos: [0,0,0] },
+        { name: `センター`, wpos: [0,8,0] },
 
-        { name: `右つま先ＩＫ` },
-        { name: `b017tree` },
-        { name: `b019tree` }, // forward
-        { name: `b021tree` },
-        { name: `b023tree` }, // top
+        { name: `左足ＩＫ`, wpos: [ 1.133447, 1.1625, 0.01978527] },
+        { name: `右足ＩＫ`, wpos: [-1.133448, 1.1625, 0.01978525] },
+
+        { name: `左つま先ＩＫ`, wpos: [ 1.14111, 0, -1.3] },
+        { name: `右つま先ＩＫ`, wpos: [-1.14111, 0, -1.3] },
+
+        { name: `上半身`, wpos: [0, 11.8375, 0]  },
+        { name: `上半身２`, wpos: [0, 13.8625, 0]  },
+        { name: `下半身`, wpos: [0, 10.7125, 0]  },
+
+        { name: `_target`, wpos: [0, 9.5, -0.5]  },
+        //{ name: `頭`, wpos: [0, 16.84375, 0]  },
       ];
       const motiondegs = [
         [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
@@ -815,12 +931,10 @@ class Misc {
         [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 4],
         [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 5],
       ];
-      /**
-       * 垂直軸度数
-       */
+      /** 垂直軸度数 */
       const crossdegs = [
-        [ 0,  0,  0,  0,  0,   0,  na,  na,  na,  na ],
-        [na, 21, 21, 21, 21,  na, -90, -90, +90, -90 ], // upper degs
+        [ 0,  0,  0,  0, na,  na,  na,  na,  na,  na ], // first try
+        [ 0,  0,  0,  0,  0,   0,   0,   0,   0,  na ], // bone full
         [na, na, na, na, na, +90, -90, -90, +90, -21 ], // lower degs
         [na, na, na, na, na,   0,   0,   0,   0,   0 ], // plane
         [na, na, na, na, na,  na,  na,  na,   0,   0 ], // 2
@@ -837,10 +951,6 @@ class Misc {
         // トポロジーの決定
 
         let rv = 0;
-        while (rv === 0 || rv === lfn * 0.5) {
-          const val = this.rnd() % rn; // 0 と lfn * 0.5 は個数が変わってめんどいので
-          rv = val * floorn;
-        }
         const inc = (this.rnd() % 2) * 2 - 1;
         //console.log('rv', rv);
 
