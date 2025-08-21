@@ -70,6 +70,11 @@ const _qmul = (a, b) => {
   ];
   return ret;
 };
+/** 新しい共役を返す */
+const _qconj = (a) => {
+  return [-a[0], -a[1], -a[2], a[3]];
+};
+
 
 class V3 {
   constructor(_x = 0, _y = 0, _z = 0) {
@@ -132,6 +137,12 @@ class V3 {
   distance(b) {
     return this.clone().sub(b).length();
   }
+
+  /** 新しいインスタンス @param {number[]} q */
+  appliedQ(q) {
+    const rotp = _qmul(q, _qmul([this.x, this.y, this.z, 0], _qconj(q)));
+    return new V3(rotp[0], rotp[1], rotp[2]);
+  }
 }
 
 class Bone {
@@ -152,7 +163,7 @@ class Bone {
      */
     this.weight = 0;
 
-    this._wp = [0, 0, 0];
+    this._wp = new V3();
     this._wq = [0, 0, 0, 1];
     /**
      * @type {Bone}
@@ -181,13 +192,15 @@ class Bone {
   }
 
   /**
-   * 
+   * 親に従ってワールド姿勢を算出する
    */
   apply() {
     const parent = this._parent || new Bone();
-    // 回転と平行移動
-
     // _wp, _wq を更新する
+    this._wq = _qmul(parent._wq, this.q);
+    const lp = _qmul(this.q, _qmul([...this.p, 0], _qconj(this.q)));
+    this._wp.add(new V3(lp[0], lp[1], lp[2]));
+    return this;
   }
 
 }
@@ -836,11 +849,42 @@ class Misc {
     console.log('downloadMotion3 end');
   }
 
+
+  /**
+   * 正計算する
+   * @param {number} deg 倒れる量プラスで
+   * @param {number} forward 進む量プラスで
+   */
+  resolve(deg, forward, height) {
+    // センターから目標へのベクトル
+    const rv = new V3(0, 0.95 - 8, -0.5 - 0);
+
+    const targetp = new V3(0, height, -forward);
+    const rootp = new V3(0, 0, -forward);
+    const centerwd = -deg;
+
+    // rv を deg だけ倒したベクトルを計算
+    const apv = rv.appliedQ(_qaxis(0, centerwd));
+
+    // 場所を算出
+    const centerwp = targetp.clone().sub(apv);
+    const centerlp = centerwp.clone().sub(rootp);
+    // 角度を算出
+    const centerldeg = Math.atan(centerlp.z, centerlp.y) * 180 / Math.PI;
+
+    const ret = {
+      rootp,
+      centerldeg,
+      centerlp,
+    };
+    return ret;
+  }
+
   /**
    * IKもどき
    * @param {V3} wtp
    */
-  resolve(ps, wtp) {
+  resolve2(ps, wtp) {
     const calcs = [...ps];
 
     // wtp に _target が来るように
@@ -933,7 +977,7 @@ class Misc {
       ];
       /** 垂直軸度数 */
       const crossdegs = [
-        [ 0,  0,  0,  0, na,  na,  na,  na,  na,  na ], // first try
+        [ 0,  0, na, na, na,  na,  na,  na,  na,  na ], // first try
         [ 0,  0,  0,  0,  0,   0,   0,   0,   0,  na ], // bone full
         [na, na, na, na, na, +90, -90, -90, +90, -21 ], // lower degs
         [na, na, na, na, na,   0,   0,   0,   0,   0 ], // plane
@@ -941,70 +985,67 @@ class Misc {
         [na, na, na, na, na, +90, -90, -90, +90, -90 ], // upper degs thin
       ];
 
-      /**
-       * 位相用乱数の候補数
-       */
-      const rn = Math.floor(lfn / 2 / floorn);
       const bkvs = [];
       for (let i = 0; i < boneNum; ++i) {
         let kvs = [];
         // トポロジーの決定
-
-        let rv = 0;
-        const inc = (this.rnd() % 2) * 2 - 1;
-        //console.log('rv', rv);
-
         // cos が減少していく範囲なら true
         const halfAdd = this.nfloor(lfn * 0.5, floorn);
-        if (inc < 0) {
-          const t1 = lfn * 0.5 - rv;
+        {
+          const t1 = lfn * 0.5;
           const cs = this.gettri(t1, lfn);
           kvs.push({ key: 0, val: cs.cos });
 
           kvs.push({ key: t1, val: -1 });
           kvs.push({ key: t1 + halfAdd, val: 1 });
           //kvs.push({ key: lfn, val: cs.cos });
-        } else {
-          const t1 = lfn - rv;
-          const cs = this.gettri(t1, lfn);
-          kvs.push({ key: 0, val: cs.cos });
-
-          kvs.push({ key: t1, val: 1 });
-          kvs.push({ key: t1 + halfAdd, val: -1 });
-          //kvs.push({ key: lfn, val: cs.cos });
         }
-
         bkvs.push(kvs);
       }
-      console.log('rn', rn, 'bkvs', bkvs);
+      console.log('rn', 'bkvs', bkvs);
 
       for (let j = 0; j < boneNum; ++j) { // ボーンループ
-        /**
-         * ボーンごと key, val
-         */
-        const kvs = bkvs[j];
-        const kon = kvs.length;
-        for (let n = 0; n < 21; ++n) { // ループグループ。(30 or 60) * 21 あれば十分
 
-          for (let i = 0; i < kon; ++i) {
-            const kv = kvs[i];
-            let frame = n * lfn + kv.key;
+        for (let n = 0; n < 21; ++n) { // ループグループ。(30 or 60) * 21 あれば十分
+          for (let i = 0; i < lfn; ++i) {
+            let frame = n * lfn + i;
             if (frame > maxframe) {
               break;
             }
+
+            const lfn5 = lfn * 0.5;
+            let forward = 8 * n;
+            let angt = i / lfn;
+            let deg = 30 * angt + 60 * (1 - angt);
+            if (i >= lfn5) {
+              forward += 8 * (i - lfn5) / lfn5;
+            }
+            const result = this.resolve(deg, forward, 0.5);
 
             let obj = new Bone();
             obj.frame = frame;
             obj.name = subbones[j].name;
 
-            const motiondeg = motiondegs[motiontype][j];
+            switch (obj.name) {
+            case '全ての親':
+              obj.p = result.rootp.asArray();
+              obj.q = [0, 0, 0, 1];
+              break;
+            case 'センター':
+              obj.p = result.centerlp.asArray();
+              obj.q = _qaxis(0, result.centerldeg);
+              break;
+            }
+
+            //const motiondeg = motiondegs[motiontype][j];
             const crossdeg = crossdegs[crosstype][j];
             if (!Number.isFinite(crossdeg)) {
               continue;
             }
-            const q2 = _qaxis(crossaxis, crossdeg);
-            obj.q = _qaxis(motionaxis, motiondeg * kv.val * lrsgn);
-            obj.q = _qmul(obj.q, q2);
+            //const q2 = _qaxis(crossaxis, crossdeg);
+            //obj.q = _qaxis(motionaxis, 60.0); // TODO: 
+            //obj.q = _qmul(obj.q, q2);
+            //obj.p = new V3().asArray(); // TODO: 
             motionData.bones.push(obj);
           }
         }
