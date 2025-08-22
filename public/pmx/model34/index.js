@@ -145,14 +145,14 @@ class Misc {
    * @returns {string[]} 行ごとに返す
    */
   analyzeFileRoss(parser) {
-/**
- * 物理変形
- */
+    /**
+     * 物理変形
+     */
     const _usePhy = document.getElementById('usephy')?.checked;
 
-/**
- * gui group
- */
+    /**
+     * gui group
+     */
     const RIGID_DEFAULT_GROUP = 2;
 
     let rc = 93;
@@ -199,9 +199,9 @@ class Misc {
     const R = 0;
     const L = 1;
     const lrname = ['right', 'left'];
-/**
- * 最小が有効扱いするので大きい値
- */
+    /**
+     * 最小が有効扱いするので大きい値
+     */
     const NA = 999999;
 
     let rmin = 99999;
@@ -210,9 +210,9 @@ class Misc {
     for (let i = 0; i < mtl._faceIndexNum; ++i) {
       const index = _ficount + i;
       const vtxIndex = parser.faceIndices[index];
-/**
- * 頂点1個
- */
+      /**
+       * 頂点1個
+       */
       const vtx = parser.vts[vtxIndex];
       vtx._analyze = {
         target: false,
@@ -553,10 +553,10 @@ class Misc {
       pow2: Number.parseFloat(document.getElementById('pow2element')?.value ?? -3),
 //            denom: Number.parseFloat(document.getElementById('denom')?.value ?? 1),
       usephy: document.getElementById('usephy')?.checked,
-/**
- * ik 書き出しするかどうか
- */
+      /** ik 書き出しするかどうか */
       useik: document.getElementById('useikelement')?.checked,
+
+      useadd: document.getElementById('useadd')?.checked,
     };
     param.scale = 2 ** param.pow2;
     param.denom = 1 / param.scale;

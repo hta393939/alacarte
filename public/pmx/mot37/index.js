@@ -856,10 +856,12 @@ class Misc {
    * @param {number} forward 進む量プラスで
    */
   resolve(deg, forward, height) {
+    const centerdiff = new V3(0, 8, 0);
     // センターから目標へのベクトル
-    const rv = new V3(0, 0.95 - 8, -0.5 - 0);
-
+    const rv = new V3(0, 0.95, -0.5).sub(centerdiff);
+    // ワールド
     const targetp = new V3(0, height, -forward);
+    // ワールド
     const rootp = new V3(0, 0, -forward);
     const centerwd = -deg;
 
@@ -868,9 +870,11 @@ class Misc {
 
     // 場所を算出
     const centerwp = targetp.clone().sub(apv);
-    const centerlp = centerwp.clone().sub(rootp);
-    // 角度を算出
-    const centerldeg = Math.atan(centerlp.z, centerlp.y) * 180 / Math.PI;
+    const centerlp = centerwp.clone().sub(centerdiff).sub(rootp);
+    // 角度を算出 違う 平行移動している
+    //const centerldeg = Math.atan(centerlp.z, centerlp.y) * 180 / Math.PI;
+
+    const centerldeg = centerwd;
 
     const ret = {
       rootp,
@@ -1004,6 +1008,9 @@ class Misc {
       }
       console.log('rn', 'bkvs', bkvs);
 
+      let onestep = 4;
+      let targetHeight = 0.5;
+
       for (let j = 0; j < boneNum; ++j) { // ボーンループ
 
         for (let n = 0; n < 21; ++n) { // ループグループ。(30 or 60) * 21 あれば十分
@@ -1014,13 +1021,16 @@ class Misc {
             }
 
             const lfn5 = lfn * 0.5;
-            let forward = 8 * n;
-            let angt = i / lfn;
-            let deg = 30 * angt + 60 * (1 - angt);
+
+            let forward = onestep * n;
+            let subt = i / lfn5;
+            let deg = 30 * (1 - subt) + 60 * subt;
             if (i >= lfn5) {
-              forward += 8 * (i - lfn5) / lfn5;
+              subt -= 1;
+              deg = 60 * (1 - subt) + 30 * subt;
+              forward += onestep * subt;
             }
-            const result = this.resolve(deg, forward, 0.5);
+            const result = this.resolve(deg, forward, targetHeight);
 
             let obj = new Bone();
             obj.frame = frame;
