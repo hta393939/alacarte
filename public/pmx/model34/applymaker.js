@@ -1,8 +1,4 @@
-/**
- * @file applymaker.js
- */
 // clipboard にセットするための実行関数を持つ
-// 2024/2/12 14:23 分岐して使用中
 
 (function(_global) {
 
@@ -601,6 +597,11 @@ class ApplyMaker {
               '',
             ];
             vtx.weights = [vertexWeight, 1 - vertexWeight, 0, 0];
+          }
+          { // SDEF 時のみ参照される
+            vtx.r0 = [0, 0, 0]; // 3?
+            vtx.r1 = [0, 0, 0]; // 7?
+            vtx.c  = [0, 0, 0];
           }
           adjustvts.push(vtx);
         }

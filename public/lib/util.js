@@ -96,7 +96,7 @@ export class Util {
   }
 
   /**
-   * 
+   * quaternion 線形補間
    * @param {[number,number,number]} a 正規化後
    * @param {[number,number,number]} b 正規化後
    * @param {number} t bの重さ 
@@ -147,6 +147,26 @@ export class Util {
       return Util.halflerp(half, b, (t - 0.5) * 2, c - 1);
     }
     return half;
+  }
+
+  /**
+   * 線形補間
+   * @param {[number,number,number]} a 
+   * @param {[number,number,number]} b 
+   * @param {number} t bの重さ。0だとa、1だとb
+   */
+  static lerp(a, b, t) {
+    if (t <= 0) {
+      return [...a];
+    }
+    if (t >= 1) {
+      return [...b];
+    }
+    return [
+      a[0] * (1 - t) + b[0] * t,
+      a[1] * (1 - t) + b[1] * t,
+      a[2] * (1 - t) + b[2] * t,
+    ];
   }
 
 }

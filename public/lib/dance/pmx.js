@@ -6,47 +6,45 @@
 (function(_global) {
 
 class Vertex {
-/**
- * BDEF1
- * @default 0
- */
+  /**
+   * BDEF1
+   * @default 0
+   */
   static DEFORM_BDEF1 = 0;
-/**
- * BDEF2
- * @default 1
- */
+  /**
+   * BDEF2
+   * @default 1
+   */
   static DEFORM_BDEF2 = 1;
-/**
- * 4参照
- * @default 2
- */
+  /**
+   * 4参照
+   * @default 2
+   */
   static DEFORM_BDEF4 = 2;
-/**
- * spherical deform
- * @default 3
- */
+  /**
+   * spherical deform
+   * @default 3
+   */
   static DEFORM_SDEF = 3;
-/**
- * quaternion deform
- * @default 4
- */
+  /**
+   * quaternion deform
+   * @default 4
+   */
   static DEFORM_QDEF = 4;
 
-/**
- * 共用のトゥーン
- * 1
- */
+  /**
+   * 共用のトゥーン
+   * 1
+   */
   static TOONTYPE_SHARE = 1;
-/**
- * テクスチャでトゥーン
- * 0
- */
+  /**
+   * テクスチャでトゥーン
+   * 0
+   */
   static TOONTYPE_TEXTURE = 0;
 
   constructor() {
-/**
- * インデックス
- */
+    /** インデックス */
     this._index = 0;
 
     /**
@@ -54,22 +52,16 @@ class Vertex {
      */
     this.p = [0, 0,  0];
     this.n = [0, 0, -1];
-/**
- * V成分は上から下が 0.0～1.0
- */
+    /** V成分は上から下が 0.0～1.0 */
     this.uv = [0.5, 0.5];
 
     this.deformType = Vertex.DEFORM_BDEF2;
     this.weights = [1, 0, 0, 0];
     this.joints  = [0, 1, 0, 0];
 
-/**
- * ボーン名
- */
+    /** ボーン名 */
     this._boneName = ['', '', '', ''];
-/**
- * エッジ倍率
- */
+    /** エッジ倍率 */
     this.edgeRate = 1.0;
 
     this.c  = [0, 0, 0];
