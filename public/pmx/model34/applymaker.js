@@ -33,6 +33,26 @@ const _rad2deg = v => {
   return v * 180 / Math.PI;
 };
 
+/**
+ * 線形補間
+ * @param {[number,number,number]} a 
+ * @param {[number,number,number]} b 
+ * @param {number} t bの重さ。0だとa、1だとb
+ */
+const _lerp = (a, b, t) => {
+  if (t <= 0) {
+    return [...a];
+  }
+  if (t >= 1) {
+    return [...b];
+  }
+  return [
+    a[0] * (1 - t) + b[0] * t,
+    a[1] * (1 - t) + b[1] * t,
+    a[2] * (1 - t) + b[2] * t,
+  ];
+};
+
 
 class ApplyMaker {
   constructor() {
@@ -596,9 +616,11 @@ class ApplyMaker {
           { // SDEF 時のみ参照される。今は無効
             let index7 = (ringNum - 1 - 7) + i * ringNum;
             let index3 = (ringNum - 1 - 3) + i * ringNum;
-            vtx.r0 = [...bones[index7].p]; // #7
-            vtx.r1 = [...bones[index3].p]; // #3
-            vtx.c  = Util.lerp(vtx.r0, vtx.r1, vertexWeight);
+            if (index3 < bones.length) {
+              vtx.r0 = [...(bones[index7].p)]; // #7
+              vtx.r1 = [...(bones[index3].p)]; // #3
+              vtx.c  = _lerp(vtx.r0, vtx.r1, vertexWeight);
+            }
           }
           adjustvts.push(vtx);
         }
