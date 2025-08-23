@@ -104,7 +104,7 @@ class ApplyMaker {
       }
     }
 
-// 材質で絞るためのカウント
+    // 材質で絞るためのカウント
     let _ficount = 0;
     let mtl = null;
     for (let i = 0; i < parser.materials.length; ++i) {
@@ -118,7 +118,7 @@ class ApplyMaker {
       console.log(mtl._faceIndexNum / 3);
     }
 
-// 対象頂点を絞る
+    // 対象頂点を絞る
     const oneIndices = new Set();
     /** 右 */
     const R = 0;
@@ -129,9 +129,7 @@ class ApplyMaker {
     /** 1-origin */
     const rigidGroups = [RIGID_DEFAULT_GROUP, RIGID_NEXT_GROUP];
 
-    /**
-     * 最小が有効扱いするので大きい値
-     */
+    /** 最小が有効扱いするので大きい値 */
     const NA = 999999;
 
     let rmin = 99999;
@@ -148,7 +146,7 @@ class ApplyMaker {
         lr: NA,
       };
 
-// 影響1個
+      // 影響1個
       if (vtx.deformType !== PMX.Vertex.DEFORM_BDEF1) {
         continue;
       }
@@ -219,9 +217,7 @@ class ApplyMaker {
       }
     }
 
-    /**
-     * 各0～13段のインデックスに分離する
-     */
+    /** 各0～13段のインデックスに分離する */
     const ringNum = 14;
     const setset = [[], []];
     for (let i = 0; i < ringNum; ++i) {
@@ -266,7 +262,7 @@ class ApplyMaker {
       modelInfo.modelJa += typeAdd;
     }
 
-// リングごとに算出する
+    // リングごとに算出する
     /** 頂点トランスレートの場合 */
     const adjustvts = [];
     /**
@@ -278,7 +274,7 @@ class ApplyMaker {
     const _node = new PMX.PMXNode();
     _node.nameJa = _usePhy ? '物理変形' : 'ボーン変形';
     const items = [];
-
+    /** ボーン配列 */
     const bones = [];
 
     /** 既存表情への追加 */
@@ -347,10 +343,10 @@ class ApplyMaker {
         let vertexWeight = 1;
 
         // ここまでのオフセットを足す
-/**
- * このリングの重心
- * @type {V3}
- */
+        /**
+         * このリングの重心
+         * @type {V3}
+         */
         const center = new V3(...result.avg);
         /** ボーン */
         const bone = new PMX.Bone();
@@ -560,8 +556,7 @@ class ApplyMaker {
           }
         }
 
-// 頂点
-        for (const index of setset[i][j]) {
+        for (const index of setset[i][j]) { // 頂点
           const vtx = parser.vts[index];
 
           const vm = new PMX.VertexMorph();
@@ -598,10 +593,12 @@ class ApplyMaker {
             ];
             vtx.weights = [vertexWeight, 1 - vertexWeight, 0, 0];
           }
-          { // SDEF 時のみ参照される
-            vtx.r0 = [0, 0, 0]; // 3?
-            vtx.r1 = [0, 0, 0]; // 7?
-            vtx.c  = [0, 0, 0];
+          { // SDEF 時のみ参照される。今は無効
+            let index7 = (ringNum - 1 - 7) + i * ringNum;
+            let index3 = (ringNum - 1 - 3) + i * ringNum;
+            vtx.r0 = [...bones[index7].p]; // #7
+            vtx.r1 = [...bones[index3].p]; // #3
+            vtx.c  = Util.lerp(vtx.r0, vtx.r1, vertexWeight);
           }
           adjustvts.push(vtx);
         }
@@ -615,7 +612,8 @@ class ApplyMaker {
       }
     }
 
-    if (_usePhy) { // 補正
+
+    if (_usePhy) { // 物理属性補正
       for (const rigid of parser.rigids) {
         if (rigid.nameJa === '右胸'
           || rigid.nameJa === '左胸') {
@@ -634,7 +632,7 @@ class ApplyMaker {
       }
     }
 
-    {
+    { // モーフ追加
       const mr = new PMX.Morph();
       morphs.push(mr);
       mr.nameEn = `p`;
