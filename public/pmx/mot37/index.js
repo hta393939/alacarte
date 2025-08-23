@@ -859,8 +859,10 @@ class Misc {
   resolve(deg, forward, height) {
     // 全ての親からのセンターの相対位置
     const centerdiff = new V3(0, 8, 0);
+    // 目標地点のワールド位置
+    const targetwp = new V3(0, 9.8, -0.3); // -0.4 とか -0.6
     // センターから目標へのベクトル
-    const rv = new V3(0, 0.95, -0.5);
+    const rv = targetwp.sub(centerdiff);
 
     // ワールド
     const targetp = new V3(0, height, -forward);
@@ -998,8 +1000,8 @@ class Misc {
               if (frame !== 0) { // 一旦先頭だけ
                 continue;
               }
-              obj.p = [0, 0, 0, 1];
-              obj.p[0] = (isLeft ? 1 : -1) * 1.5;
+              obj.p = [6, -5, -2];
+              obj.p[0] = (isLeft ? 1 : -1) * 6;
               obj.q = [0, 0, 0, 1];
               break;
 
