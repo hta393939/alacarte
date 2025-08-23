@@ -104,14 +104,14 @@ class Misc {
    * 
    * @param {File} file 
    */
-  async makeApplyClip(file) {
+  async makeApplyClip(file, param) {
     const ab = await file.arrayBuffer();
     const parser = new PMX.Maker();
     this.parser = parser;
     parser.parse(ab);
 
     const maker = new ApplyMaker();
-    const result = maker.analyzeFileRoss(parser);
+    const result = maker.analyzeFileRoss(parser, param);
 
     result.push('');
     let str = result.join('\n');
@@ -618,9 +618,7 @@ class Misc {
     //this.draw3(window.canvast3);
 
     {
-      /**
-       * @type {HTMLDivElement}
-       */
+      /** @type {HTMLDivElement} */
       const el = window.drop;
       el?.addEventListener('dragover', ev => {
         ev.stopPropagation();
@@ -630,15 +628,14 @@ class Misc {
       el?.addEventListener('drop', ev => {
         ev.stopPropagation();
         ev.preventDefault();
-        this.makeApplyClip(ev.dataTransfer.files[0]);
+        const param = this.getCommonOptions();
+        this.makeApplyClip(ev.dataTransfer.files[0], param);
 //                this.parseFile(ev.dataTransfer.files[0]);
       });
     }
 
     {
-      /**
-       * @type {HTMLDivElement}
-       */
+      /** @type {HTMLDivElement} */
       const el = window.dropsub;
       el?.addEventListener('dragover', ev => {
         ev.stopPropagation();

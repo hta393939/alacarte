@@ -65,7 +65,7 @@ class ApplyMaker {
    * @param {PMX.Parser} parser 
    * @returns {string[]} 行ごとに返す
    */
-  analyzeFileRoss(parser) {
+  analyzeFileRoss(parser, param) {
     /**
      * 物理変形
      * @type {boolean}
@@ -79,6 +79,11 @@ class ApplyMaker {
      * gui group(1-origin)
      */
     const RIGID_DEFAULT_GROUP = 3;
+    const RIGID_NEXT_GROUP = 4;
+
+    const firstj = 7;
+    const sencondj = 5;
+    const thirdj = 3;
 
     let rc = 93;
     //const rce = 94; // 無い
@@ -119,11 +124,15 @@ class ApplyMaker {
 
 // 対象頂点を絞る
     const oneIndices = new Set();
-
+    /** 右 */
     const R = 0;
+    /** 左 */
     const L = 1;
-    //const lrname = ['right', 'left'];
+    /** 右左のプリフィクス */
     const lrname = ['r_', 'l_'];
+    /** 1-origin */
+    const rigidGroups = [RIGID_DEFAULT_GROUP, RIGID_NEXT_GROUP];
+
     /**
      * 最小が有効扱いするので大きい値
      */
@@ -135,9 +144,7 @@ class ApplyMaker {
     for (let i = 0; i < mtl._faceIndexNum; ++i) {
       const index = _ficount + i;
       const vtxIndex = parser.faceIndices[index];
-/**
- * 頂点1個
- */
+      /** 頂点1個 */
       const vtx = parser.vts[vtxIndex];
       vtx._analyze = {
         target: false,
@@ -248,14 +255,23 @@ class ApplyMaker {
         `${_useAdd ? '追加剛体有り': ''}`,
       ];
       modelInfo.commentJa += comments.join('\r\n');
-      // TODO: 'g'
-      modelInfo.modelJa += `${_usePhy ? (_useChain ? 'e' : 'd') : ''}`;
+
+      let typeAdd = '';
+      if (_usePhy) {
+        if (_useChain) {
+          typeAdd = 'e';
+        } else {
+          typeAdd = 'd';
+          if (_useAdd) {
+            typeAdd = 'g';
+          }
+        }
+      }
+      modelInfo.modelJa += typeAdd;
     }
 
 // リングごとに算出する
-/**
- * 頂点トランスレートの場合
- */
+    /** 頂点トランスレートの場合 */
     const adjustvts = [];
     /**
      * モーフの場合
@@ -269,18 +285,12 @@ class ApplyMaker {
 
     const bones = [];
 
-    /**
-     * 既存表情への追加
-     */
+    /** 既存表情への追加 */
     const frames = [];
 
-    /**
-     * @type {PMX.Rigid[]}
-     */
+    /** @type {PMX.Rigid[]} */
     const rigids = [];
-    /**
-     * @type {PMX.Joint[]}
-     */
+    /** @type {PMX.Joint[]} */
     const joints = [];
 
     const _shapes = [
@@ -289,8 +299,8 @@ class ApplyMaker {
       { rr: 0.8, delta: 0.02 }, // 2
       { rr: 1.0, delta: 0.02 }, // 3
       { rr: 1.1, delta: 0.04 }, // 4
-      { rr: 1.08, delta: 0.05 }, // 5
-      { rr: 1.05, delta: 0.05 + Math.sqrt(3) * 0.05 }, // 6 NOTE: 長くした
+      { rr: 1.08, delta: 0.05 + 0.04 }, // 5 NOTE: 長くした
+      { rr: 1.05, delta: 0.05 + 0.04 }, // 6 NOTE: 長くした
       { rr: 1, delta: 0.03 }, // 7 基準
       { rr: 1, delta: 0.01 }, // 8
       { rr: 1, delta: 0.01 }, // 9
@@ -299,26 +309,11 @@ class ApplyMaker {
       { rr: 1, delta: 0.02 }, // 12
       { rr: 1, delta: 0.02 }, // 13          
     ];
-/*
-    const _shapes = [
-      { rr: 1, delta: 0.00 }, // 0
-      { rr: 0.4, delta: -0.01 }, // 1
-      { rr: 0.8, delta: 0.02 }, // 2
-      { rr: 1.0, delta: 0.02 }, // 3
-      { rr: 1.1, delta: 0.02 }, // 4
-      { rr: 1.08, delta: 0.03 }, // 5
-      { rr: 1.05, delta: 0.03 }, // 6
-      { rr: 1, delta: 0.03 }, // 7 基準
-      { rr: 1, delta: 0.01 }, // 8
-      { rr: 1, delta: 0.01 }, // 9
-      { rr: 1, delta: 0.02 }, // 10
-      { rr: 1, delta: 0.02 }, // 11
-      { rr: 1, delta: 0.02 }, // 12
-      { rr: 1, delta: 0.02 }, // 13          
-    ]; */
 
     const additiveMorphs = [];
     for (let i = 0; i < 2; ++i) {
+      const isRight = (i === R);
+
       const morph = new PMX.Morph();
       additiveMorphs.push(morph);
       morph.nameEn = `${lrname[i]}chest`;
@@ -327,17 +322,17 @@ class ApplyMaker {
       morph.type = PMX.Morph.TYPE_VERTEX;
 
       /** 直前の親で更新していくボーン名 */
-      let _preBoneName = ((i === R) ? '右' : '左') + '胸';
+      let _preBoneName = (isRight ? '右' : '左') + '胸';
       /** 親ボーン保持用 */
       let _parentBoneName = '' + _preBoneName;
       /** 更新していく物理名 */
       let _preRigidName = '' + _preBoneName;
-/**
- * ウェイト影響ボーン．
- * 一番最初は局所ルート
- */
+      /**
+       * 頂点へのウェイト影響ボーン．
+       * 一番最初は局所ルート
+       */
       let _effectBoneName = '' + _preBoneName;
-
+      /** #7ボーン名 */
       const _sevenBoneName = `${lrname[i]}chest${7}`;
 
       let offsets = [0, 0, 0];
@@ -352,9 +347,7 @@ class ApplyMaker {
           radius7 = result.radius;
         }
         let newradius = radius7;
-/**
- * 根本に近い方の重み
- */
+        /** 根本に近い方の重み */
         let vertexWeight = 1;
 
         // ここまでのオフセットを足す
@@ -363,9 +356,7 @@ class ApplyMaker {
  * @type {V3}
  */
         const center = new V3(...result.avg);
-/**
- * ボーン
- */
+        /** ボーン */
         const bone = new PMX.Bone();
         bones.push(bone);
         bone.nameEn = `${lrname[i]}chest${j}`;
@@ -386,9 +377,7 @@ class ApplyMaker {
         bone.zLocalVector = new V3(...basis[0]).scale(-1).asArray();
         // 親ボーン
         bone._parentName = _parentBoneName;
-/**
- * フレーム内アイテム
- */
+        /** フレーム内アイテム */
         const item = new PMX.NodeItem();
         item._parentName = _node.nameJa;
         item._itemName = bone.nameJa;
@@ -399,25 +388,22 @@ class ApplyMaker {
         rigid.nameEn = bone.nameEn;
         rigid._boneName = bone.nameJa;
         rigid.type = _usePhy ? PMX.Rigid.TYPE_DYNAMIC_POS : PMX.Rigid.TYPE_STATIC;
-        //rigid.type = _usePhy ? PMX.Rigid.TYPE_DYNAMIC : PMX.Rigid.TYPE_STATIC;
         rigid.shape = PMX.Rigid.SHAPE_CAPSULE;
         rigid.p = [...bone.p]; // 剛体位置はここで終わり
-        /**
-         * 半径
-         */
-        const rr = (newradius >= 0) ? newradius : result.radius;
-        let capHeight = rr;
+        /** 計算上の半径 */
+        //const rr = (newradius >= 0) ? newradius : result.radius;
         //rigid.size = [rr, capHeight, rr];
         rigid.size = [0.11, 0.29, 1];
         //rigid.size = [0.11, 0.29, 1]; // キープ
-        if (_useAdd) {
-          rigid.size = [0.11, 0.29 * 0.5, 1];
+        if (j === sencondj) {
+          //rigid.size = [0.11, 0.29 * 0.5, 1];
         }
 
-        rigid.setUIGroup(RIGID_DEFAULT_GROUP);
+        rigid.setUIGroup(rigidGroups[i]);
         rigid.setUINots(1, 2,
-          // 3, // 当たる
+          rigidGroups[i], // 自分側には当たらない(逆には当たる)
           13, 14, 15, 16);
+
         rigid.moveDamping = 0;
         rigid.rotDamping = 1; // 全減衰でよい。joint ばねで戻す
         //rigid.mass = 0.002;
@@ -429,20 +415,20 @@ class ApplyMaker {
         const joint = new PMX.Joint();
         joint.nameEn = `j_${i}_${j}`;
         joint.nameJa = joint.nameEn;
-        joint.p = [...rigid.p];
+        joint.p = [...bone.p]; // NOTE: 書き換えた
         joint._rigidName = [_preRigidName, rigid.nameJa];
-        if (_useAdd) {
-          joint._rigidName = [`${rigid.p[0] < 0 ? 'r':'l'}_chest7`, rigid.nameJa];
+        if (j === sencondj) {
+          joint._rigidName = [_sevenBoneName, rigid.nameJa];
         }
         joint.lockMove();
         joint.lockRot();
         {
           //if (j >= 1 && j <= 7) {
-          if (j === 7) { // 重要ボーン
+          if (j === firstj) { // 重要ボーン #7
             /** 移動範囲 */
             const dp = 0;
             /** 回転範囲 */
-            const dr = (j === 7) ? /*90*/ 45 : 45;
+            const dr = (j === firstj) ? /*90*/ 45 : 45;
             joint.moveUpper = [dp, dp, dp];
             joint.moveLower = [-dp, -dp, -dp];
             joint.rotUpper = [_deg2rad(dr), _deg2rad(dr), _deg2rad(dr * 1)];
@@ -496,7 +482,7 @@ class ApplyMaker {
             }
           }
 
-          if (_useAdd && (j === 5)) { // 2個め
+          if (_useAdd && (j === sencondj)) { // 2個め #5
             /** 移動範囲 */
             const dp = 0;
             /** 回転範囲 */
@@ -534,21 +520,30 @@ class ApplyMaker {
             }
           }
 
+          //// 頂点ウエイトなどの計算や更新
           if (j >= 8) { // より根本ボーンに近い方(j は逆進)       
             //_effectBoneName = bone.nameJa;
             _effectBoneName = _preBoneName;
             // 13, 12～7
             vertexWeight = (j - 7) / (12 - 7);
             vertexWeight = Math.max(0, Math.min(1, vertexWeight));
-          } else if (j === 7) {
+          } else if (j === firstj) { // #7
             _effectBoneName = bone.nameJa;
 
             // 格納後
             _parentBoneName = bone.nameJa;
           } else if (j <= 6) { // より先端に近い方 endボーン
-            if (j != 5) { //// 通常 #0-4, #6
-              _effectBoneName = bone.nameJa;
-              // 格納後
+
+            if (thirdj < j && j < firstj) { // #3 < j < #7
+              vertexWeight = (j - thirdj) / (firstj - thirdj);
+              vertexWeight = Math.max(0, Math.min(1, vertexWeight));
+              // #3と#7で逆なので逆転させる
+              vertexWeight = 1 - vertexWeight;
+
+              //_effectBoneName = bone.nameJa;
+              _effectBoneName = `${lrname[i]}chest${thirdj}`;
+
+              // 格納後 次のボーンに使用する
               _parentBoneName = bone.nameJa;
               
               if (_usePhy) {
@@ -556,7 +551,7 @@ class ApplyMaker {
               }
 
             } else {
-              //// 特殊 j == 5
+              //// 通常
               _effectBoneName = bone.nameJa;
               // 格納後
               _parentBoneName = bone.nameJa;
@@ -599,7 +594,12 @@ class ApplyMaker {
 // 頂点変形を足す
           {
             vtx.deformType = PMX.Vertex.DEFORM_BDEF2;
-            vtx._boneName = [_effectBoneName, _sevenBoneName, '', ''];
+            vtx._boneName = [
+              _effectBoneName,
+              _sevenBoneName,
+              '',
+              '',
+            ];
             vtx.weights = [vertexWeight, 1 - vertexWeight, 0, 0];
           }
           adjustvts.push(vtx);
@@ -620,8 +620,7 @@ class ApplyMaker {
           || rigid.nameJa === '左胸') {
           rigid._boneName = rigid.nameJa;
           rigid.setUINots(1, 2,
-            3, // NOTE: 当たるようにするか??
-            4,
+            3, 4,
             13, 14, 15, 16
           );
           if (_useChain) {
