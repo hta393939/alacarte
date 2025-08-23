@@ -210,14 +210,14 @@ class ApplyMaker {
 
     console.log('one, targets', oneIndices, targets);
 
-// flood で ring 階層を更新していく
+    // flood で ring 階層を更新していく
     const faceNum = mtl._faceIndexNum / 3;
     for (let i = 0; i < 14; ++i) {
       for (let j = 0; j < faceNum; ++j) { // 面ループ
         const index = _ficount + j * 3;
 
         const faceIndices = parser.faceIndices.slice(index, index + 3);
-// map() の返り値が Type[] であるので最後に変換が入る
+        // map() の返り値が Type[] であるので最後に変換が入る
         const vs = Array.from(faceIndices).map(v => parser.vts[v]);
 
         const minRing = Math.min(...(vs.map(v => v._analyze?.ring ?? NA)));
@@ -322,6 +322,20 @@ class ApplyMaker {
       { rr: 1, delta: 0.02 }, // 13          
     ];
 
+/* 計算後位置
+l_chest7 [1.309, 14.648, -1.857];
+l_chest5 [1.452, 14.790, -2.127]; // #5, #6 を 0.04 伸ばした後
+l_chest3 [1.512, 14.850, -2.241];
+l_chest1 [1.530, 14.868, -2.276];
+
+body
+l_chest7 [1.393, 14.734, -2.017];
+*/
+    let dist51 = _dist([1.452, 14.790, -2.127], [1.530, 14.868, -2.276]);
+    //dist51 += _shapes[4].delta + _shapes[3].delta + _shapes[2].delta;
+    console.log('dist51', dist51);
+
+
     const additiveMorphs = [];
     for (let i = 0; i < 2; ++i) {
       const isRight = (i === R);
@@ -406,9 +420,15 @@ class ApplyMaker {
         //const rr = (newradius >= 0) ? newradius : result.radius;
         //rigid.size = [rr, capHeight, rr];
         rigid.size = [0.11, 0.29, 1];
-        //rigid.size = [0.11, 0.29, 1]; // キープ
+        //rigid.size = [0.11, 0.29, 1]; // キープ 1つのとき元のうまくいくサイズ
+        if (_useAdd) {
+          const halfDist = _dist([1.452, 14.790, -2.127], [1.393, 14.734, -2.017]);
+          rigid.size = [0.11, halfDist * 2, 1];
+          console.log('0.29', 0.29, 'halfDist * 2', halfDist * 2);
+        }
+
         if (j === sencondj) {
-          //rigid.size = [0.11, 0.29 * 0.5, 1];
+          rigid.size = [0.11, dist51 - 0.11, 1];
         }
 
         rigid.setUIGroup(rigidGroups[i]);
