@@ -854,25 +854,26 @@ class Misc {
    * 正計算する
    * @param {number} deg 倒れる量プラスで
    * @param {number} forward 進む量プラスで
+   * @param {number} height 目標高さ
    */
   resolve(deg, forward, height) {
+    // 全ての親からのセンターの相対位置
     const centerdiff = new V3(0, 8, 0);
     // センターから目標へのベクトル
-    const rv = new V3(0, 0.95, -0.5).sub(centerdiff);
+    const rv = new V3(0, 0.95, -0.5);
+
     // ワールド
     const targetp = new V3(0, height, -forward);
     // ワールド
     const rootp = new V3(0, 0, -forward);
     const centerwd = -deg;
 
-    // rv を deg だけ倒したベクトルを計算
-    const apv = rv.appliedQ(_qaxis(0, centerwd));
+    // rv を deg だけ倒した(符号は-deg)ベクトルを計算
+    const apv = rv.appliedQ(_qaxis(Misc.XAXIS, centerwd));
 
     // 場所を算出
     const centerwp = targetp.clone().sub(apv);
     const centerlp = centerwp.clone().sub(centerdiff).sub(rootp);
-    // 角度を算出 違う 平行移動している
-    //const centerldeg = Math.atan(centerlp.z, centerlp.y) * 180 / Math.PI;
 
     const centerldeg = centerwd;
 
@@ -881,38 +882,13 @@ class Misc {
       centerldeg,
       centerlp,
     };
+/*
+    console.log(`rv`, rv);
+    console.log(`apv`, apv),
+    console.log(`centerwp`, centerwp);
+    console.log(`centerlp`, centerlp);
+*/
     return ret;
-  }
-
-  /**
-   * IKもどき
-   * @param {V3} wtp
-   */
-  resolve2(ps, wtp) {
-    const calcs = [...ps];
-
-    // wtp に _target が来るように
-    let minerr = 123456;
-    let mindegs = [0, 0, 0];
-    for (let i = 0; i < 100; ++i) {
-      const cands = [0, 0, 0];
-      for (let j = 0; j < 3; ++j) {
-        const index = [0,1,8][j];
-        const xdeg = 0;
-        mindegs[j] = xdeg;
-
-        // 計算する
-      }
-      const err = wtp.distance(calcs.wpos[8]);
-      if (err <= minerr) {
-        minerr = err;
-        mindegs = [...cands];
-      }
-    }
-
-    // mindegs から構築する
-    return mindegs;
-    //return calcs;
   }
 
   /**
@@ -935,18 +911,14 @@ class Misc {
 
     const param = this.gatherParam();
     const {
-      step, loopsec, repeatnum, ampdeg, maxframe,
+      loopsec, ampdeg, maxframe,
       floorn, // 1 or 2 or 6
-      motiontype,
       crosstype,
     } = param;
     // 1 or 2 or 6
 
     /** 1ループフレーム数。30, 60 など */
     let lfn = 30 * loopsec;
-
-    const crossaxis = Misc.YAXIS;
-    const motionaxis = Misc.ZAXIS;
 
     //// モーション
     let boneNum = 10;
@@ -971,17 +943,9 @@ class Misc {
         { name: `_target`, wpos: [0, 9.5, -0.5]  },
         //{ name: `頭`, wpos: [0, 16.84375, 0]  },
       ];
-      const motiondegs = [
-        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
-        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg],
-        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 2],
-        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 3],
-        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 4],
-        [ampdeg,  ampdeg,ampdeg,ampdeg,ampdeg, ampdeg, ampdeg,ampdeg,ampdeg,ampdeg * 5],
-      ];
       /** 垂直軸度数 */
       const crossdegs = [
-        [ 0,  0, na, na, na,  na,  na,  na,  na,  na ], // first try
+        [ 0,  0,  0,  0, na,  na,  na,  na,  na,  na ], // first try
         [ 0,  0,  0,  0,  0,   0,   0,   0,   0,  na ], // bone full
         [na, na, na, na, na, +90, -90, -90, +90, -21 ], // lower degs
         [na, na, na, na, na,   0,   0,   0,   0,   0 ], // plane
@@ -989,27 +953,8 @@ class Misc {
         [na, na, na, na, na, +90, -90, -90, +90, -90 ], // upper degs thin
       ];
 
-      const bkvs = [];
-      for (let i = 0; i < boneNum; ++i) {
-        let kvs = [];
-        // トポロジーの決定
-        // cos が減少していく範囲なら true
-        const halfAdd = this.nfloor(lfn * 0.5, floorn);
-        {
-          const t1 = lfn * 0.5;
-          const cs = this.gettri(t1, lfn);
-          kvs.push({ key: 0, val: cs.cos });
-
-          kvs.push({ key: t1, val: -1 });
-          kvs.push({ key: t1 + halfAdd, val: 1 });
-          //kvs.push({ key: lfn, val: cs.cos });
-        }
-        bkvs.push(kvs);
-      }
-      console.log('rn', 'bkvs', bkvs);
-
       let onestep = 4;
-      let targetHeight = 0.5;
+      let targetHeight = 5;
 
       for (let j = 0; j < boneNum; ++j) { // ボーンループ
 
@@ -1036,6 +981,7 @@ class Misc {
             obj.frame = frame;
             obj.name = subbones[j].name;
 
+            let isLeft = false;
             switch (obj.name) {
             case '全ての親':
               obj.p = result.rootp.asArray();
@@ -1043,7 +989,21 @@ class Misc {
               break;
             case 'センター':
               obj.p = result.centerlp.asArray();
-              obj.q = _qaxis(0, result.centerldeg);
+              obj.q = _qaxis(Misc.XAXIS, result.centerldeg);
+              break;
+
+            case '左足ＩＫ':
+              isLeft = true;
+            case '右足ＩＫ':
+              if (frame !== 0) { // 一旦先頭だけ
+                continue;
+              }
+              obj.p = [0, 0, 0, 1];
+              obj.p[0] = (isLeft ? 1 : -1) * 1.5;
+              obj.q = [0, 0, 0, 1];
+              break;
+
+            default:
               break;
             }
 
