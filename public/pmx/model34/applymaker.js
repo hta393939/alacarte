@@ -95,7 +95,10 @@ class ApplyMaker {
      * gui group(1-origin)
      */
     const RIGID_DEFAULT_GROUP = 3;
-    const RIGID_NEXT_GROUP = 4;
+    /**
+     * gui group(1-origin) #4はだめ
+     */
+    const RIGID_NEXT_GROUP = 3;
 
     const firstj = 7;
     const sencondj = 5;
@@ -146,7 +149,9 @@ class ApplyMaker {
     const L = 1;
     /** 右左のプリフィクス */
     const lrname = ['r_', 'l_'];
-    /** 1-origin */
+    /**
+     * 1-origin
+     */
     const rigidGroups = [RIGID_DEFAULT_GROUP, RIGID_NEXT_GROUP];
 
     /** 最小が有効扱いするので大きい値 */
@@ -309,10 +314,10 @@ class ApplyMaker {
       { rr: 1, delta: 0.00 }, // 0
       { rr: 0.4, delta: -0.01 }, // 1
       { rr: 0.8, delta: 0.02 }, // 2
-      { rr: 1.0, delta: 0.02 }, // 3
-      { rr: 1.1, delta: 0.04 }, // 4
-      { rr: 1.08, delta: 0.05 + 0.04 }, // 5 NOTE: 長くした
-      { rr: 1.05, delta: 0.05 + 0.04 }, // 6 NOTE: 長くした
+      { rr: 1.0, delta: 0.02 + 0.02 }, // 3
+      { rr: 1.1, delta: 0.04 + 0.02 }, // 4
+      { rr: 1.08, delta: 0.05 + 0.02 }, // 5 NOTE: 長くした
+      { rr: 1.05, delta: 0.05 }, // 6
       { rr: 1, delta: 0.03 }, // 7 基準
       { rr: 1, delta: 0.01 }, // 8
       { rr: 1, delta: 0.01 }, // 9
@@ -322,7 +327,7 @@ class ApplyMaker {
       { rr: 1, delta: 0.02 }, // 13          
     ];
 
-/* 計算後位置
+/* 計算後位置 // #5, #6 を 0.04 伸ばした後
 l_chest7 [1.309, 14.648, -1.857];
 l_chest5 [1.452, 14.790, -2.127]; // #5, #6 を 0.04 伸ばした後
 l_chest3 [1.512, 14.850, -2.241];
@@ -330,8 +335,21 @@ l_chest1 [1.530, 14.868, -2.276];
 
 body
 l_chest7 [1.393, 14.734, -2.017];
+
+    const calced7b = [1.393, 14.734, -2.017];
+    //const calced7 = [];
+    const calced5 = [1.452, 14.790, -2.127];
+    const calced1 = [1.530, 14.868, -2.276]; */
+
+/* #3, #4, #5 を 0.02 長くした
 */
-    let dist51 = _dist([1.452, 14.790, -2.127], [1.530, 14.868, -2.276]);
+    const calced7b = [1.393, 14.734, -2.017];
+    const calced7 = [1.309, 14.648, -1.857];
+    const calced5 = [1.435, 14.773, -2.095];
+    const cacced3 = [1.495, 14.833, -2.209];
+    const calced1 = [1.522, 14.859, -2.260];
+
+    let dist51 = _dist(calced5, calced1);
     //dist51 += _shapes[4].delta + _shapes[3].delta + _shapes[2].delta;
     console.log('dist51', dist51);
 
@@ -403,6 +421,10 @@ l_chest7 [1.393, 14.734, -2.017];
         bone.zLocalVector = new V3(...basis[0]).scale(-1).asArray();
         // 親ボーン
         bone._parentName = _parentBoneName;
+        if (_useAdd && j === sencondj) {
+          bone._parentName = `${lrname[i]}chest7`;
+        }
+
         /** フレーム内アイテム */
         const item = new PMX.NodeItem();
         item._parentName = _node.nameJa;
@@ -422,13 +444,11 @@ l_chest7 [1.393, 14.734, -2.017];
         rigid.size = [0.11, 0.29, 1];
         //rigid.size = [0.11, 0.29, 1]; // キープ 1つのとき元のうまくいくサイズ
         if (_useAdd) {
-          const halfDist = _dist([1.452, 14.790, -2.127], [1.393, 14.734, -2.017]);
+          const halfDist = _dist(calced5, calced7b);
           rigid.size = [0.11, halfDist * 2, 1];
-          console.log('0.29', 0.29, 'halfDist * 2', halfDist * 2);
-        }
-
-        if (j === sencondj) {
-          rigid.size = [0.11, dist51 - 0.11, 1];
+          if (j === sencondj) {
+            rigid.size = [0.11, dist51 - 0.11, 1];
+          }
         }
 
         rigid.setUIGroup(rigidGroups[i]);
@@ -572,14 +592,17 @@ l_chest7 [1.393, 14.734, -2.017];
               // #3と#7で逆なので逆転させる
               vertexWeight = 1 - vertexWeight;
 
+              // このターンの後半で使用する
               //_effectBoneName = bone.nameJa;
               _effectBoneName = `${lrname[i]}chest${thirdj}`;
 
               // 格納後 次のボーンに使用する
               _parentBoneName = bone.nameJa;
-              
-              if (_usePhy) {
-                bone.bits |= PMX.Bone.BIT_AFTERPHY;
+
+              if (j !== secondj) { // #5以外                
+                if (_usePhy) {
+                  bone.bits |= PMX.Bone.BIT_AFTERPHY;
+                }
               }
 
             } else {
