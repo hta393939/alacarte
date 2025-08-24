@@ -913,11 +913,12 @@ class Misc {
 
     const param = this.gatherParam();
     const {
-      loopsec, ampdeg, maxframe,
+      loopsec, ampdeg,
       floorn, // 1 or 2 or 6
       crosstype,
     } = param;
-    // 1 or 2 or 6
+    let maxframe = param.maxframe;
+    maxframe = 120;
 
     /** 1ループフレーム数。30, 60 など */
     let lfn = 30 * loopsec;
@@ -971,11 +972,15 @@ class Misc {
 
             let forward = onestep * n;
             let subt = i / lfn5;
-            let deg = 30 * (1 - subt) + 60 * subt;
+            let deg = 0;
             if (i >= lfn5) {
               subt -= 1;
+              subt *= 30 / 24;
               deg = 60 * (1 - subt) + 30 * subt;
               forward += onestep * subt;
+            } else {
+              subt *= 30 / 24;
+              deg = 30 * (1 - subt) + 60 * subt;
             }
             const result = this.resolve(deg, forward, targetHeight);
 
