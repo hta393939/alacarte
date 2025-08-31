@@ -98,10 +98,10 @@ class ApplyMaker {
     /**
      * gui group(1-origin) #4はだめ
      */
-    const RIGID_NEXT_GROUP = 3;
+    const RIGID_NEXT_GROUP = 6;
 
     const firstj = 7;
-    const sencondj = 5;
+    const secondj = 5;
     const thirdj = 3;
 
     let rc = 93;
@@ -314,10 +314,10 @@ class ApplyMaker {
       { rr: 1, delta: 0.00 }, // 0
       { rr: 0.4, delta: -0.01 }, // 1
       { rr: 0.8, delta: 0.02 }, // 2
-      { rr: 1.0, delta: 0.02 + 0.02 }, // 3
-      { rr: 1.1, delta: 0.04 + 0.02 }, // 4
-      { rr: 1.08, delta: 0.05 + 0.02 }, // 5 NOTE: 長くした
-      { rr: 1.05, delta: 0.05 }, // 6
+      { rr: 1.0, delta: 0.02 + 0.01 }, // 3
+      { rr: 1.1, delta: 0.04 + 0.01 }, // 4
+      { rr: 1.08, delta: 0.05 + 0.01 }, // 5 NOTE: 長くした
+      { rr: 1.05, delta: 0.05 + 0.01 }, // 6 NOTE: 長くした
       { rr: 1, delta: 0.03 }, // 7 基準
       { rr: 1, delta: 0.01 }, // 8
       { rr: 1, delta: 0.01 }, // 9
@@ -342,7 +342,13 @@ l_chest7 [1.393, 14.734, -2.017];
     const calced1 = [1.530, 14.868, -2.276]; */
 
 /* #3, #4, #5 を 0.02 長くした
-*/
+    const calced7b = [1.393, 14.734, -2.017];
+    const calced7 = [1.309, 14.648, -1.857];
+    const calced5 = [1.435, 14.773, -2.095];
+    const cacced3 = [1.495, 14.833, -2.209];
+    const calced1 = [1.522, 14.859, -2.260]; */
+
+    /* #6, #5, #4, #3 を 0.01 長くするかも */
     const calced7b = [1.393, 14.734, -2.017];
     const calced7 = [1.309, 14.648, -1.857];
     const calced5 = [1.435, 14.773, -2.095];
@@ -421,7 +427,7 @@ l_chest7 [1.393, 14.734, -2.017];
         bone.zLocalVector = new V3(...basis[0]).scale(-1).asArray();
         // 親ボーン
         bone._parentName = _parentBoneName;
-        if (_useAdd && j === sencondj) {
+        if (_useAdd && j === secondj) {
           bone._parentName = `${lrname[i]}chest7`;
         }
 
@@ -446,7 +452,7 @@ l_chest7 [1.393, 14.734, -2.017];
         if (_useAdd) {
           const halfDist = _dist(calced5, calced7b);
           rigid.size = [0.11, halfDist * 2, 1];
-          if (j === sencondj) {
+          if (j === secondj) {
             rigid.size = [0.11, dist51 - 0.11, 1];
           }
         }
@@ -469,7 +475,7 @@ l_chest7 [1.393, 14.734, -2.017];
         joint.nameJa = joint.nameEn;
         joint.p = [...bone.p]; // NOTE: 書き換えた
         joint._rigidName = [_preRigidName, rigid.nameJa];
-        if (j === sencondj) {
+        if (j === secondj) {
           joint._rigidName = [_sevenBoneName, rigid.nameJa];
         }
         joint.lockMove();
@@ -534,7 +540,7 @@ l_chest7 [1.393, 14.734, -2.017];
             }
           }
 
-          if (_useAdd && (j === sencondj)) { // 2個め #5
+          if (_useAdd && (j === secondj)) { // 2個め #5
             /** 移動範囲 */
             const dp = 0;
             /** 回転範囲 */
