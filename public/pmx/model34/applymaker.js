@@ -348,12 +348,12 @@ l_chest7 [1.393, 14.734, -2.017];
     const cacced3 = [1.495, 14.833, -2.209];
     const calced1 = [1.522, 14.859, -2.260]; */
 
-    /* #6, #5, #4, #3 を 0.01 長くするかも */
+    /* #6, #5, #4, #3 を 0.01 長くした */
     const calced7b = [1.393, 14.734, -2.017];
     const calced7 = [1.309, 14.648, -1.857];
-    const calced5 = [1.435, 14.773, -2.095];
-    const cacced3 = [1.495, 14.833, -2.209];
-    const calced1 = [1.522, 14.859, -2.260];
+    const calced5 = [1.439, 14.777, -2.103];
+    const calced3 = [1.491, 14.828, -2.201];
+    const calced1 = [1.514, 14.851, -2.244];
 
     let dist51 = _dist(calced5, calced1);
     //dist51 += _shapes[4].delta + _shapes[3].delta + _shapes[2].delta;
