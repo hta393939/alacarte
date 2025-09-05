@@ -96,9 +96,9 @@ class ApplyMaker {
      */
     const RIGID_DEFAULT_GROUP = 3;
     /**
-     * gui group(1-origin) #4はだめ
+     * gui group(1-origin) #4は当てる方、#6は無効
      */
-    const RIGID_NEXT_GROUP = 6;
+    const RIGID_NEXT_GROUP = 9;
 
     const firstj = 7;
     const secondj = 5;
@@ -317,7 +317,7 @@ class ApplyMaker {
       { rr: 1.0, delta: 0.02 + 0.01 }, // 3
       { rr: 1.1, delta: 0.04 + 0.01 }, // 4
       { rr: 1.08, delta: 0.05 + 0.01 }, // 5 NOTE: 長くした
-      { rr: 1.05, delta: 0.05 + 0.01 }, // 6 NOTE: 長くした
+      { rr: 1.05, delta: 0.05 }, // 6
       { rr: 1, delta: 0.03 }, // 7 基準
       { rr: 1, delta: 0.01 }, // 8
       { rr: 1, delta: 0.01 }, // 9
@@ -348,12 +348,19 @@ l_chest7 [1.393, 14.734, -2.017];
     const cacced3 = [1.495, 14.833, -2.209];
     const calced1 = [1.522, 14.859, -2.260]; */
 
-    /* #6, #5, #4, #3 を 0.01 長くした */
+    /* #6, #5, #4, #3 を 0.01 長くした
     const calced7b = [1.393, 14.734, -2.017];
     const calced7 = [1.309, 14.648, -1.857];
     const calced5 = [1.439, 14.777, -2.103];
     const calced3 = [1.491, 14.828, -2.201];
-    const calced1 = [1.514, 14.851, -2.244];
+    const calced1 = [1.514, 14.851, -2.244]; */
+
+    /* #5, #4, #3 を 0.01 長くした */
+    const calced7b = [1.393, 14.734, -2.017];
+    const calced7 = [1.309, 14.648, -1.857];
+    const calced5 = [1.435, 14.773, -2.095];
+    const calced3 = [1.487, 14.824, -2.193];
+    const calced1 = [1.509, 14.846, -2.236];
 
     let dist51 = _dist(calced5, calced1);
     //dist51 += _shapes[4].delta + _shapes[3].delta + _shapes[2].delta;
