@@ -578,117 +578,6 @@ class Misc {
   }
 
   /**
-   * 明るくしたい場所は白アルファ
-   * 影は黒アルファチャンネル
-   * 無関係はalpha0
-   * 
-   * @param {HTMLCanvasElement} canvas 
-   */
-  async makeWaterKeep(param) {
-    console.log('makeWaterKeep called');
-    const w = param.size;
-    const h = w;
-    const canvas = new OffscreenCanvas(w, h);
-    const c = canvas.getContext('2d');
-
-    const data = c.getImageData(0, 0, w, h);
-
-    if (true) {
-      /**
-       * 中心から外までを1.0としたときの球半径
-       */
-      const rradius = 0.25;
-
-      const tailLen = param.taillen;
-      const heightrate = param.heightrate;
-      const ishigh = param.ishigh;
-
-      for (let y = 0; y < h; ++y) {
-        for (let x = 0; x < w; ++x) {
-          const offset = (x + w * y) * 4;
-
-          let lv = 1;
-          let a = 0;
-
-          const rx = (x - w * 0.5) / (w * 0.5);
-          const ry = (h * 0.5 - y) / (h * 0.5);
-          const d = Math.sqrt(rx ** 2 + ry ** 2);
-
-          const ax = rx * 1;
-          let spec = 0;
-          if (ry >= 0) {
-            let ang = Math.PI * 2 * ry / tailLen * 0.5;
-            let hr = (Math.cos(ang) + 3) / 4 * rradius;
-            const bx = Math.abs(rx);
-            if (bx > hr || ry >= tailLen) {
-              lv = 1;
-              a = 0;
-            } else {
-              const mx = bx / hr;
-              let z = Math.sqrt(1 - mx ** 2);
-              let rate = 1 - ry / tailLen;
-              a = z * rate;
-
-              lv = 1; // 白
-            }
-          } else { // 下半分
-            let ay = ry * 0.90;
-            let ad = Math.sqrt(ax ** 2 + ay ** 2);
-            if (ad < rradius) {
-              if (d < rradius) {
-                let z = Math.sqrt(1 - (d / rradius) ** 2);
-                a = z;
-                if (ishigh) {
-                  const q3 = Math.sqrt(1 / 3);
-                  const lightv = [-q3, -q3, +q3];
-                  let nv = [
-                    rx / rradius,
-                    ry / rradius,
-                    z,
-                  ];
-                  const dp = _dot(nv, lightv);
-                  const ref = [
-                    -lightv[0] + 2 * dp * nv[0],
-                    -lightv[1] + 2 * dp * nv[1],
-                    -lightv[2] + 2 * dp * nv[2],
-                  ];
-                  const viewv = _norm([
-                    0 - x,
-                    0 - y,
-                    2 - z,
-                  ]);
-                  const sp = Math.max(0, _dot(ref, viewv));
-                  spec = Math.pow(sp, 5);
-                }
-
-                lv = 1; // 白
-              } else {
-                lv = 0; // 黒
-                a = 1;
-              }
-            } else { // 下半分の外側
-              lv = 0; // 黒
-              a = 0;
-            }
-          }
-          a *= heightrate;
-          a += spec;
-
-          lv = Math.max(0, Math.min(lv * 255, 255));
-          a = Math.max(0, Math.min(a * 255, 255));
-          data.data[offset+0] = lv;
-          data.data[offset+1] = lv;
-          data.data[offset+2] = lv;
-          data.data[offset+3] = a;
-        }
-      }
-    }
-    c.putImageData(data, 0, 0);
-    console.log('makeWaterKeep leave');
-    return canvas;
-  }
-
-  /**
    * 
    * @param {HTMLCanvasElement} canvas
    */
@@ -838,9 +727,9 @@ class Misc {
         ev.preventDefault();
         ev.stopPropagation();
         ev.dataTransfer.dropEffect = 'copy';
-        const canvas = document.getElementById('subcanvas');
-        await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
-        this.round(canvas);
+        const file = ev.dataTransfer.files[0];
+        const ab = await file.arrayBuffer();
+        this.parseJpeg(ab);
       });
     }
 
@@ -919,6 +808,55 @@ class Misc {
       });
     }
 
+  }
+
+  /**
+   * 
+   * @param {ArrayBuffer} ab 
+   */
+  parseJpeg(ab) {
+    const p = new DataView(ab);
+    let c = 0;
+    // サイズ部分を含む
+    let byteNum = 0;
+    while (c + 2 <= ab.byteLength) {
+      let tag = p.getUint16(c, false); // BE
+      c += 2;
+      if ((tag & 0xff00) != 0xff00) {
+        console.warn('no tag', tag.toString(16));
+        break;
+      }
+      switch (tag) {
+        case 0xffd8:
+        case 0xffd9: // EOI
+          break;
+
+        case 0xffda:
+          console.log('Start Of Scan', (c-2).toString(16));
+          {
+            while (c + 2 <= ab.byteLength) {
+              let tag = p.getUint16(c, false);
+              if (tag != 0xffd9) {
+                c += 1;
+                continue;
+              }
+              console.log('found EOI', tag.toString(16), c.toString(16));
+              c += 2;
+              break;
+            }
+            continue;
+          }
+
+        case 0xffe1: // APP1   この中に入れ子(というより最後)で FFD8-FFD9 が含まれている．サムネか
+        case 0xffe6: // APP6
+        default:
+          byteNum = p.getUint16(c, false);
+          console.log('tag', tag.toString(16), c - 2, (c - 2).toString(16), byteNum);
+          c += byteNum;
+          break;
+      }
+    }
+    console.log('parseJpeg', c, ab.byteLength);
   }
 
 }

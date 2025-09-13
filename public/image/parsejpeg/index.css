@@ -1,0 +1,32 @@
+
+#backcanvas {
+  background-color: darkgoldenrod;
+}
+
+.drop {
+  background-color: #f0f0ff;
+  border: dashed 4px black;
+  margin: 1rem;
+  padding: 1rem;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 1rem;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.toright {
+  display: flex;
+  flex-direction: row;
+}
+
+#maincanvas {
+  border: solid 1px blue;
+}
+
+#subcanvas {
+  border: solid 1px red;
+}
+
