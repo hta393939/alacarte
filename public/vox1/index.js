@@ -375,6 +375,11 @@ class Misc {
   async processDir(dirHandle, startLayer) {
     console.log('processDir', dirHandle.name, startLayer);
     const useVox = document.getElementById('idusevox')?.checked;
+    /** AviUtl2で動けばよい場合．未使用 */
+    const for2 = document.getElementById('for2')?.checked;
+
+    const color1 = document.getElementById('color1')?.value;
+    console.log('color1', color1);
     /**
      * znd.txt を探す
      * @type {FileSystemFileHandle}

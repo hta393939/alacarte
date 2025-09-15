@@ -1,6 +1,3 @@
-/**
- * @file aviutl.js
- */
 
 (function(_global) {
 
@@ -29,6 +26,7 @@ class AUElement {
 
     this.data0 = null;
     this.data1 = null;
+    this.data2 = null;
   }
 
   /**
@@ -63,6 +61,13 @@ class AUElement {
       for (const k in this.data2) {
         ss.push(`${k}=${this.data2[k]}`);
       }
+    }
+
+    if (this.data3) {
+      ss.push(`[${this._index}.3]`);
+      for (const k in this.data3) {
+        ss.push(`${k}=${this.data3[k]}`);
+      }  
     }
 
     return ss;
@@ -158,23 +163,53 @@ class AUText extends AUElement {
       //font: 'Noto Sans JP Black',
       text: '0000',
     };
-    this.data1 = {
-      ['_name']: '縁取り',
-      ['サイズ']: 3,
-      ['ぼかし']: 10,
-      color: 'ffffff',
-      file: '',
-    };
-    this.data2 = {
-      ['_name']: '標準描画',
-      X: 0,
-      Y: 0,
-      Z: 0,
-      ['拡大率']: 100,
-      ['透明度']: 0,
-      ['回転']: 0,
-      blend: 0,
-    };
+
+    if (true) {
+
+      this.data1 = {
+        ['_name']: 'オフスクリーン描画',
+      };
+
+      this.data2 = {
+        ['_name']: '縁取り',
+        ['サイズ']: 3,
+        ['ぼかし']: 10,
+        color: 'ffffff',
+        file: '',
+      };
+      this.data3 = {
+        ['_name']: '標準描画',
+        X: 0,
+        Y: 0,
+        Z: 0,
+        ['拡大率']: 100,
+        ['透明度']: 0,
+        ['回転']: 0,
+        blend: 0,
+      };
+
+    } else {
+
+      this.data1 = {
+        ['_name']: '縁取り',
+        ['サイズ']: 3,
+        ['ぼかし']: 10,
+        color: 'ffffff',
+        file: '',
+      };
+      this.data2 = {
+        ['_name']: '標準描画',
+        X: 0,
+        Y: 0,
+        Z: 0,
+        ['拡大率']: 100,
+        ['透明度']: 0,
+        ['回転']: 0,
+        blend: 0,
+      };
+
+    }
+
   }
 
   setText(instr) {
