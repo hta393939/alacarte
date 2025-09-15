@@ -474,8 +474,12 @@ class Misc {
           let rawsec = waveBinary ? waveBinary.len.sec : 7.5;
           let sec = Math.ceil(rawsec);
           const secmod = rawsec - Math.floor(rawsec);
-          if (secmod >= 0.9 || secmod == 0.0) {
+          //if (secmod >= 0.9 || secmod == 0.0) {
+          if (secmod >= 0.6 || secmod == 0.0) {
             sec += 1;
+            console.log('sec add', secmod);
+          } else {
+            console.log('sec normal', secmod);
           }
           const len = sec * _fps;
 
