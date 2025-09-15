@@ -1,9 +1,21 @@
-/**
- * @file index.js
- */
 
 const _pad = (v, n = 2) => {
   return String(v).padStart(n, '0');
+};
+
+/**
+ * '#rrggbb' をパースする．[255,128,0]などを返す．
+ * @param {string} text 
+ */
+const _parsecol = (text) => {
+  const ret = [];
+  for (let i = 0; i < 3; ++i) {
+    const start = i * 2 + 1;
+    const hex = text.slice(start, start + 2);
+    let val = Number.parseInt(hex, 16);
+    ret.push(val);
+  }
+  return ret;
 };
 
 class Misc {
@@ -225,14 +237,14 @@ class Misc {
       el?.addEventListener('click', async () => {
         const dirHandle = await this.openDir();
         this.dirHandle = dirHandle;
-        try {
+        //try {
           await this.processDir(dirHandle, this.startLayer);
-        } catch(e) {
-          console.warn('processDir catch', e);
-        } finally {
-          const retryel = document.getElementById('retry');
-          retryel.removeAttribute('disabled');
-        }
+        //} catch(e) {
+        //  console.warn('processDir catch', e);
+        //} finally {
+        //  const retryel = document.getElementById('retry');
+        //  retryel.removeAttribute('disabled');
+        //}
       });
     }
     { // リトライ
@@ -440,7 +452,7 @@ class Misc {
         const mod = counter & 1;
 
         let name = '';
-        let filehead = (`${say.text}`).replace(/[\r\n\s\t"]/g, '');
+        let filehead = (`${say.text}`).replace(/[\r\n\s\t\<\>"]/g, '');
         for (let i = 0; i < 10; ++i) {
           name = `${filehead.substring(0, 6)}_${_pad(counter, 3)}_${i}.wav`;
           if (!_filenames.includes(name)) {
@@ -470,6 +482,8 @@ class Misc {
           {
             const te = new AVIUTL.AUText();
             te.setText(say.text);
+            te.data0.color = color1.slice(1);
+            //te.data0['文字色'] = color1.slice(1);
             //te.data0.font = `Noto Sans JP Black`;
             te.data0.spacing_y = 12;
             te.data.layer = startLayer + 5 + mod; // +5, +6
@@ -490,12 +504,16 @@ class Misc {
           timeCounter += len;
 
           if (useVox) { // 書き込む
-            const fileHandle = await dirHandle.getFileHandle(name,
-              { create: true });
-            const writer = await fileHandle.createWritable();
-            await writer.write(waveBinary.arrayBuffer);
-            await writer.close();
-          }               
+            try {
+              const fileHandle = await dirHandle.getFileHandle(name,
+                { create: true });
+              const writer = await fileHandle.createWritable();
+              await writer.write(waveBinary.arrayBuffer);
+              await writer.close();
+            } catch (ec) {
+              console.warn('オーディオ書き出し', name, ec.message);
+            }
+          }            
         }
       }
 
@@ -531,19 +549,22 @@ class Misc {
         project.elements.push(ge);
       }
 
-      // .exo ファイルを書き込む
-      const fileHandle = await dirHandle.getFileHandle(`${basename}.exo`,
-        { create: true });
-      const writer = await fileHandle.createWritable();
-      {
-        for (let i = 0; i < project.elements.length; ++i) {
-          const el = project.elements[i];
-          el._index = i;
-        }
+      try { // .exo ファイルを書き込む
+        const fileHandle = await dirHandle.getFileHandle(`${basename}.exo`,
+          { create: true });
+        const writer = await fileHandle.createWritable();
+        {
+          for (let i = 0; i < project.elements.length; ++i) {
+            const el = project.elements[i];
+            el._index = i;
+          }
 
-        const ss = project.getLines();
-        await writer.write(this.strToSJIS(ss.join('\r\n')));
-        await writer.close();
+          const ss = project.getLines();
+          await writer.write(this.strToSJIS(ss.join('\r\n')));
+          await writer.close();
+        }
+      } catch (ec) {
+        console.warn('exo 書き出し', basename, ec.message);
       }
       
     }

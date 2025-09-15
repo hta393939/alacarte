@@ -848,6 +848,8 @@ class Misc {
           }
 
         case 0xffe1: // APP1   この中に入れ子(というより最後)で FFD8-FFD9 が含まれている．サムネか
+          // "Hdr State Machine" の文字が見える
+
         case 0xffe6: // APP6
         default:
           byteNum = p.getUint16(c, false);
