@@ -17,6 +17,73 @@ const _rad = (deg) => {
 export class CharBuilder extends PMX.Maker {
   constructor() {
     super();
+
+    this.bones = this.initBone();
+    this.mtls = this.initMaterial();
+  }
+
+  initBone() {
+    const bones = [
+      {
+        parent: -1,
+        nameJa: '全ての親',
+        nameEn: 'root'
+      },{
+        parent: 0,
+        nameJa: '操作中心',
+        nameEn: 'view cnt bone'
+      }, {
+        parent: 0,
+        nameJa: 'センター',
+        nameEn: 'center'
+      }, {
+        parent: 2,
+        nameJa: '下半身',
+        nameEn: 'spine'
+      }, {
+        parent: 3,
+        nameJa: '左足',
+        nameEn: 'leftUpperLeg'
+      }, {
+        parent: 4,
+        nameJa: '左足下',
+        nameEn: 'leftLowerLeg'
+      }, {
+        parent: 5,
+        nameJa: '左足首',
+        nameEn: 'leftUnkle'
+      }, { // #7
+        parent: 6,
+        nameJa: '左足先',
+        nameEn: 'leftFoot'
+      }
+    ];
+    return bones;
+  }
+
+  initMaterial() {
+      let bits = 0;
+      //  | PMX.Material.BIT_GROUND
+      //  | PMX.Material.BIT_TOMAP
+      //  | PMX.Material.BIT_SELFSHADOW
+
+    const mtls = [{
+      nameJa: `体`,
+      nameEn: `body`,
+      texIndex: 0,
+      diffuse: [1, 1, 1, 1],
+      specular: [0.2, 0.2, 0.2],
+      specPower: 0.5,
+      ambient: [0.7, 0.7, 0.7],
+      edgeColor: [156/255, 130/255, 48/255, 1],
+      bitFlag: bits,
+      sphereMode: PMX.Material.SPMODE_ADD,
+      sphereIndex: 1,
+      sharetoonflag: 0,
+      sharetoonindex: -1,
+      faces: [],
+    }];
+    return mtls;
   }
 
   /**
@@ -160,10 +227,9 @@ export class CharBuilder extends PMX.Maker {
       this.materials.push(m);
     }
 
-    for (let i = 0; i < 7; ++i) { // ボーン
-      /**
-       * ボーン
-       */
+    for (let i = 0; i < this.bones.length; ++i) { // ボーン
+      const bone = this.bones[i];
+      /** ボーン */
       const b = new PMX.Bone();
 
       let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
@@ -171,27 +237,12 @@ export class CharBuilder extends PMX.Maker {
       bits |= PMX.Bone.BIT_CONTROL;
       b.bits = bits;
 
-      b.nameJa = `b${_pad(i, 3)}`;
-      b.nameEn = b.nameJa;
+      b.nameJa = bone.nameJa;
+      b.nameEn = bone.nameEn;
       b.p = [0, 0, 0];
-      b.parent = i - 1;
+      b.parent = bone.parent;
 
       switch (i) {
-      case 0:
-        b.parent = -1;
-        b.nameJa = '全ての親';
-        b.nameEn = 'root';
-        break;
-      case 1:
-        b.parent = 0;
-        b.nameJa = '操作中心';
-        b.nameEn = 'view cnt bone';
-        break;
-      case BONE_CENTER:
-        b.parent = 0;
-        b.nameJa = 'センター';
-        b.nameEn = 'center';
-        break;
       case 3:
         b.parent = BONE_CENTER;
         b.p = [1, 0, 0];
