@@ -1,8 +1,6 @@
 
-import { BoxBuilder } from "./box.js";
-import { CylinderBuilder } from "./cylinder.js";
 import { CharBuilder } from "./char.js";
-import { PrimitiveBuilder } from "./primitive.js";
+import { CharBuilder2 } from "./char2.js";
 
 const _lim = (a, x, b) => {
   if (x < a) {
@@ -257,65 +255,20 @@ class Misc {
       console.log('makechar', param);
   
       Object.assign(param, {
-        nameEn: `char${param.tail}`,
+        nameEn: `usagi miku`,
         texturePath: [
-          `water${param.tail}.png`,
-          `a014spa.png`,
+          `body.png`,
+          `face.png`,
+          `hair.png`,
+          `item.png`,
+          `spa.png`,
         ],
       });
       const writer = new CharBuilder();
       writer.make(param);
       const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
+      this.download(new Blob(bufs), `usagimiku.pmx`);
       console.log('makechar done');
-    });
-
-    window.idmakebox?.addEventListener('click', () => {
-      const param = this.getCommonOptions();
-      let base = `box_${param.lenhalf}`;
-      let name = `${base}${param.usefriction ? '': '_no'}`;
-      let tail = `d${param.denom.toFixed(0)}`;
-      if (param.denom < 1) {
-        tail = `${1 / param.denom}`;
-      }
-      Object.assign(param, {
-        nameEn: name,
-        texturePath: [
-          `tex/${base}.png`,
-          `tex/${base}spa.png`,
-        ],
-      });
-      const writer = new BoxBuilder();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${name}.pmx`);
-      console.log('make box');            
-    });
-
-    window.idmakecylinder?.addEventListener('click', () => {
-      const param = {
-        nameEn: `a009_skycylinder`,
-        texturePath: ['a009.png'],
-      };
-      const writer = new CylinderBuilder();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-      console.log('makecylinder');            
-    });
-
-    window.idmakeplate?.addEventListener('click', () => {
-      const param = {
-        nameEn: `a008_plate`,
-        scale: 0.25,
-        div: 4,
-      };
-      const writer = new PlateBuilder();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
-  
-      console.log('makeplate');            
     });
 
     {
@@ -333,11 +286,10 @@ class Misc {
     //this.draw1(window.canvast1);
     //this.draw2(window.canvast2);
     //this.draw3(window.canvast3);
+        //this.draw4(window.canvast4);
 
     {
-/**
- * @type {HTMLDivElement}
- */
+/** @type {HTMLDivElement} */
       const el = window.drop;
       el?.addEventListener('dragover', ev => {
         ev.stopPropagation();

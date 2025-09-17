@@ -1,6 +1,5 @@
-/**
- * @file cylinder.js
- */
+
+import { CharBuilder } from "./char.js";
 
 /**
  * @param {number} v 値
@@ -17,48 +16,99 @@ const _rad = (deg) => {
   return deg * Math.PI / 180;
 };
 
-export class CylinderBuilder extends PMX.Maker {
+export class CharBuilder2 extends CharBuilder {
   constructor() {
     super();
+
+    this.divnum = 16;
+  }
+
+  addOneJoint() {
+    for (let i = 0; i < this.divnum; ++i) {
+      for (let j = 0; j < this.divnum; ++j) {
+
+      }
+    }
+  }
+
+  addMultiJoint() {
+    for (let i = 0; i < this.divnum; ++i) {
+      for (let j = 0; j < this.divnum; ++j) {
+
+      }
+    }
+  }
+
+  addMid() {
+    for (let i = 0; i < this.divnum; ++i) {
+      for (let j = 0; j < this.divnum; ++j) {
+
+      }
+    }
   }
 
   /**
-   * 破壊
-   * @param {number[]} vs 
+   * 物理シンプルな箱
    */
-  normalize(vs) {
-    let sum = vs.reduce((p, c) => p + c * c, 0);
-    if (sum === 0) {
-      return vs;
-    }
-    const k = 1 / Math.sqrt(sum);
-    for (let i = 0; i < vs.length; ++i) {
-      vs[i] *= k;
-    }
-    return vs;
-  }
+  makeBox(param) {
+    {
+      const vs = [
+        {p: [-1, 1, -1]},
+        {p: [ 1, 1, -1]},
+        {p: [-1,-1, -1]},
+        {p: [ 1,-1, -1]}, // 手前 下
+        {p: [-1, 1,  1]}, // 4 奥上
+        {p: [ 1, 1,  1]}, // 5
+        {p: [-1,-1,  1]}, // 6
+        {p: [ 1,-1,  1]}, // 7
+      ];
 
-  /**
-   * 
-   * @param {number[]} vs 
-   * @param {number} deg 
-   */
-  rotate(vs, deg) {
-    const ang = deg * Math.PI / 180;
-    const cs = Math.cos(ang);
-    const sn = Math.sin(ang);
-    let x = vs[0] * cs - vs[1] * sn;
-    let y = vs[0] * sn + vs[1] * cs;
-    vs[0] = x;
-    vs[1] = y;
-    return vs;
+      const k = 0.25;
+      const mens = [
+        {p: [0, 1, 2, 3], n: [0, 0, -1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
+        {p: [4, 0, 6, 2], n: [-1, 0, 0], uv: [k * 1, k * 2, k * 2, k * 2, k * 1, k * 1, k * 2, k * 1,]},
+        {p: [1, 5, 3, 7], n: [1, 0, 0], uv: [k * 3, k * 2, k * 4, k * 2, k * 3, k * 1, k * 4, k * 1,]},
+        {p: [4, 5, 0, 1], n: [0, 1, 0], uv: [k * 2, k * 3, k * 3, k * 3, k * 2, k * 2, k * 3, k * 2,]},
+        {p: [2, 3, 6, 7], n: [0, -1, 0], uv: [k * 2, k * 1, k * 3, k * 1, k * 2, k * 0, k * 3, k * 0,]},
+        {p: [5, 4, 7, 6], n: [0, 0, 1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
+      ];
+
+      for (const men of mens) {
+        for (let j = 0; j < 4; ++j) {
+          const vp = vs[men.p[j]];
+
+          const v = new PMX.Vertex();
+
+          let x = vp.p[0];
+          let y = vp.p[1];
+          let z = vp.p[2];
+
+          v.n = this.normalize(men.n);
+          v.p = [
+            x * scale * 1,
+            y * scale * param.lenhalf,
+            z * scale * 1,
+          ];
+          v.uv = [
+            men.uv[j*2+0],
+            men.uv[j*2+1],
+          ];
+          v.deformType = PMX.Vertex.DEFORM_BDEF1;
+          v.joints = [2, 0, 0, 0];
+          v.weights = [1, 0, 0, 0];
+
+          this.vts.push(v);
+        }
+      }
+    }
+
   }
 
   /**
    * シリンダー
    * UV は V0が上、V1が下
    */
-  make(param) {
+  makeKeep(param) {
     const d = new Date();
     const scale = 1.0;
 
