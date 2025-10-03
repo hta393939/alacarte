@@ -266,7 +266,6 @@ export class CharBuilder extends PMX.Maker {
       }
 
       b.p = b.p.map(v => v * scale);
-      this.bones.push(b);
     }
 
     { // モーフ 3個

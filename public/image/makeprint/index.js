@@ -74,7 +74,7 @@ class Misc {
   }
 
   async initialize() {
-    const side = 9 * 16;
+    const side = 15 * 16;
     {
       const canvas = window.maincanvas;
       canvas.width = side * 5;
@@ -85,6 +85,13 @@ class Misc {
       const canvas = window.subcanvas;
       canvas.width = side * 5;
       canvas.height = side * 7;
+      this.makeGrad(canvas, 'rb');
+    }
+    {
+      const canvas = window.backcanvas;
+      canvas.width = side * 5;
+      canvas.height = side * 7;
+      this.makeMarker(canvas);
     }
 
     this.setListener();
@@ -94,22 +101,42 @@ class Misc {
    * 正方形グラデーション
    * @param {HTMLCanvasElement} canvas 
    */
-  async makeGrad(canvas) {
-
+  async makeGrad(canvas, type) {
     const w = canvas.width;
     const h = canvas.height;
     const c = canvas.getContext('2d');
+    c.fillStyle = 'white';
+    c.fillRect(0, 0, w, h);
+
     const data = c.getImageData(0, 0, w, h);
 
     {
       for (let y = 0; y < h; ++y) {
+        let cy = y;
+        if (cy > w) {
+          continue;
+        }
         for (let x = 0; x < w; ++x) {
-          const offset = (x + h * y) * 4;
+          const mx = x & 1;
+          const my = cy & 1;
+          if (mx === 1 && my === 1) {
+            // do nothing.
+          } else {
+            //continue;
+          }
+
+          const offset = (x + w * cy) * 4;
 
           let r = x / w;
-          let g = y / h;
+          let g = cy / w;
           let b = 0;
           let a = 255;
+
+          if (type === 'rb') {
+            r = x / w;
+            g = 0;
+            b = 1 - cy / w;
+          }
 
           r = Math.max(0, Math.min(r * 255, 255));
           g = Math.max(0, Math.min(g * 255, 255));
@@ -123,6 +150,7 @@ class Misc {
       }
     }
     c.putImageData(data, 0, 0);
+    console.log('makeGrad', canvas.width, canvas.height);
   }
 
   /**
@@ -286,80 +314,73 @@ class Misc {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  async make3(canvas) {
-    console.log('make3 called');
-    const w = 16 * 8;
-    const h = 16 * 8;
+  async makeMarker(canvas) {
+    console.log('makeMarker called');
+    const cellsize = 16;
+    const cside = cellsize * 15;
+    const w = cside * 5;
+    const h = cside * 7;
     canvas.width = w;
     canvas.height = h;
     const c = canvas.getContext('2d');
-    //c.fillStyle = '#c0c0c0'; // 192
-    //c.fillRect(0, 0, w, h);
-
-    const cols = [
-      [0, 0, 256],
-      [0, 256, 0],
-      [256, 0, 0],
-      [256, 256, 0],
-    ];
+    c.fillStyle = 'white';
+    c.fillRect(0, 0, w, h);
 
     const data = c.getImageData(0, 0, w, h);
-    for (let i = 0; i < 8; ++i) {
-      for (let j = 0; j < 8; ++j) {
-      for (let y = 0; y < 16; ++y) {
-        for (let x = 0; x < 16; ++x) {
-          let offset = (x + (j * 16) + w * (y + i * 16)) * 4;
-          let rx = x - 8;
-          let ry = y - 7;
-          let rr = Math.sqrt(rx ** 2 + ry ** 2);
-          const colIndex = Math.floor(j / 2);
-          let r = cols[colIndex][0];
-          let g = cols[colIndex][1];
-          let b = cols[colIndex][2];
-          let a = 255;
-          let mx = (x + Math.floor(j / 2)) % 4;
-          let my = (y + Math.floor(i / 4) * 0) % 4;
-          let pat = (mx == 0 && my == 0) || (mx == 2 && my == 2);
-          if (rr > 5 && ((j % 2) == 0)) {
-            r *= 0.5;
-            g *= 0.5;
-            b *= 0.5;
-          } else if (rr <= 5 && ((j % 2) != 0)) {
-            r *= 0.5;
-            g *= 0.5;
-            b *= 0.5;
-          }
+    let count = 0;
+    c.textAlign = 'left';
+    c.textBaseline = 'top';
+    c.fillStyle = 'black';
+    for (let i = 0; i < 7; ++i) {
+      for (let j = 0; j < 5; ++j) {
+        let chx = cside * j;
+        let chy = cside * i;
+        let forceblack = false;
+        if ((((j&1) + (i&1)) & 1) === 0) {
+          forceblack = true;
+        } else {
+          forceblack = false;
 
-
-          if (pat && rr < 5.25) {
-            a = 0;
-          }
-          if (rr >= 6.5 + 1) {
-            a = 0;
-          }
-
-          if (i >= 2) {
-            let size = 16 * ((i >= 4) ? 2 : 1);
-            size = 16;
-            const ret = this.makeBarrier(x + j * 16, y + i * 16,
-              size);
-            r = ret[0];
-            g = ret[1];
-            b = ret[2];
-            a = ret[3];
-          }
-
-          data.data[offset] = r;
-          data.data[offset+1] = g;
-          data.data[offset+2] = b;
-          data.data[offset+3] = a;
         }
+
+        const id = count;
+        const bits = [0, 1, 0, 1];
+
+        for (let cy = 0; cy < 15; ++cy) {
+          for (let cx = 0; cx < 15; ++cx) {
+
+
+            const white = true;
+            let lv = white ? 255 : 0;
+            if (forceblack) {
+              lv = 0;
+            }
+            let r = lv;
+            let g = lv;
+            let b = lv;
+            let a = 255;
+
+            for (let y = 0; y < cellsize; ++y) {
+              for (let x = 0; x < cellsize; ++x) {
+                let offset = (x + cx * cellsize + chx + w * (y + cy * cellsize + chy)) * 4;
+                data.data[offset] = r;
+                data.data[offset+1] = g;
+                data.data[offset+2] = b;
+                data.data[offset+3] = a;
+              }
+            }
+          }
+        }
+
+        if (forceblack === false) {
+                    //c.fillText(`${count}`, chx, chy);
+          count += 1;
         }
       }
     }
 
     c.putImageData(data, 0, 0);
-    console.log('make3 leave');
+    console.log('makeMarker leave', canvas.width, canvas.height);
   }
 
   /**
