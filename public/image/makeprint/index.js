@@ -74,85 +74,46 @@ class Misc {
   }
 
   async initialize() {
+    const side = 9 * 16;
     {
       const canvas = window.maincanvas;
-      canvas.width = 64;
+      canvas.width = side * 5;
+      canvas.height = side * 7;
+      this.makeGrad(canvas);
     }
     {
       const canvas = window.subcanvas;
-      canvas.width = 64;
+      canvas.width = side * 5;
+      canvas.height = side * 7;
     }
 
     this.setListener();
   }
 
   /**
-   * 
+   * 正方形グラデーション
    * @param {HTMLCanvasElement} canvas 
    */
-  async round(canvas) {
+  async makeGrad(canvas) {
 
     const w = canvas.width;
     const h = canvas.height;
     const c = canvas.getContext('2d');
     const data = c.getImageData(0, 0, w, h);
 
-    const center = [440, 71]; // 1607, 71
-    const router = 37;
-    const rinner = 4;
-    const ps = [
-      [0, 0, 0, 255, 70], // 角度
-      [0, 0, 0, 255, 130], // 角度
-    ];
-
-    for (let lr = 0; lr < 2; ++lr) {
-      /**
-       * 度角度範囲
-       */
-      const range = [ps[0][4], ps[1][4]];
-      if (lr === 1) {
-        center[0] = 2047 - center[0];
-        const turn = [180 - range[0], 180 - range[1]];
-        range[0] = Math.min(...turn);
-        range[1] = Math.max(...turn);
-      }
-
+    {
       for (let y = 0; y < h; ++y) {
         for (let x = 0; x < w; ++x) {
-          const dx = x - center[0];
-          const dy = y - center[1];
-          const d = Math.sqrt(dx * dx + dy * dy);
-          const ang = Math.atan2(-dy, dx);
-          const deg = ang * 180 / Math.PI;
-          if (deg < range[0] || deg > range[1]) {
-            continue;
-          }
-          if (d > router || rinner > d) {
-            continue;
-          }
-
-          for (let i = 0; i < 2; ++i) {
-            const pang = range[i] * Math.PI / 180;
-            let px = Math.round(center[0] + Math.cos(pang) * d);
-            let py = Math.round(center[1] - Math.sin(pang) * d);
-            const offset = (px + h * py) * 4;
-            ps[i][0] = data.data[offset];
-            ps[i][1] = data.data[offset+1];
-            ps[i][2] = data.data[offset+2];
-          }
-
           const offset = (x + h * y) * 4;
 
-          let t = (deg - range[0]) / (range[1] - range[0]);
-
-          let r = _lerp(ps[0][0], ps[1][0], t);
-          let g = _lerp(ps[0][1], ps[1][1], t);
-          let b = _lerp(ps[0][2], ps[1][2], t);
+          let r = x / w;
+          let g = y / h;
+          let b = 0;
           let a = 255;
 
-          r = Math.max(0, Math.min(r, 255));
-          g = Math.max(0, Math.min(g, 255));
-          b = Math.max(0, Math.min(b, 255));
+          r = Math.max(0, Math.min(r * 255, 255));
+          g = Math.max(0, Math.min(g * 255, 255));
+          b = Math.max(0, Math.min(b * 255, 255));
 
           data.data[offset+0] = r;
           data.data[offset+1] = g;

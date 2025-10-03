@@ -1,13 +1,4 @@
 
-.back {
-  background-image: url('back.png');
-  background-repeat: repeat;
-}
-
-#backcanvas {
-  background-color: darkgoldenrod;
-}
-
 .drop {
   background-color: #f0f0ff;
   border: dashed 4px black;
@@ -27,9 +18,11 @@
   flex-direction: row;
 }
 
+.thumb {
+  max-width: 256px;
+}
+
 #maincanvas {
-  width: 256px;
-  height: 256px;
   border: solid 1px blue;
 }
 
