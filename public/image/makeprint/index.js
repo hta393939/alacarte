@@ -68,6 +68,46 @@ const _dot = (as, bs) => {
   return sum;
 };
 
+class Pattern {
+  static WHITE = 1;
+  static BLACK = 0;
+  constructor() {
+    this.pitch = 9;
+  }
+
+  /**
+   * 
+   * @param {Float32Array} pos 
+   * @param {BigInt} bits 
+   */
+  makeMap(pos, bits) {
+    this.bitMap = new Float32Array(9 * 9);
+
+    // 黒と白
+    for (const v of [{ox: 1, oy: 1, num: 7, val: Pattern.BLACK},
+      {ox: 2, oy: 2, num: 5, val: Pattern.WHITE},
+    ]) {
+      for (let i = 0; i < v.num; ++i) {
+        for (let j = 0; j < v.num; ++j) {
+          let x = j + v.ox;
+          let y = i + v.oy;
+          this.bitMap[this.pitch * y + x] = v.val;
+        }
+      }
+    }
+
+
+    for (let i = 0; i < 41; ++i) {
+      let x = pos[i * 2 + 0] + 2;
+      let y = pos[i + 2 + 1] + 2;
+      this.bitMap[this.pitch * y + x] = (bits & (1n << BigInt(i)) !== 0n) ? Pattern.BLACK : Pattern.WHITE;
+    }
+  }
+
+  getBit(x, y) {
+    return this.bitMap[this.pitch * y + x];
+  }
+}
 
 class Misc {
   constructor() {
@@ -78,13 +118,13 @@ class Misc {
     {
       const canvas = window.maincanvas;
       canvas.width = side * 5;
-      canvas.height = side * 7;
+      canvas.height = side * 5 * 7 / 7;
       this.makeGrad(canvas);
     }
     {
       const canvas = window.subcanvas;
       canvas.width = side * 5;
-      canvas.height = side * 7;
+      canvas.height = side * 5 * 7 / 7;
       this.makeGrad(canvas, 'rb');
     }
     {
@@ -95,6 +135,17 @@ class Misc {
     }
 
     this.setListener();
+
+    {
+
+      const canvas = document.getElementById('onecanvas');
+      canvas.width = 9;
+      canvas.height = 9;
+
+      const result = this.parseCode(_code);
+      this.mapping = result.map;
+      this.makeOne(canvas, 100);
+    }
   }
 
   /**
@@ -113,7 +164,7 @@ class Misc {
     {
       for (let y = 0; y < h; ++y) {
         let cy = y;
-        if (cy > w) {
+        if (cy >= w) {
           continue;
         }
         for (let x = 0; x < w; ++x) {
@@ -151,163 +202,6 @@ class Misc {
     }
     c.putImageData(data, 0, 0);
     console.log('makeGrad', canvas.width, canvas.height);
-  }
-
-  /**
-   * カラーチップ作りたい
-   */
-  async make1() {
-    const w = 64;
-    const h = 64;
-    const canvas = new OffscreenCanvas(w, h);
-    const c = canvas.getContext('2d');
-    {
-      for (let y = 0; y < h / 4; ++y) {
-        for (let x = 0; x < w / 4; ++x) {
-          const index = x + (w / 4) * y;
-          let r = 255;
-          let g = 255;
-          let b = 255;
-          let a = 1;
-          if (index >= 0 && index <= 4) {
-            a = index * 64;
-          } else if (index >= 5 && index < 8) {
-            switch (index) {
-              case 5:
-                r = 0;
-                g = 0;
-                b = 255;
-                a = 0.5;
-                break;
-              case 6:
-                r = 0;
-                g = 255;
-                b = 0;
-                a = 0.5;
-                break;
-              case 7:
-                r = 255;
-                g = 0;
-                b = 0;
-                a = 0.5;
-                break;
-            }
-          } else if (index >= 8 && index < 224) {
-            let pal = index - 8;
-            b = pal % 6;
-            const val = Math.floor(pal / 6);
-            g = val % 6;
-            r = Math.floor(val / 6);
-            r = r * 51;
-            g = g * 51;
-            b = b * 51;
-          }
-
-          r = Math.max(0, Math.min(255, Math.floor(r)));
-          g = Math.max(0, Math.min(255, Math.floor(g)));
-          b = Math.max(0, Math.min(255, Math.floor(b)));
-          a = Math.max(0, Math.min(1, a));
-
-          //c.fillStyle = `#${_tocol(r, g, b)}`;
-          c.fillStyle = `rgba(${r},${g},${b},${a})`;
-          c.fillRect(x * 4, y * 4, 4, 4);
-        }
-      }
-
-    }
-
-    {
-      for (let x = 0; x < w; ++x) {
-        let lv = x * 4;
-        c.fillStyle = `rgba(${lv},${lv},${lv},${1})`;;
-        c.fillRect(x, 56, 1, 4);
-      }
-    }
-    {
-      for (let x = 0; x < w; ++x) {
-        let lv = 0;
-        let r = 0;
-        let g = 0;
-        let b = 0;
-        c.fillStyle = `rgba(${r},${g},${b},${1})`;
-        c.fillRect(x, 60, 1, 4);
-      }
-    }
-
-    return canvas;
-  }
-
-  /**
-   * 量子化する
-   * 不使用
-   */
-  async makequat() {
-    /**
-     * @type {HTMLImageElement}
-     */
-    const img = document.getElementById('shootdot');
-    const w = img.naturalWidth;
-    const h = img.naturalHeight;
-    /**
-     * @type {HTMLCanvasElement}
-     */
-    const canvas = document.getElementById('maincanvas');
-    canvas.width = w;
-    canvas.height = h;
-    const c = canvas.getContext('2d');
-    c.drawImage(img, 0, 0);
-    const data = c.getImageData(0, 0, w, h);
-
-    if (true) {
-      //const q = 32;
-      const q = 64;
-      const _q = (v) => {
-        return Math.floor((v + q / 2) / q) * q;
-      };
-      for (let y = 0; y < h; ++y) {
-        for (let x = 0; x < w; ++x) {
-          const bx = Math.floor(x / 32);
-          const by = Math.floor(y / 32);
-
-          const offset = (x + h * y) * 4;
-
-          const mx = (x + bx) % 4;
-          const my = (y + Math.floor(bx / 4) * 2) % 4;
-          let pat = (mx == 0 && my == 0) || (mx == 2 && my == 2);
-          //pat = 0;
-
-          let r = data.data[offset];
-          let g = data.data[offset+1];
-          let b = data.data[offset+2];
-          let a = data.data[offset+3];
-          r *= a / 256;
-          g *= a / 256;
-          b *= a / 256;
-          r = _q(r);
-          g = _q(g);
-          b = _q(b);
-
-          const rx = x % 32 - 15.5;
-          const ry = y % 32 - 15.5;
-          const rr = Math.sqrt(rx ** 2 + ry ** 2);
-
-          if (pat || rr > 7.5) {
-            r = 0;
-            g = 0;
-            b = 0;
-            a = 0;
-          } else {
-            a = 255;
-          }
-
-          data.data[offset+0] = r;
-          data.data[offset+1] = g;
-          data.data[offset+2] = b;
-          data.data[offset+3] = a;
-        }
-      }
-    }
-    c.putImageData(data, 0, 0);
   }
 
   /**
@@ -385,112 +279,22 @@ class Misc {
 
   /**
    * 
-   * @param {number} inx 
-   * @param {number} iny 
-   * @returns {number[]}
+   * @param {HTMLCanvasElement} canvas 
    */
-  makeBarrier(inx, iny, size) {
-      const _atan = (x, y) => {
-        if (y === 0) {
-          return (x > 0) ? 0 : -180;
-        }
-        if (x === 0) {
-          return (y > 0) ? 90 : -90;
-        }
-        if (x < 0 && y > 0) {
-          return 180 - Math.atan2(y, -x) * 180 / Math.PI;
-        }
-        if (x < 0 && y < 0) {
-          return Math.atan2(y, x) * 180 / Math.PI;
-        }
-        if (x > 0 && y < 0) {
-          return -Math.atan2(-y, x) * 180 / Math.PI;
-        }
-        return Math.atan2(y, x) * 180 / Math.PI;
-      };
-
-      const smallr = 1.5 * size / 16;
-      let offset = 45 * Math.floor(inx / size) + 30;
-      let sx = inx % size;
-      let sy = iny % size;
-      let rx = sx - size / 2;
-      let ry = sy - (size / 2 - 1);
-      let rr = Math.sqrt(rx ** 2 + ry ** 2);
-      const ang = _atan(-ry, rx) * Math.PI / 180;
-      const scale = 3;
-      const adjust = 5 * size / 16
-        + smallr * Math.cos(ang * scale + (offset + 0 * 120) * Math.PI / 180);
-      const adjust2 = 5 * size / 16
-        + smallr * Math.cos(ang * scale + (offset + 180) * Math.PI / 180);
-
-    let f = (rr - adjust) ** 2;
-    let f2 = (rr - adjust2) ** 2;
-    const index = Math.floor(inx / (16 * 4)) + 2 * (Math.floor(iny / 16) & 1);
-    const cols = [
-      [255, 255, 255],
-      [0, 255, 0],
-      [255, 255, 0],
-      [255, 0, 0],
-    ];
-    const ret = [
-      ...(cols[index]), 255,
-    ];
-    //const thr = Math.sqrt(0.5) ** 2;
-    //const thr = Math.sqrt(0.37) ** 2; // 傾けないときこのぐらい
-    const thr = Math.sqrt(0.30) ** 2;
-    //ret[3] = (f < thr) ? 255 : 0;
-    ret[3] = (f < thr || f2 < thr) ? 255 : 0;
-    const fmax = (rr - Math.max(adjust, adjust2)) ** 2;
-    ret[3] = (fmax < thr) ? 255 : 0;
-
-    if (iny >= 96) {
-      if (ret[3] === 0) {
-        ret[0] = 0;
-        ret[1] = 0;
-        ret[2] = 0;
-        ret[3] = 255;
-      }
-    }
-
-    return ret;
-  }
-
-  /**
-   * 
-   * @param {HTMLCanvasElement} canvas
-   */
-  convColor(canvas) {
-    console.log('convColor called');
+  makeOne(canvas, id) {
+    canvas.width = 9 * 16;
+    canvas.height = 9 * 16;
     const c = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    const dat = c.getImageData(0, 0, w, h);
 
-    for (let i = 0; i < h; ++i) {
-      for (let j = 0; j < w; ++j) {
-        let ft = (j + i * w) * 4;
-        let r = dat.data[ft];
-        let g = dat.data[ft+1];
-        let b = dat.data[ft+2];
-        let a = dat.data[ft+3];
+    const map = this.mapping[id];
+    for (let i = 0; i < 9; ++i) {
+      for (let j = 0; j < 9; ++j) {
+        const bw = map.getBit(j, i);
 
-        let cols = [
-          g, // r
-          g, // g
-          g, // b
-          a, // a
-        ];
-        cols = cols.map(v => {
-          return Math.max(0, Math.min(255, Math.round(v)));
-        });
-
-        dat.data[ft] = cols[0];
-        dat.data[ft+1] = cols[1];
-        dat.data[ft+2] = cols[2];
-        dat.data[ft+3] = cols[3];
+        c.fillStyle = (bw === Pattern.BLACK) ? 'black' : 'white';
+        c.fillRect(j * 16, i * 16, 16, 16); 
       }
     }
-    c.putImageData(dat, 0, 0);
   }
 
   /**
@@ -642,9 +446,12 @@ class Misc {
     }
 
     {
-      const el = document.getElementById('idmakequat');
+      const el = document.getElementById('idmakemarker');
       el?.addEventListener('click', async () => {
-        await this.makequat();
+        const canvas = document.getElementById('backcanvas');
+        canvas.width = 16 * 15 * 5;
+        canvas.height = 16 * 15 * 7;
+        this.makeMarker(canvas, result);
       });
     }
 
@@ -658,6 +465,43 @@ class Misc {
       });
     }
 
+  }
+
+  parseCode(code) {
+    const ret = {
+      bits: [],
+      pos: new Float32Array(41 * 2),
+      map: [],
+    };
+    const lines = code.split('\n');
+    const bitReg = /0x(?<bits>.{16})UL/;
+    const posReg = /bit_(?<el>x|y)\[(?<index>\d+)\] = (?<num>-?\d+)/;
+    for (const line of lines) {
+      const bit = bitReg.exec(line);
+      if (bit) {
+        const bitstr = bit.groups['bits'];
+        const bit64 = (BigInt(`0x${bitstr.slice(0, 8)}`) << 32n) | BigInt(`0x${bitstr.slice(8, 16)}`);
+        ret.bits.push(bit64);
+        continue;
+      }
+      const pos = posReg.exec(line);
+      if (pos) {
+        const el = pos.groups['el'] === 'x' ? 0 : 1;
+        const index = Number.parseFloat(pos.groups['index']);
+        const num = Number.parseFloat(pos.groups['num']);
+        ret.pos[index * 2 + el] = num;
+        continue;
+      }
+    }
+
+    for (let i = 0; i < 2115; ++i) {
+      const pat = new Pattern();
+      pat.makeMap(ret.pos, ret.bits);
+      ret.map.push(pat);
+    }
+
+    console.log('parseCode', ret);
+    return ret;
   }
 
 }
