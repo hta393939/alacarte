@@ -68,11 +68,22 @@ const _dot = (as, bs) => {
   return sum;
 };
 
+
+    /** 9 */
+    const total_width = 9;
+    /** 5 */
+    const width_at_border = 5;
+    /** 41 */
+    const nbits = 41;
+    /** true */
+    const reversed_border = true;
+
+
 class Pattern {
   static WHITE = 1;
   static BLACK = 0;
   constructor() {
-    this.pitch = 9;
+    this.pitch = total_width;
   }
 
   /**
@@ -96,11 +107,14 @@ class Pattern {
       }
     }
 
-
-    for (let i = 0; i < 41; ++i) {
-      let x = pos[i * 2 + 0] + 2;
-      let y = pos[i * 2 + 1] + 2;
-      this.bitMap[this.pitch * y + x] = (bits & (1n << BigInt(i)) != 0) ? Pattern.BLACK : Pattern.WHITE;
+    // パターン
+    /** 今回は2 */
+    const border_start = Math.floor((total_width - width_at_border) / 2);
+    for (let i = 0; i < nbits; ++i) {
+      let x = pos[i * 2 + 0] + border_start;
+      let y = pos[i * 2 + 1] + border_start;
+      let bw = ((bits & (1n << BigInt(nbits - i - 1))) != 0n) ? Pattern.WHITE : Pattern.BLACK;
+      this.bitMap[this.pitch * y + x] = bw;
     }
   }
 
@@ -111,6 +125,7 @@ class Pattern {
 
 class Misc {
   constructor() {
+
   }
 
   async initialize() {
@@ -275,12 +290,13 @@ class Misc {
   }
 
   /**
-   * 
+   * 1つ作画する
    * @param {HTMLCanvasElement} canvas 
    */
   makeOne(canvas, id) {
-    canvas.width = 9 * 16;
-    canvas.height = 9 * 16;
+    const cellsize = 16;
+    canvas.width = 9 * cellsize;
+    canvas.height = 9 * cellsize;
     const c = canvas.getContext('2d');
 
     const map = this.mapping[id];
@@ -289,7 +305,7 @@ class Misc {
         const bw = map.getBit(j, i);
 
         c.fillStyle = (bw === Pattern.BLACK) ? 'black' : 'white';
-        c.fillRect(j * 16, i * 16, 16, 16); 
+        c.fillRect(j * cellsize, i * cellsize, cellsize, cellsize); 
       }
     }
   }
@@ -464,6 +480,12 @@ class Misc {
 
   }
 
+  /**
+   * 
+   * @see https://github.com/AprilRobotics/apriltag/blob/master/apriltag.c#L1454
+   * @param {string} code 
+   * @returns 
+   */
   parseCode(code) {
     const ret = {
       bits: [],
@@ -471,14 +493,16 @@ class Misc {
       map: [],
     };
     const lines = code.split('\n');
-    const bitReg = /0x(?<bits>.{16})UL/;
-    const posReg = /bit_(?<el>x|y)\[(?<index>\d+)\] = (?<num>-?\d+)/;
+    const bitReg = /0x(?<bits>.{16})UL,/;
+    const posReg = /bit_(?<el>x|y)\[(?<index>\d+)\] = (?<num>-?\d+);/;
     for (const line of lines) {
       const bit = bitReg.exec(line);
       if (bit) {
         const bitstr = bit.groups['bits'];
         const bit64 = (BigInt(`0x${bitstr.slice(0, 8)}`) << 32n) | BigInt(`0x${bitstr.slice(8, 16)}`);
         ret.bits.push(bit64);
+
+        console.log(ret.bits.length - 1, 'bit64', bit64.toString(16).padStart(16, '0'));
         continue;
       }
       const pos = posReg.exec(line);
@@ -493,7 +517,7 @@ class Misc {
 
     for (let i = 0; i < 2115; ++i) {
       const pat = new Pattern();
-      pat.makeMap(ret.pos, ret.bits);
+      pat.makeMap(ret.pos, ret.bits[i]);
       ret.map.push(pat);
     }
 
