@@ -99,8 +99,8 @@ class Pattern {
 
     for (let i = 0; i < 41; ++i) {
       let x = pos[i * 2 + 0] + 2;
-      let y = pos[i + 2 + 1] + 2;
-      this.bitMap[this.pitch * y + x] = (bits & (1n << BigInt(i)) !== 0n) ? Pattern.BLACK : Pattern.WHITE;
+      let y = pos[i * 2 + 1] + 2;
+      this.bitMap[this.pitch * y + x] = (bits & (1n << BigInt(i)) != 0) ? Pattern.BLACK : Pattern.WHITE;
     }
   }
 
@@ -139,9 +139,6 @@ class Misc {
     {
 
       const canvas = document.getElementById('onecanvas');
-      canvas.width = 9;
-      canvas.height = 9;
-
       const result = this.parseCode(_code);
       this.mapping = result.map;
       this.makeOne(canvas, 100);
