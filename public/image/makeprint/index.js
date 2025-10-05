@@ -142,12 +142,7 @@ class Misc {
       canvas.height = side * 5 * 7 / 7;
       this.makeGrad(canvas, 'rg');
     }
-    {
-      const canvas = window.backcanvas;
-      canvas.width = side * 5;
-      canvas.height = side * 7;
-      this.makeMarker(canvas);
-    }
+
 
     this.setListener();
 
@@ -157,6 +152,13 @@ class Misc {
       const result = this.parseCode(_code);
       this.mapping = result.map;
       this.makeOne(canvas, 100);
+    }
+
+    {
+      const canvas = window.backcanvas;
+      canvas.width = side * 5;
+      canvas.height = side * 7;
+      this.makeMarker(canvas);
     }
   }
 
@@ -257,18 +259,24 @@ class Misc {
           forceblack = true;
         } else {
           forceblack = false;
-
         }
 
         const id = count;
-        const bits = [0, 1, 0, 1];
+        const map = this.mapping[id];
 
         for (let cy = 0; cy < 15; ++cy) {
           for (let cx = 0; cx < 15; ++cx) {
+            let lv = 255;
 
+            let ptx = cx - 3;
+            let pty = cy - 3;
+            if (ptx >= 0 && ptx < 9 && pty >= 0 && pty < 9) {
+              const result = map.getBit(ptx, pty);
+              if (result === Pattern.BLACK) {
+                lv = 0;
+              }
+            }
 
-            const white = true;
-            let lv = white ? 255 : 0;
             if (forceblack) {
               lv = 0;
             }
