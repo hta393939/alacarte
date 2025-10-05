@@ -134,13 +134,13 @@ class Misc {
       const canvas = window.maincanvas;
       canvas.width = side * 5;
       canvas.height = side * 5 * 7 / 7;
-      this.makeGrad(canvas);
+      this.makeGrad(canvas, 'gray');
     }
     {
       const canvas = window.subcanvas;
       canvas.width = side * 5;
       canvas.height = side * 5 * 7 / 7;
-      this.makeGrad(canvas, 'rb');
+      this.makeGrad(canvas, 'rg');
     }
     {
       const canvas = window.backcanvas;
@@ -192,13 +192,24 @@ class Misc {
 
           let r = x / w;
           let g = cy / w;
-          let b = 0;
+          //let b = 0;
+          let b = 255;
           let a = 255;
 
-          if (type === 'rb') {
+          if (type == 'rg') {
+            r = x / w;
+            g = cy / w;
+            b = 255;
+            a = 255;
+          } else if (type === 'rb') {
             r = x / w;
             g = 0;
             b = 1 - cy / w;
+          } else if (type == 'gray') {
+            let lv = (r + g) / Math.sqrt(2);
+            r = lv;
+            g = lv;
+            b = lv;
           }
 
           r = Math.max(0, Math.min(r * 255, 255));
