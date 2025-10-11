@@ -4,6 +4,19 @@ const _one255 = (v) => {
 };
 
 /**
+ * 
+ * @param {number} r 
+ * @param {number} g 
+ * @param {number} b 
+ * @param {number} ina 0-255
+ * @returns 
+ */
+const _colstr = (r, g, b, ina) => {
+  let a = Math.max(0, Math.min(ina / 255, 1));
+  return `rgba(${r},${g},${b},${a})`;
+};
+
+/**
  * n次元線形補完
  * @param {number[]} a 
  * @param {number[]} b 
@@ -36,7 +49,7 @@ export class TexMaker {
    * 紫系統色
    * @param {HTMLCanvasElement} canvas 
    */
-  draw1(canvas) {
+  draw4(canvas) {
     const w = 512;
     const h = 512;
     canvas.width = w;
@@ -48,8 +61,8 @@ export class TexMaker {
         let hang = Math.PI * 2 * x / w;
         let rateh = 10;
         let k = Math.sin(hang * rateh);
-        let r = 128 * ((k + 1) * 0.25 + 0.5);
-        let g = 0;
+        let g = 255 * ((k + 1) * 0.25 + 0.5);
+        let r = 0;
         let b = 255 * ((k + 1) * 0.25 + 0.5);
         let a = 255;
 
@@ -74,6 +87,57 @@ export class TexMaker {
       }
     }
     c.putImageData(img, 0, 0);
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  drawChip(canvas) {
+    const size = 16;
+    const w = size * 16;
+    const h = size * 16;
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    for (let i = 0; i < 16; ++i) {
+      for (let j = 0; j < 16; ++j) {
+        let x = j * size;
+        let y = i * size;
+        let index = j + i * 16;
+        let index8 = index - 8;
+        let r = Math.floor(index8 / 36) * 51;
+        let g = (Math.floor(index8 / 6) % 6) * 51;
+        let b = (index8 % 6) * 51;
+        let a = 255;
+
+        const c1s = [[255,255,255,0],
+          [255,255,255,64],
+          [255,255,255,128],
+          [255,255,255,192],
+          [255,255,255,255], // #4
+          [0,0,255,128], // #5
+          [0,255,0,128], // #6
+          [255,0,0,128], // #7
+        ];
+
+        if (index < 8) {
+          r = c1s[index][0];
+          g = c1s[index][1];
+          b = c1s[index][2];
+          a = c1s[index][3];
+        } else if (i >= 14) {
+          let lv = 0;
+          r = lv;
+          g = lv;
+          b = lv;
+          a = 255;
+        }
+
+        c.fillStyle = _colstr(r, g, b, a);
+        c.fillRect(x, y, size, size);
+      }
+    }
   }
 
   /**
@@ -158,7 +222,7 @@ export class TexMaker {
     console.log('draw3 called');
     const util = new Util();
     util.srand(1);
-    const baseColor = [17, 17, 255];
+    const baseColor = [17, 255, 17];
     const padding = 8;
     const padColor = baseColor.map(c => c * 0.5);
 //        const padColor = [0, 0, 0]; // 黒
@@ -233,8 +297,8 @@ export class TexMaker {
           }
 
           r = _one255(lv * 153 / 255);
-          g = _one255(lv * 17 / 255);
-          b = _one255(lv);
+          g = _one255(lv * 255 / 255);
+          b = _one255(lv * 255 / 255);
 
           {
             let mx = padding - x;

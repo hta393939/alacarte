@@ -196,11 +196,10 @@ class Misc {
       Object.assign(param, {
         nameEn: `usagi miku`,
         texturePath: [
-          `body.png`,
-          `face.png`,
-          `hair.png`,
-          `item.png`,
-          `spa.png`,
+          `tex/chip.png`,
+          `tex/sph.png`,
+          `tex/parts1.png`,
+          `tex/parts2.png`,
         ],
       });
       this.makeFiles(param, this.dh);
@@ -303,11 +302,14 @@ class Misc {
     const cv2 = window.canvast2;
     /** @type {HTMLCanvasElement} */
     const cv3 = window.canvast3;
+    /** @type {HTMLCanvasElement} */
+    const cv4 = window.canvast4;
     {
       const maker = new TexMaker();
-      maker.draw1(cv1);
+      maker.drawChip(cv1);
       maker.drawAdd(cv2);
       maker.draw3(cv3);
+      maker.draw4(cv4);
     }
     {
       const blob = await this.toBlob(cv1);
@@ -359,64 +361,6 @@ class Misc {
     a.href = URL.createObjectURL(blob);
     a.click();
   }
-
-  /**
-   * 
-   * @param {HTMLCanvasElement} canvas 
-   */
-  draw(canvas) {
-    const w = 512;
-    const h = 512;
-    canvas.width = w;
-    canvas.height = h;
-    const c = canvas.getContext('2d');
-    c.clearRect(0, 0, w, h);
-    const img = c.getImageData(0, 0, w, h);
-    const center = [w * 0.5, h * 0.5];
-    for (let y = 0; y < h; ++y) {
-      for (let x = 0; x < w; ++x) {
-        let r = 255;
-        let g = 255;
-        let b = 255;
-        let a = 1;
-        let lv = 0.5;
-
-        const dx = x - center[0];
-        const dy = y - center[1];
-        let d = Math.sqrt(dx * dx + dy * dy) / (w / 2);
-        const ang = Math.atan2(-dy, dx);
-        const deg = ang * 180 / Math.PI;
-
-        if (d < 0.5) {
-          lv = 0.5 + 0.25 * (Math.cos(d / 0.5 * Math.PI) + 1) * 0.5;
-        } else if (0.5 < d && d < 0.75) {
-        } else {
-          const p4 = 4 / w;
-          d += Math.sin(ang * 17) / 32 + Math.sin(ang * 7) / 16;
-          let k = 0.125;
-          k = 0.25; // 生成した
-          k = 0.5;
-          k = 1;
-          a = _lim(0, - k * 1 / p4 * (d - 0.875), 1);
-        }
-        a *= 256;
-        lv *= 256;
-
-        r = lv;
-        g = lv;
-        b = lv;
-
-        const ft = (x + w * y) * 4;
-        img.data[ft] = r;
-        img.data[ft+1] = g;
-        img.data[ft+2] = b;
-        img.data[ft+3] = a;
-      }
-    }
-    c.putImageData(img, 0, 0);
-  }
-
-
 
 }
 
