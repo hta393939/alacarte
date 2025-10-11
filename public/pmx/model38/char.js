@@ -14,6 +14,143 @@ const _rad = (deg) => {
   return deg * Math.PI / 180;
 };
 
+export class Vec3 {
+  static XAXIS = 'x';
+  static YAXIS = 'y';
+  static ZAXIS = 'z';
+
+  constructor(inx = 0, iny = 0, inz = 0) {
+    this._x = inx;
+    this._y = iny;
+    this._z = inz;
+  }
+
+  get x() {
+    return this._x;
+  }
+  get y() {
+    return this._y;
+  }
+  get z() {
+    return this._z;
+  }
+
+  clone() {
+    return new Vec3(this.x, this.y, this.z);
+  }
+
+  /**
+   * 
+   * @param {Vec3} b 
+   * @returns {number}
+   */
+  dot(b) {
+    return (this.x * b.x + this.y * b.y + this.z * b.z);
+  }
+
+  /**
+   * 
+   * @param {number} k 
+   */
+  mulk(k) {
+    return new Vec3(this.x * k, this.y * k, this.z * k);
+  }
+
+  cross(b) {
+    return new Vec3(
+      this.y * b.z - this.z * b.y,
+      this.z * b.x - this.x * b.z,
+      this.x * b.y - this.y * b.x,
+    );
+  }
+
+  /**
+   * 
+   * @param {number} ok スカラー倍数
+   * @param {Vec3} b ベクトル
+   * @param {number} bk スカラー倍数
+   */
+  add(ok, b, bk) {
+    return new Vec3(this.x * ok + b.x * bk,
+      this.y * ok + b.y * bk,
+      this.z * ok + b.z * bk,
+    );
+  }
+}
+
+export class Quat {
+  constructor(inx, iny, inz, inw) {
+    this._x = inx;
+    this._y = iny;
+    this._z = inz;
+    this._w = inw;
+  }
+
+  get x() {
+    return this._x;
+  }
+  get y() {
+    return this._y;
+  }
+  get z() {
+    return this._z;
+  }
+  get w() {
+    return this._w;
+  }
+
+  clone() {
+    return new Quat(this.x, this.y, this.z, this.w);
+  }
+
+  im() {
+    return new Vec3(this.x, this.y, this.z);
+  }
+
+  mul(b) {
+    const are = this.w;
+    const bre = b.w;
+    const aim = this.im();
+    const bim = b.im();
+    const vre = aim.mulk(bre).add(bim.mulk(are)).add(aim.cross(bim));
+    return new Quat(
+      vre.x,
+      vre.y,
+      vre.z,
+      are * bre - aim.dot(bim),
+    );
+  }
+
+  toVec3() {
+    return new Vec3(this.x, this.y, this.z);
+  }
+
+  conj() {
+    return new Quat(-this.x, -this.y, -this.z, this.w);
+  }
+
+  /**
+   * 
+   * @param {Vec3} target 
+   * @returns {Vec3}
+   */
+  rotate(target) {
+    const posq = new Quat(target.x, target.y, target.z, 0);
+    return this.mul(posq).mul(this.conj()).toVec3();   
+  }
+
+  /**
+   * center でこの Quat 回転する
+   * @param {Vec3} target
+   * @param {Vec3} center 
+   */
+  rotateByPoint(target, center) {
+    const p1 = target.add(1, center, -1);
+    const p2 = this.rotate(p1);
+    return p2.add(1, center, 1);
+  }
+} 
+
 export class CharBuilder extends PMX.Maker {
   constructor() {
     super();
@@ -103,7 +240,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * 
+   * 2次元回転
    * @param {number[]} vs 
    * @param {number} deg 
    */

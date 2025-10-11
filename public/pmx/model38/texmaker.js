@@ -1,4 +1,27 @@
 
+const _one255 = (v) => {
+  return Math.floor(v * 255 + 0.5);
+};
+
+/**
+ * n次元線形補完
+ * @param {number[]} a 
+ * @param {number[]} b 
+ * @param {number} t a側の重み
+ * @returns 
+ */
+const _lerp = (a, b, t, is255) => {
+  const num = Math.min(a.length, b.length);
+  const ret = [];
+  for (let i = 0; i < num; ++i) {
+    let val = a[i] * t + b[i] * (1 - t);
+    if (is255) {
+      val = Math.round(val);
+    }
+    ret.push(val);
+  }
+  return ret;
+};
 
 export class TexMaker {
   constructor() {
@@ -57,8 +80,8 @@ export class TexMaker {
    * sha マップ生成
    * @param {HTMLCanvasElement} canvas 
    */
-  draw2(canvas) {
-    console.log('draw2 called');
+  drawAdd(canvas) {
+    console.log('drawAdd called');
     const w = 512;
     const h = 512;
     canvas.width = w;

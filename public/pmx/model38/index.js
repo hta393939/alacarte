@@ -13,25 +13,7 @@ const _lim = (a, x, b) => {
   return x;
 };
 
-/**
- * n次元線形補完
- * @param {number[]} a 
- * @param {number[]} b 
- * @param {number} t a側の重み
- * @returns 
- */
-const _lerp = (a, b, t, is255) => {
-  const num = Math.min(a.length, b.length);
-  const ret = [];
-  for (let i = 0; i < num; ++i) {
-    let val = a[i] * t + b[i] * (1 - t);
-    if (is255) {
-      val = Math.round(val);
-    }
-    ret.push(val);
-  }
-  return ret;
-};
+
 
 const _one255 = v => {
   return Math.max(0, Math.min(255, Math.round(v * 255)));
@@ -197,59 +179,6 @@ class Misc {
       }
     });
 
-    window.idmakehalf?.addEventListener('click', () => {
-      const param = this.getCommonOptions();
-      const top = 'a';
-
-      Object.assign(param, {
-        nameEn: `${top}001_halfcapsule`,
-        texturePath: `tex/${top}001.png`,
-      });
-      const writer = new HalfCapsule();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}_${_dstr()}.pmx`);
-      console.log('makehalf offsets');
-    });
-
-    window.idmakecentercapsule?.addEventListener('click', () => {
-      const param = this.getCommonOptions();
-      const top = param.useradius ? 'r' : 'a';
-      const d = param.denom;
-      const numtext = param.useradiusq ? _pad(23, 3) : _pad(3, 3);
-      let dtext = (d > 1) ? `d${d.toFixed(0)}` : `${(1 / d).toFixed(0)}`;
-
-      Object.assign(param, {
-        nameEn: `${top}${numtext}_centercapsule_${param.belt}_${dtext}`,
-        texturePath: [
-          `tex/${top}${numtext}.png`,
-          `tex/${top}${numtext}spa.png`,
-        ],
-      });
-      const writer = new CenterCapsule();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-      console.log('makecentercapsule offsets');
-    });
-
-    window.idmakephycapsule?.addEventListener('click', () => {
-      this.makePhyCapsule();
-    });
-
-    const makePlanes = (planenum) => {
-      const param = {
-        planenum,
-      };
-      Object.assign(param, {
-        nameEn: `plane${planenum}`,
-      });
-      const writer = new PrimitiveBuilder();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
-      console.log('make plane', planenum);
-    };
 
     window.makechar?.addEventListener('click', () => {
       const param = this.getCommonOptions();
@@ -265,11 +194,8 @@ class Misc {
           `spa.png`,
         ],
       });
-      const writer = new CharBuilder();
-      writer.make(param);
-      const bufs = writer.makeBuffer();
-      this.download(new Blob(bufs), `usagimiku.pmx`);
-      console.log('makechar done');
+      this.makeFiles(param);
+
     });
 
     {
@@ -283,11 +209,6 @@ class Misc {
       });
     }
 
-    this.draw(window.canvast);
-    //this.draw1(window.canvast1);
-    //this.draw2(window.canvast2);
-    //this.draw3(window.canvast3);
-        //this.draw4(window.canvast4);
 
     {
 /** @type {HTMLDivElement} */
@@ -349,30 +270,70 @@ class Misc {
   }
 
   /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  toBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/png');
+    });
+  }
+
+  /**
    * 一連のファイル群を作成する
    * @param {FileSystemDirectoryHandle} dh 
    */
   async makeFiles(dh) {
     console.log('makeFiles');
+
+    /** @type {HTMLCanvasElement} */
+    const cv1 = window.canvast1;
+    /** @type {HTMLCanvasElement} */
+    const cv2 = window.canvast2;
+    /** @type {HTMLCanvasElement} */
+    const cv3 = window.canvast3;
     {
+      const maker = new TexMaker();
+      maker.draw1(cv1);
+      maker.drawAdd(cv2);
+      maker.draw3(cv3);
+    }
+    {
+      const blob = await this.toBlob(cv1);
       await this.makeFile(dh,
         ['tex'],
-        'tex01.png',
+        't01.png',
         blob,
       );
     }
     {
+      const blob = await this.toBlob(cv2);
       await this.makeFile(dh,
         ['tex'],
         'sph.png',
         blob,
       );
     }
+    {
+      const blob = await this.toBlob(cv3);
+      await this.makeFile(dh,
+        ['tex'],
+        't03.png',
+        blob,
+      );
+    }
+
     { // .pmx
+      const writer = new CharBuilder();
+      writer.make(param);
+      const bufs = writer.makeBuffer();
+
       await this.makeFile(dh,
         [],
-        'foo.pmx',
-        blob,
+        'usagimiku.pmx',
+        new Blob(bufs),
       );
     }
     console.log('makeFiles');
