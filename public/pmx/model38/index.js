@@ -179,6 +179,15 @@ class Misc {
       }
     });
 
+    {
+      const el = document.getElementById('selectroot');
+      el?.addEventListener('click', async ev => {
+        const opt = { mode: 'readwrite' };
+        const dh = await window.showDirectoryPicker(opt);
+        this.root = dh;
+
+      });
+    }
 
     window.makechar?.addEventListener('click', () => {
       const param = this.getCommonOptions();
@@ -194,7 +203,7 @@ class Misc {
           `spa.png`,
         ],
       });
-      this.makeFiles(param);
+      this.makeFiles(param, this.dh);
 
     });
 
@@ -285,7 +294,7 @@ class Misc {
    * 一連のファイル群を作成する
    * @param {FileSystemDirectoryHandle} dh 
    */
-  async makeFiles(dh) {
+  async makeFiles(param, dh) {
     console.log('makeFiles');
 
     /** @type {HTMLCanvasElement} */

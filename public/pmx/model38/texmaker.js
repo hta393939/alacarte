@@ -158,7 +158,7 @@ export class TexMaker {
     console.log('draw3 called');
     const util = new Util();
     util.srand(1);
-    const baseColor = [153, 17, 255];
+    const baseColor = [17, 17, 255];
     const padding = 8;
     const padColor = baseColor.map(c => c * 0.5);
 //        const padColor = [0, 0, 0]; // 黒
