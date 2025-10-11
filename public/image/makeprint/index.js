@@ -140,7 +140,7 @@ class Misc {
       const canvas = window.subcanvas;
       canvas.width = side * 5;
       canvas.height = side * 5 * 7 / 7;
-      this.makeGrad(canvas, 'rg');
+      this.makeGrad(canvas, 'rb');
     }
 
 
@@ -151,14 +151,14 @@ class Misc {
       const canvas = document.getElementById('onecanvas');
       const result = this.parseCode(_code);
       this.mapping = result.map;
-      this.makeOne(canvas, 100);
+      this.makeOne(canvas, 283);
     }
 
     {
       const canvas = window.backcanvas;
       canvas.width = side * 5;
       canvas.height = side * 7;
-      this.makeMarker(canvas);
+      this.makeMarker(canvas, 200);
     }
   }
 
@@ -205,7 +205,7 @@ class Misc {
             a = 255;
           } else if (type === 'rb') {
             r = x / w;
-            g = 0;
+            g = 255;
             b = 1 - cy / w;
           } else if (type == 'gray') {
             let lv = (r + g) / Math.sqrt(2);
@@ -233,7 +233,7 @@ class Misc {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  async makeMarker(canvas) {
+  async makeMarker(canvas, start) {
     console.log('makeMarker called');
     const cellsize = 16;
     const cside = cellsize * 15;
@@ -246,7 +246,7 @@ class Misc {
     c.fillRect(0, 0, w, h);
 
     const data = c.getImageData(0, 0, w, h);
-    let count = 0;
+    let count = start;
     c.textAlign = 'left';
     c.textBaseline = 'top';
     c.fillStyle = 'black';
@@ -313,7 +313,8 @@ class Misc {
    * @param {HTMLCanvasElement} canvas 
    */
   makeOne(canvas, id) {
-    const cellsize = 16;
+    //const cellsize = 16;
+    const cellsize = 128;
     canvas.width = 9 * cellsize;
     canvas.height = 9 * cellsize;
     const c = canvas.getContext('2d');
