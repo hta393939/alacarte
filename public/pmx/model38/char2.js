@@ -17,6 +17,9 @@ const _rad = (deg) => {
 };
 
 export class CharBuilder2 extends CharBuilder {
+  static L = 0;
+  static R = 1;
+
   constructor() {
     super();
 
@@ -49,22 +52,30 @@ export class CharBuilder2 extends CharBuilder {
 
   /**  */
   addArm(param) {
-
+    let vindex = this.vertices.length;
   }
 
   /**  */
   addLeg(param) {
-
+    let vindex = this.vertices.length;
   }
 
   /**  */
   addUpper(param) {
-
+    {
+      this.addArm(param, CharBuilder2.L);
+      this.addArm(param, CharBuilder2.R);
+      this.addHead(param);
+      this.addHeadPart(param);
+    }
   }
 
   /**  */
   addLower(param) {
-
+    {
+      this.addLeg(param, CharBuilder2.L);
+      this.addLeg(param, CharBuilder2.R);
+    }
   }
 
   /**  */

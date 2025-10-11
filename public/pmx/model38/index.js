@@ -195,13 +195,13 @@ class Misc {
   
       Object.assign(param, {
         nameEn: `usagi miku`,
-        texturePath: [
-          `tex/chip.png`,
-          `tex/sph.png`,
-          `tex/body.png`,
-          `tex/face.png`,
-          `tex/parts1.png`,
-          `tex/parts2.png`,
+        textures: [
+          `chip.png`,
+          `sph.png`,
+          `body.png`,
+          `face.png`,
+          `parts1.png`,
+          `parts2.png`,
         ],
       });
       this.makeFiles(param, this.dh);
@@ -317,7 +317,7 @@ class Misc {
       const blob = await this.toBlob(cv1);
       await this.makeFile(dh,
         ['tex'],
-        't01.png',
+        param.textures[0],
         blob,
       );
     }
@@ -325,7 +325,7 @@ class Misc {
       const blob = await this.toBlob(cv2);
       await this.makeFile(dh,
         ['tex'],
-        'sph.png',
+        param.textures[1],
         blob,
       );
     }
@@ -333,7 +333,7 @@ class Misc {
       const blob = await this.toBlob(cv3);
       await this.makeFile(dh,
         ['tex'],
-        't03.png',
+        param.textures[2],
         blob,
       );
     }
