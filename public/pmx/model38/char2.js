@@ -47,6 +47,36 @@ export class CharBuilder2 extends CharBuilder {
     }
   }
 
+  /**  */
+  addArm(param) {
+
+  }
+
+  /**  */
+  addLeg(param) {
+
+  }
+
+  /**  */
+  addUpper(param) {
+
+  }
+
+  /**  */
+  addLower(param) {
+
+  }
+
+  /**  */
+  addHead(param) {
+
+  }
+
+  /**  */
+  addHeadPart(param) {
+
+  }
+
   /**
    * 物理シンプルな箱
    */

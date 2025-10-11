@@ -198,6 +198,8 @@ class Misc {
         texturePath: [
           `tex/chip.png`,
           `tex/sph.png`,
+          `tex/body.png`,
+          `tex/face.png`,
           `tex/parts1.png`,
           `tex/parts2.png`,
         ],
