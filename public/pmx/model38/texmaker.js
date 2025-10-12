@@ -138,6 +138,28 @@ export class TexMaker {
         c.fillRect(x, y, size, size);
       }
     }
+
+    {
+      const data = c.getImageData(0, 0, w, h);
+      for (let i = 0; i < 2; ++i) {
+        for (let x = 0; x < w; ++x) {
+          for (let y = 0; y < 16; ++y) {
+            let offset = (x + y * w) * 4;
+            let lv = x;
+            let r = lv;
+            let g = lv;
+            let b = lv;
+            let a = 255;
+            data.img[offset] = r;
+            data.img[offset+1] = g;
+            data.img[offset+2] = b;
+            data.img[offset+3] = a;
+          }
+        }
+      }
+      c.putImageData(data, 0, 0);
+    }
+
   }
 
   /**

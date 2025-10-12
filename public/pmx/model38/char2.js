@@ -19,10 +19,12 @@ const _rad = (deg) => {
 export class CharBuilder2 extends CharBuilder {
   static L = 0;
   static R = 1;
+  static lrname = ['左', '右'];
 
   constructor() {
     super();
 
+    /** 分割数 */
     this.divnum = 16;
   }
 
@@ -42,22 +44,52 @@ export class CharBuilder2 extends CharBuilder {
     }
   }
 
-  addMid() {
+  addMid(param, lr) {
+    let vindex = this.vertices.length;
+    for (let i = 0; i <= this.divnum; ++i) {
+      for (let j = 0; j <= this.divnum; ++j) {
+        let ang = (j % this.divnum) * Math.PI * 2 / this.divnum;
+        let cs = Math.cos(ang);
+        let sn = Math.sin(ang);
+        const vtx = new PMX.Vertex();
+        vtx.p = [cs, 0, sn];
+        vtx.n = [cs, 0, sn];
+        vtx.uv = [j / this.divnum, i / this.divnum];
+        vtx._boneName[0] = '全ての親';
+        vtx._boneName[1] = `${CharBuilder2.lrname[lr]}腕`;
+
+        this.vertices.push(vtx);
+      }
+    }
+
     for (let i = 0; i < this.divnum; ++i) {
       for (let j = 0; j < this.divnum; ++j) {
-
+        let v0 = vindex + (this.divnum + 1) + j;
+        let v1 = v0 + 1;
+        let v2 = v1 + (this.divnum + 1);
+        let v3 = v2 + 1;
+        this.faces.push([v0, v2, v1]);
+        this.faces.push([v1, v2, v3]);
       }
     }
   }
 
   /**  */
-  addArm(param) {
+  addArm(param, lr) {
     let vindex = this.vertices.length;
+    this.addMid(param, lr);
+    for (let i = 0; i < 0; ++i) {
+
+    }
   }
 
   /**  */
-  addLeg(param) {
+  addLeg(param, lr) {
     let vindex = this.vertices.length;
+    this.addMid(param, lr);
+    for (let i = 0; i < 0; ++i) {
+
+    }
   }
 
   /**  */
@@ -94,9 +126,9 @@ export class CharBuilder2 extends CharBuilder {
   makeBox(param) {
     {
       const vs = [
-        {p: [-1, 1, -1]},
+        {p: [-1, 1, -1]}, // 手前
         {p: [ 1, 1, -1]},
-        {p: [-1,-1, -1]},
+        {p: [-1,-1, -1]}, // z
         {p: [ 1,-1, -1]}, // 手前 下
         {p: [-1, 1,  1]}, // 4 奥上
         {p: [ 1, 1,  1]}, // 5
