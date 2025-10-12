@@ -1,23 +1,6 @@
 
-import { CharBuilder } from "./char.js";
 import { CharBuilder2 } from "./char2.js";
 import { TexMaker } from "./texmaker.js";
-
-const _lim = (a, x, b) => {
-  if (x < a) {
-    return a;
-  }
-  if (b < x) {
-    return b;
-  }
-  return x;
-};
-
-
-
-const _one255 = v => {
-  return Math.max(0, Math.min(255, Math.round(v * 255)));
-};
 
 /**
  * @param {number} v 値
@@ -38,59 +21,10 @@ const _dstr = (d = new Date()) => {
   return s;
 };
 
-/**
- * 距離
- * @param {number[]} a 
- * @param {number[]} b 
- * @returns {number}
- */
-const _dist = (a, b) => {
-  let sum = 0;
-  sum += (a[0] - b[0]) ** 2;
-  sum += (a[1] - b[1]) ** 2;
-  sum += (a[2] - b[2]) ** 2;
-  return Math.sqrt(sum);
-};
-
-/**
- * Set から array を得る
- * @param {Set} t 
- * @returns {any[]} 
- */
-const _settoarray = (t) => {
-  return Array.from(t).sort((a, b) => a - b);
-};
-
-const _deg2rad = v => {
-  return v * Math.PI / 180;
-};
-
-const _rad2deg = v => {
-  return v * 180 / Math.PI;
-};
-
 
 class Misc {
   constructor() {
     this.STORAGE = 'model';
-  }
-
-  /**
-   * 
-   * @param {File} file 
-   */
-  async parseFile(file) {
-    const ab = await file.arrayBuffer();
-    const parser = new PMX.Maker();
-    this.parser = parser;
-    parser.parse(ab);
-
-    const result = this.analyzeFileRoss(parser);
-//        const ss = adjustvts.map(vtx => vtx.toCSV());
-
-    result.push('');
-    let str = result.join('\n');
-    await navigator.clipboard.writeText(str);
   }
 
   getCommonOptions() {
@@ -208,7 +142,7 @@ class Misc {
 
     });
 
-    {
+    { // クリップ
       const el = window.idtoclip1;
       el?.addEventListener('click', async () => {
         const maker = new TransObjectBuilder();
@@ -220,7 +154,7 @@ class Misc {
     }
 
 
-    {
+    { // ドロップ
 /** @type {HTMLDivElement} */
       const el = window.drop;
       el?.addEventListener('dragover', ev => {
@@ -339,7 +273,7 @@ class Misc {
     }
 
     { // .pmx
-      const writer = new CharBuilder();
+      const writer = new CharBuilder2();
       writer.make(param);
       const bufs = writer.makeBuffer();
 

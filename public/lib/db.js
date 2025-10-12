@@ -32,7 +32,7 @@ export class Db {
   /**
    * 
    * @param {string} dbname 
-   * @param {number} dbver 
+   * @param {number} dbver バージョン数値
    * @param {string[]} dbstores 
    */
   init(dbname, dbver, dbstores) {
@@ -106,7 +106,7 @@ export class Db {
   }
 
   /**
-   * 
+   * ストアを空にする
    * @param {IDBDatabase} db 
    * @param {string} storename 
    */
