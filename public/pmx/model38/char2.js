@@ -44,6 +44,11 @@ export class CharBuilder2 extends CharBuilder {
     }
   }
 
+  /**
+   * 原点から下へ延びる中間筒を生成する
+   * @param {*} param 
+   * @param {*} lr 
+   */
   addMid(param, lr) {
     let vindex = this.vertices.length;
     for (let i = 0; i <= this.divnum; ++i) {
@@ -52,9 +57,9 @@ export class CharBuilder2 extends CharBuilder {
         let cs = Math.cos(ang);
         let sn = Math.sin(ang);
         const vtx = new PMX.Vertex();
-        vtx.p = [cs, 0, sn];
+        vtx.p = [cs, -i, sn];
         vtx.n = [cs, 0, sn];
-        vtx.uv = [j / this.divnum, i / this.divnum];
+        vtx.uv = [j / this.divnum, 1 - i / this.divnum];
         vtx._boneName[0] = '全ての親';
         vtx._boneName[1] = `${CharBuilder2.lrname[lr]}腕`;
 
