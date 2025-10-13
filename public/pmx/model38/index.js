@@ -132,6 +132,7 @@ class Misc {
         textures: [
           `chip.png`,
           `sph.png`,
+          `marking.png`,
           `body.png`,
           `face.png`,
           `parts1.png`,
@@ -231,43 +232,29 @@ class Misc {
    */
   async makeFiles(param, dh) {
     console.log('makeFiles');
+    /** @type {HTMLCanvasElement[]} */
+    const cvs = [];
+    for (let i = 0; i < 7; ++i) {
+      /** @type {HTMLCanvasElement} */
+      const canvas = document.getElementById(`canvast${i}`);
+      cvs.push(canvas);
+    }
 
-    /** @type {HTMLCanvasElement} */
-    const cv1 = window.canvast1;
-    /** @type {HTMLCanvasElement} */
-    const cv2 = window.canvast2;
-    /** @type {HTMLCanvasElement} */
-    const cv3 = window.canvast3;
-    /** @type {HTMLCanvasElement} */
-    const cv4 = window.canvast4;
     {
       const maker = new TexMaker();
-      maker.drawChip(cv1);
-      maker.drawAdd(cv2);
-      maker.draw3(cv3);
-      maker.draw4(cv4);
+      maker.drawChip(cvs[0]);
+      maker.drawAdd(cvs[1]);
+      maker.drawMarking(cvs[2]);
+      maker.draw3(cvs[3]);
+      maker.draw4(cvs[4]);
+      maker.draw5(cvs[5]);
+      maker.draw6(cvs[6]);
     }
-    {
-      const blob = await this.toBlob(cv1);
+    for (let i = 0; i < 7; ++i) {
+      const blob = await this.toBlob(cvs[i]);
       await this.makeFile(dh,
         ['tex'],
-        param.textures[0],
-        blob,
-      );
-    }
-    {
-      const blob = await this.toBlob(cv2);
-      await this.makeFile(dh,
-        ['tex'],
-        param.textures[1],
-        blob,
-      );
-    }
-    {
-      const blob = await this.toBlob(cv3);
-      await this.makeFile(dh,
-        ['tex'],
-        param.textures[2],
+        param.textures[i],
         blob,
       );
     }

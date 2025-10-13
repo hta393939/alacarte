@@ -72,38 +72,6 @@ export class TexMaker {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  draw4(canvas) {
-    const w = 512;
-    const h = 512;
-    canvas.width = w;
-    canvas.height = h;
-    const c = canvas.getContext('2d');
-    const img = c.getImageData(0, 0, w, h);
-    for (let y = 0; y < h; ++y) {
-      for (let x = 0; x < w; ++x) {
-        let hang = Math.PI * 2 * x / w;
-        let rateh = 10;
-        let k = Math.sin(hang * rateh);
-        let g = 255 * ((k + 1) * 0.25 + 0.5);
-        let r = 0;
-        let b = 255 * ((k + 1) * 0.25 + 0.5);
-        let a = 255;
-
-        let ft = (x + w * y) * 4;
-
-        img.data[ft] = r;
-        img.data[ft+1] = g;
-        img.data[ft+2] = b;
-        img.data[ft+3] = a;
-      }
-    }
-    c.putImageData(img, 0, 0);
-  }
-
-  /**
-   * 
-   * @param {HTMLCanvasElement} canvas 
-   */
   drawChip(canvas) {
     const size = 16;
     const w = size * 16;
@@ -256,9 +224,215 @@ export class TexMaker {
   /**
    * 
    * @param {HTMLCanvasElement} canvas 
+   */
+  drawMarking(canvas) {
+    const w = 1024;
+    const h = 1024;
+    const size = w / 16;
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    const img = c.getImageData(0, 0, w, h);
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let hang = Math.PI * 2 * x / w;
+        let rateh = 10;
+        let k = Math.sin(hang * rateh);
+        let g = 255 * ((k + 1) * 0.25 + 0.5);
+        let r = 0;
+        let b = 255 * ((k + 1) * 0.25 + 0.5);
+        let a = 255;
+
+        let ft = (x + w * y) * 4;
+
+        img.data[ft] = r;
+        img.data[ft+1] = g;
+        img.data[ft+2] = b;
+        img.data[ft+3] = a;
+      }
+    }
+    //c.putImageData(img, 0, 0);
+
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillStyle = 'black';
+    for (let i = 0; i < 16; ++i) {
+      for (let j = 0; j < 16; ++j) {
+        let x = j * size + size * 0.5;
+        let y = i * size + size * 0.5;
+        let px = size * 0.5;
+        c.font = `bold ${px}px Consolas`;
+        c.fillText(`${x}`, x, y);
+      }
+    }
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
    */ 
   draw3(canvas) {
     console.log('draw3 called');
+    const util = new Util();
+    util.srand(1);
+    const baseColor = [17, 255, 255];
+    const padding = 8;
+    const padColor = baseColor.map(c => c * 0.5);
+//        const padColor = [0, 0, 0]; // 黒
+
+    const ellipses = [
+//{ cx: 1/16, cy: -0.75, deg: 20, top: 1, k: 8, bx: 0.5, by: 0.6, add: true },
+
+{ cx: -3/8, cy: -0.75, deg: -1, top: 1, k: 8, bx: 0.5, by: 8, add: true },
+{ cx: 1/8, cy: 0.75, deg: -1, top: 1, k: 8, bx: 0.5, by: 8, add: true },
+    ];
+    for (let k = 0; k <= 8; ++k) {
+      const obj = {
+        cx: k / 4 - 1,
+        cy: util.rand() / 32768 - 0.5,
+        deg: (util.rand() / 32768 - 0.5) * 15,
+        top: 1,
+        k: 4,
+        bx: 0.5 + (util.rand() / 32768 - 0.5) * 0.1,
+        by: 6 + (util.rand() / 32768 - 0.5) * 2,
+        add: true,
+      };
+      ellipses.push(obj);
+      //console.log(obj);
+    }
+
+
+    const w = 512;
+    const h = 512;
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    c.fillStyle = 'rgb(0, 0, 0)';
+    c.fillRect(0, 0, w, h);
+    const img = c.getImageData(0, 0, w, h);
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let r = 255;
+        let g = 255;
+        let b = 192;
+        let a = 255;
+
+        let ft = (x + w * y) * 4;
+
+        img.data[ft] = r;
+        img.data[ft+1] = g;
+        img.data[ft+2] = b;
+        img.data[ft+3] = a;
+      }
+    }
+    c.putImageData(img, 0, 0);
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  draw4(canvas) {
+    const w = 512;
+    const h = 512;
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    const img = c.getImageData(0, 0, w, h);
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let hang = Math.PI * 2 * x / w;
+        let rateh = 10;
+        let k = Math.sin(hang * rateh);
+        let g = 255;
+        let r = 255;
+        let b = 192;
+        let a = 255;
+
+        let ft = (x + w * y) * 4;
+
+        img.data[ft] = r;
+        img.data[ft+1] = g;
+        img.data[ft+2] = b;
+        img.data[ft+3] = a;
+      }
+    }
+    c.putImageData(img, 0, 0);
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */ 
+  draw5(canvas) {
+    console.log('draw5 called');
+    const util = new Util();
+    util.srand(1);
+    const baseColor = [17, 255, 255];
+    const padding = 8;
+    const padColor = baseColor.map(c => c * 0.5);
+//        const padColor = [0, 0, 0]; // 黒
+
+    const ellipses = [
+//{ cx: 1/16, cy: -0.75, deg: 20, top: 1, k: 8, bx: 0.5, by: 0.6, add: true },
+
+{ cx: -3/8, cy: -0.75, deg: -1, top: 1, k: 8, bx: 0.5, by: 8, add: true },
+{ cx: 1/8, cy: 0.75, deg: -1, top: 1, k: 8, bx: 0.5, by: 8, add: true },
+    ];
+    for (let k = 0; k <= 8; ++k) {
+      const obj = {
+        cx: k / 4 - 1,
+        cy: util.rand() / 32768 - 0.5,
+        deg: (util.rand() / 32768 - 0.5) * 15,
+        top: 1,
+        k: 4,
+        bx: 0.5 + (util.rand() / 32768 - 0.5) * 0.1,
+        by: 6 + (util.rand() / 32768 - 0.5) * 2,
+        add: true,
+      };
+      ellipses.push(obj);
+      //console.log(obj);
+    }
+
+
+    const w = 512;
+    const h = 512;
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    c.fillStyle = 'rgb(0, 0, 0)';
+    c.fillRect(0, 0, w, h);
+    const img = c.getImageData(0, 0, w, h);
+    for (let y = 0; y < h; ++y) {
+      for (let x = 0; x < w; ++x) {
+        let r = 255;
+        let g = 255;
+        let b = 255;
+        let a = 255;
+
+        let ft = (x + w * y) * 4;
+
+        if (x >= w * 0.5) {
+          r = 64;
+          g = 255;
+          b = 64;
+        }
+
+        img.data[ft] = r;
+        img.data[ft+1] = x;
+        img.data[ft+2] = b;
+        img.data[ft+3] = a;
+      }
+    }
+    c.putImageData(img, 0, 0);
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */ 
+  draw6(canvas) {
+    console.log('draw6 called');
     const util = new Util();
     util.srand(1);
     const baseColor = [17, 255, 255];

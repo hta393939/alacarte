@@ -28,3 +28,7 @@ summary, button, .pointer, .pt, input[type="range"] {
   border-radius: 2em;
 }
 
+#canvast2 {
+  width: 512px;
+  height: 512px;
+}
