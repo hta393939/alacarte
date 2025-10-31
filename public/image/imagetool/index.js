@@ -1,6 +1,7 @@
-/**
- * @file index.js
- */
+
+const _pad = (v, n = 2) => {
+  return new String(v).padStart(n, '0');
+};
 
 class Misc {
   constructor() {
@@ -305,6 +306,17 @@ class Misc {
         this.processForDir(usefunction?.checked);
       });
     }
+    {
+      const el = document.getElementById('flattenfordir');
+      el?.addEventListener('click', async () => {
+        const opt = {
+          mode: 'readwrite',
+        };
+        const dh = await window.showDirectoryPicker(opt);
+        this.dirHandle = dh;
+        this.flattenForDir();
+      });
+    }
 
     {
       const el = document.getElementById('downloadact');
@@ -498,6 +510,124 @@ class Misc {
     }
 
     console.log('processForDir');
+  }
+
+  /**
+   * 
+   * @param {FileSystemFileHandle} src 
+   * @param {FileSystemFileHandle} dst 
+   */
+  async copyFile(src, dst) {
+    const file = await src.getFile();
+    /** ブロブで書けるのか? */
+    //const data = await file.blob();
+    const opt = {
+      keepExistingData: false, // false は空にする
+    };
+    const ws = await dst.createWritable(opt);
+    await ws.write(file);
+    await ws.close();
+  }
+
+  /**
+   * ディレクトリ内の画像を処理する
+   * @param {boolean} usefunction
+   */
+  async flattenForDir() {
+    /** 対象フォルダ */
+    const dh = this.dirHandle;
+    console.log('flattenForDir called', dh?.name);
+
+    let count = 0;
+    // ext は . を含む
+    const re = /^(?<body>.+)(?<ext>\.[^.]+)$/;
+    const reNum = /^(?<body>.*)(?<num>\d+)$/;
+    const rePar = /^(?<body>.*)(?<dup>\s\(\d+\))$/;
+
+    /** 直下のファイル */
+    const cFiles = [];
+    /** 直下のフォルダ @type {FileSystemDirectoryHandle[]} */
+    const subDirs = [];
+    for await (const [k, h] of dh) {
+      console.log(k, h); // 短い名前とハンドル
+      if (h.kind === 'file') {
+        cFiles.push(h);
+        continue;
+      }
+      subDirs.push(h);
+    }
+
+    for (const subDir of subDirs) {
+      let falseCount = 0;
+      for await (const [k, h] of subDir) {
+        console.log(k, h); // 短い名前とハンドル
+        if (h.kind !== 'file') {
+          continue;
+        }
+
+        /** 拡張子を除いたファイル名からさらに末尾を除いたファイル名 */
+        let body = k;
+        let ext = '';
+        const mbe = re.exec(k);
+        if (mbe) {
+          body = mbe.groups['body'];
+          ext = mbe.groups['ext'];
+        }
+        const mbn = reNum.exec(body);
+        if (mbn) {
+          body = mbn.groups['body'];
+        } else {
+          const mbp = rePar.exec(body);
+          if (mbp) {
+            body = mbp.groups['body'];
+            console.log('parentheses', mbp.groups['dup']);
+          }
+        }
+        let no = 10001;
+        /** 現在の候補名 */
+        let dstName = k;
+        while (true) {
+          // 先に代入すると初期名はもはや使用しない
+          dstName = `${body}${_pad(no, 5)}${ext}`;
+
+          const found = cFiles.find(fh => fh.name === dstName);
+          if (!found) {
+            break;
+          }
+          // 名前がバッティングした場合
+          no += 1;
+        }
+        // 生成する
+        const opt = {
+          create: true,
+        };
+        const dstfh = await dh.getFileHandle(dstName, opt);
+        try {
+          await this.copyFile(h, dstfh);
+          cFiles.push(dstfh);
+
+          await subDir.removeEntry(k); // 元を削除
+
+          count += 1;
+        } catch (ec) {
+          falseCount += 1;
+          console.warn('copy and remove catch', ec.message);
+        }
+        await window?.scheduler?.yield();
+      }
+      if (falseCount === 0) {
+        await dh.removeEntry(subDir.name, {recursive: true});
+      }
+    }
+
+    {
+      const el = document.getElementById('countview');
+      if (el) {
+        el.textContent = `${count}, ${new Date().toLocaleTimeString()}`;
+      }
+    }
+
+    console.log('flattenForDir');
   }
 
   /**
