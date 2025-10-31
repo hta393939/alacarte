@@ -541,7 +541,8 @@ class Misc {
     let count = 0;
     // ext は . を含む
     const re = /^(?<body>.+)(?<ext>\.[^.]+)$/;
-    const reNum = /^(?<body>.*)(?<num>\d+)$/;
+    // 後ろが短く1個で取られるのだが;; 否定後読み Negative lookbehind
+    const reNum = /^(?<body>.*)(?<num>(?<!\d)\d+)$/;
     const rePar = /^(?<body>.*)(?<dup>\s\(\d+\))$/;
 
     /** 直下のファイル */
