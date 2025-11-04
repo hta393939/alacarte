@@ -108,15 +108,16 @@ class Misc {
     c.font = `normal ${px}px メイリオ`;
     for (let i = 0; i < 8; ++i) {
       for (let j = 0; j < 8; ++j) {
-        const isBlack = ((i & 1) + (j & 1)) & 1;
-        c.fillStyle = isBlack ? 'rgb(64,0,0' : 'rgb(128,128,0)';
+        const checkBlack = ((i & 1) + (j & 1)) & 1;
+        c.fillStyle = checkBlack ? 'rgb(128,64,64)' : 'rgb(192,192,64)';
         let x = j * size;
         let y = i * size;
         c.fillRect(x, y, size, size);
 
-        const val = this.curBoard.buf[(2+i) * 10 + (2+j)];
+        const val = this.curBoard.buf[(2+i) * Chess.PITCH + (2+j)];
         const black = (val & Chess.BLACK_BIT) ? 1 : 0;
         const piece = (val & Chess.PIECE_MASK);
+        c.fillStyle = black ? 'rgb(0,0,0)' : 'rgb(255,255,255)';
         c.fillText(codes[black][piece],
           x + size * 0.5, y + size * 0.5);
       }

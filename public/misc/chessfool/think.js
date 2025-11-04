@@ -132,9 +132,9 @@ export class Board {
     ];
     for (let i = Chess.WHITE_IDX; i <= Chess.BLACK_IDX; ++i) {
       let offset = ((i === Chess.BLACK_IDX) ? 3 : 8) * Chess.PITCH + 2;
-      const bit = ((i === Chess.BLACK_IDX) ? Chess.BLACK_IDX : 0);
+      const bit = ((i === Chess.BLACK_IDX) ? Chess.BLACK_BIT : 0);
       const pawn = Piece.PAWN | bit;
-      let offsetNonpawn = offset + ((i === Chess.BLACK_IDX) ? Chess.PITCH : -Chess.PITCH);
+      let offsetNonpawn = offset + ((i === Chess.BLACK_IDX) ? -Chess.PITCH : Chess.PITCH);
       for (let j = 0; j < 8; ++j) {
         this.buf[offset] = pawn;
         this.buf[offsetNonpawn] = ps[j] | bit;
