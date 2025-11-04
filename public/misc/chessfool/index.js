@@ -1,5 +1,5 @@
 
-import {Board} from './think.js';
+import {Board, Piece, Chess} from './think.js';
 
 const _pad = (v, n = 2) => {
   return new String(v).padStart(n, '0');
@@ -19,6 +19,8 @@ class Misc {
 
   async initialize() {
     this.setListener();
+
+    this.readyDraw();
   }
 
 
@@ -91,6 +93,34 @@ class Misc {
     ];
 
     this.curBoard.initFirst();
+
+    /** @type {HTMLCanvasElement} */
+    const canvas = document.getElementById('maincanvas');
+    const size = 60;
+    const w = size * 8;
+    const h = size * 8;
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    let px = size;
+    c.font = `normal ${px}px メイリオ`;
+    for (let i = 0; i < 8; ++i) {
+      for (let j = 0; j < 8; ++j) {
+        const isBlack = ((i & 1) + (j & 1)) & 1;
+        c.fillStyle = isBlack ? 'rgb(64,0,0' : 'rgb(128,128,0)';
+        let x = j * size;
+        let y = i * size;
+        c.fillRect(x, y, size, size);
+
+        const val = this.curBoard.buf[(2+i) * 10 + (2+j)];
+        const black = (val & Chess.BLACK_BIT) ? 1 : 0;
+        const piece = (val & Chess.PIECE_MASK);
+        c.fillText(codes[black][piece],
+          x + size * 0.5, y + size * 0.5);
+      }
+    }
 
   }
 
