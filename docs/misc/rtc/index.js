@@ -39,7 +39,7 @@ class Misc {
     const parent = document.getElementById('devices');
     const devs = await navigator.mediaDevices.enumerateDevices();
     for (const dev of devs) {
-      let text = `${dev.kind},${dev.label},${dev.id}`;
+      let text = `${dev.kind},${dev.label},${dev.deviceId}`;
       this.log(text);
 
       if (!parent) {
