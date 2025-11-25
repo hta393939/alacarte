@@ -70,6 +70,7 @@ class Misc {
           }
         }
       });
+      parent.appendChild(el);
     }
   }
 
