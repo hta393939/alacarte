@@ -3,8 +3,16 @@
   cursor: pointer;
 }
 
-.num6 {
-  width: 6em;
+@media (orientation: landscape) {
+  .largebutton {
+    width: 40vh;
+  }
+}
+
+@media (orientation: portrait) {
+  .largebutton {
+    width: 40vw;
+  }
 }
 
 #numberselement {

@@ -13,16 +13,17 @@ class Misc {
   }
 
   async log(...args) {
-    const text = `${new Date().toLocaleTimeString()},` + args.join(',');
+    const d = new Date();
+    const text = `${d.toLocaleTimeString()}.${new String(d.getMilliseconds()).padStart(3, '0')},` + args.join(',');
     this.consoles.unshift(text);
     const el = document.getElementById('console');
     if (!el) {
       return;
     }
     const br = document.createElement('br');
-    el.insertBefore(br);
+    el.insertBefore(br, el.firstChild);
     const node = document.createTextNode(text);
-    el.insertBefore(node);
+    el.insertBefore(node, el.firstChild);
   }
 
   async first() {
@@ -35,10 +36,40 @@ class Misc {
   }
 
   async enum() {
+    const parent = document.getElementById('devices');
     const devs = await navigator.mediaDevices.enumerateDevices();
     for (const dev of devs) {
       let text = `${dev.kind},${dev.label},${dev.id}`;
       this.log(text);
+
+      if (!parent) {
+        continue;
+      }
+      const el = document.createElement('button');
+      el.textContent = `${dev.label}`;
+      el.classList.add('pointer', 'largebutton');
+      el.addEventListener('click', async ev => {
+        const opt = {
+          audio: false,
+          video: true,
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(opt);
+        let str = `getUserMedia,${stream.id}`;
+        this.log(str);
+        for (const track of stream.getVideoTracks()) {
+          try {
+            const capa = await track.getCapabilities();
+            this.log(`${JSON.stringify(capa)}`);
+          } catch (e) {
+            this.log(`${e.message}`);
+          }
+          try {
+
+          } catch (e) {
+
+          }
+        }
+      });
     }
   }
 
@@ -77,7 +108,11 @@ class Misc {
     {
       const el = document.getElementById('startbutton');
       el?.addEventListener('click', async () => {
-        this.first();
+        try {
+          await this.first();
+        } catch (e) {
+          this.log(`first,${e.message}`);
+        }
       });
     }
     {
@@ -89,6 +124,9 @@ class Misc {
 
     for (const k of ['startcount', 'addcount', 'outcount']) {
       const el = document.getElementById(k);
+      if (!el) {
+        continue;
+      }
       const _update = () => {
         const val = Number.parseFloat(el.value);
         const viewel = document.getElementById(`${k}view`);
