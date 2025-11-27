@@ -6,6 +6,9 @@ const _pad = (v, n = 2) => {
 class Misc {
   constructor() {
     this.consoles = [];
+
+    /** @type {MediaStreamVideoTrack} */
+    this.track = null;
   }
 
   async initialize() {
@@ -68,6 +71,9 @@ class Misc {
           } catch (e) {
 
           }
+          if (track.label.includes('back')) {
+            this.track = track;
+          }
         }
       });
       parent.appendChild(el);
@@ -123,6 +129,32 @@ class Misc {
       });
     }
 
+    {
+      const el = document.getElementById('enumbutton');
+      el?.addEventListener('click', async () => {
+        this.enum();
+      });
+    }
+
+    {
+      const el = document.getElementById('torchon');
+      el?.addEventListener('click', () => {
+        this.setTorch(true);
+      });
+    }
+    {
+      const el = document.getElementById('torchoff');
+      el?.addEventListener('click', () => {
+        this.setTorch(false);
+      });
+    }
+    {
+      const el = document.getElementById('zoom10');
+      el?.addEventListener('click', () => {
+        this.setZoom(10);
+      });
+    }
+
     for (const k of ['startcount', 'addcount', 'outcount']) {
       const el = document.getElementById(k);
       if (!el) {
@@ -139,6 +171,42 @@ class Misc {
       _update();
     }
 
+  }
+
+  /**
+   * 
+   * @param {boolean} onoff 
+   */
+  async setTorch(onoff) {
+    try {
+      /** @type {MediaStreamVideoTrack} */
+      const track = this.track;
+      const opt = {
+        advanced: [{torch: onoff}]
+      };
+      await track.applyConstraints(opt);
+      this.log(`apply success`);
+    } catch (e) {
+      this.log(`apply,catch,${e.message}`);
+    }
+  }
+
+  /**
+   * 
+   * @param {number} rate 
+   */
+  async setZoom(rate) {
+    try {
+      /** @type {MediaStreamVideoTrack} */
+      const track = this.track;
+      const opt = {
+        advanced: [{zoom: rate}]
+      };
+      await track.applyConstraints(opt);
+      this.log(`apply success`);
+    } catch (e) {
+      this.log(`apply,catch,${e.message}`);
+    }
   }
 
 }
