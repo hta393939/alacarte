@@ -7,11 +7,17 @@
   .largebutton {
     width: 40vh;
   }
+  #video {
+    max-height: 40vh;
+  }
 }
 
 @media (orientation: portrait) {
   .largebutton {
     width: 40vw;
+  }
+  #video {
+    max-width: 80vw;
   }
 }
 

@@ -13,6 +13,19 @@ class Misc {
 
   async initialize() {
     this.setListener();
+
+    {
+      const dpr = window.devicePixelRatio;
+      const iw = window.innerWidth;
+      const ih = window.innerHeight;
+      const dcw = document.documentElement.clientWidth;
+      const dch = document.documentElement.clientHeight;
+      const sw = window.screen.width;
+      const sh = window.screen.height;
+      const saw = window.screen.availWidth;
+      const sah = window.screen.availHeight;
+      this.log(`dpr,i,dc,sc,sca,${dpr}, ${iw}x${ih}, ${dcw}x${dch}, ${sw}x${sh}, ${saw}x${sah}`);
+    }
   }
 
   async log(...args) {
@@ -54,10 +67,12 @@ class Misc {
       el.addEventListener('click', async ev => {
         const opt = {
           audio: false,
-          video: true,
+          video: {
+            deviceId: {exact: dev.deviceId},
+          },
         };
         const stream = await navigator.mediaDevices.getUserMedia(opt);
-        let str = `getUserMedia,${stream.id}`;
+        let str = `getUserMedia succ,${dev.label}`;
         this.log(str);
         for (const track of stream.getVideoTracks()) {
           try {
@@ -71,8 +86,13 @@ class Misc {
           } catch (e) {
 
           }
-          if (track.label.includes('back')) {
+          if (dev.label.includes('back')) {
             this.track = track;
+            /** @type {HTMLVideoElement} */
+            const video = document.getElementById('video');
+            if (video) {
+              video.srcObject = stream;
+            }
           }
         }
       });
@@ -122,13 +142,6 @@ class Misc {
         }
       });
     }
-    {
-      const el = document.getElementById('enumbutton');
-      el?.addEventListener('click', async () => {
-        this.enum();
-      });
-    }
-
     {
       const el = document.getElementById('enumbutton');
       el?.addEventListener('click', async () => {
