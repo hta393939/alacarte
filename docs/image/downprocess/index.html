@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <title>加工</title>
     <link rel="stylesheet" href="./index.css" />
+    <!-- docs only -->
   </head>
   <body>
     <div>
@@ -89,18 +90,21 @@
     <div class="aaatoright">
 
       <div class="toright">
-        <div>
+        <div class="tobottom">
+          <div id="maincanvasview"></div>
           <canvas class="minithumb" id="maincanvas"></canvas>
         </div>
         <div class="tobottom">
           <div id="filenameview"></div>
           <div id="subview"></div>
         </div>
-        <div>
+        <div class="tobottom">
+          <div id="subcanvasview"></div>
           <canvas id="subcanvas"></canvas>
         </div>
       </div>
-      <div>
+      <div class="tobottom">
+        <div id="backcanvasview"></div>
         <canvas id="backcanvas"></canvas>
       </div>
 

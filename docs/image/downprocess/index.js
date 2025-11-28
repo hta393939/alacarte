@@ -259,9 +259,7 @@ class Misc {
    * @param {number} scale スケール
    */
   scaleImageSimple(src, dst, scale) {
-    /**
-     * 入力画像の幅
-     */
+    /** 入力画像の幅 */
     const w = src.width;
     const h = src.height;
     dst.width = w * scale;
@@ -277,7 +275,7 @@ class Misc {
     {
       const el = document.getElementById('subview');
       if (el) {
-        el.textContent = `${w}x${h}`;
+        el.textContent = `元解像度 ${w}x${h} ${scale}倍`;
       }
     }
   }
@@ -626,7 +624,7 @@ class Misc {
   gray(param) {
     /** 画素値に対する事前量子化想定 */
     const { downsize } = param;
-    console.log('%c convByQ', 'color:blue', param);
+    console.log('%c gray', 'color:blue', param);
 
     const canvas = window.maincanvas;
     const w = canvas.width;
@@ -679,7 +677,7 @@ class Misc {
   colorgray(param) {
     /** 画素値に対する事前量子化想定 */
     const { qstep, downsize } = param;
-    console.log('%c colorgray', 'color:blue', param);
+    console.log('%c colorgray near yellow', 'color:blue', param);
 
     const canvas = window.maincanvas;
     const w = canvas.width;
@@ -714,15 +712,16 @@ class Misc {
         let b = dstimg.data[ft+2];
         let a = dstimg.data[ft+3];
         let lv = r * 77 + g * 150 + b * 29 + 128;
-        lv = Math.floor(lv / 256);
+        //lv = Math.floor(lv / 256);
+        lv = Math.floor(lv / 512) * 2;
         let dist = Math.sqrt(
             ((lv - r) * 77 / 65536) ** 2
           + ((lv - g) * 150 / 65536) ** 2
           + ((lv - b) * 29 / 65536) ** 2);
         if (dist > 0.01) {
           r = lv;
-          g = lv;
-          b = 0;
+          g = lv * 0.75;
+          b = lv * 0.5;
         } else {
           r = lv;
           g = lv;
@@ -1042,7 +1041,7 @@ class Misc {
     let _useq = true;
 
     /**
-     * パレット
+     * 16色パレット
      * 素直にピックした方が良さそうだった。
      */
     const _cols = [
@@ -1107,7 +1106,7 @@ class Misc {
 
 //// パレットの作成
     const pals = [];
-// 8pxブロックの投票
+    // 8pxブロックの投票
     const palblocks = [];
     for (let r = 0; r < 16; ++r) {
       const rs = [];
@@ -1387,7 +1386,7 @@ class Misc {
     }
     c.putImageData(img, 0, 0);
 
-    console.log('downByPalette');
+    console.log('downByPalette', pals);
   }
 
 }
