@@ -168,6 +168,26 @@ class Misc {
       });
     }
 
+    {
+      const el = document.getElementById('zoomnumber');
+      const viewel = document.getElementById('zoomnumberview');
+      const _update = ev => {
+        const val = Number.parseFloat(el.value);
+        if (Number.isFinite(val)) {
+          viewel.textContent = `${val}`;
+        }
+        return val;
+      };
+      el?.addEventListener('input', _update);
+      el?.addEventListener('change', ev => {
+        const result = _update();
+        if (Number.isFinite(result)) {
+          this.setZoom(result);
+        }
+      });
+      _update();
+    }
+
     for (const k of ['startcount', 'addcount', 'outcount']) {
       const el = document.getElementById(k);
       if (!el) {
@@ -194,6 +214,9 @@ class Misc {
     try {
       /** @type {MediaStreamVideoTrack} */
       const track = this.track;
+      if (!track) {
+        return;
+      }
       const opt = {
         advanced: [{torch: onoff}]
       };
@@ -212,6 +235,9 @@ class Misc {
     try {
       /** @type {MediaStreamVideoTrack} */
       const track = this.track;
+      if (!track) {
+        return;
+      }
       const opt = {
         advanced: [{zoom: rate}]
       };
