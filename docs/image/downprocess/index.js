@@ -316,6 +316,10 @@ class Misc {
         return;
       case 'gray':
         this.gray(setting);
+        {
+          const last = document.getElementById('backcanvas');
+          this.scaleImageSimple(window.subcanvas, last, setting.afterdot);
+        }
         return;
       case 'colorgray':
         this.colorgray(setting);
@@ -324,6 +328,7 @@ class Misc {
         {
           const mid = document.getElementById('subcanvas');
           await this.miniScale(src, mid);
+          await this.conv555(mid);
           await this.downColor(mid);
           this.scaleImageSimple(mid,
             document.getElementById('backcanvas'),
@@ -334,6 +339,7 @@ class Misc {
         {
           const mid = document.getElementById('subcanvas');
           await this.miniScale(src, mid);
+          await this.conv555(mid);
           await this.downByPalette(mid);
           this.scaleImageSimple(mid,
             document.getElementById('backcanvas'),
@@ -451,10 +457,21 @@ class Misc {
   miniScale(canvas, dst) {
     let w = canvas.width;
     let h = canvas.height;
-    while (w > 256 || h > 256) {
-      w *= 0.5;
-      h *= 0.5;
+
+    if (false) {
+      while (w > 256 || h > 256) {
+        w *= 0.5;
+        h *= 0.5;
+      }
+    } else {
+      h = 640 * canvas.height / canvas.width;
+      w = 640;
+      if (w > 640 || h > 400) {
+        w = 400 * canvas.width / canvas.height;
+        h = 400;
+      }
     }
+
     w = Math.floor(w);
     h = Math.floor(h);
 
@@ -563,6 +580,47 @@ class Misc {
     return Math.min(255, mod * step);
   }
 
+  /**
+   * インプレイスで15bitカラー化 4,12,20,28, ...
+   * @param {HTMLCanvasElement} src 
+   */
+  conv555(src) {
+    console.log('%c conv555', 'color:blue');
+
+    const w = src.width;
+    const h = src.height;
+    //dst.width = w;
+    //dst.height = h;
+    //const dstc = dst.getContext('2d');
+    const dstc = src.getContext('2d');
+    //dstc.clearRect(0, 0, w, h);
+    //dstc.drawImage(src, 0, 0);
+    const dstimg = dstc.getImageData(0, 0, w, h);
+    const _q5 = (x) => {
+      return (Math.floor(x / 8) * 8 + 4);
+    };
+    for (let i = 0; i < h; ++i) {
+      for (let j = 0; j < w; ++j) {
+        let ft = (j + i * w) * 4;
+        let r = dstimg.data[ft];
+        let g = dstimg.data[ft+1];
+        let b = dstimg.data[ft+2];
+        let a = dstimg.data[ft+3];
+
+        r = _q5(r);
+        g = _q5(g);
+        b = _q5(b);
+        a = 255;
+
+        dstimg.data[ft]   = r;
+        dstimg.data[ft+1] = g;
+        dstimg.data[ft+2] = b;
+        dstimg.data[ft+3] = a;
+      }
+    }
+    dstc.putImageData(dstimg, 0, 0);
+  }
+
   convByQ(param) {
     /** 画素値に対する事前量子化想定 */
     const { qstep, downsize } = param;
@@ -624,7 +682,7 @@ class Misc {
   gray(param) {
     /** 画素値に対する事前量子化想定 */
     const { downsize } = param;
-    console.log('%c gray', 'color:blue', param);
+    console.log('%c gray 16色', 'color:blue', param);
 
     const canvas = window.maincanvas;
     const w = canvas.width;
@@ -637,8 +695,8 @@ class Misc {
         calch = downsize;
         calcw = Math.floor(w * calch / h);
       } else {
-        calcw = downsize;
-        calch = Math.floor(h * calcw / w);
+        calch = downsize;
+        calcw = Math.floor(w * calch / h);
       }
     }
     dstcanvas.width = calcw;
@@ -658,8 +716,13 @@ class Misc {
 
         let lv = r * 77 + g * 150 + b * 29 + 128;
         lv = Math.floor(lv / 256);
-        if (lv === 1) {
-          lv = 0;
+
+        if (false) {
+          if (lv === 1) {
+            lv = 0;
+          }
+        } else {
+          lv = Math.floor(lv / 16) * 16 + 8;
         }
 
         dstimg.data[ft]   = lv;
@@ -669,9 +732,6 @@ class Misc {
       }
     }
     dstc.putImageData(dstimg, 0, 0);
-
-    const last = document.getElementById('backcanvas');
-    this.scaleImageSimple(dstcanvas, last, param.afterdot);
   }
 
   colorgray(param) {
@@ -1045,17 +1105,17 @@ class Misc {
      * 素直にピックした方が良さそうだった。
      */
     const _cols = [
-      {cs:[0,0,0]}, // 黒
-      {cs:[255,136,0]},
-      {cs:[255,204,136]},
-      {cs:[255,221,192]},
+      {cs:[4,4,4]}, // 黒
+      {cs:[252,136,0]},
+      {cs:[252,204,136]},
+      {cs:[252,221,192]},
       {cs:[204,204,136]},
       {cs:[204,136,102]}, // pick
       {cs:[136,136,0]},
       {cs:[170,153,153]},
       {cs:[136,136,13]},
       {cs:[102,102,102]},
-      {cs:[255,255,255]}, // 白
+      {cs:[252,252,252]}, // 白
       {cs:[204,204,204]},
       {cs:[221,221,221]},
       {cs:[170,136,136]}, // pick
