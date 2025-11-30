@@ -86,7 +86,7 @@ class Misc {
           } catch (e) {
 
           }
-          if (dev.label.includes('back')) {
+          if (dev.label.includes('back') || dev.label.startsWith('Android')) {
             this.track = track;
             /** @type {HTMLVideoElement} */
             const video = document.getElementById('video');
