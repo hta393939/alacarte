@@ -71,7 +71,7 @@ class Misc {
       dstNames.push(h.name);
     }
     // 移動
-    let count = 0;
+    let count = 10000;
     for await (const h of images) {
       //let name = h.name;
       let name = `image${String(count).padStart(5, '0')}.jpg`;
@@ -99,7 +99,7 @@ class Misc {
         await h.remove();
       }
     }
-    console.log('done');
+    console.log('moveAndFile done');
   }
 
   /**
@@ -122,7 +122,7 @@ class Misc {
    */
   async processDir(dirHandle) {
     this.root = dirHandle;
-    const result = this.moveAndFile(dirHandle);
+    const result = await this.moveAndFile(dirHandle);
     if (!result) {
       console.warn('moveAndFile failure');
       return;
