@@ -49,7 +49,7 @@ class Misc {
       }
       let str = ``;
       for (let j = 0; j < pad.buttons.length; ++j) {
-        str += `${j}${pad.buttons[j].value}`;
+        str += `,${j}-${pad.buttons[j].value}`;
       }
       str += '<br />';
       for (let j = 0; j < pad.axes.length; ++j) {
