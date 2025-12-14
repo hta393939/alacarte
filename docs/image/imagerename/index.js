@@ -134,13 +134,37 @@ class Misc {
     console.log('moveAndFile done');
   }
 
-  /*
-  async checkDel() {
-    const qs = document.querySelectorAll(`[data-name]`);
-    for (const q of qs) {
+  /**
+   * 部分的に重複チェックする
+   * @param {FileSystemFileHandle} a 
+   * @param {FileSystemFileHandle} b 
+   */
+  async checkSame(a, b) {
+    let checkByte = 256;
+    try {
+      const fa = await a.getFile();
+      const fb = await b.getFile();
+      if (fa.size !== fb.size) {
+        return false;
+      }
 
+      const end = fa.size;
+      const start = Math.max(0, end - checkByte);
+      const bufa = await fa.slice(start, end).arrayBuffer();
+      const bufb = await fb.slice(start, end).arrayBuffer();
+
+      const n = bufa.size;
+      for (let i = 0; i < n; ++i) {
+        if (bufa[i] !== bufb[i]) {
+          return false;
+        }
+      }
+      return true;
+
+    } catch (e) {
+      return false;
     }
-  } */
+  }
 
   /**
    * フォルダに対して処理する．
@@ -192,6 +216,10 @@ class Misc {
         const bi = fi.byte;
         const bj = fj.byte;
         if (bi !== bj) {
+          continue;
+        }
+        const result = this.checkSame(fi.handle, fj.handle);
+        if (!result) {
           continue;
         }
 
