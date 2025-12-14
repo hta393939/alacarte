@@ -74,10 +74,10 @@ class Misc {
     }
   }
 
-/**
- * 
- * @param {File} file 
- */
+  /**
+   * 
+   * @param {File} file 
+   */
   async parseImage(file) {
     const img = new Image();
     img.addEventListener('load', () => {

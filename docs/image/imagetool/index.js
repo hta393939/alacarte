@@ -1,6 +1,3 @@
-/**
- * @file index.js
- */
 
 class Misc {
   constructor() {
@@ -22,10 +19,10 @@ class Misc {
     this.setListener();
   }
 
-/**
- * 緑の明るさを取ってきてすべての成分に適用する
- * @param {HTMLCanvasElement} canvas
- */
+  /**
+   * 緑の明るさを取ってきてすべての成分に適用する
+   * @param {HTMLCanvasElement} canvas
+   */
   convColor(canvas) {
     console.log('convColor called');
     const c = canvas.getContext('2d');
@@ -60,12 +57,12 @@ class Misc {
     c.putImageData(dat, 0, 0);
   }
 
-/**
- * 
- * @param {File} file 
- * @param {HTMLCanvasElement} canvas 
- * @returns {Promise<HTMLCanvasElement>}
- */
+  /**
+   * 
+   * @param {File} file 
+   * @param {HTMLCanvasElement} canvas 
+   * @returns {Promise<HTMLCanvasElement>}
+   */
   loadFileToCanvas(file, canvas) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -83,10 +80,10 @@ class Misc {
     });
   }
 
-/**
- * 
- * @param {HTMLCanvasElement} src 
- */
+  /**
+   * 
+   * @param {HTMLCanvasElement} src 
+   */
   scaleImage(src) {
     const scale = this.scale;
 
@@ -95,16 +92,16 @@ class Misc {
     const cellw = this.cellw;
     const cellh = cellw;
 
-/**
- * 入力画像の幅
- */
-//        const w = src.width;
-//        const h = src.height;
+    /**
+     * 入力画像の幅
+     */
+    //        const w = src.width;
+    //        const h = src.height;
     const context = src.getContext('2d');
-/**
- * 書き出し先
- * @type {HTMLCanvasElement}
- */
+    /**
+     * 書き出し先
+     * @type {HTMLCanvasElement}
+     */
     const canvas = document.getElementById('subcanvas');
     const c = canvas.getContext('2d');
     canvas.width = cellw * scale;
@@ -140,16 +137,16 @@ class Misc {
     }
   }
 
-/**
- * 
- * @param {File} file 
- */
+  /**
+   * 
+   * @param {File} file 
+   */
   async parseImage(file) {
     const img = new Image();
     img.addEventListener('load', () => {
-/**
- * @type {HTMLCanvasElement}
- */
+      /**
+       * @type {HTMLCanvasElement}
+       */
       const canvas = document.getElementById('maincanvas');
       canvas.width = img.width;
       canvas.height = img.height;
