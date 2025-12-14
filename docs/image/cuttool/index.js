@@ -78,19 +78,19 @@ class Misc {
    */
   loadFileToCanvas(file, canvas) {
     return new Promise((resolve, reject) => {
-      {
-        const name = file.name;
-        this.filename = name;
-        window.filename.textContent = name;
-      }
-
-
       const img = new Image();
       img.addEventListener('load', () => {
         canvas.width = img.width;
         canvas.height = img.height;
         const c = canvas.getContext('2d');
         c.drawImage(img, 0, 0);
+
+        {
+          const name = file.name;
+          this.filename = name;
+          window.filename.textContent = `${canvas.width}x${canvas.height}, ${name}`;
+        }
+
         resolve(canvas);
       });
       img.addEventListener('error', () => {
@@ -296,14 +296,23 @@ class Misc {
     {
       const el = document.getElementById('downloadact');
       el?.addEventListener('click', async () => {
-        const canvas = document.getElementById('subcanvas');
-        const blob = await this.canvasToBlob(canvas);
+        let baseIsJpeg = false;
+
         const re = /(?<fw>[^.]+)(?<ext>\.[^.]*)?/;
-        let name = 'a_po.png';
-        const m = re.exec(this.filename || 'a.png');
+        let baseExt = '.png';
+        let name = `a_po${baseExt}`;
+        const m = re.exec(this.filename || `a${baseExt}`);
         if (m) {
-          name = `${m.groups?.['fw'] ?? 'a'}_po${m.groups?.['ext'] ?? '.png'}`;
+          const ext = m.groups?.['ext'];
+          if (ext === '.jpg' || ext === '.jpeg') {
+            baseIsJpeg = true;
+          }
+          baseExt = baseIsJpeg ? '.jpg' : '.png';
+          name = `${m.groups?.['fw'] ?? 'a'}_po${ext ?? baseExt}`;
         }
+
+        const canvas = document.getElementById('subcanvas');
+        const blob = await this.canvasToBlob(canvas, baseIsJpeg);
         this.download(blob, name);
       });
     }
@@ -438,12 +447,12 @@ class Misc {
    * @param {HTMLCanvasElement} canvas 
    * @returns {Promise<Blob>}
    */
-  canvasToBlob(canvas) {
+  canvasToBlob(canvas, isjpeg = false) {
     console.log('canvasToBlob called');
     return new Promise((resolve, reject) => {
       canvas.toBlob(blob => {
         resolve(blob);
-      }, 'image/png');
+      }, isjpeg ? 'image/jpeg' : 'image/png');
     });
   }
 
