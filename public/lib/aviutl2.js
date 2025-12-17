@@ -3,13 +3,13 @@
 
 class AU2Base {
   /**
-   * 表示を0-originにしても1から開始する
+   * au2では0からっぽい
    */
-  #head = 1;
+  #head = 0;
   /**
    * 1-1 の場合、1フレーム分の長さ
    */
-  #tail = 60;
+  #tail = 80;
   constructor() {
     /**
      * 配置するレイヤー番号
@@ -40,6 +40,17 @@ class AU2Base {
     this.update();
   }
 
+}
+
+class AU2Standard {
+  constructor() {
+    this['effect.name'] = '標準描画';
+    this['X'] = 0;
+    this['Y'] = 0;
+    this['Z'] = 0;
+    this['Group'] = 1;
+    this['合成モード'] = '通常';
+  }
 }
 
 class AU2Element {
@@ -132,33 +143,23 @@ class AU2Text extends AU2Element {
    * 縁取り
    */
   static TYPE_EDGE = 3;
-  /**
-   * 縁取り細い
-   */
+
+  static TYPE_EDGETHICK = '縁取り文字(太)';
+
+  /** 縁取り細い */
   static TYPE_EDGETHIN = 4;
 
-  /**
-   * 左上
-   */
+  /** 左上 */
   static ALIGN_LEFTTOP = '左寄せ[上]';
-  /**
-   * 中央揃え中
-   */
-  static ALIGN_CENTERMIDDLE = 4;
-  /**
-   * 中央揃え下
-   */
-  static ALIGN_CENTERBOTTOM = 7;
+  /** 中央揃え中 */
+  static ALIGN_CENTERMIDDLE = '中央揃え[中]';
+  /** 中央揃え下 */
+  static ALIGN_CENTERBOTTOM = '中央揃え[下]';
 
   constructor() {
     super();
 
-    this.data.camera = 0;
-
-    /**
-     * 変換元
-     */
-    this._text = '';
+    //this.data.camera = 0;
 
     this.data0 = {
       ['effect.name']: 'テキスト',
@@ -184,27 +185,18 @@ class AU2Text extends AU2Element {
     };
 
     if (true) {
-
-      this.data1 = {
-        ['_name']: 'オフスクリーン描画',
-      };
+      this.data1 = new AU2Standard();
 
       this.data2 = {
-        ['_name']: '縁取り',
+        ['effect.name']: 'オフスクリーン描画',
+      };
+
+      this.data3 = {
+        ['effect.name']: '縁取り',
         ['サイズ']: 3,
         ['ぼかし']: 10,
-        color: 'ffffff',
-        file: '',
-      };
-      this.data3 = {
-        ['_name']: '標準描画',
-        X: 0,
-        Y: 0,
-        Z: 0,
-        ['拡大率']: 100,
-        ['透明度']: 0,
-        ['回転']: 0,
-        blend: 0,
+        '縁色': 'ffffff',
+        'パターン画像': '',
       };
 
     } else {
@@ -244,18 +236,17 @@ class AU2Audio extends AU2Element {
   constructor() {
     super();
 
-    this.data.audio = 1;
-
     this.data0 = {
       ['effect.name']: '音声ファイル',
-      ['再生位置']: 0,
+      ['再生位置']: `0.000,0.000,再生範囲,0`,
       ['再生速度']: 100,
+      'ファイル': '',
+      'トラック': 0,
       ['ループ再生']: 0,
-      ['動画ファイルと連携']: 0,
-      file: '',
+      //['動画ファイルと連携']: 0,
     };
     this.data1 = {
-      ['_name']: '標準再生',
+      ['effect.name']: '標準再生',
       ['音量']: 100,
       ['左右']: 0,
     };
@@ -275,13 +266,14 @@ class AU2Group extends AU2Element {
       ['X']: 0,
       ['Y']: 0,
       ['Z']: 0,
-      ['拡大率']: 100,
+      Group: 1,
       ['X軸回転']: 0,
       ['Y軸回転']: 0,
       ['Z軸回転']: 0,
-      ['上位グループ制御の影響を受ける']: 0,
-      ['同じグループのオブジェクトを対象にする']: 1,
-      range: 0,
+      ['拡大率']: 100,
+      '対象レイヤー数': 3,
+      //['上位グループ制御の影響を受ける']: 0,
+      //['同じグループのオブジェクトを対象にする']: 1,
     };
 
     // .1 は無い
