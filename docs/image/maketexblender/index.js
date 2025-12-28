@@ -26,58 +26,96 @@ class Misc {
   async initialize() {
     this.setListener();
 
-    this.drawCap(window.maincanvas);
+    this.draw(window.maincanvas);
   }
 
   /**
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  draw(canvas, objs) {
-    const w = 512;
-    const h = 512;
-    //const w = 64;
-    //const h = 64;
-    const rate = 512 / 64;
-// 1: (1/PI) のとき
-    //const offsetY = h * 0.5 - 512 / Math.PI * 0.5;
-
-// 1: (2/PI) のとき
-    const offsetY = h * 0.5 - 512 / Math.PI;
+  draw(canvas) {
+    const one = 256;
+    const w = one * 4;
+    const h = one * 4;
 
     canvas.width = w;
     canvas.height = h;
     const c = canvas.getContext('2d');
     c.fillStyle = 'rgba(51, 153, 51, 1)';
-    c.fillStyle = 'rgba(51, 176, 51, 1)';
+    c.fillStyle = 'rgba(128, 128, 128, 1)';
     c.fillRect(0, 0, w, h);
 
-    const _l = (a, b, index, t) => {
-      return a[index] * (1 - t) + b[index] * t;
-    };
+    const dirs = [
+      {col: (j, i) => {
+        return [i,j,255];
+      },
+        pos: (j, i) => {
+          return [one * 3 / 2 + i, j];
+        }
+      },
+      {col: (j, i) => {
+        return [j,0,i];
+      },
+        pos: (j, i) => {
+          return [one * 1 / 2 + i, j + one];
+        }
+      },
+      {col: (j, i) => {
+        return [0,j,i];
+      },
+        pos: (j, i) => {
+          return [one * 3 / 2 + i, j + one];
+        }},
+      {col: (j, i) => {
+        return [j,255,i];
+      },
+        pos: (j, i) => {
+          return [one * 5 / 2 + i, j + one];
+        }},
+      {col: (j, i) => {
+        return [i,j,0];
+      },
+        pos: (j, i) => {
+          return [one * 3 / 2 + i, j + one * 2];
+        }},
+      {col: (j, i) => {
+        return [255,j,i];
+      },
+        pos: (j, i) => {
+          return [one * 3 / 2 + i, j + one * 3];
+        }
+      },
+    ];
+    const img = c.getImageData(0, 0, w, h);
+    for (const dir of dirs) {
 
-    for (const obj of objs) {
-      let c0 = [0, 153, 0];
-      let c1 = [51, 255, 51];
-      let smaller = 1;
-      for (let i = 0; i <= 16 - smaller; ++i) {
-        let t = i / 16;
-        let k = (16 - smaller) /16 - t;
-        c.beginPath();
-        c.strokeStyle = 'red';
-        c.fillStyle = `rgb(${_l(c0, c1, 0, t)}, ${_l(c0, c1, 1, t)}, ${(c0, c1, 2, t)}, 0.5)`;
-        c.ellipse(obj.x * rate,
-          obj.y * rate + offsetY,
-          obj.rx * rate * k, obj.ry * rate * k,
-          obj.a,
-          0, Math.PI * 2);
-        c.fill();
-        //c.stroke();
+      for (let i = 0; i < one; ++i) {
+        for (let j = 0; j < one; ++j) {
+          const col = dir.col?.(j, i) || [0, 0, 0];
+          const pos = dir.pos?.(j, i) || [0, 0];
+          let offset = (pos[0] + w * pos[1]) * 4;
+          img.data[offset] = col[0];
+          img.data[offset+1] = col[1];
+          img.data[offset+2] = col[2];
+          img.data[offset+3] = 255;
+        }
       }
 
-//            c.fillStyle = 'blue';
-//            c.fillRect(obj.x, obj.y, 4, 4);
     }
+    c.putImageData(img, 0, 0);
+
+    {
+      c.font = `normal 256px Consolas`;
+      //c.textAlign = 'center';
+      //c.textBaseline = 'middle';
+      c.fillStyle = 'rgb(255,128,0)';
+      c.fillText(`z`, one * 3 / 2, one * 4);
+      c.fillText(`a`, one * 3 / 2, one * 1);
+      c.fillText(`b`, one * 3 / 2, one * 2);
+      c.fillText(`c`, one * 3 / 2, one * 3);
+    }
+
+    console.log('draw end');
     return;
   }
 
