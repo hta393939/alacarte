@@ -1,4 +1,18 @@
 
+/**
+ * 
+ * @param {number} r 
+ * @param {*} g 
+ * @param {*} b 
+ * @param {number} [k=255] 倍数。デフォルト 255
+ * @returns 
+ */
+const _rgbstr = (r, g, b, k = 255) => {
+  const cols = [r, g, b];
+  return `rgb(${cols.map(v => Math.max(0,
+    Math.min(255, Math.floor(v * k)))).join(',')})`;
+};
+
   /**
    * 
    * @param {*} a 
@@ -110,15 +124,19 @@ class Misc {
     }
     c.putImageData(img, 0, 0);
 
-    if (false) {
-      c.font = `normal 256px Consolas`;
-      //c.textAlign = 'center';
-      //c.textBaseline = 'middle';
+    if (true) {
+      c.font = `normal 200px Segoe UI Emoji`;
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
       c.fillStyle = 'rgb(255,128,0)';
-      c.fillText(`z`, one * 3 / 2, one * 4);
-      c.fillText(`a`, one * 3 / 2, one * 1);
-      c.fillText(`b`, one * 3 / 2, one * 2);
-      c.fillText(`c`, one * 3 / 2, one * 3);
+
+      c.translate(one * 6 / 2, one * 3 / 2);
+      //c.rotate(Math.PI * 0.5);
+      //c.fillText(`z`, one * 3 / 2, one * 4);
+      //c.fillText(`a`, one * 3 / 2, one * 1);
+      c.fillText(`\u{1f99c}`, 0 + 8, 0 + 12);
+      //c.fillText(`c`, one * 3 / 2, one * 3);
+      c.resetTransform();
     }
 
     {
@@ -131,11 +149,44 @@ class Misc {
         {x: one * 1 + one * 0.25, y: one * 3 / 2 + one * 0.25},
       ];
       const rings = [
-        {num: 1, rr: 0},
-        {num: 4, rr: 1},
-        {num: 8, rr: 2},
-        {num: 16, rr: 3}];
-      for (const pat of pats) {
+        {num: 1, rr: 0, f: idx => 14}, // 常に明るい
+        {num: 4, rr: 1, f: idx => 14},
+        {num: 8, rr: 2, f: idx => {
+          return (idx <= 1) ? 1 : 11;
+        }},
+        {num: 16, rr: 3, f: idx => {
+          return (idx <= 1) ? 1 : 11;
+        }}
+      ];
+
+      for (let m = 0; m < pats.length; ++m) {
+        const pat = pats[m];
+        switch (m) {
+        case 1:
+          rings[2].f = idx => {
+            return [1,1,5,5, 12,12,12,12][idx];
+          };
+          rings[3].f = idx => {
+            return [1,5,12,12][Math.floor(idx / 4)];
+          };
+          break;
+        case 2:
+          rings[2].f = idx => {
+            return [1,1,12,12, 1,1,12,12][idx];
+          };
+          rings[3].f = idx => {
+            return [1,12,1,12][Math.floor(idx / 4)];
+          };
+          break;
+        case 3:
+          rings[2].f = idx => {
+            return [1, 12, 1, 12, 1, 12, 1, 12][idx];
+          }
+          rings[3].f = idx => {
+            return [1,1,12,12][Math.floor(idx % 4)];
+          };
+          break;
+        }
 
         for (const ring of rings) {
           for (let i = 0; i < ring.num; ++i) {
@@ -147,7 +198,8 @@ class Misc {
             const sn = Math.sin(ang);
             let x = pat.x + cs * ring.rr * ringRate;
             let y = pat.y + sn * ring.rr * ringRate;
-            c.fillStyle = true ? `rgb(255,255,255)` : 'black';
+            let lv = ring.f(i);
+            c.fillStyle = _rgbstr(lv * 17, lv * 17, lv * 17, 1);
             c.beginPath();
             c.ellipse(x, y, rr, rr, 0, 0, Math.PI * 2);
             c.fill();
