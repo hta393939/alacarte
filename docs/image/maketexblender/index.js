@@ -46,43 +46,49 @@ class Misc {
     c.fillRect(0, 0, w, h);
 
     const dirs = [
-      {col: (j, i) => {
-        return [i,j,255];
+      { // Y-
+        col: (j, i) => {
+        return [i,0,j];
       },
         pos: (j, i) => {
-          return [one * 3 / 2 + i, j];
+          return [one * 3 / 2 + j, i];
         }
       },
-      {col: (j, i) => {
-        return [j,0,i];
+      { // Z-
+        col: (j, i) => {
+        return [j,i,0];
       },
         pos: (j, i) => {
-          return [one * 1 / 2 + i, j + one];
+          return [one * 1 / 2 + j, i + one];
         }
       },
-      {col: (j, i) => {
-        return [0,j,i];
+      { // X+
+        col: (j, i) => {
+        return [255,i,j];
       },
         pos: (j, i) => {
-          return [one * 3 / 2 + i, j + one];
+          return [one * 3 / 2 + j, i + one];
         }},
-      {col: (j, i) => {
-        return [j,255,i];
+      { // Z+
+        col: (j, i) => {
+        return [255-j,i,255];
       },
         pos: (j, i) => {
-          return [one * 5 / 2 + i, j + one];
+          return [one * 5 / 2 + j, i + one];
         }},
-      {col: (j, i) => {
-        return [i,j,0];
+      { // Y+
+        col: (j, i) => {
+        return [255-i,255,j];
       },
         pos: (j, i) => {
-          return [one * 3 / 2 + i, j + one * 2];
+          return [one * 3 / 2 + j, i + one * 2];
         }},
-      {col: (j, i) => {
-        return [255,j,i];
+      { // X-
+        col: (j, i) => {
+        return [0,255-i,j];
       },
         pos: (j, i) => {
-          return [one * 3 / 2 + i, j + one * 3];
+          return [one * 3 / 2 + j, i + one * 3];
         }
       },
     ];
@@ -104,7 +110,7 @@ class Misc {
     }
     c.putImageData(img, 0, 0);
 
-    {
+    if (false) {
       c.font = `normal 256px Consolas`;
       //c.textAlign = 'center';
       //c.textBaseline = 'middle';
@@ -113,6 +119,42 @@ class Misc {
       c.fillText(`a`, one * 3 / 2, one * 1);
       c.fillText(`b`, one * 3 / 2, one * 2);
       c.fillText(`c`, one * 3 / 2, one * 3);
+    }
+
+    {
+      const rr = 8;
+      const ringRate = 16;
+      const pats = [
+        {x: one * 1 - one * 0.25, y: one * 3 / 2 - one * 0.25},
+        {x: one * 1 + one * 0.25, y: one * 3 / 2 - one * 0.25},
+        {x: one * 1 - one * 0.25, y: one * 3 / 2 + one * 0.25},
+        {x: one * 1 + one * 0.25, y: one * 3 / 2 + one * 0.25},
+      ];
+      const rings = [
+        {num: 1, rr: 0},
+        {num: 4, rr: 1},
+        {num: 8, rr: 2},
+        {num: 16, rr: 3}];
+      for (const pat of pats) {
+
+        for (const ring of rings) {
+          for (let i = 0; i < ring.num; ++i) {
+            let ang = Math.PI * 2 * (i * 2 + 1) / (ring.num * 2);
+            if (ring.num === 8) {
+              ang = Math.PI * 2 * i / ring.num;
+            }
+            const cs = Math.cos(ang);
+            const sn = Math.sin(ang);
+            let x = pat.x + cs * ring.rr * ringRate;
+            let y = pat.y + sn * ring.rr * ringRate;
+            c.fillStyle = true ? `rgb(255,255,255)` : 'black';
+            c.beginPath();
+            c.ellipse(x, y, rr, rr, 0, 0, Math.PI * 2);
+            c.fill();
+          }
+        }
+
+      }
     }
 
     console.log('draw end');
