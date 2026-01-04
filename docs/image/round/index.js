@@ -75,10 +75,11 @@ class Misc {
   }
 
   /**
-   * 丸くならす
+   * すでに存在するテクスチャを丸くならす
    * @param {HTMLCanvasElement} canvas 
    */
   async round(canvas) {
+    console.log('round');
 
     const w = canvas.width;
     const h = canvas.height;
@@ -89,14 +90,14 @@ class Misc {
     const router = 37;
     const rinner = 4;
     const ps = [
-      [0, 0, 0, 255, 70], // 角度
+      [0, 0, 0, 255, 70], // 色を保存する。角度
       [0, 0, 0, 255, 130], // 角度
     ];
 
     for (let lr = 0; lr < 2; ++lr) {
-/**
- * 度角度範囲
- */
+      /**
+       * 度角度範囲
+       */
       const range = [ps[0][4], ps[1][4]];
       if (lr === 1) {
         center[0] = 2047 - center[0];
@@ -157,33 +158,70 @@ class Misc {
    * @param {HTMLCanvasElement} canvas 
    */
   async make1(canvas) {
+    console.log('make1');
 
     const w = canvas.width;
     const h = canvas.height;
     const c = canvas.getContext('2d');
     const data = c.getImageData(0, 0, w, h);
 
-    const router = 37;
+    const ellis = [
+      //{p: [0.6, 0.6], rr: 64, ra: 1, rb: 1.2, deg: -45, top: 0.8, padr: 1 },
+      {p: [0.35, -0.3], rr: 64, ra: 1, rb: 1.5, deg: 10, top: 0.5, padr: 1 },
+      {p: [-0.2, 0.2], rr: 16, ra: 1, rb: 1.1, deg: 30, top: 1 / 8, padr: 2 },
+      {f: (dx, dy, indeg) => {
+        let deg = (indeg + 360) % 360;
+        let d = Math.sqrt(dx ** 2 + dy ** 2);
+        d += Math.sin(deg * 3 * Math.PI / 180) / 64;
+        const rc = 0.5;
+        let lv = 1 / 8 - Math.abs(d - rc);
+        lv = Math.max(0, lv);
+        let base = (d < rc) ? 1 : 0;
+        lv += base / 128;
+
+        return Math.max(0, lv);
+      }},
+    ];
 
     {
-      const rot = Math.PI * 20 / 180;
       for (let y = 0; y < h; ++y) {
         for (let x = 0; x < w; ++x) {
           let dx = (x - w * 0.5) / (w * 0.5);
           let dy = (y - h * 0.5) / (h * 0.5);
-          const d = Math.sqrt(dx * dx + dy * dy);
           const ang = Math.atan2(-dy, dx);
           const deg = ang * 180 / Math.PI;
+          const d = Math.sqrt(dx ** 2 + dy ** 2);
 
-          dx *= 1;
-          dy *= 1.2 + 0.05 * (Math.cos(ang * 5) + Math.cos(ang * 7));
-          const cs = Math.cos(rot);
-          const sn = Math.sin(rot);
-          let vx = dx * cs - dy * sn;
-          let vy = dx * sn + dy * cs;
+          let lv = 0.5;
+          let sum = 0;
 
-          const d2 = Math.sqrt(vx * vx + vy * vy);
-          let lv = 1 - d2 * 1;
+          if (d < 1.1) {
+
+            for (const elli of ellis) {
+              if (elli.f) {
+                lv = elli.f(dx, dy, deg);
+              } else {
+                let dx1 = dx - elli.p[0];
+                let dy1 = dy - elli.p[1];
+                const ang1 = elli.deg * Math.PI / 180;
+                const cs = Math.cos(ang1);
+                const sn = Math.sin(ang1);
+                let dx2 = cs * dx1 - sn * dy1;
+                let dy2 = sn * dx1 + cs * dy1;
+                dx2 /= elli.ra;
+                dy2 /= elli.rb;
+
+                let d1 = Math.sqrt(dx2 ** 2 + dy2 ** 2) * elli.rr;
+                // 1 -> 1, 1 + 1 + 1 / padr -> 0
+                lv = (1 + 1 / elli.padr - d1) * elli.padr;
+                lv = Math.max(0, lv) * elli.top;
+              }
+              sum += lv;
+            }
+
+            lv = sum;
+          }
+
           lv = Math.max(0, Math.min(1, lv));
 
           const offset = (x + h * y) * 4;
@@ -218,6 +256,7 @@ class Misc {
    * @param {HTMLCanvasElement} canvas 
    */
   async make2(canvas) {
+    console.log('make2');
 
     const w = canvas.width;
     const h = canvas.height;
