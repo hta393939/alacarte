@@ -167,17 +167,17 @@ class Misc {
 
     const ellis = [
       //{p: [0.6, 0.6], rr: 64, ra: 1, rb: 1.2, deg: -45, top: 0.8, padr: 1 },
-      {p: [0.35, -0.3], rr: 64, ra: 1, rb: 1.5, deg: 10, top: 0.5, padr: 1 },
-      {p: [-0.2, 0.2], rr: 16, ra: 1, rb: 1.1, deg: 30, top: 1 / 8, padr: 2 },
+      {p: [0.37, -0.3], rr: 64, ra: 1, rb: 1.5, deg: 50, top: 1/16, padr: 1 },
+      {p: [-0.2, 0.2], rr: 16, ra: 1, rb: 1.1, deg: 30, top: 1/16, padr: 2 },
       {f: (dx, dy, indeg) => {
         let deg = (indeg + 360) % 360;
         let d = Math.sqrt(dx ** 2 + dy ** 2);
         d += Math.sin(deg * 3 * Math.PI / 180) / 64;
         const rc = 0.5;
-        let lv = 1 / 8 - Math.abs(d - rc);
+        let lv = 1 / 8 - Math.abs(d - rc) / 2;
         lv = Math.max(0, lv);
         let base = (d < rc) ? 1 : 0;
-        lv += base / 128;
+        lv += base / 64;
 
         return Math.max(0, lv);
       }},
@@ -193,10 +193,8 @@ class Misc {
           const d = Math.sqrt(dx ** 2 + dy ** 2);
 
           let lv = 0.5;
-          let sum = 0;
-
           if (d < 1.1) {
-
+            let sum = 0;
             for (const elli of ellis) {
               if (elli.f) {
                 lv = elli.f(dx, dy, deg);
@@ -228,14 +226,10 @@ class Misc {
 
           lv *= 255;
 
-          let r = 255;
-          let g = 204;
-          let b = 204;
-          let a = lv;
-          r = lv;
-          g = lv;
-          b = lv;
-          a = 255;
+          let r = lv;
+          let g = lv;
+          let b = lv;
+          let a = 255;
 
           r = Math.max(0, Math.min(r, 255));
           g = Math.max(0, Math.min(g, 255));
