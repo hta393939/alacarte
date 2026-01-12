@@ -166,15 +166,15 @@ class Misc {
     const data = c.getImageData(0, 0, w, h);
 
     const ellis = [
-      //{p: [0.6, 0.6], rr: 64, ra: 1, rb: 1.2, deg: -45, top: 0.8, padr: 1 },
       {p: [0.37, -0.3], rr: 64, ra: 1, rb: 1.5, deg: 50, top: 1/16, padr: 1 },
-      {p: [-0.2, 0.2], rr: 16, ra: 1, rb: 1.1, deg: 30, top: 1/16, padr: 2 },
+      {p: [-0.2, 0.2], rr: 16, ra: 1, rb: 1.1, deg: 30, top: 1/32, padr: 2 },
       {f: (dx, dy, indeg) => {
         let deg = (indeg + 360) % 360;
         let d = Math.sqrt(dx ** 2 + dy ** 2);
         d += Math.sin(deg * 3 * Math.PI / 180) / 64;
         const rc = 0.5;
-        let lv = 1 / 8 - Math.abs(d - rc) / 2;
+        let lv = 1 / 16 - Math.abs(d - rc) / 2 / 2; // #5
+        //let lv = 1 / 8 - Math.abs(d - rc) / 2; // #3
         lv = Math.max(0, lv);
         let base = (d < rc) ? 1 : 0;
         lv += base / 64;
