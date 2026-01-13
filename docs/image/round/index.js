@@ -173,7 +173,13 @@ class Misc {
         let d = Math.sqrt(dx ** 2 + dy ** 2);
         d += Math.sin(deg * 3 * Math.PI / 180) / 64;
         const rc = 0.5;
-        let lv = (0.25 - Math.abs(d - rc)) * 3 / 8; // #6
+        let a = 1 / 4;
+        let b = 3 / 32; // #7
+        let _f = (x) => x;
+        let t = Math.abs(d - rc) / a;
+        t = Math.max(0, Math.min(1, t));
+        let lv = - _f(t) * b + b;
+        //let lv = (0.25 - Math.abs(d - rc)) * 3 / 8; // #6
         //let lv = 1 / 16 - Math.abs(d - rc) / 2 / 2; // #5
         //let lv = 1 / 8 - Math.abs(d - rc) / 2; // #3
         lv = Math.max(0, lv);
