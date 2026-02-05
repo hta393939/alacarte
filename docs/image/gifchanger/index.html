@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>gif変更する</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+
+    <div></div>
+    <div>chrome または edge でのみ使用可能</div>
+
+    <div>
+      <div>
+        <div id="innerview"></div>
+        <div id="element"></div>
+      </div>
+      <div>
+        <input type="number" min="0" max="30" value="0" id="startcount" />
+        <input type="number" min="1" max="30" value="1" id="addcount" />
+        <input type="number" min="1" max="30" value="10" id="outcount" />
+
+        <button id="openwindow">開く</button>
+        <button class="pointer" id="opendir">ワーキングフォルダを指定する ←</button>
+        <div id="rootview"></div>
+
+        <input id="source" value="src" />
+        <input id="destination" value="dst" />
+        <button id="retry">リトライする</button>
+        <label class="pointer">
+<input type="checkbox" class="pointer" id="isdel" />
+重複を消す</label>
+        <div id="dupfiles"></div>
+        <div>
+          <div id="processingview"></div>
+          <div>
+            <img id="baseimage" />
+            <img id="candimage" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <template id="oneframe">
+        <div class="oneframe">
+          <label class="pointer">
+<input checked type="checkbox" class="pointer" />
+<span class="name"></span>
+</label>
+        </div>
+      </template>
+    </div>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
+
