@@ -380,10 +380,11 @@ class Misc {
         ev.preventDefault();
         ev.dataTransfer.dropEffect = 'copy';
       });
-      el?.addEventListener('drop', ev => {
+      el?.addEventListener('drop', async ev => {
         ev.stopPropagation();
         ev.preventDefault();
-        //this.analyzeText(ev.dataTransfer.files[0]);
+        const ab = await ev.dataTransfer.files[0].arrayBuffer();
+        this.parseGif(ab);
       });
     }
 
@@ -433,20 +434,29 @@ class Misc {
   async parseGif(ab) {
     const p = new DataView(ab);
     let c = 0;
-    c += 10;
+    c += 6;
+    let gw = p.getUint16(c, true);
+    let gh = p.getUint16(c + 2, true);
+    c += 4;
     let flags = p.getUint8(c);
     c += 1;
-    let globalTable = ((flags & 0x80) !== 0); 
-    let pow = (flags & 7) + 1;
+    //let globalTable = ((flags & 0x80) !== 0);
+    //let pow = (flags & 7) + 1;
+
+    let globalTable = ((flags & 1) !== 0);
+    let pow = ((flags >> 5) & 7) + 1;
+
     let commonPaletteNum = 2 ** pow;
-    console.log('table', globalTable, commonPaletteNum);
+    console.log('table', globalTable, commonPaletteNum, gw, gh);
 
     c += 2;
+
     if (globalTable) {
       c += commonPaletteNum * 3;
     }
 
-    while (c + 1 < ab.length) {
+    while (c + 1 < ab.byteLength) {
+      console.log('offset', c, c.toString(16));
       const sep = p.getUint8(c);
       c += 1;
       if (sep === 0x3b) {
@@ -458,9 +468,13 @@ class Misc {
         switch (subsep) {
         case 0xff: // Application
         case 0xf9: // 
+          {
+            // 4バイト
+            c += 4;
+          }
         default:
           // offset.push(c - 2);
-          while (c + 1 < ab.length) {
+          while (c + 1 < ab.byteLength) {
             let blockByte = p.getUint8(c);
             c += 1;
             if (blockByte === 0) {
@@ -482,7 +496,7 @@ class Misc {
           c += localNum * 3;
         }
 
-        while (c + 1 < ab.length) {
+        while (c + 1 < ab.byteLength) {
           let blockByte = p.getUint8(c);
           c += 1;
           if (blockByte === 0) {
@@ -494,7 +508,7 @@ class Misc {
 
     }
 
-    console.log('', c, ab.length);
+    console.log('', c, ab.byteLength);
   }
 
 }
