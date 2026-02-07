@@ -440,11 +440,11 @@ class Misc {
     c += 4;
     let flags = p.getUint8(c);
     c += 1;
-    //let globalTable = ((flags & 0x80) !== 0);
-    //let pow = (flags & 7) + 1;
+    let globalTable = ((flags & 0x80) !== 0);
+    let pow = (flags & 7) + 1;
 
-    let globalTable = ((flags & 1) !== 0);
-    let pow = ((flags >> 5) & 7) + 1;
+    //let globalTable = ((flags & 1) !== 0);
+    //let pow = ((flags >> 5) & 7) + 1;
 
     let commonPaletteNum = 2 ** pow;
     console.log('table', globalTable, commonPaletteNum, gw, gh);
@@ -455,26 +455,36 @@ class Misc {
       c += commonPaletteNum * 3;
     }
 
-    while (c + 1 < ab.byteLength) {
+    while (c < ab.byteLength) {
       console.log('offset', c, c.toString(16));
       const sep = p.getUint8(c);
       c += 1;
-      if (sep === 0x3b) {
+      if (sep === 0x3b) { // 
         break;
       }
       if (sep === 0x21) {
         const subsep = p.getUint8(c);
         c += 1;
+
+        console.log('0x21', c - 2, subsep.toString(16));
+
         switch (subsep) {
-        case 0xff: // Application
+
         case 0xf9: // 
           {
-            // 4バイト
-            c += 4;
+            const blockByte = p.getUint8(c);
+            c += 1;
+            const flags = p.getUint8(c);
+            const delayTime = p.getUint16(c + 1, true);
+            const transparent = p.getUint8(c + 3, true);
+            c += blockByte;
+            console.log('Graphic', flags, delayTime, transparent);
           }
+        case 0x01:
+        case 0xff: // Application
         default:
           // offset.push(c - 2);
-          while (c + 1 < ab.byteLength) {
+          while (c < ab.byteLength) {
             let blockByte = p.getUint8(c);
             c += 1;
             if (blockByte === 0) {
@@ -484,7 +494,12 @@ class Misc {
           }
         }
       } else if (sep === 0x2c) { // image
+        console.log('image', c - 1);
         // offset.push(c - 1);
+        let lx = p.getUint16(c, true);
+        let ly = p.getUint16(c + 2, true);
+        let lw = p.getUint16(c + 4, true);
+        let lh = p.getUint16(c + 6, true);
         c += 8;
         let iflags = p.getUint8(c);
         c += 1;
@@ -495,6 +510,8 @@ class Misc {
         if (itable) {
           c += localNum * 3;
         }
+        let lzw = p.getUint8(c);
+        c += 1;
 
         while (c + 1 < ab.byteLength) {
           let blockByte = p.getUint8(c);
