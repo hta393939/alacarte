@@ -432,6 +432,10 @@ class Misc {
    * @param {ArrayBuffer} ab 
    */
   async parseGif(ab) {
+    const info = {
+      frames: [],
+    };
+
     const p = new DataView(ab);
     let c = 0;
     c += 6;
@@ -455,6 +459,8 @@ class Misc {
       c += commonPaletteNum * 3;
     }
 
+    let frame = {};
+
     while (c < ab.byteLength) {
       console.log('offset', c, c.toString(16));
       const sep = p.getUint8(c);
@@ -469,7 +475,6 @@ class Misc {
         console.log('0x21', c - 2, subsep.toString(16));
 
         switch (subsep) {
-
         case 0xf9: // 
           {
             const blockByte = p.getUint8(c);
@@ -494,8 +499,9 @@ class Misc {
           }
         }
       } else if (sep === 0x2c) { // image
+        frame.offset = c - 1;
         console.log('image', c - 1);
-        // offset.push(c - 1);
+
         let lx = p.getUint16(c, true);
         let ly = p.getUint16(c + 2, true);
         let lw = p.getUint16(c + 4, true);
@@ -521,11 +527,15 @@ class Misc {
           }
           c += blockByte;
         }
+
+        frame.end = c;
+        info.frames.push(frame);
       }
 
     }
 
     console.log('', c, ab.byteLength);
+    return info;
   }
 
 }
