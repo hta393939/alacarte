@@ -26,6 +26,8 @@ class Frame {
     this.graphicEnd = 0;
     /** delayTime 書き込み先 */
     this.delayOffset = 0;
+    /** フレーム画像かどうか */
+    this.isFrame = false;
 
     /** 1/100秒単位。0だとカット扱いとする */
     this.delayTime = 0;
@@ -568,6 +570,14 @@ class Misc {
     }
 
     for (const frame of info.frames) { // 書き換え
+      if (!frame.isFrame) {
+        const clone = _clone(ab,
+          frame.offset, frame.end - frame.offset,
+        );
+        ret.bufs.push(clone.buffer);
+        continue;
+      }
+
       if (frame.delayTime === 0) {
         continue;
       }
@@ -627,9 +637,9 @@ class Misc {
     if (globalTable) {
       c += commonPaletteNum * 3;
     }
+    info.headend = c;
 
     let frame = {};
-    frame.headend = c;
 
     while (c < ab.byteLength) {
       console.log('offset', c, c.toString(16));
@@ -650,7 +660,7 @@ class Misc {
             frame.graphicOffset = c - 2;
             frame.delayOffset = c + 2;
 
-            const blockByte = p.getUint8(c);
+            const blockByte = p.getUint8(c); // 常に4
             c += 1;
             const flags = p.getUint8(c);
             const delayTime = p.getUint16(c + 1, true);
@@ -675,6 +685,10 @@ class Misc {
 
           if (subsep === 0xf9) {
             frame.graphicEnd = c;
+          } else {
+            frame.end = c;
+            info.frames.push(Object.assign({}, frame));
+            frame = {};
           }
         }
       } else if (sep === 0x2c) { // image
@@ -708,13 +722,13 @@ class Misc {
         }
 
         frame.end = c;
-        info.frames.push(Object.assign({}, frame));
+        info.frames.push(Object.assign({ isFrame: true }, frame));
         frame = {};
       }
 
     }
 
-    console.log('', c, ab.byteLength);
+    console.log('parseGif', c, ab.byteLength);
     return info;
   }
 
