@@ -4,7 +4,7 @@ const _pad = (v, n = 2) => {
 };
 
 const _dtstr = () => {
-  let str = Temporal.Now.plainDateTimeISO();
+  let str = Temporal.Now.plainDateTimeISO().toString();
   str = str.replace(/[-:]/g, '');
   str = str.replace(/[T\.]/g, '_');
   return str;
@@ -20,9 +20,17 @@ class Frame {
     /** 末尾バイト。ファイル中オフセット */
     this.end = 0;
 
+    /** graphic block */
+    this.graphicOffset = 0;
+    /** graphic block */
+    this.graphicEnd = 0;
+    /** delayTime 書き込み先 */
+    this.delayOffset = 0;
+
     /** 1/100秒単位。0だとカット扱いとする */
     this.delayTime = 0;
-
+    /** 元ファイルでの値
+     */
     this.orgDelayTime = 0;
   }
 }
@@ -515,14 +523,14 @@ class Misc {
   async downloadGif() {
     console.log('downloadGif');
     const ab = await this.curfile.arrayBuffer();
-    const bufs = await this.changeGif(ab, this.curinfo);
-    const re = `(?<front>.+)\.[^\.]+$`;
+    const result = await this.changeGif(ab, this.curinfo);
+    const re = /(?<front>.+)\.[^\.]+$/;
     const m = re.exec(this.curname);
     let name = `_${_dtstr()}.gif`;
     if (m) {
       name = m.groups['front'] + name;
     }
-    this.download(new Blob(bufs), name);
+    this.download(new Blob(result.bufs), name);
   }
 
   /**
@@ -540,29 +548,49 @@ class Misc {
      * @param {number} len 
      */
     const _clone = (ab, offset, len) => {
-      const clone = new ArrayBuffer(len);
+      const clone = new Uint8Array(len);
       const src = new Uint8Array(ab);
       for (let i = 0; i < len; ++i) {
-        clone[i] = src.getUint8(offset + i);
+        clone[i] = src[offset + i];
       }
       return clone;
     };
 
-    const ret = {};
+    const ret = { bufs: [] };
     // クローン
-    const ab = _clone(inab, 0, inab.byteLength);
+    const b8 = _clone(inab, 0, inab.byteLength);
+    const ab = b8.buffer;
     const p = new DataView(ab);
+
+    {
+      const clone = _clone(ab, 0, info.headend);
+      ret.bufs.push(clone.buffer);
+    }
 
     for (const frame of info.frames) { // 書き換え
       if (frame.delayTime === 0) {
         continue;
       }
 
-      let offset = frame.offset;
-      p.setUint16(offset, 100, true);
-      const clone = _clone(ab,
-        frame.offset, frame.end - frame.offset);
-      ret.bufs.push(clone);
+      //let offset = frame.delayOffset;
+      //p.setUint16(offset, 100, true);
+
+      {
+        const clone = _clone(ab,
+          frame.graphicOffset, frame.graphicEnd - frame.graphicOffset);
+        ret.bufs.push(clone.buffer);
+      }
+      {
+        const clone = _clone(ab,
+          frame.offset, frame.end - frame.offset);
+        ret.bufs.push(clone.buffer);
+      }
+    }
+
+    {
+      const buf = new Uint8Array(1);
+      buf[0] = 0x3b;
+      ret.bufs.push(buf);
     }
 
     return ret;
@@ -601,6 +629,7 @@ class Misc {
     }
 
     let frame = {};
+    frame.headend = c;
 
     while (c < ab.byteLength) {
       console.log('offset', c, c.toString(16));
@@ -618,6 +647,9 @@ class Misc {
         switch (subsep) {
         case 0xf9: // 
           {
+            frame.graphicOffset = c - 2;
+            frame.delayOffset = c + 2;
+
             const blockByte = p.getUint8(c);
             c += 1;
             const flags = p.getUint8(c);
@@ -625,6 +657,8 @@ class Misc {
             const transparent = p.getUint8(c + 3, true);
             c += blockByte;
             console.log('Graphic', flags, delayTime, transparent);
+            frame.delayTime = delayTime;
+            frame.orgDelayTime = delayTime;
           }
         case 0x01:
         case 0xff: // Application
@@ -637,6 +671,10 @@ class Misc {
               break;
             }
             c += blockByte;
+          }
+
+          if (subsep === 0xf9) {
+            frame.graphicEnd = c;
           }
         }
       } else if (sep === 0x2c) { // image

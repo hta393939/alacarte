@@ -28,8 +28,8 @@
 
         <input id="source" value="src" />
         <input id="destination" value="dst" />
-        <button id="applybut">反映する</button>
-        <button id="downloadbut">ダウンロードする</button>
+        <button class="pointer" id="applybut">反映する</button>
+        <button class="pointer" id="downloadbut">ダウンロードする</button>
         <label class="pointer">
 <input type="checkbox" class="pointer" id="isdel" />
 重複を消す</label>
@@ -46,7 +46,8 @@
 
     <div>
       <template id="oneframe">
-        <div class="oneframe">
+        <div class="oneframe row">
+          <div class="index"></div>
           <label class="pointer">
 <input checked type="checkbox" class="pointer" />
 <span class="name"></span>

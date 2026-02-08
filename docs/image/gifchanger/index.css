@@ -21,8 +21,17 @@
   font-weight: bold;
 }
 
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
 #maincanvas {
   max-height: 128px;
+}
+
+#candimage {
+  max-width: 40vw;
 }
 
 
