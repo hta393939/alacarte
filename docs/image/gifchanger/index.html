@@ -28,11 +28,12 @@
 
         <input id="source" value="src" />
         <input id="destination" value="dst" />
-        <button id="retry">リトライする</button>
+        <button id="applybut">反映する</button>
+        <button id="downloadbut">ダウンロードする</button>
         <label class="pointer">
 <input type="checkbox" class="pointer" id="isdel" />
 重複を消す</label>
-        <div id="dupfiles"></div>
+
         <div>
           <div id="processingview"></div>
           <div>
@@ -50,6 +51,9 @@
 <input checked type="checkbox" class="pointer" />
 <span class="name"></span>
 </label>
+          <div class="offset"></div>
+          <div class="end"></div>
+          <input class="delaytime" type="slider" value="100" min="0" max="200" />
         </div>
       </template>
     </div>

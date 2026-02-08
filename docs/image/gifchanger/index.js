@@ -3,6 +3,30 @@ const _pad = (v, n = 2) => {
   return new String(v).padStart(n, '0');
 };
 
+const _dtstr = () => {
+  let str = Temporal.Now.plainDateTimeISO();
+  str = str.replace(/[-:]/g, '');
+  str = str.replace(/[T\.]/g, '_');
+  return str;
+};
+
+/**
+ * 1フレーム分
+ */
+class Frame {
+  constructor() {
+    /** ファイル中オフセット */
+    this.offset = 0;
+    /** 末尾バイト。ファイル中オフセット */
+    this.end = 0;
+
+    /** 1/100秒単位。0だとカット扱いとする */
+    this.delayTime = 0;
+
+    this.orgDelayTime = 0;
+  }
+}
+
 class Misc {
   constructor() {
     this.src = '';
@@ -19,6 +43,14 @@ class Misc {
     this.root = null;
     this.srcdh = null;
     this.dstdh = null;
+
+    /** ドロップしたファイル名 */
+    this.curname = '';
+    /** @type {File} */
+    this.curfile = null;
+    this.curinfo = {};
+    /** 変更後バイナリの素 */
+    this.curbufs = [];
   }
 
   async initialize() {
@@ -383,8 +415,14 @@ class Misc {
       el?.addEventListener('drop', async ev => {
         ev.stopPropagation();
         ev.preventDefault();
-        const ab = await ev.dataTransfer.files[0].arrayBuffer();
-        this.parseGif(ab);
+        const file = ev.dataTransfer.files[0];
+        this.curfile = file;
+        const ab = await file.arrayBuffer();
+        const info = await this.parseGif(ab);
+        this.curinfo = info;
+        console.log('info', info);
+        this.curname = file.name;
+        document.title = `${this.curname} - gifchanger`;
       });
     }
 
@@ -397,18 +435,16 @@ class Misc {
         await this.processDir(dirHandle);
       });
     }
-    { // リトライ
-      const el = document.getElementById('retry');
+    { // delayやカットの反映
+      const el = document.getElementById('applybut');
       el?.addEventListener('click', async () => {
-        await this.processDir(this.root);
+        await this.applyGif();
       });
     }
-
-    { // 重複チェック
-      const el = document.getElementById('checkdup');
+    { // 反映後のダウンロード
+      const el = document.getElementById('downloadbut');
       el?.addEventListener('click', async () => {
-        const param = this.gatherParam();
-        await this.checkDup(this.root, param);
+        await this.downloadGif();
       });
     }
 
@@ -427,12 +463,117 @@ class Misc {
 
   }
 
+  async makeUI() {
+    console.log('makeUI');
+
+    const el = document.getElementById('oneframe');
+    const parent = document.getElementById('processingview');
+    parent.textContent = '';
+    for (const frame of this.curinfo.frames) {
+      const clone = document.importNode(el.content, true);
+      for (const k of ['offset', 'end']) {
+        const q = clone.querySelector(`.${k}`);
+        if (!q) {
+          continue;
+        }
+        q.textContent = `${frame[k]}`;
+      }
+      for (const k of ['delayTime']) {
+        const q = clone.querySelector(`.${k}`);
+        if (!q) {
+          continue;
+        }
+        q.value = frame[k];
+      }
+      parent.appendChild(clone);
+    }
+  }
+
+  async applyGif() {
+    console.log('applyGif');
+    // TODO: UIから収集する
+
+    const ab = await this.curfile.arrayBuffer();
+    const result = await this.changeGif(ab, this.curinfo);
+    this.curbufs = result.bufs;
+    const candimage = document.getElementById('candimage');
+    candimage.src = URL.createObjectURL(new Blob(this.curbufs));
+  }
+
+  /**
+   * 
+   * @param {Blob} blob 
+   * @param {string} name 
+   */
+  download(blob, name) {
+    const a = document.createElement('a');
+    a.download = name;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+  }  
+
+  async downloadGif() {
+    console.log('downloadGif');
+    const ab = await this.curfile.arrayBuffer();
+    const bufs = await this.changeGif(ab, this.curinfo);
+    const re = `(?<front>.+)\.[^\.]+$`;
+    const m = re.exec(this.curname);
+    let name = `_${_dtstr()}.gif`;
+    if (m) {
+      name = m.groups['front'] + name;
+    }
+    this.download(new Blob(bufs), name);
+  }
+
+  /**
+   * 
+   * @param {ArrayBuffer} inab 
+   * @param {Object} info 
+   * @param {Frame[]} info.frames
+   * @returns 
+   */
+  async changeGif(inab, info) {
+    /**
+     * 
+     * @param {ArrayBuffer} ab 
+     * @param {number} offset 
+     * @param {number} len 
+     */
+    const _clone = (ab, offset, len) => {
+      const clone = new ArrayBuffer(len);
+      const src = new Uint8Array(ab);
+      for (let i = 0; i < len; ++i) {
+        clone[i] = src.getUint8(offset + i);
+      }
+      return clone;
+    };
+
+    const ret = {};
+    // クローン
+    const ab = _clone(inab, 0, inab.byteLength);
+    const p = new DataView(ab);
+
+    for (const frame of info.frames) { // 書き換え
+      if (frame.delayTime === 0) {
+        continue;
+      }
+
+      let offset = frame.offset;
+      p.setUint16(offset, 100, true);
+      const clone = _clone(ab,
+        frame.offset, frame.end - frame.offset);
+      ret.bufs.push(clone);
+    }
+
+    return ret;
+  }
+
   /**
    * 
    * @param {ArrayBuffer} ab 
    */
   async parseGif(ab) {
-    const info = {
+    let info = {
       frames: [],
     };
 
@@ -529,7 +670,8 @@ class Misc {
         }
 
         frame.end = c;
-        info.frames.push(frame);
+        info.frames.push(Object.assign({}, frame));
+        frame = {};
       }
 
     }
