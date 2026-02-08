@@ -11,6 +11,21 @@ const _dtstr = () => {
 };
 
 /**
+ * 
+ * @param {ArrayBuffer} ab 
+ * @param {number} offset 
+ * @param {number} len 
+ */
+const _clone = (ab, offset, len) => {
+  const clone = new Uint8Array(len);
+  const src = new Uint8Array(ab);
+  for (let i = 0; i < len; ++i) {
+    clone[i] = src[offset + i];
+  }
+  return clone;
+};
+
+/**
  * 1フレーム分
  */
 class Frame {
@@ -28,6 +43,8 @@ class Frame {
     this.delayOffset = 0;
     /** フレーム画像かどうか */
     this.isFrame = false;
+
+    this.index = -1;
 
     /** 1/100秒単位。0だとカット扱いとする */
     this.delayTime = 0;
@@ -96,8 +113,9 @@ class Misc {
 
 
   /**
-   * フォルダに対して処理する．
-   * ルートから指定フォルダに重複せずにファイルを作成する．
+   * 未使用
+   * フォルダに対して処理する
+   * ルートから指定フォルダに重複せずにファイルを作成する
    * @param {FileSystemDirectoryHandle} dirHandle 
    */
   async moveAndFile(dirHandle, param) {
@@ -177,8 +195,9 @@ class Misc {
   }
 
   /**
-   * フォルダに対して処理する．
-   * ルートから見た指定フォルダの重複をチェックする．
+   * 不使用
+   * フォルダに対して処理する
+   * ルートから見た指定フォルダの重複をチェックする
    * @param {FileSystemDirectoryHandle} dirHandle 
    * @param {boolean} isdel
    */
@@ -307,36 +326,6 @@ class Misc {
     }
   }
 
-  async analyzeText(file) {
-    const text = await file.text();
-    const lines = text.split('\n');
-    const result = {
-      objs: []
-    };
-    for (const line of lines) {
-      const vals = line.split(',').map(val => Number.parseFloat(val));
-      if (!Number.isFinite(vals[0])) {
-        continue;
-      }
-
-      const obj = {
-        index: vals[0],
-        id: vals[1],
-        x: vals[2],
-        y: vals[3],
-        a: vals[4],
-        rx: vals[5],
-        ry: vals[6],
-      };
-      result.objs.push(obj);
-    }
-    console.log('result', result);
-
-    this.draw(window.canvas, result.objs);
-
-    return result;
-  }
-
   makeFilename(num) {
     return `${this.prefix}${_pad(num, this.num)}.${this.ext}`;
   }
@@ -433,6 +422,7 @@ class Misc {
         console.log('info', info);
         this.curname = file.name;
         document.title = `${this.curname} - gifchanger`;
+        await this.makeUI();
       });
     }
 
@@ -473,6 +463,67 @@ class Misc {
 
   }
 
+  /**
+   * 
+   * @param {ArrayBuffer} ab
+   * @param {number} index 
+   */
+  async pickGif(ab, index) {
+    const ret = { bufs: [] };
+    {
+      const clone = _clone(ab, 0, this.curinfo.headend);
+      ret.bufs.push(clone.buffer);
+    }
+    for (const frame of this.curinfo.frames) {
+      if (!frame.isFrame) {
+        // NOTE: または animation 無しを作成する
+        continue;
+      }
+
+      if (frame.index !== index) {
+        continue;
+      }
+
+      // graphic control block を書き出さない
+      const clone = _clone(ab,
+        frame.offset, frame.end - frame.offset,
+      );
+      ret.bufs.push(clone.buffer);
+    }
+    {
+      const b8 = new Uint8Array(1);
+      b8[0] = 0x3b;
+      ret.bufs.push(b8.buffer);
+    }
+    return ret;
+  }
+
+  async gatherUI() {
+    console.log('gatherUI');
+    const qs = document.querySelectorAll('.oneframe');
+    for (const q of qs) {
+      const frame = {};
+      {
+        const index = q.querySelector('.index');
+        frame.index = Number.parseFloat(index.textContent);
+        if (!Number.isFinite(frame.index)) {
+          continue;
+        }
+      }
+      {
+        const delayTime = q.querySelector('.delayTime');
+        frame.delayTime = Number.parseFloat(delayTime.value);
+      }
+
+      const found = this.curinfo.frames.find(f => frame.index === frame.index);
+      if (!found) {
+        console.warn('not found', frame.index);
+        continue;
+      }
+      found.delayTime = frame.delayTime;
+    }
+  }
+
   async makeUI() {
     console.log('makeUI');
 
@@ -480,20 +531,45 @@ class Misc {
     const parent = document.getElementById('processingview');
     parent.textContent = '';
     for (const frame of this.curinfo.frames) {
+      if (!frame.isFrame) {
+        continue;
+      }
+
       const clone = document.importNode(el.content, true);
-      for (const k of ['offset', 'end']) {
+      for (const k of ['offset', 'end', 'index']) {
         const q = clone.querySelector(`.${k}`);
         if (!q) {
           continue;
         }
         q.textContent = `${frame[k]}`;
       }
-      for (const k of ['delayTime']) {
+      {
+        const k = 'enable';
         const q = clone.querySelector(`.${k}`);
-        if (!q) {
-          continue;
+        if (q) {
+          q.addEventListener('change', async ev => {
+            if (!q.checked) {
+              return;
+            }
+            const ab = await this.curfile.arrayBuffer();
+            const result = await this.pickGif(ab, frame.index);
+            const img = document.getElementById('baseimage');
+            img.src = URL.createObjectURL(new Blob(result.bufs));
+          });
         }
-        q.value = frame[k];
+      }
+      {
+        const k = 'delayTime';
+        const q = clone.querySelector(`.${k}`);
+        const view = clone.querySelector(`.${k}view`);
+        if (q && view) {
+          q.value = frame[k];
+          const _update = () => {
+            view.textContent = `${q.value}`;
+          };
+          q.addEventListener('input', _update);
+          _update();
+        }
       }
       parent.appendChild(clone);
     }
@@ -543,23 +619,10 @@ class Misc {
    * @returns 
    */
   async changeGif(inab, info) {
-    /**
-     * 
-     * @param {ArrayBuffer} ab 
-     * @param {number} offset 
-     * @param {number} len 
-     */
-    const _clone = (ab, offset, len) => {
-      const clone = new Uint8Array(len);
-      const src = new Uint8Array(ab);
-      for (let i = 0; i < len; ++i) {
-        clone[i] = src[offset + i];
-      }
-      return clone;
-    };
+
 
     const ret = { bufs: [] };
-    // クローン
+
     const b8 = _clone(inab, 0, inab.byteLength);
     const ab = b8.buffer;
     const p = new DataView(ab);
@@ -626,9 +689,6 @@ class Misc {
     let globalTable = ((flags & 0x80) !== 0);
     let pow = (flags & 7) + 1;
 
-    //let globalTable = ((flags & 1) !== 0);
-    //let pow = ((flags >> 5) & 7) + 1;
-
     let commonPaletteNum = 2 ** pow;
     console.log('table', globalTable, commonPaletteNum, gw, gh);
 
@@ -640,6 +700,7 @@ class Misc {
     info.headend = c;
 
     let frame = {};
+    let count = 0;
 
     while (c < ab.byteLength) {
       console.log('offset', c, c.toString(16));
@@ -722,8 +783,11 @@ class Misc {
         }
 
         frame.end = c;
-        info.frames.push(Object.assign({ isFrame: true }, frame));
+        frame.isFrame = true;
+        frame.index = count;
+        info.frames.push(Object.assign({}, frame));
         frame = {};
+        count += 1;
       }
 
     }

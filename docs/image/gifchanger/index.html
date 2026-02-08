@@ -28,11 +28,19 @@
 重複を消す</label>
 
         <div>
-          <div id="processingview"></div>
-          <div>
-            <img id="baseimage" />
-            <img id="candimage" />
+          <div class="row">
+            <details open>
+              <summary class="pointer">base</summary>
+              <img id="baseimage" />
+            </details>
+            <details open>
+              <summary class="pointer">apply</summary>
+              <img id="candimage" />
+            </details>
           </div>
+
+          <div id="processingview" class="aaarow"></div>
+
         </div>
       </div>
     </div>
@@ -42,12 +50,13 @@
         <div class="oneframe row">
           <div class="index"></div>
           <label class="pointer">
-<input checked type="checkbox" class="pointer" />
+<input type="checkbox" class="pointer enable" />
 <span class="name"></span>
 </label>
-          <div class="offset"></div>
-          <div class="end"></div>
-          <input class="delaytime" type="slider" value="100" min="0" max="200" />
+          <div class="offset" hidden></div>
+          <div class="end" hidden></div>
+          <input class="delayTime pointer" type="range" value="100" min="0" max="200" />
+          <div class="delayTimeview"></div>
         </div>
       </template>
     </div>
