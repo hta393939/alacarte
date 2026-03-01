@@ -15,6 +15,9 @@ class Misc {
     this.stepx = 4;
     this.offsety = 0;
     this.stepy = 4;
+
+    /** @type {File} */
+    this.targetFile = null;
   }
 
   async initialize() {
@@ -104,11 +107,13 @@ class Misc {
         ev.stopPropagation();
         ev.dataTransfer.dropEffect = 'copy';
       });
-      el.addEventListener('drop', ev => {
+      el.addEventListener('drop', async ev => {
         ev.preventDefault();
         ev.stopPropagation();
         ev.dataTransfer.dropEffect = 'copy';
-        this.parseImage(ev.dataTransfer.files[0]);
+
+        this.targetFile = ev.dataTransfer.files[0];
+        this.updatePick();
       });
     }
 
@@ -124,17 +129,27 @@ class Misc {
       };
       el?.addEventListener('input', () => {
         _update();
+
+        this.updatePick();
       });
       _update();
     }
 
   }
 
-  updatePick() {
+  async updatePick() {
+    console.log('updatePick', this.stepx);
+    if (!this.targetFile) {
+      return;
+    }
+    const bitmap = await window.createImageBitmap(this.targetFile);
+
+    const sw = bitmap.width;
+    const sh = bitmap.height;
     /** @type {HTMLCanvasElement} */
     const srccanvas = document.getElementById('maincanvas');
-    const sw = srccanvas.width;
-    const sh = srccanvas.height;
+    srccanvas.width = sw;
+    srccanvas.height = sh;
     /** @type {HTMLCanvasElement} */
     const dstcanvas = document.getElementById('subcanvas');
     const dw = Math.floor((sw - this.offsetx) / this.stepx);
@@ -142,29 +157,41 @@ class Misc {
     dstcanvas.width = dw;
     dstcanvas.height = dh;
     const srcc = srccanvas.getContext('2d');
+    srcc.drawImage(bitmap, 0, 0);
+
+
     const srcimg = srcc.getImageData(0, 0, sw, sh);
     const dstc = dstcanvas.getContext('2d');
     const dstimg = dstc.getImageData(0, 0, dw, dh);
 
+
     for (let i = 0; i < dh; ++i) {
       for (let j = 0; j < dw; ++j) {
-        let sx = j * this.stepx + this.offsetx;
-        let sy = i * this.stepy + this.offsety;
+        let sx = Math.floor(j * this.stepx + this.offsetx);
+        let sy = Math.floor(i * this.stepy + this.offsety);
         let dx = j;
         let dy = i;
         let srcoffset = (sw * sy + sx) * 4;
         let dstoffset = (dw * dy + dx) * 4;
-        let r = srcimg.data[srcoffset];
+        let r = srcimg.data[srcoffset  ];
         let g = srcimg.data[srcoffset+1];
         let b = srcimg.data[srcoffset+2];
         let a = srcimg.data[srcoffset+3];
-        dstimg.data[dstoffset] = r;
+        dstimg.data[dstoffset  ] = r;
         dstimg.data[dstoffset+1] = g;
         dstimg.data[dstoffset+2] = b;
         dstimg.data[dstoffset+3] = a;
+
+        srcimg.data[srcoffset  ] = 255;
+        srcimg.data[srcoffset+1] = 0;
+        srcimg.data[srcoffset+2] = 0;
+        srcimg.data[srcoffset+3] = 255;
       }
     }
+    srcc.putImageData(srcimg, 0, 0);
     dstc.putImageData(dstimg, 0, 0);
+
+    window.dstview.textContent = `${dw}x${dh}`;
   }
 
 }

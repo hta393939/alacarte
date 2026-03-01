@@ -32,32 +32,34 @@
 
       <div class="toright">
         <div>Xオフセット</div>
-        <input class="pointer" type="range" id="offsetx" value="0" min="0" max="100" />
+        <input class="pointer" type="range" id="offsetx" value="4" min="0" max="20" step="0.5" />
         <div id="offsetxview"></div>
       </div>
 
       <div class="toright">
         <div>Xステップ</div>
-        <input class="pointer" type="range" id="stepx" value="4" min="1" max="100" />
+        <input class="pointer" type="range" id="stepx" value="8" min="1" max="20" step="0.5" />
         <div id="stepxview"></div>
       </div>
 
       <div class="toright">
         <div>Yオフセット</div>
-        <input class="pointer" type="range" id="offsety" value="0" min="0" max="100" />
+        <input class="pointer" type="range" id="offsety" value="4" min="0" max="20" step="0.5" />
         <div id="offsetyview"></div>
       </div>
 
       <div class="toright">
         <div>Yステップ</div>
-        <input class="pointer" type="range" id="stepy" value="4" min="1" max="100" />
+        <input class="pointer" type="range" id="stepy" value="8" min="1" max="20" step="0.5" />
         <div id="stepyview"></div>
       </div>
 
     </div>
 
-    <canvas id="maincanvas"></canvas>
     <canvas id="subcanvas"></canvas>
+    <div id="dstview"></div>
+    <br />
+    <canvas id="maincanvas"></canvas>
 
     <script src="./index.js"></script>
   </body>
