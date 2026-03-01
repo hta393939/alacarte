@@ -670,129 +670,190 @@ class Misc {
   }
 
   /**
+   * 0x00 が見つかるまでを探す
+   * @param {DataView} p 
+   * @param {number} inc 
+   */
+  searchNullTerm(p, inc) {
+    const buf = new Uint8Array(32768);
+    let num = 0;
+    for (let i = 0; i < 32768; ++i) {
+      let u8 = p.getUint8(inc + i);
+      buf[i] = u8;
+      if (u8 !== 0) {
+        continue;
+      }
+      num = i + 1;
+      break;
+    }
+    const text = new TextDecoder().decode(buf.buffer.slice(0, num - 1));
+
+    return {
+      num,
+      text,
+    }
+  }
+
+  /**
    * 
    * @param {ArrayBuffer} ab 
+   * @returns 
    */
-  async parseJpeg(ab) {
+  async parseOneJpeg(ab) {
     let info = {
-      frames: [],
+      tags: [],
+    };
+    const names = {
+      0x69: '69',
+      0xc0: 'SOF0',
+      0xc4: 'DHT',
+      0xd8: 'SOI',
+      0xd9: 'EOI',
+      0xda: 'SOS',
+      0xdb: 'DQT',
+      0xe0: 'APP0',
+      0xe1: 'APP1',
+      0xe2: 'APP2',
+      0xeb: 'APP11',
     };
 
     const p = new DataView(ab);
     let c = 0;
-    c += 6;
-    let gw = p.getUint16(c, true);
-    let gh = p.getUint16(c + 2, true);
-    c += 4;
-    let flags = p.getUint8(c);
-    c += 1;
-    let globalTable = ((flags & 0x80) !== 0);
-    let pow = (flags & 7) + 1;
 
-    let commonPaletteNum = 2 ** pow;
-    console.log('table', globalTable, commonPaletteNum, gw, gh);
-
-    c += 2;
-
-    if (globalTable) {
-      c += commonPaletteNum * 3;
-    }
-    info.headend = c;
-
-    let frame = {};
-    let count = 0;
-
-    while (c < ab.byteLength) {
-      console.log('offset', c, c.toString(16));
-      const sep = p.getUint8(c);
+    for (; c < ab.byteLength;) {
+      let b8 = p.getUint8(c);
       c += 1;
-      if (sep === 0x3b) { // 
+      if (b8 !== 0xff) {
+        continue;
+      }
+
+      let next = p.getUint8(c);
+      c += 1;
+      if (next == 0) {
+        continue;
+      }
+      const obj = {
+        offset: c - 2,
+        next,
+        name: names[next],
+        hexa: {},
+      };
+      info.tags.push(obj);
+
+      console.log('', c - 2, (c - 2).toString(16), next.toString(16), obj.name);
+
+      switch (next) {
+      case 0xe1:
+      case 0xe2:
+      case 0xeb:
+        {
+          // タグは含まずこのサイズフィールドは含む長さ
+          let num = p.getUint16(c, false);
+          c += 2;
+          obj.num = num;
+
+          let localc = c;
+          c += num - 2;
+
+          if (next === 0xe1) {
+            const result = this.searchNullTerm(p, localc);
+            console.log('APP1 text', result);
+            localc += result.num;
+
+            if (result.text.includes('xmp')) {
+              const hexa = new TextDecoder().decode(ab.slice(localc, localc + 32));
+              console.log('hexa', hexa);
+              localc += 32;
+              
+              const fulllen = p.getUint32(localc, false);
+              const offset = p.getUint32(localc + 4, false);
+              localc += 8;
+              console.log('full, offset', fulllen, offset);
+
+              // null-term するのか??? してなかった気がする
+              const last = new TextDecoder().decode(ab.slice(localc, c));
+              console.log('last text', last);
+
+              obj.hexa[hexa] = last;
+            }
+
+          }
+
+        }
         break;
       }
-      if (sep === 0x21) {
-        const subsep = p.getUint8(c);
-        c += 1;
-
-        console.log('0x21', c - 2, subsep.toString(16));
-
-        switch (subsep) {
-        case 0xf9: // 
-          {
-            frame.graphicOffset = c - 2;
-            frame.delayOffset = c + 2;
-
-            const blockByte = p.getUint8(c); // 常に4
-            c += 1;
-            const flags = p.getUint8(c);
-            const delayTime = p.getUint16(c + 1, true);
-            const transparent = p.getUint8(c + 3, true);
-            c += blockByte;
-            console.log('Graphic', flags, delayTime, transparent);
-            frame.delayTime = delayTime;
-            frame.orgDelayTime = delayTime;
-          }
-        case 0x01:
-        case 0xff: // Application
-        default:
-          // offset.push(c - 2);
-          while (c < ab.byteLength) {
-            let blockByte = p.getUint8(c);
-            c += 1;
-            if (blockByte === 0) {
-              break;
-            }
-            c += blockByte;
-          }
-
-          if (subsep === 0xf9) {
-            frame.graphicEnd = c;
-          } else {
-            frame.end = c;
-            info.frames.push(Object.assign({}, frame));
-            frame = {};
-          }
-        }
-      } else if (sep === 0x2c) { // image
-        frame.offset = c - 1;
-        console.log('image', c - 1);
-
-        let lx = p.getUint16(c, true);
-        let ly = p.getUint16(c + 2, true);
-        let lw = p.getUint16(c + 4, true);
-        let lh = p.getUint16(c + 6, true);
-        c += 8;
-        let iflags = p.getUint8(c);
-        c += 1;
-        let itable = ((iflags & 0x80) !== 0);
-        let ipow = (iflags & 7) + 1;
-        let localNum = 2 ** ipow;
-        console.log('', itable, localNum);
-        if (itable) {
-          c += localNum * 3;
-        }
-        let lzw = p.getUint8(c);
-        c += 1;
-
-        while (c + 1 < ab.byteLength) {
-          let blockByte = p.getUint8(c);
-          c += 1;
-          if (blockByte === 0) {
-            break;
-          }
-          c += blockByte;
-        }
-
-        frame.end = c;
-        frame.isFrame = true;
-        frame.index = count;
-        info.frames.push(Object.assign({}, frame));
-        frame = {};
-        count += 1;
-      }
 
     }
 
-    console.log('parseJpeg', c, ab.byteLength);
+    //console.log('info', info);
+    return info;
+  }
+
+  /**
+   * jpeg パース
+   * @param {ArrayBuffer} ab 
+   */
+  async parseJpeg(ab) {
+    const byteNum = ab.byteLength;
+
+    let info = await this.parseOneJpeg(ab);
+
+    let frames = [];
+    let frame = null;
+    for (const tag of info.tags) {
+      if (tag.next === 0xd8) {
+        frame = {
+          tags: [tag],
+          hexa: {},
+        };
+      } else if (tag.next === 0xd9) {
+        frame.tags.push(tag);
+        frames.push(frame);
+        frame = null;
+      } else if (frame) {
+        frame.tags.push(tag);
+
+        {
+          const uuids = Object.keys(tag.hexa);
+          if (uuids.length >= 1) {
+            for (const uuid of uuids) {
+              if (!(uuid in frame.hexa)) {
+                frame.hexa[uuid] = '';
+              }
+              frame.hexa[uuid] += tag.hexa[uuid];
+            }
+          }
+        }
+      }
+    }
+
+    console.log('frames', frames);
+
+
+    for (let i = 0; i < frames.length; ++i) {
+      const one = frames[i];
+      let begin = one.tags[0].offset;
+      let end = (i + 1 < frames.length)
+        ? frames[i+1].tags[0].offset : byteNum;
+      const sub = ab.slice(begin, end);
+      const img = document.createElement('img');
+      img.classList.add('thumb');
+      img.src = URL.createObjectURL(new Blob([sub]));
+      document.body.appendChild(img);
+
+      {
+        const uuids = Object.keys(one.hexa);
+        if (uuids.length >= 1) {
+          for (const uuid of uuids) {
+            const hexa = one.hexa[uuid];
+            if (hexa.includes("Adobe XMP Core 5.1.0-jc003")) {
+              console.log('jc003', hexa);
+            }
+          }
+        }
+      }
+    }
+
     return info;
   }
 

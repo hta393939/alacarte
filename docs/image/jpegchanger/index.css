@@ -21,6 +21,10 @@
   font-weight: bold;
 }
 
+.thumb {
+  width: 30vw;
+}
+
 .row {
   display: flex;
   flex-direction: row;
