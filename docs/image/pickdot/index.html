@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>pick dot</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div class="drop">Drop file</div>
+
+    <div>
+      <div class="toright">
+        <div>スケール</div>
+        <input class="pointer" type="range" id="scale" value="4" min="1" max="16" />
+        <div id="scaleview"></div>
+      </div>
+      <div class="toright">
+        <div>セル横</div>
+        <input class="pointer" type="range" id="cellx" value="0" min="0" max="8" />
+        <div id="cellxview"></div>
+      </div>
+      <div class="toright">
+        <div>セル縦</div>
+        <input class="pointer" type="range" id="celly" value="0" min="0" max="8" />
+        <div id="cellyview"></div>
+      </div>
+      <div class="toright">
+        <div>1セルサイズ</div>
+        <input class="pointer" type="range" id="cellw" value="16" min="8" max="32" />
+        <div id="cellwview"></div>
+      </div>
+
+      <div class="toright">
+        <div>Xオフセット</div>
+        <input class="pointer" type="range" id="offsetx" value="0" min="0" max="100" />
+        <div id="offsetxview"></div>
+      </div>
+
+      <div class="toright">
+        <div>Xステップ</div>
+        <input class="pointer" type="range" id="stepx" value="4" min="1" max="100" />
+        <div id="stepxview"></div>
+      </div>
+
+      <div class="toright">
+        <div>Yオフセット</div>
+        <input class="pointer" type="range" id="offsety" value="0" min="0" max="100" />
+        <div id="offsetyview"></div>
+      </div>
+
+      <div class="toright">
+        <div>Yステップ</div>
+        <input class="pointer" type="range" id="stepy" value="4" min="1" max="100" />
+        <div id="stepyview"></div>
+      </div>
+
+    </div>
+
+    <canvas id="maincanvas"></canvas>
+    <canvas id="subcanvas"></canvas>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
