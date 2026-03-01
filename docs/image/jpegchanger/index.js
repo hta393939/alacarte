@@ -422,7 +422,6 @@ class Misc {
         console.log('info', info);
         this.curname = file.name;
         document.title = `${this.curname} - jpegchanger`;
-        await this.makeUI();
       });
     }
 
@@ -848,6 +847,8 @@ class Misc {
             const hexa = one.hexa[uuid];
             if (hexa.includes("Adobe XMP Core 5.1.0-jc003")) {
               console.log('jc003', hexa);
+
+              this.parseXML(hexa);
             }
           }
         }
@@ -855,6 +856,58 @@ class Misc {
     }
 
     return info;
+  }
+
+  parseXML(text) {
+    const el = document.createElement('div');
+    //el.outerHTML = text;
+    el.innerHTML = text;
+    console.log('el', el);
+
+    const numkeys = [
+      'far', 'focaltableentrycount', 'near',
+    ];
+    const strkeys = [
+      'confidenceuri', 'depthuri', 'focaltable', 'format',
+      'itemsemantic', 'measuretype', 'units',
+      'distortion',
+    ];
+
+    const ret = {};
+    for (const sub of ['depthmap', 'imagingmodel']) {
+      const obj = {};
+      ret[sub] = obj;
+
+      const el2 = el.getElementsByTagName(`camera:${sub}`);
+      for (const node of el2[0].children) {
+        console.log('child', node);
+        //console.log('', node.tagName, node.textContent);
+        const key = node.tagName.split(':')[1].toLowerCase();
+        let val = node.textContent;
+        if (!(strkeys.includes(key))) {
+          val = Number.parseFloat(val);
+        }
+        obj[key] = val;
+      }
+    }
+
+    console.log('ret', ret);
+    return ret;
+  }
+
+  /** グレースケールは明らかに黒が近かったけどなあ */
+  qtoreal8(inx, near, far) {
+    const x = 255 - inx;
+    if (x === 0) {
+      return far;
+    }
+    if (x === 255) {
+      return near;
+    }
+    const rate = x / 255;
+    const range = 1 - near / far;
+    const inv = rate * range + near / far;
+    return near / inv;
   }
 
 }
