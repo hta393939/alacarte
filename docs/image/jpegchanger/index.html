@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>jpeg変更する</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div>
+
+      <div>
+        <div id="startfile" class="drop">ここにファイルをドロップ</div>
+
+        <input type="number" min="0" max="30" value="0" id="startcount" />
+        <input type="number" min="1" max="30" value="1" id="addcount" />
+        <input type="number" min="1" max="30" value="10" id="outcount" />
+
+        <button id="openwindow">開く</button>
+        <button class="pointer" id="opendir">ワーキングフォルダを指定する ←</button>
+        <div id="rootview"></div>
+
+        <input id="source" value="src" />
+        <input id="destination" value="dst" />
+        <button class="pointer" id="applybut">反映する</button>
+        <button class="pointer" id="downloadbut">ダウンロードする</button>
+        <label class="pointer">
+<input type="checkbox" class="pointer" id="isdel" />
+重複を消す</label>
+
+        <div>
+          <div class="row">
+            <details open>
+              <summary class="pointer">base</summary>
+              <img id="baseimage" />
+            </details>
+            <details open>
+              <summary class="pointer">apply</summary>
+              <img id="candimage" />
+            </details>
+          </div>
+
+          <div id="processingview" class="aaarow"></div>
+
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <template id="oneframe">
+        <div class="oneframe row">
+          <div class="index"></div>
+          <label class="pointer">
+<input type="checkbox" class="pointer enable" />
+<span class="name"></span>
+</label>
+          <div class="offset" hidden></div>
+          <div class="end" hidden></div>
+          <input class="delayTime pointer" type="range" value="100" min="0" max="200" />
+          <div class="delayTimeview"></div>
+        </div>
+      </template>
+    </div>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
+
