@@ -434,10 +434,15 @@ class Misc {
         await this.processDir(dirHandle);
       });
     }
-    { // delayやカットの反映
-      const el = document.getElementById('applybut');
+    {
+      const el = document.getElementById('openfile');
       el?.addEventListener('click', async () => {
-        await this.applyJpeg();
+        const opt = {};
+        /** @type {FileSystemFileHandle[]} */
+        const fhs = await window.showOpenFilePicker(opt);
+        const f = await fhs[0].getFile();
+        const ab = await f.arrayBuffer();
+        await this.parseJpeg(ab);
       });
     }
     { // 反映後のダウンロード
@@ -848,7 +853,11 @@ class Misc {
             if (hexa.includes("Adobe XMP Core 5.1.0-jc003")) {
               console.log('jc003', hexa);
 
-              this.parseXML(hexa);
+              const result = this.parseXML(hexa);
+              const obj = result?.depthmap;
+              if (obj) {
+                window.nearfarview.textContent = `${obj.near} ${obj.far}`;
+              }
             }
           }
         }
@@ -858,19 +867,22 @@ class Misc {
     return info;
   }
 
+  /**
+   * 
+   * @param {string} text 
+   * @returns 
+   */
   parseXML(text) {
     const el = document.createElement('div');
-    //el.outerHTML = text;
     el.innerHTML = text;
     console.log('el', el);
 
-    const numkeys = [
-      'far', 'focaltableentrycount', 'near',
-    ];
     const strkeys = [
-      'confidenceuri', 'depthuri', 'focaltable', 'format',
+      'confidenceuri', 'depthuri', 'format',
       'itemsemantic', 'measuretype', 'units',
-      'distortion',
+    ];
+    const b64keys = [
+      'focaltable', 'distortion',
     ];
 
     const ret = {};
@@ -884,7 +896,15 @@ class Misc {
         //console.log('', node.tagName, node.textContent);
         const key = node.tagName.split(':')[1].toLowerCase();
         let val = node.textContent;
-        if (!(strkeys.includes(key))) {
+        if (b64keys.includes(key)) {
+          val = Uint8Array.fromBase64(val);
+          if (key === 'focaltable') {
+            val = new Float32Array(val.buffer);
+            // distance, radius らしいが radius は負で見えていて
+            // 負半径は前景ぼかし(distanceがfocusより小さいらしいが大小はおかしい)
+          }
+
+        } else if (!(strkeys.includes(key))) {
           val = Number.parseFloat(val);
         }
         obj[key] = val;

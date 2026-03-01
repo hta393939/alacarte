@@ -11,17 +11,21 @@
       <div>
         <div id="startfile" class="drop">ここにファイルをドロップ</div>
 
+        <div>
+          <div id="nearfarview"></div>
+          <div></div>
+        </div>
+
         <input type="number" min="0" max="30" value="0" id="startcount" />
         <input type="number" min="1" max="30" value="1" id="addcount" />
         <input type="number" min="1" max="30" value="10" id="outcount" />
 
-        <button id="openwindow">開く</button>
+        <button class="pointer" id="openfile">ファイルを開く</button>
         <button class="pointer" id="opendir">ワーキングフォルダを指定する ←</button>
         <div id="rootview"></div>
 
         <input id="source" value="src" />
         <input id="destination" value="dst" />
-        <button class="pointer" id="applybut">反映する</button>
         <button class="pointer" id="downloadbut">ダウンロードする</button>
         <label class="pointer">
 <input type="checkbox" class="pointer" id="isdel" />
