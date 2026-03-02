@@ -915,19 +915,18 @@ class Misc {
     return ret;
   }
 
-  /** グレースケールは明らかに黒が近かったけどなあ */
-  qtoreal8(inx, near, far) {
-    const x = 255 - inx;
-    if (x === 0) {
-      return far;
-    }
-    if (x === 255) {
+  /**
+   * @param {number} x 0.0-1.0
+   */
+  qtoreal8(x, near, far) {
+    if (x <= 0) {
       return near;
     }
-    const rate = x / 255;
-    const range = 1 - near / far;
-    const inv = rate * range + near / far;
-    return near / inv;
+    if (x >= 1) {
+      return far;
+    }
+    let val = far * near / (far - x * (far - near));
+    return val;
   }
 
 }

@@ -16,6 +16,8 @@ class Misc {
     this.offsety = 0;
     this.stepy = 4;
 
+    this.quant = false;
+
     /** @type {File} */
     this.targetFile = null;
   }
@@ -135,6 +137,19 @@ class Misc {
       _update();
     }
 
+    for (const k of ['quant']) {
+      const el = document.getElementById(`${k}`);
+      const _update = () => {
+        this[k] = el.checked;
+      };
+      el?.addEventListener('change', () => {
+        _update();
+
+        this.updatePick();
+      });
+      _update();
+    }
+
   }
 
   async updatePick() {
@@ -144,6 +159,8 @@ class Misc {
     }
     const bitmap = await window.createImageBitmap(this.targetFile);
 
+    const quant = this.quant;
+
     const sw = bitmap.width;
     const sh = bitmap.height;
     /** @type {HTMLCanvasElement} */
@@ -152,8 +169,8 @@ class Misc {
     srccanvas.height = sh;
     /** @type {HTMLCanvasElement} */
     const dstcanvas = document.getElementById('subcanvas');
-    const dw = Math.floor((sw - this.offsetx) / this.stepx);
-    const dh = Math.floor((sh - this.offsety) / this.stepy);
+    const dw = Math.floor((sw + this.stepx - 1 - this.offsetx) / this.stepx);
+    const dh = Math.floor((sh + this.stepy - 1 - this.offsety) / this.stepy);
     dstcanvas.width = dw;
     dstcanvas.height = dh;
     const srcc = srccanvas.getContext('2d');
@@ -164,6 +181,13 @@ class Misc {
     const dstc = dstcanvas.getContext('2d');
     const dstimg = dstc.getImageData(0, 0, dw, dh);
 
+    const _quant = (x) => {
+      return Math.floor((x + 25) / 51) * 51;
+    };
+    /** 16段階 */
+    const _q17 = (x) => {
+      return Math.floor((x + 8) / 17) * 17;
+    };
 
     for (let i = 0; i < dh; ++i) {
       for (let j = 0; j < dw; ++j) {
@@ -177,6 +201,13 @@ class Misc {
         let g = srcimg.data[srcoffset+1];
         let b = srcimg.data[srcoffset+2];
         let a = srcimg.data[srcoffset+3];
+
+        if (quant) {
+          r = _quant(r);
+          g = _quant(g);
+          b = _quant(b);
+        }
+
         dstimg.data[dstoffset  ] = r;
         dstimg.data[dstoffset+1] = g;
         dstimg.data[dstoffset+2] = b;
