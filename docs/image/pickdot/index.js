@@ -18,6 +18,8 @@ class Misc {
 
     this.quant = false;
 
+    this.quanttype = 'q17';
+
     /** @type {File} */
     this.targetFile = null;
   }
@@ -38,9 +40,7 @@ class Misc {
     const cellw = this.cellw;
     const cellh = cellw;
 
-    /**
-     * 入力画像の幅
-     */
+    /** 入力画像の幅 */
 //        const w = src.width;
 //        const h = src.height;
     const context = src.getContext('2d');
@@ -119,6 +119,17 @@ class Misc {
       });
     }
 
+    {
+      const el = document.getElementById('openfile');
+      el?.addEventListener('click', async () => {
+        const opt = {};
+        const fhs = await window.showOpenFilePicker(opt);
+        const f = await fhs[0].getFile();
+        this.targetFile = f;
+        this.updatePick();
+      });
+    }
+
     for (const k of [
       'scale', 'cellx', 'celly', 'cellw',
       'offsetx', 'stepx', 'offsety', 'stepy',
@@ -150,6 +161,19 @@ class Misc {
       _update();
     }
 
+    for (const k of ['quanttype']) {
+      const el = document.getElementById(`${k}`);
+      const _update = () => {
+        this[k] = el.value;
+      };
+      el?.addEventListener('change', () => {
+        _update();
+
+        this.updatePick();
+      });
+      _update();
+    }
+
   }
 
   async updatePick() {
@@ -158,8 +182,6 @@ class Misc {
       return;
     }
     const bitmap = await window.createImageBitmap(this.targetFile);
-
-    const quant = this.quant;
 
     const sw = bitmap.width;
     const sh = bitmap.height;
@@ -181,13 +203,24 @@ class Misc {
     const dstc = dstcanvas.getContext('2d');
     const dstimg = dstc.getImageData(0, 0, dw, dh);
 
-    const _quant = (x) => {
+    const _q51 = (x) => {
       return Math.floor((x + 25) / 51) * 51;
     };
     /** 16段階 */
     const _q17 = (x) => {
       return Math.floor((x + 8) / 17) * 17;
     };
+    const _noq = x => x;
+
+    let _q = _noq;
+    switch (this.quanttype) {
+      case 'q51':
+        _q = _q51;
+        break;
+      case 'q17':
+        _q = _q17;
+        break;
+    }
 
     for (let i = 0; i < dh; ++i) {
       for (let j = 0; j < dw; ++j) {
@@ -202,11 +235,9 @@ class Misc {
         let b = srcimg.data[srcoffset+2];
         let a = srcimg.data[srcoffset+3];
 
-        if (quant) {
-          r = _quant(r);
-          g = _quant(g);
-          b = _quant(b);
-        }
+        r = _q(r);
+        g = _q(g);
+        b = _q(b);
 
         dstimg.data[dstoffset  ] = r;
         dstimg.data[dstoffset+1] = g;

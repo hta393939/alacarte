@@ -23,6 +23,7 @@
 
 .thumb {
   width: 30vw;
+  border: solid red 1px;
 }
 
 .row {
