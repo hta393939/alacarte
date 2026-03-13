@@ -161,73 +161,51 @@ export class CharBuilder extends PMX.Maker {
 
   initBone() {
     const bones = [
-      {
-        parent: -1,
-        nameJa: '全ての親',
-        nameEn: 'root'
-      },{
-        parent: 0,
-        nameJa: '操作中心',
-        nameEn: 'view cnt bone'
-      }, {
-        parent: 0,
-        nameJa: 'センター',
-        nameEn: 'center'
-      }, {
-        parent: 2,
-        nameJa: '下半身',
-        nameEn: 'spine'
-      }, {
-        parent: 3,
-        nameJa: '上半身',
-        nameEn: 'upperChest'
-      }, {
-        parent: 4,
-        nameJa: '上半身2',
-        nameEn: 'upperChest2'
-      }, {
-        parent: 5,
-        nameJa: '首',
-        nameEn: 'neck'
-      },
-{ parent: 6, nameJa: '頭', nameEn: 'head' }, // #7
+{ parent: -1, nameJa: '全ての親', nameEn: 'root' },
+{ parent: 0, nameJa: '操作中心', nameEn: 'view cnt bone' },
+{ parent: 0, nameJa: 'センター', nameEn: 'center', p:[0,0,0] },
+{ parent: 2, nameJa: '下半身', nameEn: 'spine', p: [0,0,0] },
+{ parent: 3, nameJa: '上半身', nameEn: 'upperChest', p:[0,0,0] },
+{ parent: 4, nameJa: '上半身2', nameEn: 'upperChest2', p:[0,0,0] },
+{ parent: 5, nameJa: '首', nameEn: 'neck', p:[0,0,0] },
+{ parent: 6, nameJa: '頭', nameEn: 'head', p:[0,0,0] }, // #7
     ];
 
     const lr = [
 [
-{parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg'},
-{parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg'},
-{parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot'},
-{parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe'},
+{parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg', p:[0,0,0]},
+{parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg', p:[0,0,0]},
+{parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot', p:[0,0,0]},
+{parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0,0,0]},
 ],
 [
-{parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder'},
-{parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm'},
-{parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm'},
-{parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand'},
-{parentName: '_手首',nameJa: '小指１', nameEn: 'LittleProximal'},
-{parentName: '_小指１',nameJa: '小指２', nameEn: 'LittleIntermediate'},
-{parentName: '_小指２',nameJa: '小指３', nameEn: 'LittleDistal'},
-{parentName: '_小指３',nameJa: '小指先', nameEn: 'LittleEnd'},
-{parentName: '_手首',nameJa: '親指０', nameEn: 'ThumbMetacarpal'},
-{parentName: '_親指０',nameJa: '親指１', nameEn: 'ThumbProximal'},
-{parentName: '_親指１',nameJa: '親指２', nameEn: 'ThumbDistal'},
-{parentName: '_親指２',nameJa: '親指先', nameEn: 'ThumbEnd'},
+{parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder', p:[0,0,0]},
+{parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm', p:[0,0,0]},
+{parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[0,0,0]},
+{parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[0,0,0]},
+{parentName: '_手首',nameJa: '小指１', nameEn: 'LittleProximal', p:[0,0,0]},
+{parentName: '_小指１',nameJa: '小指２', nameEn: 'LittleIntermediate', p:[0,0,0]},
+{parentName: '_小指２',nameJa: '小指３', nameEn: 'LittleDistal', p:[0,0,0]},
+{parentName: '_小指３',nameJa: '小指先', nameEn: 'LittleEnd', p:[0,0,0]},
+{parentName: '_手首',nameJa: '親指０', nameEn: 'ThumbMetacarpal', p:[0,0,0]},
+{parentName: '_親指０',nameJa: '親指１', nameEn: 'ThumbProximal', p:[0,0,0]},
+{parentName: '_親指１',nameJa: '親指２', nameEn: 'ThumbDistal', p:[0,0,0]},
+{parentName: '_親指２',nameJa: '親指先', nameEn: 'ThumbEnd', p:[0,0,0]},
 ],
 [
-{parentName: '頭',nameJa: '目', nameEn: 'Eye'},
+{parentName: '頭',nameJa: '目', nameEn: 'Eye', p:[0,0,0]},
 ],
 [
-{parentName: '全ての親',nameJa: '足ＩＫ', nameEn: 'LegIK'},
-{parentName: '_足ＩＫ先',nameJa: '足ＩＫ先', nameEn: 'LegIKEnd'},
+{parentName: '全ての親',nameJa: '足ＩＫ', nameEn: 'LegIK', p:[0,0,0]},
+{parentName: '_足ＩＫ先',nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,0]},
 ],
 [
-{parentName: '_足ＩＫ',nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop'},
-{parentName: '_つま先ＩＫ先',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd'},
+{parentName: '_足ＩＫ',nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[0,0,0]},
+{parentName: '_つま先ＩＫ先',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,0]},
 ],
 [
-{parentName: '上半身２', nameJa: 'パーツ１', nameEn: 'parts1'},
-{parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'parts2'},
+{parentName: '上半身２', nameJa: 'パーツ１', nameEn: 'parts1', p:[0,0,0]},
+{parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'parts2', p:[0,0,0]},
 ]
     ];
     const lrpre = [
