@@ -179,22 +179,82 @@ export class CharBuilder extends PMX.Maker {
         nameEn: 'spine'
       }, {
         parent: 3,
-        nameJa: '左足',
-        nameEn: 'leftUpperLeg'
+        nameJa: '上半身',
+        nameEn: 'upperChest'
       }, {
         parent: 4,
-        nameJa: '左足下',
-        nameEn: 'leftLowerLeg'
+        nameJa: '上半身2',
+        nameEn: 'upperChest2'
       }, {
         parent: 5,
-        nameJa: '左足首',
-        nameEn: 'leftUnkle'
-      }, { // #7
-        parent: 6,
-        nameJa: '左足先',
-        nameEn: 'leftFoot'
-      }
+        nameJa: '首',
+        nameEn: 'neck'
+      },
+{ parent: 6, nameJa: '頭', nameEn: 'head' }, // #7
     ];
+
+    const lr = [
+[
+{parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg'},
+{parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg'},
+{parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot'},
+{parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe'},
+],
+[
+{parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder'},
+{parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm'},
+{parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm'},
+{parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand'},
+{parentName: '_手首',nameJa: '小指１', nameEn: 'LittleProximal'},
+{parentName: '_小指１',nameJa: '小指２', nameEn: 'LittleIntermediate'},
+{parentName: '_小指２',nameJa: '小指３', nameEn: 'LittleDistal'},
+{parentName: '_小指３',nameJa: '小指先', nameEn: 'LittleEnd'},
+{parentName: '_手首',nameJa: '親指０', nameEn: 'ThumbMetacarpal'},
+{parentName: '_親指０',nameJa: '親指１', nameEn: 'ThumbProximal'},
+{parentName: '_親指１',nameJa: '親指２', nameEn: 'ThumbDistal'},
+{parentName: '_親指２',nameJa: '親指先', nameEn: 'ThumbEnd'},
+],
+[
+{parentName: '頭',nameJa: '目', nameEn: 'Eye'},
+],
+[
+{parentName: '全ての親',nameJa: '足ＩＫ', nameEn: 'LegIK'},
+{parentName: '_足ＩＫ先',nameJa: '足ＩＫ先', nameEn: 'LegIKEnd'},
+],
+[
+{parentName: '_足ＩＫ',nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop'},
+{parentName: '_つま先ＩＫ先',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd'},
+],
+[
+{parentName: '上半身２', nameJa: 'パーツ１', nameEn: 'parts1'},
+{parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'parts2'},
+]
+    ];
+    const lrpre = [
+      {nameJa: '右', nameEn: 'right'},
+      {nameJa: '左', nameEn: 'left'},
+    ];
+    for (let bi = 0; bi < lr.length; ++bi) {
+      const block = lr[bi];
+      for (let i = 0; i < 2; ++i) {
+        for (let j = 0; j < block.length; ++j) {
+          const one = lr[j];
+          const bone = {
+            parent: -1,
+            parentName: one.parentName.replace('_', lrpre[i].nameJa),
+            nameJa: `${lrpre[i].nameJa}${one.nameJa}`,
+            nameEn: `${lrpre[i].nameEn}${one.nameEn}`,
+          };
+          const index = bones.findIndex(b => b.nameJa === bone.parentName);
+          if (index < 0) {
+            console.warn('not found parent', bone.parentName);
+          }
+          bone.parent = index;
+          bones.push(bone);
+        }
+      }
+    }
+
     return bones;
   }
 
