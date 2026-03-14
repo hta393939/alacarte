@@ -17,9 +17,6 @@ const _rad = (deg) => {
 };
 
 export class CharBuilder2 extends CharBuilder {
-  static L = 0;
-  static R = 1;
-  static lrname = ['左', '右'];
 
   constructor() {
     super();
@@ -125,62 +122,7 @@ export class CharBuilder2 extends CharBuilder {
 
   }
 
-  /**
-   * 物理シンプルな箱
-   */
-  makeBox(param) {
-    {
-      const vs = [
-        {p: [-1, 1, -1]}, // 手前
-        {p: [ 1, 1, -1]},
-        {p: [-1,-1, -1]}, // z
-        {p: [ 1,-1, -1]}, // 手前 下
-        {p: [-1, 1,  1]}, // 4 奥上
-        {p: [ 1, 1,  1]}, // 5
-        {p: [-1,-1,  1]}, // 6
-        {p: [ 1,-1,  1]}, // 7
-      ];
 
-      const k = 0.25;
-      const mens = [
-        {p: [0, 1, 2, 3], n: [0, 0, -1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
-        {p: [4, 0, 6, 2], n: [-1, 0, 0], uv: [k * 1, k * 2, k * 2, k * 2, k * 1, k * 1, k * 2, k * 1,]},
-        {p: [1, 5, 3, 7], n: [1, 0, 0], uv: [k * 3, k * 2, k * 4, k * 2, k * 3, k * 1, k * 4, k * 1,]},
-        {p: [4, 5, 0, 1], n: [0, 1, 0], uv: [k * 2, k * 3, k * 3, k * 3, k * 2, k * 2, k * 3, k * 2,]},
-        {p: [2, 3, 6, 7], n: [0, -1, 0], uv: [k * 2, k * 1, k * 3, k * 1, k * 2, k * 0, k * 3, k * 0,]},
-        {p: [5, 4, 7, 6], n: [0, 0, 1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
-      ];
-
-      for (const men of mens) {
-        for (let j = 0; j < 4; ++j) {
-          const vp = vs[men.p[j]];
-
-          const v = new PMX.Vertex();
-
-          let x = vp.p[0];
-          let y = vp.p[1];
-          let z = vp.p[2];
-
-          v.n = this.normalize(men.n);
-          v.p = [
-            x * scale * 1,
-            y * scale * param.lenhalf,
-            z * scale * 1,
-          ];
-          v.uv = [
-            men.uv[j*2+0],
-            men.uv[j*2+1],
-          ];
-          v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [2, 0, 0, 0];
-          v.weights = [1, 0, 0, 0];
-
-          this.vts.push(v);
-        }
-      }
-    }
-
-  }
 
   /**
    * シリンダー

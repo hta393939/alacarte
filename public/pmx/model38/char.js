@@ -19,6 +19,10 @@ export class Vec3 {
   static YAXIS = 'y';
   static ZAXIS = 'z';
 
+  static fromArray(arr) {
+    return new Vec3(arr[0], arr[1], arr[2]);
+  }
+
   constructor(inx = 0, iny = 0, inz = 0) {
     this._x = inx;
     this._y = iny;
@@ -157,12 +161,13 @@ export class CharBuilder extends PMX.Maker {
 
     this.bones = this.initBone();
     this.mtls = this.initMaterial();
+    this.emos = this.initEmotion();
   }
 
   initBone() {
     const bones = [
 { parent: -1, nameJa: '全ての親', nameEn: 'root' },
-{ parent: 0, nameJa: '操作中心', nameEn: 'view cnt bone' },
+{ parent: 0, nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
 { parent: 0, nameJa: 'センター', nameEn: 'center', p:[0,0,0] },
 { parent: 2, nameJa: '下半身', nameEn: 'spine', p: [0,0,0] },
 { parent: 3, nameJa: '上半身', nameEn: 'upperChest', p:[0,0,0] },
@@ -209,8 +214,8 @@ export class CharBuilder extends PMX.Maker {
 ]
     ];
     const lrpre = [
-      {nameJa: '右', nameEn: 'right'},
-      {nameJa: '左', nameEn: 'left'},
+      {nameJa: '右', nameEn: 'right', x: -1},
+      {nameJa: '左', nameEn: 'left', x: 1},
     ];
     for (let bi = 0; bi < lr.length; ++bi) {
       const block = lr[bi];
@@ -224,10 +229,17 @@ export class CharBuilder extends PMX.Maker {
             nameEn: `${lrpre[i].nameEn}${one.nameEn}`,
           };
           const index = bones.findIndex(b => b.nameJa === bone.parentName);
+          let parentPos = new Vec3(0, 0, 0);
           if (index < 0) {
             console.warn('not found parent', bone.parentName);
+          } else {
+            bone.parent = index;
+            parentPos = bones[index].position.clone();
           }
-          bone.parent = index;
+          const diff = Vec3.fromArray(one.p);
+          diff.x = lrpre[i].x;
+          bones.position = parentPos.add(diff);
+
           bones.push(bone);
         }
       }
@@ -262,6 +274,46 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
+   * 表情。定番とVRM1.0
+   * @returns 
+   */
+  initEmotion() {
+    const emos = [
+{nameJa: 'あ', nameEn: 'aa'},
+{nameJa: 'い', nameEn: 'ih'},
+{nameJa: 'う', nameEn: 'ou'},
+{nameJa: 'え', nameEn: 'ee'},
+{nameJa: 'お', nameEn: 'oh'},
+{nameJa: 'まばたき', nameEn: 'blink'},
+{nameJa: '左ウインク', nameEn: 'blinkLeft'},
+{nameJa: '右ウインク', nameEn: 'blinkRight'},
+{nameJa: '喜び', nameEn: 'happy'}, // 笑い?
+{nameJa: '怒り', nameEn: 'angry'},
+{nameJa: '悲しみ', nameEn: 'sad'},
+{nameJa: '穏やか', nameEn: 'relaxed'},
+{nameJa: '驚き', nameEn: 'surprised'},
+{nameJa: '通常', nameEn: 'neutral'},
+{nameJa: '上目遣い', nameEn: 'lookUp'},
+{nameJa: '下目遣い', nameEn: 'lookDown'},
+{nameJa: '左目線', nameEn: 'lookLeft'},
+{nameJa: '右目線', nameEn: 'lookRight'},
+    ];
+    const emotions = [];
+    for (const emo of emos) {
+      const m = new PMX.Morph();
+      m.nameJa = emo.nameJa;
+      m.nameEn = emo.nameEn;
+      for (let i = 0; i < 1; ++i) {
+        const vm = new PMX.VertexMorph();
+        m.vertexMorphs.push(vm);
+      }
+      emotions.push(m);
+    }
+
+    return emotions;
+  }
+
+  /**
    * 破壊
    * @param {number[]} vs 
    */
@@ -278,8 +330,8 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * 2次元回転
-   * @param {number[]} vs 
+   * Z軸周り2次元回転
+   * @param {number[]} vs 破壊
    * @param {number} deg 
    */
   rotate(vs, deg) {
@@ -295,6 +347,7 @@ export class CharBuilder extends PMX.Maker {
 
   /**
    * make() を実装
+   * このインスタンスに保存する
    */
   make(param) {
     const d = new Date();
@@ -503,6 +556,127 @@ export class CharBuilder extends PMX.Maker {
       }
     }
 
+  }
+
+
+  /**
+   * 物理シンプルな箱
+   */
+  makeBox(param) {
+    const lenhalf = param.lenhalf || 1;
+    const boneIndex = param.boneIndex || 0;
+    {
+      const vs = [
+        {p: [-1, 1, -1]}, // 手前
+        {p: [ 1, 1, -1]},
+        {p: [-1,-1, -1]}, // z
+        {p: [ 1,-1, -1]}, // 手前 下
+        {p: [-1, 1,  1]}, // 4 奥上
+        {p: [ 1, 1,  1]}, // 5
+        {p: [-1,-1,  1]}, // 6
+        {p: [ 1,-1,  1]}, // 7
+      ];
+
+      const k = 0.25;
+      const mens = [
+        {p: [0, 1, 2, 3], n: [0, 0, -1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
+        {p: [4, 0, 6, 2], n: [-1, 0, 0], uv: [k * 1, k * 2, k * 2, k * 2, k * 1, k * 1, k * 2, k * 1,]},
+        {p: [1, 5, 3, 7], n: [1, 0, 0], uv: [k * 3, k * 2, k * 4, k * 2, k * 3, k * 1, k * 4, k * 1,]},
+        {p: [4, 5, 0, 1], n: [0, 1, 0], uv: [k * 2, k * 3, k * 3, k * 3, k * 2, k * 2, k * 3, k * 2,]},
+        {p: [2, 3, 6, 7], n: [0, -1, 0], uv: [k * 2, k * 1, k * 3, k * 1, k * 2, k * 0, k * 3, k * 0,]},
+        {p: [5, 4, 7, 6], n: [0, 0, 1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
+      ];
+
+      for (const men of mens) {
+        for (let j = 0; j < 4; ++j) {
+          const vp = vs[men.p[j]];
+
+          const v = new PMX.Vertex();
+
+          let x = vp.p[0];
+          let y = vp.p[1];
+          let z = vp.p[2];
+
+          v.n = this.normalize(men.n);
+          v.p = [
+            x * scale * 1,
+            y * scale * lenhalf,
+            z * scale * 1,
+          ];
+          v.uv = [
+            men.uv[j*2+0],
+            men.uv[j*2+1],
+          ];
+          v.deformType = PMX.Vertex.DEFORM_BDEF1;
+          v.joints = [boneIndex, 0, 0, 0];
+          v.weights = [1, 0, 0, 0];
+
+          this.vts.push(v);
+        }
+      }
+    }
+
+  }
+
+  /**
+   * シリンダー形状
+   */
+  makeCyl(param) {
+    const hdiv = param.hdiv || 8;
+    const vdiv = param.vdiv || 4;
+    const hhalf = param.hhalf || 1;
+    const radius = param.radius || 1;
+    const ret = {
+      vs: [],
+      fis: [],
+    };
+
+    for (const i = 0; i <= vdiv; ++i) { // 上から下か
+      const vang = i * Math.PI / vdiv;
+      let rr = Math.cos(vang);
+      for (const j = 0; j <= hdiv; ++j) {
+        const hang = (j % hdiv) * Math.PI * 2 / hdiv;
+
+        const cs = Math.cos(hang);
+        const sn = Math.sin(hang);
+
+        const v = new PMX.Vertex();
+
+        let x = -sn * rr;
+        let y = Math.sin(vang);
+        let z = cs * rr;
+
+        v.n = this.normalize();
+        v.p = [
+          x * radius,
+          y * hhalf,
+          z * radius,
+        ];
+        v.n = this.normalize([...v.p]);
+        v.uv = [
+          j / vdiv,
+          i / hdiv,
+        ];
+        v.deformType = PMX.Vertex.DEFORM_BDEF2;
+        v.joints = [2, 0, 0, 0];
+        v.weights = [1, 0, 0, 0];
+
+        ret.vs.push(v);
+      }
+    }
+
+    for (let i = 0; i < vdiv; ++i) {
+      for (let j = 0; j < hdiv; ++j) {
+        const v0 = (hdiv + 1) * i + j;
+        const v1 = v0 + 1;
+        const v2 = v0 + hdiv + 1;
+        const v3 = v2 + 1;
+        ret.fis.push(v0, v1, v2);
+        ret.fis.push(v2, v1, v3);
+      }
+    }
+
+    return ret;
   }
 
 }
