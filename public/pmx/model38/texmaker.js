@@ -92,11 +92,13 @@ export class TexMaker {
    * @param {HTMLCanvasElement} canvas 
    */
   drawChip(canvas, offsetxrate, offsetyrate) {
-    const size = 16;
+    const wholew = canvas.width;
+    const wholeh = canvas.height;
+    const offsetx = wholew * offsetxrate;
+    const offsety = wholeh * offsetyrate;
+    const size = 8;
     const w = size * 16;
     const h = size * 16;
-    canvas.width = w;
-    canvas.height = h;
     const c = canvas.getContext('2d');
     for (let i = 0; i < 16; ++i) {
       for (let j = 0; j < 16; ++j) {
@@ -133,7 +135,8 @@ export class TexMaker {
         }
 
         c.fillStyle = _colstr(r, g, b, a);
-        c.fillRect(x, y, size, size);
+        c.fillRect(x + offsetx, y + offsety,
+          size, size);
       }
     }
 
@@ -144,7 +147,7 @@ export class TexMaker {
       for (let i = 0; i < 2; ++i) {
         for (let x = 0; x < w; ++x) {
           for (let y = 0; y < 32; ++y) {
-            let offset = (x + (y + 16 * 14) * w) * 4;
+            let offset = ((x + offsetx) + (y + offsety + 16 * 14) * w) * 4;
             let lv = x;
             let r = lv;
             let g = lv;
@@ -248,8 +251,6 @@ export class TexMaker {
     const w = 1024;
     const h = 1024;
     const size = w / 16;
-    canvas.width = w;
-    canvas.height = h;
     const c = canvas.getContext('2d');
     const img = c.getImageData(0, 0, w, h);
     for (let y = 0; y < h; ++y) {
@@ -300,35 +301,9 @@ export class TexMaker {
     console.log('draw3 called');
     const util = new Util();
     util.srand(1);
-    const baseColor = [17, 255, 255];
-    const padding = 8;
-    const padColor = baseColor.map(c => c * 0.5);
-//        const padColor = [0, 0, 0]; // 黒
 
-    const ellipses = [
-//{ cx: 1/16, cy: -0.75, deg: 20, top: 1, k: 8, bx: 0.5, by: 0.6, add: true },
-
-{ cx: -3/8, cy: -0.75, deg: -1, top: 1, k: 8, bx: 0.5, by: 8, add: true },
-{ cx: 1/8, cy: 0.75, deg: -1, top: 1, k: 8, bx: 0.5, by: 8, add: true },
-    ];
-    for (let k = 0; k <= 8; ++k) {
-      const obj = {
-        cx: k / 4 - 1,
-        cy: util.rand() / 32768 - 0.5,
-        deg: (util.rand() / 32768 - 0.5) * 15,
-        top: 1,
-        k: 4,
-        bx: 0.5 + (util.rand() / 32768 - 0.5) * 0.1,
-        by: 6 + (util.rand() / 32768 - 0.5) * 2,
-        add: true,
-      };
-      ellipses.push(obj);
-      //console.log(obj);
-    }
-
-
-    const w = 512;
-    const h = 512;
+    const w = this.size * 0.5;
+    const h = this.size * 0.5;
     const c = canvas.getContext('2d');
     const img = c.getImageData(0, 0, w, h);
     for (let y = 0; y < h; ++y) {
@@ -453,6 +428,10 @@ export class TexMaker {
    * @param {HTMLCanvasElement} canvas 
    */ 
   draw6(canvas, offsetxrate, offsetyrate) {
+    const wholew = canvas.width;
+    const wholeh = canvas.height;
+    const offsetx = wholew * offsetxrate;
+    const offsety = wholeh * offsetyrate;
     console.log('draw6 called');
     const util = new Util();
     util.srand(1);

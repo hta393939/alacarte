@@ -1176,11 +1176,12 @@ class Parser extends PMXObject {
   clear() {
     this.c = 0;
 
+    // TODO: まだ .head を書き出している
     this.modelInfo.clear();
-    this.nameJa = '';
-    this.nameEn = '';
-    this.commentJa = '';
-    this.commentEn = '';
+    //this.nameJa = '';
+    //this.nameEn = '';
+    //this.commentJa = '';
+    //this.commentEn = '';
 
     this.vts = [];
     this.faces = [];

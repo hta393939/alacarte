@@ -181,8 +181,9 @@ export class CharBuilder extends PMX.Maker {
     super();
 
     this.bones = this.initBone();
-    this.mtls = this.initMaterial();
-    this.emos = this.initEmotion();
+    this.materials = this.initMaterial();
+
+    this.morphs = this.initEmotion();
   }
 
   initBone() {
@@ -260,12 +261,13 @@ export class CharBuilder extends PMX.Maker {
       for (let i = ((block.lr) ? 0 : 1); i < 2; ++i) {
         for (let j = 0; j < block.bones.length; ++j) {
           const one = block.bones[j];
-          const bone = {
+          const bone = new PMX.Bone();
+          Object.assign(bone, {
             parent: -1,
             parentName: one.parentName.replace('_', lrpre[i].nameJa),
             nameJa: `${block.lr ? lrpre[i].nameJa : ''}${one.nameJa}`,
             nameEn: `${block.lr ? lrpre[i].nameEn : ''}${one.nameEn}`,
-          };
+          });
           const index = bones.findIndex(b => b.nameJa === bone.parentName);
           let parentPos = new Vec3(0, 0, 0);
           if (index < 0) {
@@ -293,7 +295,9 @@ export class CharBuilder extends PMX.Maker {
       //  | PMX.Material.BIT_TOMAP
       //  | PMX.Material.BIT_SELFSHADOW
 
-    const mtls = [{
+    const mtls = [];
+    const mtl = new PMX.Material();
+    Object.assign(mtl, {
       nameJa: `材質1`,
       nameEn: `material1`,
       texIndex: 0,
@@ -308,7 +312,8 @@ export class CharBuilder extends PMX.Maker {
       sharetoonflag: 0,
       sharetoonindex: -1,
       faces: [],
-    }];
+    });
+    mtls.push(mtl);
     return mtls;
   }
 
@@ -392,150 +397,14 @@ export class CharBuilder extends PMX.Maker {
     console.log('CharBuilder::make');
 
     const d = new Date();
-    const scale = 0.25;
 
     this.debug = 1;
-
-    const BONE_CENTER = 2;
 
     this.head.nameEn = param.nameEn;
     this.head.nameJa = this.head.nameEn;
     let comment = `${d.toLocaleString()} CharBuilder.make\r\n`;
-    comment += `キャラクタ\r\n`;
-    comment += `scale: ${scale}\r\n`;
-    this.head.commentEn = '';
+    this.head.commentEn = 'Parametric Miku';
     this.head.commentJa = comment;
-
-    {
-      for (let i = 0; i <= 3; ++i) {
-        for (let j = 0; j <= 2; ++j) {
-          const v = new PMX.Vertex();
-
-          let x = j - 1;
-          let y = 0;
-          let z = 0;
-
-          switch (i) {
-          case 0:
-            y = 1;
-            break;
-          case 1:
-            y = 0.75;
-            break;
-          case 2:
-            y = 0;
-            break;
-          case 3:
-            y = -1;
-            break;
-          }
-
-          v.n = [0, 0, -1];
-          if (x !== 0 || y !== 0) {
-            v.n = this.normalize([x, y, 0]);
-          }
-
-          v.p = [x * scale, y * scale, z * scale];
-          v.uv = [
-            j / 2,
-            (1 - y) * 0.5,
-          ];
-          v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          let bone = BONE_CENTER;
-          switch (j) {
-          case 0:
-            bone = 3;
-            break;
-          case 2:
-            bone = 4;
-            break;
-          }
-          if (i === 0) {
-            bone = 5; // 上だけ伸ばす
-          }
-
-          v.joints = [bone, 0, 0, 0];
-          v.weights = [1, 0, 0, 0];
-
-          this.vts.push(v);
-        }
-      }
-    }
-
-    //this.textures.push(...param.texturePath);
-
-    for (let i = 0; i < 1; ++i) { // 材質
-      const m = new PMX.Material();
-      m.nameJa = `mtl00${i}`;
-      m.nameEn = `mtl00${i}`;
-      m.texIndex = 0;
-      m.diffuse = [1, 1, 1, 1];
-      m.specular = [0.2, 0.2, 0.2];
-      m.specPower = 0.5;
-      m.ambient = [0.7, 0.7, 0.7];
-      m.edgeColor = [156/255, 130/255, 48/255, 1];
-      let bits = 0;
-      //  | PMX.Material.BIT_GROUND
-      //  | PMX.Material.BIT_TOMAP
-      //  | PMX.Material.BIT_SELFSHADOW
-      m.bitFlag = bits;
-      m.sphereMode = PMX.Material.SPMODE_ADD;
-      m.sphereIndex = 1;
-      m.sharetoonflag = 0;
-      m.sharetoonindex = -1;
-
-      const fis = [
-        [0, 1, 3], [1, 4, 3],
-        [3, 4, 6], [4, 7, 6],
-        [4, 5, 8], [4, 8, 7],
-        [6, 7, 10], [6, 10, 9],
-        [7, 8, 10], [8, 11, 10],
-      ];
-      m.faces.push(...fis);
-
-      this.materials.push(m);
-    }
-
-    for (let i = 0; i < this.bones.length; ++i) { // ボーン
-      const bone = this.bones[i];
-      /** ボーン */
-      const b = new PMX.Bone();
-
-      let bits = PMX.Bone.BIT_MOVE | PMX.Bone.BIT_ROT
-        | PMX.Bone.BIT_VISIBLE;
-      bits |= PMX.Bone.BIT_CONTROL;
-      b.bits = bits;
-
-      b.nameJa = bone.nameJa;
-      b.nameEn = bone.nameEn;
-      b.p = [0, 0, 0];
-      b.parent = bone.parent;
-
-      switch (i) {
-      case 3:
-        b.parent = BONE_CENTER;
-        b.p = [1, 0, 0];
-        break;
-      case 4:
-        b.parent = BONE_CENTER;
-        b.p = [-1, 0, 0];
-        b.bits |= PMX.Bone.BIT_MOVEAPPLY;
-        b.applyParent = 3;
-        b.applyRate = -1;
-        break;
-
-      case 5:
-        b.parent = BONE_CENTER;
-        b.p = [0, 1, 0];
-        break;
-      case 6:
-        b.parent = BONE_CENTER;
-        b.p = [0, -1, 0];
-        break;
-      }
-
-      b.p = b.p.map(v => v * scale);
-    }
 
     { // モーフ 3個
       for (let i = 0; i < 3; ++i) {
@@ -582,7 +451,7 @@ export class CharBuilder extends PMX.Maker {
         } else if (i === 1) {
           f.nameJa = '表情';
           f.specialFlag = 1;
-          for (let j = 0; j < 3; ++j) {
+          for (let j = 0; j < this.morphs.length; ++j) {
             f.morphs.push(j);
           }
         } else {
