@@ -32,11 +32,20 @@ export class Vec3 {
   get x() {
     return this._x;
   }
+  set x(val) {
+    this._x = val;
+  }
   get y() {
     return this._y;
   }
+  set y(val) {
+    this._y = val;
+  }
   get z() {
     return this._z;
+  }
+  set z(val) {
+    this._z = val;
   }
 
   clone() {
@@ -75,7 +84,8 @@ export class Vec3 {
    * @param {number} bk スカラー倍数
    */
   add(ok, b, bk) {
-    return new Vec3(this.x * ok + b.x * bk,
+    return new Vec3(
+      this.x * ok + b.x * bk,
       this.y * ok + b.y * bk,
       this.z * ok + b.z * bk,
     );
@@ -169,7 +179,7 @@ export class CharBuilder extends PMX.Maker {
 
     const blocks = [
 { lr: false, bones: [
-{ parentName: '', nameJa: '全ての親', nameEn: 'root' },
+{ parentName: '', nameJa: '全ての親', nameEn: 'root', p:[0,0,0] },
 { parentName: '全ての親', nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
 { parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0,0,0] },
 { parentName: 'センター', nameJa: '下半身', nameEn: 'spine', p: [0,0,0] },
@@ -237,7 +247,7 @@ export class CharBuilder extends PMX.Maker {
             bone.parent = index;
             parentPos = bones[index].position.clone();
           }
-          const diff = one.position.clone();
+          const diff = Vec3.fromArray(one.p);
           diff.x = lrpre[i].x;
           bones.position = parentPos.add(diff);
 
