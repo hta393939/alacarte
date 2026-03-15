@@ -118,8 +118,7 @@ class Misc {
       el?.addEventListener('click', async ev => {
         const opt = { mode: 'readwrite' };
         const dh = await window.showDirectoryPicker(opt);
-        this.root = dh;
-
+        this.dh = dh;
       });
     }
 
@@ -128,15 +127,10 @@ class Misc {
       console.log('makechar', param);
   
       Object.assign(param, {
-        nameEn: `usagi miku`,
+        nameEn: `usagi paramet miku`,
         textures: [
-          `chip.png`,
+          `tex.png`,
           `sph.png`,
-          `marking.png`,
-          `body.png`,
-          `face.png`,
-          `parts1.png`,
-          `parts2.png`,
         ],
       });
       this.makeFiles(param, this.dh);
@@ -156,7 +150,7 @@ class Misc {
 
 
     { // ドロップ
-/** @type {HTMLDivElement} */
+      /** @type {HTMLDivElement} */
       const el = window.drop;
       el?.addEventListener('dragover', ev => {
         ev.stopPropagation();
@@ -196,9 +190,9 @@ class Misc {
   }
 
   /**
-   * 
+   * FileSystemファイル書き出し
    * @param {FileSystemDirectoryHandle} dh 
-   * @param {string[]} subs フォルダ
+   * @param {string[]} subs サブフォルダに潜る場合
    * @param {string} name
    * @param {Blob} blob 
    */
@@ -235,7 +229,7 @@ class Misc {
     /** @type {HTMLCanvasElement[]} */
     const cvs = [];
     for (let i = 0; i < 2; ++i) {
-      const side = [2048, 1024][i];
+      const size = [2048, 1024][i];
       /** @type {HTMLCanvasElement} */
       const canvas = document.getElementById(`canvast${i}`);
       canvas.width = size;
@@ -255,7 +249,7 @@ class Misc {
     for (let i = 0; i < 2; ++i) {
       const blob = await this.toBlob(cvs[i]);
       await this.makeFile(dh,
-        ['tex'],
+        [],
         param.textures[i],
         blob,
       );

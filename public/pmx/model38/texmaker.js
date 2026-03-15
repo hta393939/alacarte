@@ -63,6 +63,9 @@ const turbo = [
 
 export class TexMaker {
   constructor() {
+    /** テクスチャ全体ピクセル幅 */
+    this.size = 2048;
+
     this.init();
   }
 
@@ -88,7 +91,7 @@ export class TexMaker {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  drawChip(canvas, offsetx, offsety) {
+  drawChip(canvas, offsetxrate, offsetyrate) {
     const size = 16;
     const w = size * 16;
     const h = size * 16;
@@ -241,7 +244,7 @@ export class TexMaker {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  drawMarking(canvas, offsetx, offsety) {
+  drawMarking(canvas, offsetxrate, offsetyrate) {
     const w = 1024;
     const h = 1024;
     const size = w / 16;
@@ -350,7 +353,7 @@ export class TexMaker {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  draw4(canvas) {
+  draw4(canvas, offsetxrate, offsetyrate) {
     const w = 512;
     const h = 512;
     const c = canvas.getContext('2d');
@@ -449,7 +452,7 @@ export class TexMaker {
    * 
    * @param {HTMLCanvasElement} canvas 
    */ 
-  draw6(canvas) {
+  draw6(canvas, offsetxrate, offsetyrate) {
     console.log('draw6 called');
     const util = new Util();
     util.srand(1);

@@ -165,25 +165,26 @@ export class CharBuilder extends PMX.Maker {
   }
 
   initBone() {
-    const bones = [
-{ parent: -1, nameJa: '全ての親', nameEn: 'root' },
-{ parent: 0, nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
-{ parent: 0, nameJa: 'センター', nameEn: 'center', p:[0,0,0] },
-{ parent: 2, nameJa: '下半身', nameEn: 'spine', p: [0,0,0] },
-{ parent: 3, nameJa: '上半身', nameEn: 'upperChest', p:[0,0,0] },
-{ parent: 4, nameJa: '上半身2', nameEn: 'upperChest2', p:[0,0,0] },
-{ parent: 5, nameJa: '首', nameEn: 'neck', p:[0,0,0] },
-{ parent: 6, nameJa: '頭', nameEn: 'head', p:[0,0,0] }, // #7
-    ];
+    const bones = [];
 
-    const lr = [
-[
+    const blocks = [
+{ lr: false, bones: [
+{ parentName: '', nameJa: '全ての親', nameEn: 'root' },
+{ parentName: '全ての親', nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
+{ parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0,0,0] },
+{ parentName: 'センター', nameJa: '下半身', nameEn: 'spine', p: [0,0,0] },
+{ parentName: '下半身', nameJa: '上半身', nameEn: 'upperChest', p:[0,0,0] },
+{ parentName: '上半身１', nameJa: '上半身2', nameEn: 'upperChest2', p:[0,0,0] },
+{ parentName: '上半身２', nameJa: '首', nameEn: 'neck', p:[0,0,0] },
+{ parentName: '首', nameJa: '頭', nameEn: 'head', p:[0,0,0] }, // #7
+]},
+{ lr: true, bones: [
 {parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg', p:[0,0,0]},
 {parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg', p:[0,0,0]},
 {parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot', p:[0,0,0]},
 {parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0,0,0]},
-],
-[
+]},
+{ lr: true, bones: [
 {parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder', p:[0,0,0]},
 {parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm', p:[0,0,0]},
 {parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[0,0,0]},
@@ -196,37 +197,37 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '_親指０',nameJa: '親指１', nameEn: 'ThumbProximal', p:[0,0,0]},
 {parentName: '_親指１',nameJa: '親指２', nameEn: 'ThumbDistal', p:[0,0,0]},
 {parentName: '_親指２',nameJa: '親指先', nameEn: 'ThumbEnd', p:[0,0,0]},
-],
-[
+]},
+{ lr: true, bones: [
 {parentName: '頭',nameJa: '目', nameEn: 'Eye', p:[0,0,0]},
-],
-[
+]},
+{ lr: true, bones: [
 {parentName: '全ての親',nameJa: '足ＩＫ', nameEn: 'LegIK', p:[0,0,0]},
 {parentName: '_足ＩＫ先',nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,0]},
-],
-[
+]},
+{ lr: true, bones: [
 {parentName: '_足ＩＫ',nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[0,0,0]},
 {parentName: '_つま先ＩＫ先',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,0]},
-],
-[
+]},
+{ lr: true, bones: [
 {parentName: '上半身２', nameJa: 'パーツ１', nameEn: 'parts1', p:[0,0,0]},
 {parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'parts2', p:[0,0,0]},
-]
+]}
     ];
     const lrpre = [
       {nameJa: '右', nameEn: 'right', x: -1},
       {nameJa: '左', nameEn: 'left', x: 1},
     ];
-    for (let bi = 0; bi < lr.length; ++bi) {
-      const block = lr[bi];
-      for (let i = 0; i < 2; ++i) {
-        for (let j = 0; j < block.length; ++j) {
-          const one = lr[j];
+    for (let bi = 0; bi < blocks.length; ++bi) {
+      const block = blocks[bi];
+      for (let i = ((block.lr) ? 0 : 1); i < 2; ++i) {
+        for (let j = 0; j < block.bones.length; ++j) {
+          const one = block.bones[j];
           const bone = {
             parent: -1,
             parentName: one.parentName.replace('_', lrpre[i].nameJa),
-            nameJa: `${lrpre[i].nameJa}${one.nameJa}`,
-            nameEn: `${lrpre[i].nameEn}${one.nameEn}`,
+            nameJa: `${block.lr ? lrpre[i].nameJa : ''}${one.nameJa}`,
+            nameEn: `${block.lr ? lrpre[i].nameEn : ''}${one.nameEn}`,
           };
           const index = bones.findIndex(b => b.nameJa === bone.parentName);
           let parentPos = new Vec3(0, 0, 0);
@@ -236,7 +237,7 @@ export class CharBuilder extends PMX.Maker {
             bone.parent = index;
             parentPos = bones[index].position.clone();
           }
-          const diff = Vec3.fromArray(one.p);
+          const diff = one.position.clone();
           diff.x = lrpre[i].x;
           bones.position = parentPos.add(diff);
 
