@@ -194,7 +194,7 @@ export class CharBuilder extends PMX.Maker {
 { parentName: '全ての親', nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
 { parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0,0,0] },
 { parentName: 'センター', nameJa: '下半身', nameEn: 'spine', p: [0,0,0] },
-{ parentName: '下半身', nameJa: '上半身', nameEn: 'chest', p:[0,0,0] },
+{ parentName: '下半身', nameJa: '上半身１', nameEn: 'chest', p:[0,0,0] },
 { parentName: '上半身１', nameJa: '上半身２', nameEn: 'upperChest', p:[0,0,0] },
 { parentName: '上半身２', nameJa: '首', nameEn: 'neck', p:[0,0,0] },
 { parentName: '首', nameJa: '頭', nameEn: 'head', p:[0,0,0] }, // #7
@@ -206,7 +206,7 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0,0,0]},
 ]},
 { lr: true, bones: [
-{parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder', p:[0,0,0]},
+{parentName: '上半身２',nameJa: '肩', nameEn: 'Shoulder', p:[0,0,0]},
 {parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm', p:[0,0,0]},
 {parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[0,0,0]},
 {parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[0,0,0]},
