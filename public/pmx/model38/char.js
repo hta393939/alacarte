@@ -262,12 +262,17 @@ export class CharBuilder extends PMX.Maker {
         for (let j = 0; j < block.bones.length; ++j) {
           const one = block.bones[j];
           const bone = new PMX.Bone();
+          let bits = PMX.Bone.BIT_VISIBLE;
           Object.assign(bone, {
             parent: -1,
             parentName: one.parentName.replace('_', lrpre[i].nameJa),
             nameJa: `${block.lr ? lrpre[i].nameJa : ''}${one.nameJa}`,
             nameEn: `${block.lr ? lrpre[i].nameEn : ''}${one.nameEn}`,
           });
+          if (!bone.nameEn.endsWith('End')) {
+            bits |= PMX.Bone.BIT_ROT | PMX.Bone.BIT_CONTROL;
+          }
+
           const index = bones.findIndex(b => b.nameJa === bone.parentName);
           let parentPos = new Vec3(0, 0, 0);
           if (index < 0) {
@@ -298,8 +303,8 @@ export class CharBuilder extends PMX.Maker {
     const mtls = [];
     const mtl = new PMX.Material();
     Object.assign(mtl, {
-      nameJa: `材質1`,
-      nameEn: `material1`,
+      nameJa: `材質000`,
+      nameEn: `material000`,
       texIndex: 0,
       diffuse: [1, 1, 1, 1],
       specular: [0.2, 0.2, 0.2],
