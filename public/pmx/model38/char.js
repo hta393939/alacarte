@@ -245,11 +245,11 @@ export class CharBuilder extends PMX.Maker {
             console.warn('not found parent', bone.parentName);
           } else {
             bone.parent = index;
-            parentPos = bones[index].position.clone();
+            parentPos = bones[index].position?.clone() || new Vec3(0,0,0);
           }
           const diff = Vec3.fromArray(one.p);
           diff.x = lrpre[i].x;
-          bones.position = parentPos.add(diff);
+          bones.position = parentPos.add(1, diff, 1);
 
           bones.push(bone);
         }
@@ -432,7 +432,7 @@ export class CharBuilder extends PMX.Maker {
       }
     }
 
-    this.textures.push(...param.texturePath);
+    //this.textures.push(...param.texturePath);
 
     for (let i = 0; i < 1; ++i) { // 材質
       const m = new PMX.Material();

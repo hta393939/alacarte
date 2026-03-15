@@ -269,13 +269,9 @@ export class CharBuilder2 extends CharBuilder {
     }
 
     for (let i = 0; i < 5; ++i) { // ボーン
-      /**
-       * ボーン
-       */
+      /** ボーン */
       const b = new PMX.Bone();
-      /**
-       * 剛体
-       */
+      /** 剛体 */
       let rb = new PMX.Rigid();
       rb.bone = i;
       rb.nameJa = `rb${_pad(i, 3)}`;
