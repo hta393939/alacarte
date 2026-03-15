@@ -29,6 +29,10 @@ export class Vec3 {
     this._z = inz;
   }
 
+  asArray() {
+    return [this.x, this.y, this.z];
+  }
+
   get x() {
     return this._x;
   }
@@ -98,6 +102,13 @@ export class Quat {
     this._y = iny;
     this._z = inz;
     this._w = inw;
+  }
+
+  static fromArrayWHead(arr) {
+    return new Quat(arr[1], arr[2], arr[3], arr[0]);
+  }
+  static fromArrayWTail(arr) {
+    return new Quat(arr[0], arr[1], arr[2], arr[3]);
   }
 
   get x() {
@@ -183,8 +194,8 @@ export class CharBuilder extends PMX.Maker {
 { parentName: '全ての親', nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
 { parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0,0,0] },
 { parentName: 'センター', nameJa: '下半身', nameEn: 'spine', p: [0,0,0] },
-{ parentName: '下半身', nameJa: '上半身', nameEn: 'upperChest', p:[0,0,0] },
-{ parentName: '上半身１', nameJa: '上半身2', nameEn: 'upperChest2', p:[0,0,0] },
+{ parentName: '下半身', nameJa: '上半身', nameEn: 'chest', p:[0,0,0] },
+{ parentName: '上半身１', nameJa: '上半身２', nameEn: 'upperChest', p:[0,0,0] },
 { parentName: '上半身２', nameJa: '首', nameEn: 'neck', p:[0,0,0] },
 { parentName: '首', nameJa: '頭', nameEn: 'head', p:[0,0,0] }, // #7
 ]},
@@ -203,6 +214,22 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '_小指１',nameJa: '小指２', nameEn: 'LittleIntermediate', p:[0,0,0]},
 {parentName: '_小指２',nameJa: '小指３', nameEn: 'LittleDistal', p:[0,0,0]},
 {parentName: '_小指３',nameJa: '小指先', nameEn: 'LittleEnd', p:[0,0,0]},
+
+{parentName: '_手首',nameJa: '薬指１', nameEn: 'RingProximal', p:[0,0,0]},
+{parentName: '_薬指１',nameJa: '薬指２', nameEn: 'RingIntermediate', p:[0,0,0]},
+{parentName: '_薬指２',nameJa: '薬指３', nameEn: 'RingDistal', p:[0,0,0]},
+{parentName: '_薬指３',nameJa: '薬指先', nameEn: 'RingEnd', p:[0,0,0]},
+
+{parentName: '_手首',nameJa: '中指１', nameEn: 'MiddleProximal', p:[0,0,0]},
+{parentName: '_中指１',nameJa: '中指２', nameEn: 'MiddleIntermediate', p:[0,0,0]},
+{parentName: '_中指２',nameJa: '中指３', nameEn: 'MiddleDistal', p:[0,0,0]},
+{parentName: '_中指３',nameJa: '中指先', nameEn: 'MiddleEnd', p:[0,0,0]},
+
+{parentName: '_手首',nameJa: '人指１', nameEn: 'IndexProximal', p:[0,0,0]},
+{parentName: '_人指１',nameJa: '人指２', nameEn: 'IndexIntermediate', p:[0,0,0]},
+{parentName: '_人指２',nameJa: '人指３', nameEn: 'IndexDistal', p:[0,0,0]},
+{parentName: '_人指３',nameJa: '人指先', nameEn: 'IndexEnd', p:[0,0,0]},
+
 {parentName: '_手首',nameJa: '親指０', nameEn: 'ThumbMetacarpal', p:[0,0,0]},
 {parentName: '_親指０',nameJa: '親指１', nameEn: 'ThumbProximal', p:[0,0,0]},
 {parentName: '_親指１',nameJa: '親指２', nameEn: 'ThumbDistal', p:[0,0,0]},
@@ -213,11 +240,11 @@ export class CharBuilder extends PMX.Maker {
 ]},
 { lr: true, bones: [
 {parentName: '全ての親',nameJa: '足ＩＫ', nameEn: 'LegIK', p:[0,0,0]},
-{parentName: '_足ＩＫ先',nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,0]},
+{parentName: '_足ＩＫ',nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,0]},
 ]},
 { lr: true, bones: [
 {parentName: '_足ＩＫ',nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[0,0,0]},
-{parentName: '_つま先ＩＫ先',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,0]},
+{parentName: '_つま先ＩＫ',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,0]},
 ]},
 { lr: true, bones: [
 {parentName: '上半身２', nameJa: 'パーツ１', nameEn: 'parts1', p:[0,0,0]},
@@ -248,8 +275,9 @@ export class CharBuilder extends PMX.Maker {
             parentPos = bones[index].position?.clone() || new Vec3(0,0,0);
           }
           const diff = Vec3.fromArray(one.p);
-          diff.x = lrpre[i].x;
-          bones.position = parentPos.add(1, diff, 1);
+          diff.x = diff.x * lrpre[i].x;
+          bone.position = parentPos.add(1, diff, 1);
+          bone.p = bone.position.asArray();
 
           bones.push(bone);
         }
@@ -266,8 +294,8 @@ export class CharBuilder extends PMX.Maker {
       //  | PMX.Material.BIT_SELFSHADOW
 
     const mtls = [{
-      nameJa: `体`,
-      nameEn: `body`,
+      nameJa: `材質1`,
+      nameEn: `material1`,
       texIndex: 0,
       diffuse: [1, 1, 1, 1],
       specular: [0.2, 0.2, 0.2],
@@ -361,6 +389,8 @@ export class CharBuilder extends PMX.Maker {
    * このインスタンスに保存する
    */
   make(param) {
+    console.log('CharBuilder::make');
+
     const d = new Date();
     const scale = 0.25;
 
