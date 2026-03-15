@@ -234,23 +234,25 @@ class Misc {
     console.log('makeFiles');
     /** @type {HTMLCanvasElement[]} */
     const cvs = [];
-    for (let i = 0; i < 7; ++i) {
+    for (let i = 0; i < 2; ++i) {
+      const side = [2048, 1024][i];
       /** @type {HTMLCanvasElement} */
       const canvas = document.getElementById(`canvast${i}`);
+      canvas.width = size;
+      canvas.height = size;
       cvs.push(canvas);
     }
 
     {
       const maker = new TexMaker();
-      maker.drawChip(cvs[0]);
+      maker.drawChip(cvs[0], 0, 0);
+      maker.drawAdd(cvs[0], 0.5, 0);
+      maker.drawMarking(cvs[0], 0, 0.5);
+      maker.draw3(cvs[0], 0.5, 0.5);
+
       maker.drawAdd(cvs[1]);
-      maker.drawMarking(cvs[2]);
-      maker.draw3(cvs[3]);
-      maker.draw4(cvs[4]);
-      maker.draw5(cvs[5]);
-      maker.draw6(cvs[6]);
     }
-    for (let i = 0; i < 7; ++i) {
+    for (let i = 0; i < 2; ++i) {
       const blob = await this.toBlob(cvs[i]);
       await this.makeFile(dh,
         ['tex'],
@@ -266,7 +268,7 @@ class Misc {
 
       await this.makeFile(dh,
         [],
-        'usagimiku.pmx',
+        'parametmiku.pmx',
         new Blob(bufs),
       );
     }

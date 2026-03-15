@@ -88,7 +88,7 @@ export class TexMaker {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  drawChip(canvas) {
+  drawChip(canvas, offsetx, offsety) {
     const size = 16;
     const w = size * 16;
     const h = size * 16;
@@ -171,10 +171,8 @@ export class TexMaker {
    */
   drawAdd(canvas) {
     console.log('drawAdd called');
-    const w = 512;
-    const h = 512;
-    canvas.width = w;
-    canvas.height = h;
+    const w = 1024;
+    const h = 1024;
     const c = canvas.getContext('2d');
     c.fillStyle = 'rgb(0, 0, 0)';
     c.fillRect(0, 0, w, h);
@@ -243,7 +241,7 @@ export class TexMaker {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  drawMarking(canvas) {
+  drawMarking(canvas, offsetx, offsety) {
     const w = 1024;
     const h = 1024;
     const size = w / 16;
@@ -288,8 +286,14 @@ export class TexMaker {
   /**
    * 
    * @param {HTMLCanvasElement} canvas 
+   * @param {number} offsetxrate 0.0-1.0
+   * @param {number} offsetyrate 0.0-1.0
    */ 
-  draw3(canvas) {
+  draw3(canvas, offsetxrate, offsetyrate) {
+    const wholew = canvas.width;
+    const wholeh = canvas.height;
+    const offsetx = wholew * offsetxrate;
+    const offsety = wholeh * offsetyrate;
     console.log('draw3 called');
     const util = new Util();
     util.srand(1);
@@ -322,11 +326,7 @@ export class TexMaker {
 
     const w = 512;
     const h = 512;
-    canvas.width = w;
-    canvas.height = h;
     const c = canvas.getContext('2d');
-    c.fillStyle = 'rgb(0, 0, 0)';
-    c.fillRect(0, 0, w, h);
     const img = c.getImageData(0, 0, w, h);
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
@@ -335,7 +335,7 @@ export class TexMaker {
         let b = 192;
         let a = 255;
 
-        let ft = (x + w * y) * 4;
+        let ft = ((x + offsetx) + w * (y + offsety)) * 4;
 
         img.data[ft] = r;
         img.data[ft+1] = g;
@@ -353,8 +353,6 @@ export class TexMaker {
   draw4(canvas) {
     const w = 512;
     const h = 512;
-    canvas.width = w;
-    canvas.height = h;
     const c = canvas.getContext('2d');
     const img = c.getImageData(0, 0, w, h);
     for (let y = 0; y < h; ++y) {
@@ -382,7 +380,11 @@ export class TexMaker {
    * 
    * @param {HTMLCanvasElement} canvas 
    */ 
-  draw5(canvas) {
+  draw5(canvas, offsetxrate, offsetyrate) {
+    const wholew = canvas.width;
+    const wholeh = canvas.height;
+    const offsetx = wholew * offsetxrate;
+    const offsety = wholeh * offsetyrate;
     console.log('draw5 called');
     const util = new Util();
     util.srand(1);
@@ -415,8 +417,6 @@ export class TexMaker {
 
     const w = 512;
     const h = 512;
-    canvas.width = w;
-    canvas.height = h;
     const c = canvas.getContext('2d');
     c.fillStyle = 'rgb(0, 0, 0)';
     c.fillRect(0, 0, w, h);
@@ -428,7 +428,7 @@ export class TexMaker {
         let b = 255;
         let a = 255;
 
-        let ft = (x + w * y) * 4;
+        let ft = ((x + offsetx) + w * (y + offsety)) * 4;
 
         if (x >= w * 0.5) {
           r = 64;
@@ -482,8 +482,6 @@ export class TexMaker {
 
     const w = 512;
     const h = 512;
-    canvas.width = w;
-    canvas.height = h;
     const c = canvas.getContext('2d');
     c.fillStyle = 'rgb(0, 0, 0)';
     c.fillRect(0, 0, w, h);
