@@ -129,7 +129,7 @@ class Misc {
       Object.assign(param, {
         nameJa: `ウサギ式パラメトミク`,
         nameEn: `Usagi's Paramet Miku`,
-        commentJa: `https://piapro.jp/license/pcl/summary`,
+        commentJa: `https://piapro.jp/license/pcl/summary\r\n${new Date().toLocaleString()}`,
         commentEn: `https://piapro.jp/license/pcl/summary`,
         textures: [
           `tex.png`,

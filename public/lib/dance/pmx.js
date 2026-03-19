@@ -479,7 +479,7 @@ class VertexMorph {
 class Morph {
   static PANEL_SYSTEM = 0;
   /** まゆげ */
-  static PANEL_B = 1;
+  static PANEL_BROW = 1;
   static PANEL_EYE = 2;
   /** 口 */
   static PANEL_MOUTH = 3;

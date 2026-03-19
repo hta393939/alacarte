@@ -241,11 +241,11 @@ export class CharBuilder extends PMX.Maker {
 ]},
 { lr: true, bones: [
 {parentName: '全ての親',nameJa: '足ＩＫ', nameEn: 'LegIK', p:[1,0,0]},
-{parentName: '_足ＩＫ',nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,0]},
+{parentName: '_足ＩＫ',nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
 {parentName: '_足ＩＫ',nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[1,0,0]},
-{parentName: '_つま先ＩＫ',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,0]},
+{parentName: '_つま先ＩＫ',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
 {parentName: '上半身２', nameJa: 'パーツ１', nameEn: 'parts1', p:[1,0,0]},
@@ -262,7 +262,7 @@ export class CharBuilder extends PMX.Maker {
         for (let j = 0; j < block.bones.length; ++j) {
           const one = block.bones[j];
           const bone = new PMX.Bone();
-          let bits = PMX.Bone.BIT_VISIBLE;
+          let bits = 0;
           Object.assign(bone, {
             parent: -1,
             parentName: one.parentName.replace('_', lrpre[i].nameJa),
@@ -270,7 +270,7 @@ export class CharBuilder extends PMX.Maker {
             nameEn: `${block.lr ? lrpre[i].nameEn : ''}${one.nameEn}`,
           });
           if (!bone.nameEn.endsWith('End')) {
-            bits |= PMX.Bone.BIT_ROT | PMX.Bone.BIT_CONTROL;
+            bits |= PMX.Bone.BIT_ROT | PMX.Bone.BIT_CONTROL | PMX.Bone.BIT_VISIBLE;
           }
           bone.bits = bits;
 
@@ -286,6 +286,7 @@ export class CharBuilder extends PMX.Maker {
           diff.x = diff.x * lrpre[i].x;
           bone.position = parentPos.add(1, diff, 1);
           bone.p = bone.position.asArray();
+          bone._index = bones.length;
 
           bones.push(bone);
         }
@@ -329,30 +330,31 @@ export class CharBuilder extends PMX.Maker {
    */
   initEmotion() {
     const emos = [
-{nameJa: 'あ', nameEn: 'aa'},
-{nameJa: 'い', nameEn: 'ih'},
-{nameJa: 'う', nameEn: 'ou'},
-{nameJa: 'え', nameEn: 'ee'},
-{nameJa: 'お', nameEn: 'oh'},
-{nameJa: 'まばたき', nameEn: 'blink'},
-{nameJa: '左ウインク', nameEn: 'blinkLeft'},
-{nameJa: '右ウインク', nameEn: 'blinkRight'},
-{nameJa: '喜び', nameEn: 'happy'}, // 笑い?
-{nameJa: '怒り', nameEn: 'angry'},
-{nameJa: '悲しみ', nameEn: 'sad'},
-{nameJa: '穏やか', nameEn: 'relaxed'},
-{nameJa: '驚き', nameEn: 'surprised'},
+{nameJa: 'あ', nameEn: 'aa', panel: PMX.Morph.PANEL_MOUTH},
+{nameJa: 'い', nameEn: 'ih', panel: PMX.Morph.PANEL_MOUTH},
+{nameJa: 'う', nameEn: 'ou', panel: PMX.Morph.PANEL_MOUTH},
+{nameJa: 'え', nameEn: 'ee', panel: PMX.Morph.PANEL_MOUTH},
+{nameJa: 'お', nameEn: 'oh', panel: PMX.Morph.PANEL_MOUTH},
+{nameJa: 'まばたき', nameEn: 'blink', panel: PMX.Morph.PANEL_EYE},
+{nameJa: '左ウインク', nameEn: 'blinkLeft', panel: PMX.Morph.PANEL_EYE},
+{nameJa: '右ウインク', nameEn: 'blinkRight', panel: PMX.Morph.PANEL_EYE},
+{nameJa: '喜び', nameEn: 'happy', panel: PMX.Morph.PANEL_EYE}, // 笑い?
+{nameJa: '怒り', nameEn: 'angry', panel: PMX.Morph.PANEL_EYE},
+{nameJa: '悲しみ', nameEn: 'sad', panel: PMX.Morph.PANEL_EYE},
+{nameJa: '穏やか', nameEn: 'relaxed', panel: PMX.Morph.PANEL_EYE},
+{nameJa: '驚き', nameEn: 'surprised', panel: PMX.Morph.PANEL_EYE},
 {nameJa: '通常', nameEn: 'neutral'},
-{nameJa: '上目遣い', nameEn: 'lookUp'},
-{nameJa: '下目遣い', nameEn: 'lookDown'},
-{nameJa: '左目線', nameEn: 'lookLeft'},
-{nameJa: '右目線', nameEn: 'lookRight'},
+{nameJa: '上目遣い', nameEn: 'lookUp', panel: PMX.Morph.PANEL_EYE},
+{nameJa: '下目遣い', nameEn: 'lookDown', panel: PMX.Morph.PANEL_EYE},
+{nameJa: '左目線', nameEn: 'lookLeft', panel: PMX.Morph.PANEL_EYE},
+{nameJa: '右目線', nameEn: 'lookRight', panel: PMX.Morph.PANEL_EYE},
     ];
     const emotions = [];
     for (const emo of emos) {
       const m = new PMX.Morph();
       m.nameJa = emo.nameJa;
       m.nameEn = emo.nameEn;
+      m.panel = emo.panel;
       for (let i = 0; i < 1; ++i) {
         const vm = new PMX.VertexMorph();
         m.vertexMorphs.push(vm);
@@ -444,7 +446,24 @@ export class CharBuilder extends PMX.Maker {
     }
 
     { // ボーングループフレーム
-      for (let i = 0; i < 3; ++i) {
+      const _bones = [...this.bones];
+
+      /** _func(b: PMX.Bone): boolean */
+      const _sel = (_func) => {
+        const ret = [];
+        for (let j = 0; j < _bones.length; ++j) {
+          if (_bones[j] == null) {
+            continue;
+          }
+          if (_func(_bones[j])) {
+            _bones[j] = null;
+            ret.push(j);
+          }
+        }
+        return ret;
+      };
+
+      for (let i = 0; i < 6; ++i) {
         const f = new PMX.Frame();
         f.nameJa = 'その他のボーン';
         f.nameEn = `fr00${i}`;
@@ -455,19 +474,47 @@ export class CharBuilder extends PMX.Maker {
           f.nameEn = 'Root';
           f.specialFlag = 1;
           f.bones.push(0);
+
+          _bones[0] = null;
         } else if (i === 1) {
           f.nameJa = '表情';
           f.specialFlag = 1;
           for (let j = 0; j < this.morphs.length; ++j) {
             f.morphs.push(j);
           }
+        } else if (i === 2) {
+          f.nameJa = 'ＩＫ';
+          f.nameEn = 'IK';
+          for (let j = 0; j < _bones.length; ++j) {
+            const b = _bones[j];
+            if (!b) {
+              continue;
+            }
+            if (b.nameJa.includes('ＩＫ')) {
+              f.bones.push(j);
+              _bones[j] = null;
+            }
+          }
+        } else if (i === 3) {
+          f.nameJa = '体(上)';
+          f.bones.push(..._sel(b =>
+            ['首', '頭', '上半身', '上半身１', '上半身２'].includes(b.nameJa)
+          ));
+        } else if (i === 4) {
+          f.nameJa = '体(下)';
+          f.bones.push(..._sel(b =>
+            ['下半身'].includes(b.nameJa)
+          ));     
         } else {
-          if (this.bones.length <= 1) {
-            break;
-          }
-          for (let j = 1; j < this.bones.length; ++j) {
+          f.bones.push(..._sel(b => true));
+          /*
+          for (let j = 0; j < _bones.length; ++j) {
+            if (!_bones[j]) {
+              continue;
+            }
             f.bones.push(j);
-          }
+            _bones[j] = null;
+          } */
         }
         this.frames.push(f);
       }
@@ -495,7 +542,7 @@ export class CharBuilder extends PMX.Maker {
       const num = this.bones.length;
       for (let i = 0; i < num; ++i) {
         const bone = this.bones[i];
-        bone._index = i;
+        //bone._index = i;
 
         /** @type {PMX.Bone} */
         let end = null;
@@ -515,9 +562,22 @@ export class CharBuilder extends PMX.Maker {
 
         if (index >= 0) {
           bone.endBoneIndex = index;          
+          bone.bits |= PMX.Bone.BIT_BONECONNECT;
         } else {
           bone.endOffset = [0, 0, -1];
         }
+
+        switch (bone.nameJa) {
+        case '左ＩＫ':
+        case '右ＩＫ':
+          bone.bits |= PMX.Bone.BIT_IK;
+        case '全ての親':
+        case '操作中心':
+        case 'センター':
+          bone.bits |= PMX.Bone.BIT_MOVE;
+          break;
+        }
+
       }
     }
   }
