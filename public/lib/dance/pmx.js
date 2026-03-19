@@ -120,69 +120,41 @@ class IKLink {
 }
 
 class Bone {
-/**
- * 接続先、bone で指定
- */
+  /** 接続先、bone で指定 */
   static BIT_BONECONNECT = 0x0001;
-/**
- * 回転可能
- */
+  /** 回転可能 */
   static BIT_ROT = 0x0002;
-/**
- * 移動可能
- */
+  /** 移動可能 */
   static BIT_MOVE = 0x0004;
-/**
- * 表示
- */
+  /** 表示 */
   static BIT_VISIBLE = 0x0008;
-/**
- * 操作可
- */
+  /** 操作可 */
   static BIT_CONTROL = 0x0010;
-/**
- * IK
- */
+  /** IK */
   static BIT_IK = 0x0020;
 
-/**
- * 回転付与
- */
+  /** 回転付与 */
   static BIT_ROTAPPLY = 0x0100;
-  /**
-   * 移動付与
-   */
+  /** 移動付与 */
   static BIT_MOVEAPPLY = 0x0200;
 
   static BIT_LOCALAPPLY = Bone.BIT_ROTAPPLY | Bone.BIT_MOVEAPPLY;
 
-/**
- * 軸固定
- */
+  /** 軸固定 */
   static BIT_FIXAXIS = 0x0400;
-/**
- * ローカル軸
- */
+  /** ローカル軸 */
   static BIT_LOCALAXIS = 0x0800;
-/**
- * 物理演算の後
- */
+  /** 物理演算の後 */
   static BIT_AFTERPHY = 0x1000;
-/**
- * 外部親
- */
+  /** 外部親 */
   static BIT_EXTERNALPARENT = 0x2000;
 
   constructor() {
     this.nameJa = 'boon000';
     this.nameEn = 'bone000';
-/**
- * ボーン 16bit 値
- */
+    /** ボーン 16bit 値 */
     this.bits = 0;
-/**
- * 位置
- */
+    /** 位置 */
     this.p = [0, 0, 0];
 /**
  * 親ボーンインデックス
@@ -198,22 +170,14 @@ class Bone {
     this.layer = 0;
 
     this._endBoneName = '';
-/**
- * 座標オフセット(接続先: 0)
- */
+    /** 座標オフセット(接続先: 0) */
     this.endOffset = [0, 0, 1];
-/**
- * (接続先: 1) のときのボーンインデックス
- */
+    /** (接続先: 1) のときのボーンインデックス */
     this.endBoneIndex = -1;
 
-    /**
-     * 付与親ボーン
-     */
+    /** 付与親ボーン */
     this.applyParent = -1;
-    /**
-     * 付与親ボーン名
-     */
+    /** 付与親ボーン名 */
     this._applyParentName = '';
     /**
      * 付与率
@@ -221,37 +185,23 @@ class Bone {
      * @default 0
      */
     this.applyRate = 0;
-/**
- * 軸固定: 1 の場合の軸の方向ベクトル
- */
+    /** 軸固定: 1 の場合の軸の方向ベクトル */
     this.axisVector = [0, 0, 1];
-/**
- * ローカル軸: 1 の場合
- */
+    /** ローカル軸: 1 の場合 */
     this.xLocalVector = [1, 0, 0];
-/**
- * ローカル軸: 1 の場合
- */
+    /** ローカル軸: 1 の場合 */
     this.zLocalVector = [0, 0, 1];
-/**
- * 外部親変形: 1 の場合の key値
- */
+    /** 外部親変形: 1 の場合の key値 */
     this.externalParentKey = -1;
 
     this.ikTargetBone = -1;
-/**
- * IKターゲット名
- */
+    /** IKターゲット名 */
     this._ikTargetBoneName = '';
 
     this.ikLoopCount = 255;
-/**
- * ラジアン値
- */
+    /** ラジアン値 */
     this.ikLimitation = 0;
-/**
- * @type {IKLink[]}
- */
+    /** @type {IKLink[]} */
     this.ikLinks = [];
   }
 
@@ -318,25 +268,15 @@ class Face {
  * 材質。面の管理どうしよう...
  */
 class Material {
-  /**
-   * 両面
-   */
+  /** 両面 */
   static BIT_DOUBLE = 0x01;
-  /**
-   * 地面影
-   */
+  /** 地面影 */
   static BIT_GROUND = 0x02;
-  /**
-   * セルフシャドウマップへの描画
-   */
+  /** セルフシャドウマップへの描画 */
   static BIT_TOMAP = 0x04;
-  /**
-   * セルフシャドウ
-   */
+  /** セルフシャドウ */
   static BIT_SELFSHADOW = 0x08;
-  /**
-   * エッジ有効
-   */
+  /** エッジ有効 */
   static BIT_EDGE = 0x10;
 
   static SPMODE_NONE = 0;
@@ -346,32 +286,20 @@ class Material {
   constructor() {
     this.nameJa = 'mtl000';
     this.nameEn = 'mtl000';
-    /**
-     * rgba
-     */
+    /** rgba */
     this.diffuse = [1, 1, 1, 1];
     this.specPower = 5;
     this.specular = [0.5, 0.5, 0.5];
     this.ambient = [0.2, 0.2, 0.2];
-    /**
-     * 材質ビットフラッグ 8bit
-     */
+    /** 材質ビットフラッグ 8bit */
     this.bitFlag = 0;
-    /**
-     * rgba
-     */
+    /** rgba */
     this.edgeColor = [1, 1, 1, 1];
-    /**
-     * エッジサイズ
-     */
+    /** エッジサイズ */
     this.edgeSize = 1;
-    /**
-     * テクスチャインデックス
-     */
+    /** テクスチャインデックス */
     this.texIndex = 0;
-    /**
-     * スフィアテクスチャインデックス
-     */
+    /** スフィアテクスチャインデックス */
     this.sphereIndex = -1;
     /**
      * 0: 無効、1: 乗算、2: 加算、3: サブテクスチャ
@@ -521,20 +449,14 @@ class MaterialMorph {
   }
 }
 
-/**
- * 頂点モーフ1要素
- */
+/** 頂点モーフ1要素 */
 class VertexMorph {
   constructor() {
     this._parentName = '';
     this._index = 0;
-    /**
-     * 頂点インデックス
-     */
+    /** 頂点インデックス */
     this.target = 0;
-    /**
-     * 座標オフセット
-     */
+    /** 座標オフセット */
     this.offset = [0, 0, 0];
   }
   /**
@@ -553,26 +475,18 @@ class VertexMorph {
   }
 }
 
-/**
- * モーフ
- */
+/** モーフ */
 class Morph {
   static PANEL_SYSTEM = 0;
-  /**
-   * まゆげ
-   */
+  /** まゆげ */
   static PANEL_B = 1;
   static PANEL_EYE = 2;
-  /**
-   * 口
-   */
+  /** 口 */
   static PANEL_MOUTH = 3;
   static PANEL_ETC = 4;
 
   static TYPE_GROUP = 0;
-  /**
-   * 頂点
-   */
+  /** 頂点 */
   static TYPE_VERTEX = 1;
   static TYPE_BONE = 2;
   static TYPE_UV = 3;
