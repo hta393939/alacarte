@@ -272,6 +272,7 @@ export class CharBuilder extends PMX.Maker {
           if (!bone.nameEn.endsWith('End')) {
             bits |= PMX.Bone.BIT_ROT | PMX.Bone.BIT_CONTROL;
           }
+          bone.bits = bits;
 
           const index = bones.findIndex(b => b.nameJa === bone.parentName);
           let parentPos = new Vec3(0, 0, 0);
@@ -473,12 +474,14 @@ export class CharBuilder extends PMX.Maker {
     }
 
     {
+      this.indexed();
+
       for (const bone of this.bones) {
         const param = {
           bonea: bone,
           boneb: bone,
           vertices: this.vts,
-          faceIndices: this.materials[0].faceIndices,
+          faces: this.materials[0].faces,
         };
         this.makeCyl(param);
       }
@@ -487,6 +490,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   indexed() {
+    console.log('indexed');
     {
       const num = this.bones.length;
       for (let i = 0; i < num; ++i) {
@@ -591,12 +595,12 @@ export class CharBuilder extends PMX.Maker {
 
     const vts = param.vertices;
     const startIndex = vts.length;
-    const fis = param.faceIndices;
+    const faces = param.faces;
 
-    for (const i = 0; i <= vdiv; ++i) { // 上から下か
+    for (let i = 0; i <= vdiv; ++i) { // 上から下か
       const vang = i * Math.PI / vdiv;
       let rr = Math.cos(vang);
-      for (const j = 0; j <= hdiv; ++j) {
+      for (let j = 0; j <= hdiv; ++j) {
         const hang = (j % hdiv) * Math.PI * 2 / hdiv;
 
         const cs = Math.cos(hang);
@@ -608,19 +612,18 @@ export class CharBuilder extends PMX.Maker {
         let y = Math.sin(vang);
         let z = cs * rr;
 
-        v.n = this.normalize();
+        v.n = this.normalize([x, y, z]);
         v.p = [
-          x * radius,
-          y * hhalf,
-          z * radius,
+          x * radius + bonea.p[0],
+          y * hhalf + bonea.p[1],
+          z * radius + bonea.p[2],
         ];
-        v.n = this.normalize([...v.p]);
         v.uv = [
           j / vdiv,
           i / hdiv,
         ];
         v.deformType = PMX.Vertex.DEFORM_BDEF2;
-        v.joints = [2, 0, 0, 0];
+        v.joints = [bonea._index, boneb._index, 0, 0];
         v.weights = [1, 0, 0, 0];
 
         vts.push(v);
@@ -631,10 +634,10 @@ export class CharBuilder extends PMX.Maker {
       for (let j = 0; j < hdiv; ++j) {
         const v0 = (hdiv + 1) * i + j + startIndex;
         const v1 = v0 + 1;
-        const v2 = v0 + hdiv + 1;
+        const v2 = v0 + (hdiv + 1);
         const v3 = v2 + 1;
-        fis.push(v0, v1, v2);
-        fis.push(v2, v1, v3);
+        faces.push([v0, v1, v2]);
+        faces.push([v2, v1, v3]);
       }
     }
 
