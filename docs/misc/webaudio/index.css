@@ -1,0 +1,49 @@
+
+.pointer {
+  cursor: pointer;
+}
+
+.toright {
+  display: flex;
+  flex-direction: row;
+}
+
+#tunelist {
+  height: 60dvh;
+  overflow-y: scroll;
+}
+
+body {
+  overflow: hidden;
+  margin: 0;
+  border: none;
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+}
+
+@media (orientation: portrait) {
+  .but {
+    cursor: pointer;
+    width: 18vw;
+    height: 9vw;
+    font-size: 9vw;
+  }
+  #opendir, #cleardb {
+    width: 36vw;
+    height: 9vw;
+  }
+}
+
+@media (orientation: landscape) {
+  .but {
+    cursor: pointer;
+    width: 8vw;
+    height: 4vw;
+    font-size: 4vw;
+  }
+  #opendir, #cleardb {
+    width: 16vw;
+    height: 4vw;
+  }
+}
