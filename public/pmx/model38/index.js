@@ -127,7 +127,10 @@ class Misc {
       console.log('makechar', param);
   
       Object.assign(param, {
-        nameEn: `usagi paramet miku`,
+        nameJa: `ウサギ式パラメトミク`,
+        nameEn: `Usagi's Paramet Miku`,
+        commentJa: ``,
+        commentEn: ``,
         textures: [
           `tex.png`,
           `sph.png`,

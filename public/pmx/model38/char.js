@@ -406,10 +406,13 @@ export class CharBuilder extends PMX.Maker {
     this.debug = 1;
 
     this.head.nameEn = param.nameEn;
-    this.head.nameJa = this.head.nameEn;
-    let comment = `${d.toLocaleString()} CharBuilder.make\r\n`;
-    this.head.commentEn = 'Parametric Miku';
-    this.head.commentJa = comment;
+    this.head.nameJa = param.nameJa;
+    this.head.commentEn = param.commentEn;
+    this.head.commentJa = param.commentJa;
+
+    {
+      this.textures = param.textures;
+    }
 
     { // モーフ 3個
       for (let i = 0; i < 3; ++i) {

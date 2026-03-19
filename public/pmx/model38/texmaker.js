@@ -136,7 +136,7 @@ export class TexMaker {
     const wholeh = canvas.height;
     const offsetx = wholew * offsetxrate;
     const offsety = wholeh * offsetyrate;
-    const size = 8;
+    const size = 16;
     const w = size * 16;
     const h = size * 16;
     const c = canvas.getContext('2d');
@@ -288,8 +288,13 @@ export class TexMaker {
    * @param {HTMLCanvasElement} canvas 
    */
   drawMarking(canvas, offsetxrate, offsetyrate) {
-    const w = 1024;
-    const h = 1024;
+    console.log('drawMarking');
+    const wholew = canvas.width;
+    const wholeh = canvas.height;
+    const offsetx = wholew * offsetxrate;
+    const offsety = wholeh * offsetyrate;
+    const w = this.size * 0.5;
+    const h = this.size * 0.5;
     const size = w / 16;
     const c = canvas.getContext('2d');
     const img = c.getImageData(0, 0, w, h);
@@ -303,7 +308,7 @@ export class TexMaker {
         let b = 255 * ((k + 1) * 0.25 + 0.5);
         let a = 255;
 
-        let ft = (x + w * y) * 4;
+        let ft = (x + offsetx + w * (y + offsety)) * 4;
 
         img.data[ft] = r;
         img.data[ft+1] = g;
@@ -312,6 +317,7 @@ export class TexMaker {
       }
     }
     //c.putImageData(img, 0, 0);
+
 
     c.textAlign = 'center';
     c.textBaseline = 'middle';
@@ -322,9 +328,11 @@ export class TexMaker {
         let y = i * size + size * 0.5;
         let px = size * 0.5;
         c.font = `bold ${px}px Consolas`;
-        c.fillText(`${x}`, x, y);
+        c.fillText(`${x}`, x + offsetx, y + offsety);
       }
     }
+
+    console.log('drawMarking end');
   }
 
   /**
@@ -338,7 +346,7 @@ export class TexMaker {
     const wholeh = canvas.height;
     const offsetx = wholew * offsetxrate;
     const offsety = wholeh * offsetyrate;
-    console.log('drawWide start');
+    console.log('drawWide start', offsetx, offsety);
 
     const blockw = 128;
     const blockh = 64;
@@ -351,7 +359,7 @@ export class TexMaker {
     const w = this.size * 0.5;
     const h = this.size * 0.5;
     const c = canvas.getContext('2d');
-    const img = c.getImageData(0, 0, w, h);
+    const img = c.getImageData(0, 0, wholew, wholeh);
     for (let by = 0; by < 16; ++by) {
       for (let bx = 0; bx < 8; ++bx) {
         let basec = [this.seq.get(256), this.seq.get(256), this.seq.get(256)];
@@ -366,7 +374,7 @@ export class TexMaker {
 
             let cs = [...basec];
 
-            let ft = ((x + offsetx) + w * (y + offsety)) * 4;
+            let ft = (x + offsetx + wholew * (y + offsety)) * 4;
             img.data[ft  ] = cs[0];
             img.data[ft+1] = cs[1];
             img.data[ft+2] = cs[2];
@@ -407,12 +415,22 @@ export class TexMaker {
       let tf = offsety + Math.floor(i / 8) * fh;
       c.transform(1.28, 0, 0, 1.28, te, tf);
 
+      c.lineWidth = 10;
       c.strokeStyle = 'black';
       c.beginPath();
       c.moveTo(0, 0);
       c.lineTo(100, 0);
       c.lineTo(100, 100);
       c.lineTo(0, 100);
+      c.stroke();
+
+      c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(25, 25);
+      c.lineTo(25, 75);
+
+      c.moveTo(75, 25);
+      c.lineTo(75, 75);
       c.stroke();
 
       c.resetTransform();
@@ -507,69 +525,6 @@ export class TexMaker {
 
         img.data[ft] = r;
         img.data[ft+1] = x;
-        img.data[ft+2] = b;
-        img.data[ft+3] = a;
-      }
-    }
-    c.putImageData(img, 0, 0);
-  }
-
-  /**
-   * 
-   * @param {HTMLCanvasElement} canvas 
-   */ 
-  draw6(canvas, offsetxrate, offsetyrate) {
-    const wholew = canvas.width;
-    const wholeh = canvas.height;
-    const offsetx = wholew * offsetxrate;
-    const offsety = wholeh * offsetyrate;
-    console.log('draw6 called');
-    const util = new Util();
-    util.srand(1);
-    const baseColor = [17, 255, 255];
-    const padding = 8;
-    const padColor = baseColor.map(c => c * 0.5);
-//        const padColor = [0, 0, 0]; // 黒
-
-    const ellipses = [
-//{ cx: 1/16, cy: -0.75, deg: 20, top: 1, k: 8, bx: 0.5, by: 0.6, add: true },
-
-{ cx: -3/8, cy: -0.75, deg: -1, top: 1, k: 8, bx: 0.5, by: 8, add: true },
-{ cx: 1/8, cy: 0.75, deg: -1, top: 1, k: 8, bx: 0.5, by: 8, add: true },
-    ];
-    for (let k = 0; k <= 8; ++k) {
-      const obj = {
-        cx: k / 4 - 1,
-        cy: util.rand() / 32768 - 0.5,
-        deg: (util.rand() / 32768 - 0.5) * 15,
-        top: 1,
-        k: 4,
-        bx: 0.5 + (util.rand() / 32768 - 0.5) * 0.1,
-        by: 6 + (util.rand() / 32768 - 0.5) * 2,
-        add: true,
-      };
-      ellipses.push(obj);
-      //console.log(obj);
-    }
-
-
-    const w = 512;
-    const h = 512;
-    const c = canvas.getContext('2d');
-    c.fillStyle = 'rgb(0, 0, 0)';
-    c.fillRect(0, 0, w, h);
-    const img = c.getImageData(0, 0, w, h);
-    for (let y = 0; y < h; ++y) {
-      for (let x = 0; x < w; ++x) {
-        let r = 0;
-        let g = 255;
-        let b = 128;
-        let a = 255;
-
-        let ft = (x + w * y) * 4;
-
-        img.data[ft] = x;
-        img.data[ft+1] = g;
         img.data[ft+2] = b;
         img.data[ft+3] = a;
       }
