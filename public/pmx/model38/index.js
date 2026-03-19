@@ -225,7 +225,7 @@ class Misc {
    * @param {FileSystemDirectoryHandle} dh 
    */
   async makeFiles(param, dh) {
-    console.log('makeFiles');
+    console.log('makeFiles start');
     /** @type {HTMLCanvasElement[]} */
     const cvs = [];
     for (let i = 0; i < 2; ++i) {
@@ -240,9 +240,9 @@ class Misc {
     {
       const maker = new TexMaker();
       maker.drawChip(cvs[0], 0, 0);
-      maker.drawAdd(cvs[0], 0.5, 0);
-      maker.drawMarking(cvs[0], 0, 0.5);
-      maker.draw3(cvs[0], 0.5, 0.5);
+      maker.drawWide(cvs[0], 0.5, 0);
+      maker.drawFace(cvs[0], 0, 0.5);
+      maker.drawMarking(cvs[0], 0.5, 0.5);
 
       maker.drawAdd(cvs[1]);
     }
@@ -266,7 +266,7 @@ class Misc {
         new Blob(bufs),
       );
     }
-    console.log('makeFiles');
+    console.log('makeFiles end');
   }
 
   /**

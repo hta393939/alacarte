@@ -61,6 +61,45 @@ const turbo = [
 ];
 */
 
+/**
+ * 数列
+ */
+export class Seq {
+  static A = 214013;
+  static C = 2531011;
+  static S = 1;
+  constructor() {
+    this._x = Seq.S;
+  }
+  srand(seed) {
+    this._x = seed;
+  }
+  rand() {
+    const calc = (this._x * Seq.A + Seq.C) % 4294967296;
+    this._x = calc;
+    const ret = Math.floor(calc / 65536) & 32767;
+    return ret;
+  }
+
+  /**
+   * 0-(n-1)を一応均等に
+   * @param {number} n 
+   */
+  get(n) {
+    let num = Math.floor(32768 / n) * n;
+    let ret = this.rand();
+    while (ret >= num) {
+      ret = this.rand();
+    }
+    return (ret % n);
+  }
+  /** 15bit程度だが [0.0, 1.0) */
+  one() {
+    return this.rand() / 32768;
+  }
+}
+
+
 export class TexMaker {
   constructor() {
     /** テクスチャ全体ピクセル幅 */
@@ -70,6 +109,7 @@ export class TexMaker {
   }
 
   init() {
+    this.seq = new Seq();
     this.readyTable();
   }
 
@@ -288,50 +328,97 @@ export class TexMaker {
   }
 
   /**
-   * 
+   * 128x64の中に並べる
    * @param {HTMLCanvasElement} canvas 
    * @param {number} offsetxrate 0.0-1.0
    * @param {number} offsetyrate 0.0-1.0
    */ 
-  draw3(canvas, offsetxrate, offsetyrate) {
+  drawWide(canvas, offsetxrate, offsetyrate) {
     const wholew = canvas.width;
     const wholeh = canvas.height;
     const offsetx = wholew * offsetxrate;
     const offsety = wholeh * offsetyrate;
-    console.log('draw3 called');
-    const util = new Util();
-    util.srand(1);
+    console.log('drawWide start');
+
+    const blockw = 128;
+    const blockh = 64;
+    const bw5 = blockw * 0.5;
+    const bh5 = blockh * 0.5;
+    /** 4ピクセルは不使用枠とする */
+    const blockwr = (blockw - 4 - 4) * 0.5;
+    const blockhr = (blockh - 4 - 4) * 0.5;
 
     const w = this.size * 0.5;
     const h = this.size * 0.5;
     const c = canvas.getContext('2d');
     const img = c.getImageData(0, 0, w, h);
-    for (let y = 0; y < h; ++y) {
-      for (let x = 0; x < w; ++x) {
-        let r = 255;
-        let g = 255;
-        let b = 192;
-        let a = 255;
+    for (let by = 0; by < 16; ++by) {
+      for (let bx = 0; bx < 8; ++bx) {
+        let basec = [this.seq.get(256), this.seq.get(256), this.seq.get(256)];
 
-        let ft = ((x + offsetx) + w * (y + offsety)) * 4;
+        for (let py = 0; py < blockh; ++py) {
+          for (let px = 0; px < blockw; ++px) {
+            let x = px + blockw * bx;
+            let y = py + blockh * by;
 
-        img.data[ft] = r;
-        img.data[ft+1] = g;
-        img.data[ft+2] = b;
-        img.data[ft+3] = a;
+            let dx = (px - bw5) / bw5;
+            let dy = (py - bh5) / bh5;
+
+            let cs = [...basec];
+
+            let ft = ((x + offsetx) + w * (y + offsety)) * 4;
+            img.data[ft  ] = cs[0];
+            img.data[ft+1] = cs[1];
+            img.data[ft+2] = cs[2];
+            img.data[ft+3] = 255;
+          }
+        }
       }
     }
     c.putImageData(img, 0, 0);
+    console.log('drawWide end');
   }
 
   /**
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  draw4(canvas, offsetxrate, offsetyrate) {
-    const w = 512;
-    const h = 512;
+  drawFace(canvas, offsetxrate, offsetyrate) {
+    const wholew = canvas.width;
+    const wholeh = canvas.height;
+    const offsetx = wholew * offsetxrate;
+    const offsety = wholeh * offsetyrate;
+
+    const w = this.size * 0.5;
+    const h = this.size * 0.5;
+
+    const fw = 128;
+    const fh = 128;
+
     const c = canvas.getContext('2d');
+    c.save();
+    c.resetTransform();
+
+    c.fillStyle = `rgb(255, 192, 180)`;
+    c.fillRect(offsetx, offsety, w, h);
+
+    for (let i = 0; i < 64; ++i) {
+      let te = offsetx + (i & 7) * fw;
+      let tf = offsety + Math.floor(i / 8) * fh;
+      c.transform(1.28, 0, 0, 1.28, te, tf);
+
+      c.strokeStyle = 'black';
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.lineTo(100, 0);
+      c.lineTo(100, 100);
+      c.lineTo(0, 100);
+      c.stroke();
+
+      c.resetTransform();
+    }
+
+    /*
     const img = c.getImageData(0, 0, w, h);
     for (let y = 0; y < h; ++y) {
       for (let x = 0; x < w; ++x) {
@@ -352,6 +439,10 @@ export class TexMaker {
       }
     }
     c.putImageData(img, 0, 0);
+    */
+
+    c.resetTransform();
+    c.restore();
   }
 
   /**
