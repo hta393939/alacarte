@@ -17,11 +17,6 @@
   border: dashed 4px black;
 }
 
-#tunelist {
-  height: 60dvh;
-  overflow-y: scroll;
-}
-
 .but {
   cursor: pointer;
   width: 8vw;

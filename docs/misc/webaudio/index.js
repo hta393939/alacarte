@@ -308,6 +308,26 @@ class Misc {
     }
 
     {
+      const el = document.getElementById('butleft');
+      el?.addEventListener('click', () => {
+        this.npanner.positionX.value -= 1;
+      });
+    }
+    {
+      const el = document.getElementById('butright');
+      el?.addEventListener('click', () => {
+        this.npanner.positionX.value += 1;
+      });
+    }
+
+    {
+      const el = document.getElementById('replay');
+      el?.addEventListener('click', async () => {
+        await this.ring(this.ac);
+      });
+    }
+
+    {
       const el = document.getElementById('cleardb');
       el?.addEventListener('click', async () => {
         await this.emptyStore('parameter').catch(ec => { console.warn('parameter', ec); });
@@ -402,6 +422,7 @@ class Misc {
     const source = await ac.createBufferSource();
     source.buffer = this.audioBuf;
     // panner
+    source.connect(this.npanner);
     // destination
     this.npanner.connect(ac.destination);
 
@@ -442,7 +463,7 @@ class Misc {
    * @param {OfflineAudioContext} offline 
    */
   async render(offline) {
-    console.log('render');
+    console.log('render offline');
 
     try {
       const src = offline.createBufferSource(this.audioBuf);
