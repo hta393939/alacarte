@@ -315,6 +315,44 @@ class Misc {
         this.clearDB();
       });
     }
+
+    {
+      const el = document.getElementById('startlive');
+      el?.addEventListener('click', async () => {
+        // ライブ側
+        const ac = await this.requestAction();
+        this.ac = ac;
+        await this.makeNodes(ac);
+      });
+    }
+
+    {
+
+      /**
+       * 
+       * @param {string} _type 
+       * @returns 
+       */
+      const _mode = (_type) => {
+        return (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          ev.dataTransfer.dropEffect = _type;
+        };
+      };
+
+      document.body.addEventListener('dragover', _mode('none'));
+      const el = document.querySelector('.drop');
+      el?.addEventListener('dragover', _mode('link'));
+      el?.addEventListener('drop', async ev => {
+        _mode('link')(ev);
+
+        await this.readyFile(ev.dataTransfer.files[0]);
+
+        await this.ring(this.ac);
+      });
+    }
+
   }
 
   /**
@@ -331,7 +369,19 @@ class Misc {
     return false;
   }
 
+  /**
+   * 
+   * @param {File} f 
+   */
+  async readyFile(f) {
+    const ab = await f.arrayBuffer();
+    await this.decodeAudio(this.ac, ab);
+  }
 
+  /**
+   * AudioContext のための要求確認込み
+   * @returns 
+   */
   async requestAction() {
     try {
       const opt = {};
@@ -347,33 +397,69 @@ class Misc {
    * 
    * @param {AudioContext} ac 
    */
-  async makeNodes(ac) {
-    {
+  async ring(ac) {
+    // source
+    const source = await ac.createBufferSource();
+    source.buffer = this.audioBuf;
+    // panner
+    // destination
+    this.npanner.connect(ac.destination);
 
-    }
-    {
-      const panner = new PannerNode(ac);
-      this.npanner = panner;
-    }
-    {
-      const dst = new AudioDestinationNode();
-      this.ndst = dst;
-
-      this.npanner.connect(dst);
-    }
+    source.start(0);
+    console.log('ring end');
   }
 
   /**
    * 
-   * @param {AudioContext} ac 
+   * @param {BaseAudioContext} ac 
    */
-  async makeSource(ac) {
-    const opt = {};
-    const src = new AudioBufferSourceNode(ac, opt);
-    return src;
+  async makeNodes(ac) {
+    {
+      const panner = ac.createPanner();
+      this.npanner = panner;
+
+      panner.panningModel = 'HRTF';
+      panner.positionX.value = -1;
+      panner.positionY.value = 0;
+      panner.positionZ.value = -0.2;
+    }
+    console.log('makeNodes end');
   }
 
-  
+  /**
+   * 
+   * @param {BaseAudioContext} ac 
+   * @param {ArrayBuffer} ab 
+   */
+  async decodeAudio(ac, ab) {
+    const audioBuf = await ac.decodeAudioData(ab);
+    this.audioBuf = audioBuf;
+    console.log('decodeAudio end', audioBuf.duration);
+  }
+
+  /**
+   * オフラインの場合
+   * @param {OfflineAudioContext} offline 
+   */
+  async render(offline) {
+    console.log('render');
+
+    try {
+      const src = offline.createBufferSource(this.audioBuf);
+      src.buffer = audioBuf;
+
+      // TODO: panner
+      src.connect(this.npanner);
+
+      src.start(0);
+
+      const buf = await offline.startRendering();
+      console.log('buf', buf);
+
+    } catch (e) {
+      console.warn('render catch', e);
+    }
+  }
 
 }
 

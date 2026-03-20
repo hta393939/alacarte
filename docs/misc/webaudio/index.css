@@ -8,42 +8,28 @@
   flex-direction: row;
 }
 
+.drop {
+  margin: 0.5rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: dashed 4px black;
+}
+
 #tunelist {
   height: 60dvh;
   overflow-y: scroll;
 }
 
-body {
-  overflow: hidden;
-  margin: 0;
-  border: none;
-  width: 100vw;
-  height: 100vh;
-  padding: 0;
+.but {
+  cursor: pointer;
+  width: 8vw;
+  height: 4vw;
+  font-size: 4vw;
+}
+#opendir, #cleardb {
+  width: 16vw;
+  height: 4vw;
 }
 
-@media (orientation: portrait) {
-  .but {
-    cursor: pointer;
-    width: 18vw;
-    height: 9vw;
-    font-size: 9vw;
-  }
-  #opendir, #cleardb {
-    width: 36vw;
-    height: 9vw;
-  }
-}
-
-@media (orientation: landscape) {
-  .but {
-    cursor: pointer;
-    width: 8vw;
-    height: 4vw;
-    font-size: 4vw;
-  }
-  #opendir, #cleardb {
-    width: 16vw;
-    height: 4vw;
-  }
-}
