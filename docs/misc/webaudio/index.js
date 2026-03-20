@@ -8,6 +8,9 @@ class Misc {
     this.db = null;
 
     this.volume100 = 50;
+
+    this.clock = 1;
+    this.radius = 1;
   }
 
   /**
@@ -267,6 +270,11 @@ class Misc {
     return found;
   }
 
+  outPos() {
+    const p = this.npanner;
+    console.log(`${p.positionX.value}, ${p.positionY.value}, ${p.positionZ.value}, ${this.clock}`);
+  }
+
   setListener() {
     {
       const el = document.getElementById('opendir');
@@ -294,29 +302,63 @@ class Misc {
       });
     }
 
+    const step = 1 / 8;
     {
       const el = document.getElementById('butup');
       el?.addEventListener('click', () => {
-        this.setVolume(this.volume100 + 10);
+        this.npanner.positionZ.value += -step;
+        this.outPos();
       });
     }
     {
       const el = document.getElementById('butdown');
       el?.addEventListener('click', () => {
-        this.setVolume(this.volume100 - 10);
+        this.npanner.positionZ.value += step;
+        this.outPos();
       });
     }
 
     {
       const el = document.getElementById('butleft');
       el?.addEventListener('click', () => {
-        this.npanner.positionX.value -= 1;
+        this.npanner.positionX.value += -step;
+        this.outPos();
       });
     }
     {
       const el = document.getElementById('butright');
       el?.addEventListener('click', () => {
-        this.npanner.positionX.value += 1;
+        this.npanner.positionX.value += step;
+        this.outPos();
+      });
+    }
+
+    {
+      const el = document.getElementById('butcw');
+      el?.addEventListener('click', () => {
+        this.clock = (this.clock + 1) % 12;
+        this.ring(this.ac, true);
+      });
+    }
+    {
+      const el = document.getElementById('butccw');
+      el?.addEventListener('click', () => {
+        this.clock = (this.clock + 11) % 12;
+        this.ring(this.ac, true);
+      });
+    }
+    {
+      const el = document.getElementById('butfar');
+      el?.addEventListener('click', () => {
+        this.radius += step;
+        this.ring(this.ac, true);
+      });
+    }
+    {
+      const el = document.getElementById('butnear');
+      el?.addEventListener('click', () => {
+        this.radius += -step;
+        this.ring(this.ac, true);
       });
     }
 
@@ -417,7 +459,14 @@ class Misc {
    * 
    * @param {AudioContext} ac 
    */
-  async ring(ac) {
+  async ring(ac, isclock) {
+    if (isclock) {
+      const ang = this.clock * Math.PI / 6;
+      this.npanner.positionX.value = Math.sin(ang) * this.radius;
+      this.npanner.positionZ.value = -Math.cos(ang) * this.radius;
+      this.outPos();
+    }
+
     // source
     const source = await ac.createBufferSource();
     source.buffer = this.audioBuf;
@@ -439,10 +488,13 @@ class Misc {
       const panner = ac.createPanner();
       this.npanner = panner;
 
+      panner.refDistance = 0.098;
+      panner.rolloffFactor = 0.125;
+
       panner.panningModel = 'HRTF';
       panner.positionX.value = -1;
       panner.positionY.value = 0;
-      panner.positionZ.value = -0.2;
+      panner.positionZ.value = -1;
     }
     console.log('makeNodes end');
   }
