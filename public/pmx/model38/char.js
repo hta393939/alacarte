@@ -14,6 +14,7 @@ const _rad = (deg) => {
   return deg * Math.PI / 180;
 };
 
+/** 3次ベクトル */
 export class Vec3 {
   static XAXIS = 'x';
   static YAXIS = 'y';
@@ -66,13 +67,38 @@ export class Vec3 {
   }
 
   /**
-   * 
+   * 破壊スカラー倍
    * @param {number} k 
    */
   mulk(k) {
-    return new Vec3(this.x * k, this.y * k, this.z * k);
+    this._x *= k;
+    this._y *= k;
+    this._z *= k;
+    return this;
+    //return new Vec3(this.x * k, this.y * k, this.z * k);
   }
 
+  len() {
+    return Math.sqrt(this.dot(this));
+  }
+
+  /**
+   * 破壊正規化
+   * @returns 
+   */
+  normalize() {
+    const len = this.len();
+    if (len === 0) {
+      return this;
+    }
+    return this.mulk(1 / len);
+  }
+
+  /**
+   * 新しいインスタンスで外積
+   * @param {Vec3} b 
+   * @returns 
+   */
   cross(b) {
     return new Vec3(
       this.y * b.z - this.z * b.y,
@@ -82,17 +108,16 @@ export class Vec3 {
   }
 
   /**
-   * 
+   * 破壊加算
    * @param {number} ok スカラー倍数
    * @param {Vec3} b ベクトル
    * @param {number} bk スカラー倍数
    */
   add(ok, b, bk) {
-    return new Vec3(
-      this.x * ok + b.x * bk,
-      this.y * ok + b.y * bk,
-      this.z * ok + b.z * bk,
-    );
+    this.x = this.x * ok + b.x * bk;
+    this.y = this.y * ok + b.y * bk;
+    this.z = this.z * ok + b.z * bk;
+    return this;
   }
 }
 
@@ -132,12 +157,17 @@ export class Quat {
     return new Vec3(this.x, this.y, this.z);
   }
 
+  /**
+   * 積。新しいインスタンスで。
+   * @param {*} b 
+   * @returns 
+   */
   mul(b) {
     const are = this.w;
     const bre = b.w;
     const aim = this.im();
     const bim = b.im();
-    const vre = aim.mulk(bre).add(bim.mulk(are)).add(aim.cross(bim));
+    const vre = aim.clone().mulk(bre).add(bim.clone().mulk(are)).add(aim.cross(bim));
     return new Quat(
       vre.x,
       vre.y,
@@ -150,12 +180,16 @@ export class Quat {
     return new Vec3(this.x, this.y, this.z);
   }
 
+  /**
+   * 共役。新しいインスタンスで。
+   * @returns 
+   */
   conj() {
     return new Quat(-this.x, -this.y, -this.z, this.w);
   }
 
   /**
-   * 
+   * 回転。新しいインスタンスで。
    * @param {Vec3} target 
    * @returns {Vec3}
    */
@@ -170,7 +204,7 @@ export class Quat {
    * @param {Vec3} center 
    */
   rotateByPoint(target, center) {
-    const p1 = target.add(1, center, -1);
+    const p1 = target.clone().add(1, center, -1);
     const p2 = this.rotate(p1);
     return p2.add(1, center, 1);
   }
@@ -256,6 +290,25 @@ export class CharBuilder extends PMX.Maker {
       {nameJa: '右', nameEn: 'right', x: -1},
       {nameJa: '左', nameEn: 'left', x: 1},
     ];
+
+    /**
+     * 後ろから
+     * @param {string} _str 
+     * @returns {number}
+     */
+    const _search = (_str) => {
+      let _index = -1;
+      let num = this.bones.length;
+      for (let _i = num - 1; _i >= 0; --_i) {
+        const _b = this.bones[_i];
+        if (_b.nameJa === _str) {
+          _index = _i;
+          break;
+        }
+      }
+      return _index;
+    };
+
     for (let bi = 0; bi < blocks.length; ++bi) {
       const block = blocks[bi];
       for (let i = ((block.lr) ? 0 : 1); i < 2; ++i) {
@@ -284,27 +337,45 @@ export class CharBuilder extends PMX.Maker {
           }
           const diff = Vec3.fromArray(one.p);
           diff.x = diff.x * lrpre[i].x;
-          bone.position = parentPos.add(1, diff, 1);
+          bone.position = parentPos.clone().add(1, diff, 1);
           bone.p = bone.position.asArray();
           bone._index = bones.length;
+
+          //// IKボーン
 
           const isFootIK = bone.nameJa.endsWith('足ＩＫ');
           const isToeIK = bone.nameJa.endsWith('つま先ＩＫ');
           if (isFootIK || isToeIK) {
             bone.bits |= PMX.Bone.BIT_IK | PMX.Bone.BIT_MOVE;
-            bone.ikTargetBone = isFootIK ? 0 : 0; // _足首, _つま先 TODO: 
+            bone.ikTargetBone = _search(`${lrpre[i].nameJa}${isFootIK ? '足首' : 'つま先'}`);
             bone.ikLimitation = isFootIK ? 2 : 4; // radian
             bone.ikLoopCount = isFootIK ? 40 : 3; // loop
             for (let i2 = 0; i2 < (isFoot ? 2 : 1); ++i2) {
               const link = new PMX.IKLink();
-              link.linkBone = 0; // ひざ、足。足首。TODO: 
-              if (i2 === 0 && isFoot) { // 角度制限
+              let linkName = `${lrpre[i].nameJa}`;
+              if (i2 === 0 && isFootIK) { // 角度制限
                 link.isLimitation = 1;
                 link.upper = [-5 * Math.PI / 180, 0, 0];
                 link.lower = [-Math.PI, 0, 0];
+                linkName += 'ひざ';
+              } else {
+                linkName += ['足首', '足'][i2];
               }
+              link.linkBone = _search(linkName); // ひざ、足。足首。TODO: 
+
               bone.ikLinks.push(link);
             }
+          }
+
+          //// ローカル軸 TODO: 
+          {
+            let xv = new Vec3(1, 0, 0);
+            let yv = new Vec3(0, 1, 0);
+            let zv = new Vec3(0, 0, 1);
+            xv = yv.cross(zv).normalize();
+            yv = zv.cross(xv).normalize();
+            bone.xLocalVector = xv.toVec3();
+            bone.zLocalVector = zv.toVec3();
           }
 
           bones.push(bone);
