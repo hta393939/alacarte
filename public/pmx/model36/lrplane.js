@@ -198,10 +198,15 @@ export class LRPlaneBuilder extends PMX.Maker {
           b.nameJa = b.nameEn;
           const poff = bones[boneIndex].poff;
           b.parent = (poff !== 0) ? (i + poff) : BONE_CENTER;
-          b.p = [bones[boneIndex].x, pres[preIndex].y, 0];
+          let y = pres[preIndex].y;
+          if (poff === 0) {
+            y = 0;
+          }
+          b.p = [bones[boneIndex].x, y, 0];
           if (boneIndex === 4) {
             b.bits |= PMX.Bone.BIT_MOVEAPPLY;
             b.applyParent = i - 1;
+            // NOTE: 負の値は不正な動作になるみたい
             b.applyRate = -1;
           }
           break;
