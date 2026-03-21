@@ -195,9 +195,9 @@ export class CharBuilder extends PMX.Maker {
 { parentName: '全ての親', nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
 { parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0,5,0] },
 { parentName: 'センター', nameJa: '下半身', nameEn: 'spine', p: [0,0,0] },
-{ parentName: '下半身', nameJa: '上半身１', nameEn: 'chest', p:[0,1,0] },
-{ parentName: '上半身１', nameJa: '上半身２', nameEn: 'upperChest', p:[0,1,0] },
-{ parentName: '上半身２', nameJa: '首', nameEn: 'neck', p:[0,1,0] },
+{ parentName: '下半身', nameJa: '上半身', nameEn: 'chest', p:[0,1,0] },
+{ parentName: '上半身', nameJa: '上半身2', nameEn: 'upperChest', p:[0,1,0] },
+{ parentName: '上半身2', nameJa: '首', nameEn: 'neck', p:[0,1,0] },
 { parentName: '首', nameJa: '頭', nameEn: 'head', p:[0,1,0] }, // #7
 ]},
 { lr: true, bones: [
@@ -248,7 +248,7 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '_つま先ＩＫ',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
-{parentName: '上半身２', nameJa: 'パーツ１', nameEn: 'parts1', p:[1,0,0]},
+{parentName: '上半身2', nameJa: 'パーツ１', nameEn: 'parts1', p:[1,0,0]},
 {parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'parts2', p:[0,1,0]},
 ]}
     ];
@@ -287,6 +287,25 @@ export class CharBuilder extends PMX.Maker {
           bone.position = parentPos.add(1, diff, 1);
           bone.p = bone.position.asArray();
           bone._index = bones.length;
+
+          const isFootIK = bone.nameJa.endsWith('足ＩＫ');
+          const isToeIK = bone.nameJa.endsWith('つま先ＩＫ');
+          if (isFootIK || isToeIK) {
+            bone.bits |= PMX.Bone.BIT_IK | PMX.Bone.BIT_MOVE;
+            bone.ikTargetBone = isFootIK ? 0 : 0; // _足首, _つま先 TODO: 
+            bone.ikLimitation = isFootIK ? 2 : 4; // radian
+            bone.ikLoopCount = isFootIK ? 40 : 3; // loop
+            for (let i2 = 0; i2 < (isFoot ? 2 : 1); ++i2) {
+              const link = new PMX.IKLink();
+              link.linkBone = 0; // ひざ、足。足首。TODO: 
+              if (i2 === 0 && isFoot) { // 角度制限
+                link.isLimitation = 1;
+                link.upper = [-5 * Math.PI / 180, 0, 0];
+                link.lower = [-Math.PI, 0, 0];
+              }
+              bone.ikLinks.push(link);
+            }
+          }
 
           bones.push(bone);
         }
@@ -463,7 +482,7 @@ export class CharBuilder extends PMX.Maker {
         return ret;
       };
 
-      for (let i = 0; i < 6; ++i) {
+      for (let i = 0; i < 7; ++i) {
         const f = new PMX.Frame();
         f.nameJa = 'その他のボーン';
         f.nameEn = `fr00${i}`;
@@ -496,11 +515,16 @@ export class CharBuilder extends PMX.Maker {
             }
           }
         } else if (i === 3) {
-          f.nameJa = '体(上)';
+          f.nameJa = 'センター';
           f.bones.push(..._sel(b =>
-            ['首', '頭', '上半身', '上半身１', '上半身２'].includes(b.nameJa)
+            ['センター'].includes(b.nameJa)
           ));
         } else if (i === 4) {
+          f.nameJa = '体(上)';
+          f.bones.push(..._sel(b =>
+            ['首', '頭', '上半身', '上半身2'].includes(b.nameJa)
+          ));
+        } else if (i === 5) {
           f.nameJa = '体(下)';
           f.bones.push(..._sel(b =>
             ['下半身'].includes(b.nameJa)

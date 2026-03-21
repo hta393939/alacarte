@@ -100,21 +100,13 @@ class Vertex {
 
 class IKLink {
   constructor() {
-/**
- * リンクボーンのボーンインデックス
- */
+    /** リンクボーンのボーンインデックス */
     this.linkBone = -1;
-/**
- * 角度制限 0: OFF, 1: ON
- */
+    /** 角度制限 0: OFF, 1: ON */
     this.isLimitation = 0;
-/**
- * 下限ラジアン
- */
+    /** 下限ラジアン */
     this.lower = [0, 0, 0];
-/**
- * 上限ラジアン
- */
+    /** 上限ラジアン */
     this.upper = [0, 0, 0];
   }
 }
