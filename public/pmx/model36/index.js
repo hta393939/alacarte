@@ -7,6 +7,7 @@ import { CylinderBuilder } from "./cylinder.js";
 import { PlateBuilder } from "./plate.js";
 import { PlaneDiaBuilder } from "./planedia.js";
 import { PrimitiveBuilder } from "./primitive.js";
+import { LRPlaneBuilder } from "./lrplane.js";
 
 const _lim = (a, x, b) => {
   if (x < a) {
@@ -299,6 +300,23 @@ class Misc {
       const bufs = writer.makeBuffer();
       this.download(new Blob(bufs), `${param.nameEn}.pmx`);
       console.log('makedia');
+    });
+
+    window.idmakelrplane?.addEventListener('click', () => {
+      const param = this.getCommonOptions();
+  
+      Object.assign(param, {
+        nameEn: `lrplane`,
+        texturePath: [
+          `lrplane.png`,
+          `lrplane_spa.png`,
+        ],
+      });
+      const writer = new LRPlaneBuilder();
+      writer.make(param);
+      const bufs = writer.makeBuffer();
+      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
+      console.log('makelrplane');
     });
 
     window.idmakebox?.addEventListener('click', () => {
