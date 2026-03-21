@@ -1,6 +1,3 @@
-/**
- * @file plate.js
- */
 
 /**
  * @param {number} v 値
@@ -74,6 +71,10 @@ export class LRPlaneBuilder extends PMX.Maker {
     this.head.commentJa = comment;
 
     {
+      const boneIndices = [
+        12, 9, 11,
+        7, 4, 6,
+        17, 14, 16];
       for (let i = 0; i <= 2; ++i) {
         for (let j = 0; j <= 2; ++j) {
           const v = new PMX.Vertex();
@@ -86,11 +87,11 @@ export class LRPlaneBuilder extends PMX.Maker {
 
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
-            j / 2,
-            (1 - y) * 0.5,
+            j * 0.5,
+            (2 - y) * 0.5,
           ];
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          let bone = BONE_CENTER;
+          let bone = boneIndices[j + i * 3];
           v.joints = [bone, 0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
@@ -121,40 +122,31 @@ export class LRPlaneBuilder extends PMX.Maker {
       m.sharetoonflag = 0;
       m.sharetoonindex = -1;
 
-      const fis = [
+      const fis = [ // 時計回り
         [0, 1, 3], [1, 4, 3],
-        [3, 4, 6], [4, 7, 6],
-        [4, 5, 8], [4, 8, 7],
-        [6, 7, 10], [6, 10, 9],
-        [7, 8, 10], [8, 11, 10],
+        [3, 4, 7], [3, 7, 6],
+        [4, 5, 7], [5, 8, 7],
+        [1, 2, 5], [1, 5, 4],
       ];
       m.faces.push(...fis);
 
       this.materials.push(m);
     }
 
-    // root, cnt, center, centerpair
-    // 4: upperface, 5: uppercenter, 6: upperpair, upperxp, upperxn
-    // lowerface, lowercenter, lowerpair, lowerxp, lowerxn
-
-    const centers = [
+    const ones = [
       {name: "root"}, // 0
       {name: "cnt"}, // 1
-      {name: "center"}, // 2
-      {name: "centerpair"}, // 3
-      {name: "centerxp"}, // 4
-      {name: "centerxn"}, // 5
+      {name: "orgcenter"}, // 2
     ];
-    const ulbones = [
-      {name: "face"}, // 6, 11
-      {name: "center"}, // 7, 12
-      {name: "pair"}, // 8, 13
-      {name: "xp"}, // 9, 14
-      {name: "xn"}, // 10, 15
-    // {"lowerface"}, {"lowercenter"}, {"lowerpair"}, {"lowerxp"}, {"lowerxn"}
+    const bones = [
+      {name: ""}, // 3, 8, 13,
+      {name: "center"}, // 4, 9, 14
+      {name: "pair"}, // 5, 10, 15
+      {name: "xp"}, // 6, 11, 16
+      {name: "xn"}, // 7, 12, 17
     ];
 
-    for (let i = 0; i < 16; ++i) { // ボーン
+    for (let i = 0; i < 18; ++i) { // ボーン
       /** ボーン */
       const b = new PMX.Bone();
 
@@ -182,33 +174,36 @@ export class LRPlaneBuilder extends PMX.Maker {
       case BONE_CENTER:
         b.parent = 0;
         b.nameJa = 'センター';
-        b.nameEn = 'center';
+        b.nameEn = 'orgcenter';
         break;
-      case 3:
-        b.parent = BONE_CENTER;
-        b.nameEn = 'centerpair';
-        b.nameJa = b.nameEn;
-        b.p = [0, 0, 0];
-        break;
-      case 4:
-        b.parent = 3;
-        b.nameEn = 'centerxp';
-        b.nameJa = b.nameEn;
-        b.p = [1, 0, 0];
-        break;
-      case 5:
-        b.parent = 3;
-        b.nameEn = 'centerxn';
-        b.nameJa = b.nameEn;
-        b.p = [-1, 0, 0];
-        break;
+
       default:
         {
-          b.parent = BONE_CENTER;
-          b.p = [-1, 0, 0];
-          b.bits |= PMX.Bone.BIT_MOVEAPPLY;
-          b.applyParent = 3;
-          b.applyRate = -1;
+          const pres = [
+            {name: 'center', y: 0},
+            {name: 'upper', y: 1},
+            {name: 'lower', y: -1}
+          ];
+          const bones = [
+            {name: '', x: 0, poff: 0},
+            {name: 'center', x: 0, poff: -1},
+            {name: 'pair', x: 0, poff: -2},
+            {name: 'xp', x: 1, poff: -1},
+            {name: 'xn', x: -1, poff: -2}];
+
+          const preIndex = Math.floor((i - 3) / 5);
+          const boneIndex = (i - 3) % 5;
+
+          b.nameEn = `${pres[preIndex].name}${bones[boneIndex].name}`;
+          b.nameJa = b.nameEn;
+          const poff = bones[boneIndex].poff;
+          b.parent = (poff !== 0) ? (i + poff) : BONE_CENTER;
+          b.p = [bones[boneIndex].x, pres[preIndex].y, 0];
+          if (boneIndex === 3) {
+            b.bits |= PMX.Bone.BIT_MOVEAPPLY;
+            b.applyParent = i - 1;
+            b.applyRate = -1;
+          }
           break;
         }
       }
