@@ -221,6 +221,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   initBone() {
+    /** @type {PMX.Bone[]} */
     const bones = [];
 
     const blocks = [
@@ -241,7 +242,7 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
-{parentName: '上半身２',nameJa: '肩', nameEn: 'Shoulder', p:[0.5,0,0]},
+{parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder', p:[0.5,0,0]},
 {parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm', p:[0.5,0,0]},
 {parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[1,-1,0]},
 {parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[1,-1,0]},
@@ -274,12 +275,12 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '頭',nameJa: '目', nameEn: 'Eye', p:[0.2,0,-0.2]},
 ]},
 { lr: true, bones: [
-{parentName: '全ての親',nameJa: '足ＩＫ', nameEn: 'LegIK', p:[1,0,0]},
-{parentName: '_足ＩＫ',nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,-1]},
+{parentName: '全ての親', nameJa: '足ＩＫ', nameEn: 'LegIK', p:[1,0,0]},
+{parentName: '_足ＩＫ', nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
-{parentName: '_足ＩＫ',nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[1,0,0]},
-{parentName: '_つま先ＩＫ',nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,-1]},
+{parentName: '_足ＩＫ', nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[1,0,0]},
+{parentName: '_つま先ＩＫ', nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
 {parentName: '上半身2', nameJa: 'パーツ１', nameEn: 'parts1', p:[1,0,0]},
@@ -298,9 +299,9 @@ export class CharBuilder extends PMX.Maker {
      */
     const _search = (_str) => {
       let _index = -1;
-      let num = this.bones.length;
+      let num = bones.length;
       for (let _i = num - 1; _i >= 0; --_i) {
-        const _b = this.bones[_i];
+        const _b = bones[_i];
         if (_b.nameJa === _str) {
           _index = _i;
           break;
@@ -317,7 +318,6 @@ export class CharBuilder extends PMX.Maker {
           const bone = new PMX.Bone();
           let bits = 0;
           Object.assign(bone, {
-            parent: -1,
             parentName: one.parentName.replace('_', lrpre[i].nameJa),
             nameJa: `${block.lr ? lrpre[i].nameJa : ''}${one.nameJa}`,
             nameEn: `${block.lr ? lrpre[i].nameEn : ''}${one.nameEn}`,
@@ -325,7 +325,6 @@ export class CharBuilder extends PMX.Maker {
           if (!bone.nameEn.endsWith('End')) {
             bits |= PMX.Bone.BIT_ROT | PMX.Bone.BIT_CONTROL | PMX.Bone.BIT_VISIBLE;
           }
-          bone.bits = bits;
 
           const index = bones.findIndex(b => b.nameJa === bone.parentName);
           let parentPos = new Vec3(0, 0, 0);
@@ -342,15 +341,18 @@ export class CharBuilder extends PMX.Maker {
           bone._index = bones.length;
 
           //// IKボーン
+          /** @type {string} */
+          const nameJa = bone.nameJa;
 
-          const isFootIK = bone.nameJa.endsWith('足ＩＫ');
-          const isToeIK = bone.nameJa.endsWith('つま先ＩＫ');
+          const isFootIK = nameJa.endsWith(`足ＩＫ`);
+          const isToeIK = nameJa.endsWith(`つま先ＩＫ`);
+          //console.log('nameJa', nameJa, isFootIK);
           if (isFootIK || isToeIK) {
-            bone.bits |= PMX.Bone.BIT_IK | PMX.Bone.BIT_MOVE;
+            bits |= PMX.Bone.BIT_IK | PMX.Bone.BIT_MOVE;
             bone.ikTargetBone = _search(`${lrpre[i].nameJa}${isFootIK ? '足首' : 'つま先'}`);
             bone.ikLimitation = isFootIK ? 2 : 4; // radian
             bone.ikLoopCount = isFootIK ? 40 : 3; // loop
-            for (let i2 = 0; i2 < (isFoot ? 2 : 1); ++i2) {
+            for (let i2 = 0; i2 < (isFootIK ? 2 : 1); ++i2) {
               const link = new PMX.IKLink();
               let linkName = `${lrpre[i].nameJa}`;
               if (i2 === 0 && isFootIK) { // 角度制限
@@ -361,7 +363,7 @@ export class CharBuilder extends PMX.Maker {
               } else {
                 linkName += ['足首', '足'][i2];
               }
-              link.linkBone = _search(linkName); // ひざ、足。足首。TODO: 
+              link.linkBone = _search(linkName); // ひざ、足。足首。
 
               bone.ikLinks.push(link);
             }
@@ -374,10 +376,11 @@ export class CharBuilder extends PMX.Maker {
             let zv = new Vec3(0, 0, 1);
             xv = yv.cross(zv).normalize();
             yv = zv.cross(xv).normalize();
-            bone.xLocalVector = xv.toVec3();
-            bone.zLocalVector = zv.toVec3();
+            bone.xLocalVector = xv.asArray();
+            bone.zLocalVector = zv.asArray();
           }
 
+          bone.bits = bits;
           bones.push(bone);
         }
       }
