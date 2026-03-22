@@ -563,7 +563,7 @@ export class CharBuilder extends PMX.Maker {
         return ret;
       };
 
-      for (let i = 0; i < 7; ++i) {
+      for (let i = 0; i < 9; ++i) {
         const f = new PMX.Frame();
         f.nameJa = 'その他のボーン';
         f.nameEn = `fr00${i}`;
@@ -601,25 +601,37 @@ export class CharBuilder extends PMX.Maker {
             ['センター'].includes(b.nameJa)
           ));
         } else if (i === 4) {
+          f.nameJa = '体(下)';
+          f.bones.push(..._sel(b =>
+            ['下半身'].includes(b.nameJa)
+          ));  
+        } else if (i === 5) {
           f.nameJa = '体(上)';
           f.bones.push(..._sel(b =>
             ['首', '頭', '上半身', '上半身2'].includes(b.nameJa)
           ));
-        } else if (i === 5) {
-          f.nameJa = '体(下)';
-          f.bones.push(..._sel(b =>
-            ['下半身'].includes(b.nameJa)
-          ));     
+        } else if (i === 6) {
+          f.nameJa = '腕';
+          f.bones.push(..._sel(b => {
+            for (const _k of ['肩', 'ひじ', '手首']) {
+              if (b.nameJa.endsWith(_k)) {
+                return true;
+              }
+            }
+            return false;
+          }));
+        } else if (i === 7) {
+          f.nameJa = 'パーツ';
+          f.bones.push(..._sel(b => {
+            for (const _k of ['パーツ']) {
+              if (b.nameJa.endsWith(_k)) {
+                return true;
+              }
+            }
+            return false;
+          }));
         } else {
           f.bones.push(..._sel(b => true));
-          /*
-          for (let j = 0; j < _bones.length; ++j) {
-            if (!_bones[j]) {
-              continue;
-            }
-            f.bones.push(j);
-            _bones[j] = null;
-          } */
         }
         this.frames.push(f);
       }
@@ -628,13 +640,23 @@ export class CharBuilder extends PMX.Maker {
     {
       this.indexed();
 
-      for (const bone of this.bones) {
+      const num = this.bones.length;
+      for (let i = 0; i < num; ++i) {
+        const bone = this.bones[i];
         const param = {
+          radius: 0.5,
+          hhalf: 0.5,
           bonea: bone,
           boneb: bone,
           vertices: this.vts,
           faces: this.materials[0].faces,
+          index: i,
         };
+        const nameJa = bone.nameJa;
+        const nameEn = bone.nameEn;
+        if (nameEn.endsWith('End')) {
+          continue;
+        }
         this.makeCyl(param);
       }
     }
