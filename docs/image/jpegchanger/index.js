@@ -857,6 +857,10 @@ class Misc {
               const obj = result?.depthmap;
               if (obj) {
                 window.nearfarview.textContent = `${obj.near} ${obj.far}`;
+
+                this.dumpFocalTable(obj.focaltable,
+                  obj.near, obj.far,
+                );
               }
             }
           }
@@ -909,6 +913,7 @@ class Misc {
     };
     _f(el);
 
+
     const ret = {};
     for (const sub of ['depthmap', 'imagingmodel', 'gcamera']) {
       const obj = {};
@@ -939,6 +944,21 @@ class Misc {
 
     console.log('ret', ret);
     return ret;
+  }
+
+  /**
+   * 
+   * @param {number[]} table 
+   * @param {number} near 
+   * @param {number} far 
+   */
+  dumpFocalTable(table, near, far) {
+    for (let i = 0; i < 256; ++i) {
+      const distance = table[i * 2];
+      const rate = i / 255; // i === 0 のとき、near を返す場合
+      const invd = (1 / near) * (1 - rate) + (1 / far) * rate;
+      console.log('focaltable', i, distance, 1 / invd, table[i * 2 + 1]);
+    }
   }
 
   /**
