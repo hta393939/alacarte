@@ -695,9 +695,6 @@ export class CharBuilder extends PMX.Maker {
         }
 
         switch (bone.nameJa) {
-        case '左ＩＫ':
-        case '右ＩＫ':
-          bone.bits |= PMX.Bone.BIT_IK;
         case '全ての親':
         case '操作中心':
         case 'センター':
@@ -776,6 +773,7 @@ export class CharBuilder extends PMX.Maker {
     const vdiv = param.vdiv || 4;
     const hhalf = param.hhalf || 1;
     const radius = param.radius || 1;
+    const index = param.index || 0;
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
     const boneb = param.boneb;
@@ -784,10 +782,20 @@ export class CharBuilder extends PMX.Maker {
     const startIndex = vts.length;
     const faces = param.faces;
 
+
+    const stepnum = 8;
+    const rsc = (1 / stepnum) * 0.5 * 0.5;
+    const offsetu = 0.5 + ((index % stepnum) * 2 + 1) * rsc;
+    const offsetv = (Math.floor(index / stepnum) * 2 + 1) * rsc;
+
     for (let i = 0; i <= vdiv; ++i) { // 上から下か
       const vang = i * Math.PI / vdiv;
-      let rr = Math.cos(vang);
+      let rr = Math.sin(vang);
+
+      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
       for (let j = 0; j <= hdiv; ++j) {
+        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
+
         const hang = (j % hdiv) * Math.PI * 2 / hdiv;
 
         const cs = Math.cos(hang);
@@ -796,7 +804,7 @@ export class CharBuilder extends PMX.Maker {
         const v = new PMX.Vertex();
 
         let x = -sn * rr;
-        let y = Math.sin(vang);
+        let y = Math.cos(vang);
         let z = cs * rr;
 
         v.n = this.normalize([x, y, z]);
@@ -806,8 +814,8 @@ export class CharBuilder extends PMX.Maker {
           z * radius + bonea.p[2],
         ];
         v.uv = [
-          j / vdiv,
-          i / hdiv,
+          ratex * rsc + offsetu,
+          ratey * rsc + offsetv,
         ];
         v.deformType = PMX.Vertex.DEFORM_BDEF2;
         v.joints = [bonea._index, boneb._index, 0, 0];
