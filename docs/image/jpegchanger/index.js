@@ -894,7 +894,8 @@ class Misc {
       //if (_n.tagName === 'RDF:DESCRIPTION') {
       if (true) {
         for (const attr of _n.attributes) {
-          console.log('attr', attr, attr.name, attr.localName, attr.value);
+          console.log('attr name', attr.name, attr.localName);
+          console.log('attr value', attr.value);
           if (attr.name === 'gcamera:hdrplusmakernote') {
             const _buf = Uint8Array.fromBase64(attr.value);
             console.log('_buf', _buf); // 46781バイトもある
