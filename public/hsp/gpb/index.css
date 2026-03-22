@@ -1,0 +1,41 @@
+
+.drop {
+  width: 8rem;
+  background-color: #f0f0ff;
+  border: dashed 4px black;
+  margin: 1rem;
+  padding: 1rem;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 1rem;
+  user-select: none;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.toright {
+  display: flex;
+  flex-direction: row;
+}
+
+body {
+  background-color: #804080;
+}
+
+#maincanvas {
+  border: solid 1px blue;
+
+  width: calc(8px * 16 * 2);
+  height: calc(8px * 16 * 2);
+}
+
+#subcanvas {
+  border: solid 1px red;
+}
+
+.limit {
+  max-width: 320px;
+  max-height: 320px;
+}
