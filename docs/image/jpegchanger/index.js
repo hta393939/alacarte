@@ -875,7 +875,7 @@ class Misc {
   parseXML(text) {
     const el = document.createElement('div');
     el.innerHTML = text;
-    console.log('el', el);
+    console.log('parseXML el', el);
 
     const strkeys = [
       'confidenceuri', 'depthuri', 'format',
@@ -885,13 +885,38 @@ class Misc {
       'focaltable', 'distortion',
     ];
 
+    /**
+     * 
+     * @param {Node} _n 
+     */
+    const _f = (_n) => {
+      console.log('node', _n.tagName, _n.nodeType);
+      //if (_n.tagName === 'RDF:DESCRIPTION') {
+      if (true) {
+        for (const attr of _n.attributes) {
+          console.log('attr', attr, attr.name, attr.localName, attr.value);
+          if (attr.name === 'gcamera:hdrplusmakernote') {
+            const _buf = Uint8Array.fromBase64(attr.value);
+            console.log('_buf', _buf); // 46781バイトもある
+          }
+        }
+      }
+
+      for (const _n2 of _n.children) {
+        _f(_n2);
+      }
+    };
+    _f(el);
+
     const ret = {};
-    for (const sub of ['depthmap', 'imagingmodel']) {
+    for (const sub of ['depthmap', 'imagingmodel', 'gcamera']) {
       const obj = {};
       ret[sub] = obj;
 
       const el2 = el.getElementsByTagName(`camera:${sub}`);
-      for (const node of el2[0].children) {
+      const firstcs = el2[0]?.children;
+
+      for (const node of (firstcs || [])) {
         console.log('child', node);
         //console.log('', node.tagName, node.textContent);
         const key = node.tagName.split(':')[1].toLowerCase();
