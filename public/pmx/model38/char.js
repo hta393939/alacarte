@@ -369,15 +369,22 @@ export class CharBuilder extends PMX.Maker {
             }
           }
 
-          //// ローカル軸 TODO: 
-          {
-            let xv = new Vec3(1, 0, 0);
-            let yv = new Vec3(0, 1, 0);
-            let zv = new Vec3(0, 0, 1);
-            xv = yv.cross(zv).normalize();
-            yv = zv.cross(xv).normalize();
-            bone.xLocalVector = xv.asArray();
-            bone.zLocalVector = zv.asArray();
+          { // ローカル軸 TODO: 
+            const isElbow = nameJa.endsWith('ひじ');
+            if (isElbow) {
+              bits |= PMX.Bone.BIT_LOCALAXIS;
+
+              let vec = new Vec3(...bones[bone.parent].p);
+              vec.add(1, new Vec3(...bone.p), -1).normalize();
+
+              let xv = new Vec3(1, 0, 0);
+              let yv = vec;
+              let zv = new Vec3(0, 0, 1);
+              xv = yv.cross(zv).normalize();
+              yv = zv.cross(xv).normalize();
+              bone.xLocalVector = xv.asArray();
+              bone.zLocalVector = zv.asArray();
+            }
           }
 
           bone.bits = bits;

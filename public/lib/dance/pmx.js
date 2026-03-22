@@ -148,17 +148,17 @@ class Bone {
     this.bits = 0;
     /** 位置 */
     this.p = [0, 0, 0];
-/**
- * 親ボーンインデックス
- * @default -1
- */
+    /**
+     * 親ボーンインデックス
+     * @default -1
+     */
     this.parent = -1;
 
     this._parentName = '';
-/**
- * 変形階層
- * @default 0
- */
+    /**
+     * 変形階層
+     * @default 0
+     */
     this.layer = 0;
 
     this._endBoneName = '';
@@ -525,10 +525,10 @@ class Morph {
     this.materialMorphs = [];
   }
 
-/**
- * 1行だけ返す。実装済み
- * @returns {string}
- */
+  /**
+   * 1行だけ返す。実装済み
+   * @returns {string}
+   */
   toCSV() {
     const ss = [
       'PmxMorph',
