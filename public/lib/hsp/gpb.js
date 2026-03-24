@@ -41,9 +41,21 @@ export class GpbVertex {
 }
 
 /**
- * パート
+ * 面頂点パーツ
  */
 export class GpbPart {
+  constructor() {
+    this.type = 0;
+    this.format = 0;
+    /** @type {number[]} */
+    this.indices = [];
+  }
+}
+
+/**
+ * 
+ */
+export class GpbMesh {
   constructor() {
     /**
      * @type {GpbAttribute[]}
@@ -60,7 +72,8 @@ export class GpbPart {
     this.posmax = [-99999, -99999, -99999];
     this.radius = 0;
 
-    this.indices = [];
+    /** @type {GpbPart[]} */
+    this.parts = [];
   }
 
   compute() {
@@ -121,8 +134,8 @@ export class Gpb {
 
     /** @type {GpbTable[]} */
     this.tables = [];
-    /** @type {GpbPart[]} */
-    this.parts = [];
+    /** @type {GpbMesh[]} */
+    this.meshes = [];
     /** @type {GpbNode[]} */
     this.nodes = [];
     /** @type {GpbAnimations[]} */
@@ -224,18 +237,27 @@ export class GpbExport extends Gpb {
    * 
    * @param {DataView} p
    * @param {number} c
-   * @param {GpbPart} part 
+   * @param {GpbMesh} m 
    */
-  writePart(p, c, part) {
+  writeMesh(p, c, m) {
     let offset = 0;
 
     // 頂点ごと?
     // 属性ごと?
 
-    offset += this.writefs(p, c + offset, part.posmin);
-    offset += this.writefs(p, c + offset, part.posmax);
-    offset += this.writefs(p, c + offset, part.center);
-    offset += this.writefs(p, c + offset, [part.radius]);
+    offset += this.writefs(p, c + offset, m.posmin);
+    offset += this.writefs(p, c + offset, m.posmax);
+    offset += this.writefs(p, c + offset, m.center);
+    offset += this.writefs(p, c + offset, [m.radius]);
+
+    {
+      const num = 1;
+      offset += this.write32s(p, c + offset, [num]);
+      for (let i = 0; i < num; ++i) {
+        // TODO: 面頂点
+      }
+    }
+
     return offset;
   }
 
@@ -275,19 +297,26 @@ export class GpbExport extends Gpb {
       }
     }
     { // メッシュ
-      const num = this.parts.length;
+      const num = this.meshes.length;
       this.c += this.write32s(p, this.c, [num]);
       for (let i = 0; i < num; ++i) {
-        const part = this.parts[i];
-        this.writePart(part);
+        const mesh = this.meshes[i];
+        this.c += this.writeMesh(p, this.c, mesh);
       }
     }
-    { // ノード
-      this.processNode(this.nodes[0]);
+    {
+      // シーン
+      for (const node of this.nodes) { // ノード
+        this.processNode(node);
+      }
+      // TODO: シーン
     }
     { // アニメーション
       const num = this.animations.length;
       this.c += this.write32s(p, this.c, [num]);
+      for (const anim of this.animations) {
+        this.c += this.writeAnimation(p, this.c, anim);
+      }
     }
 
     return buf.slice(0, this.c);
