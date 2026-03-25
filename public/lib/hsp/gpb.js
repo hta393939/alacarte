@@ -1,12 +1,89 @@
 
 /**
  * 何回か実装してるからどこかにはありそうだが;;
+ * xml から gpb に変換するのとか。
  */
+
+export class Vec3 {
+  constructor() {
+    this.m = [0, 0, 0];
+  }
+  asArray() {
+    return [...this.m];
+  }
+  set x(val) {
+    this.m[0] = val;
+  }
+  get x() {
+    return this.m[0];
+  }
+  set y(val) {
+    this.m[1] = val;
+  }
+  get y() {
+    return this.m[1];
+  }
+  set z(val) {
+    this.m[2] = val;
+  }
+  get z() {
+    return this.m[2];
+  }
+}
+
+export class Mat4 {
+  constructor() {
+    /**
+     * 格納は4x4 row major
+     */
+    this.m = [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    ];
+  }
+
+  setTranslate(x, y, z) {
+    this.m[3] = x;
+    this.m[6] = y;
+    this.m[9] = z;
+    return this;
+  }
+
+  asArrayRow() {
+    return [...this.m];
+  }
+
+  asArrayCol() {
+    return [
+      this.m[0], this.m[4], this.m[8], this.m[12],
+      this.m[1], this.m[5], this.m[9], this.m[13],
+      this.m[2], this.m[6], this.m[10], this.m[14],
+      this.m[3], this.m[7], this.m[11], this.m[15],
+    ];
+  }
+
+  mul(v) {
+    const r = [...v.m, 1];
+    const result = [0, 0, 0, 0];
+    for (let i = 0; i < 4; ++i) {
+      for (let j = 0; j < 4; ++j) {
+        result[i] += this.m[i*4+j] * r[j];
+      }
+    }
+    return new Vec3(result[0], result[1], result[2]);
+  }
+
+}
 
 /**
  * ノード
  */
 export class GpbNode {
+  static TYPE_NODE = 1;
+  static TYPE_JOINT = 2;
+
   constructor() {
     this.name = '';
 
@@ -21,7 +98,7 @@ export class GpbNode {
 export class GpbAttribute {
   static TYPE_POSITION = 0;
   static TYPE_NORMAL = 1;
-  static TYPE_TEXCOORD0 = 3;
+  static TYPE_TEXCOORD0 = 8;
   static TYPE_WEIGHTS = 10;
   static TYPE_JOINTS = 11;
   constructor() {
@@ -44,9 +121,19 @@ export class GpbVertex {
  * 面頂点パーツ
  */
 export class GpbPart {
+  static INDEX8 = 0x1401;
+  static INDEX16 = 0x1403;
+  /** GL_UNSIGNED_INT */
+  static INDEX32 = 0x1405;
+
+  static TRIANGLES = 4;
+  static TRIANGLE_STRIP = 5;
+  static LINES = 1;
+  static LINE_STRIP = 3;
+  static POINTS = 0;
   constructor() {
-    this.type = 0;
-    this.format = 0;
+    this.type = GpbPart.TRIANGLES;
+    this.indexFormat = GpbPart.INDEX32;
     /** @type {number[]} */
     this.indices = [];
   }
