@@ -1,6 +1,4 @@
-/**
- * @file index.js
- */
+import {Gpb} from "../../lib/hsp/gpb.js";
 
 class Misc {
   constructor() {
@@ -49,6 +47,8 @@ class Misc {
   }
 
   saveSetting() {
+    return;
+
     const param = this.param;
     try {
       for (const key in param) {
@@ -402,19 +402,13 @@ class Misc {
    * 
    */
   act() {
-    console.log('act called');
+    console.log('act start');
 
-    /**
-     * 
-     * @param {string} base 
-     * @param {FileSystemDirectoryHandle} handle 
-     */
-    const _resolveInclude = (base, handle) => {
-      const lines = base.split('\r\n');
+    const gpb = new Gpb();
+    const buf = gpb.make();
+    // 
 
-    };
-
-    console.log('act leave');
+    console.log('act end');
   }
 
 }

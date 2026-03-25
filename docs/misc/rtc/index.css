@@ -10,6 +10,9 @@
   #video {
     max-height: 40vh;
   }
+  #subvideo {
+    max-height: 40vh;
+  }
 }
 
 @media (orientation: portrait) {
@@ -17,6 +20,9 @@
     width: 40vw;
   }
   #video {
+    max-width: 80vw;
+  }
+  #subvideo {
     max-width: 80vw;
   }
 }

@@ -51,7 +51,24 @@ class Misc {
     }
   }
 
+  /**
+   * 
+   * @param {MediaStream} ms 
+   */
+  async endStream(ms) {
+    for (const vt of ms.getVideoTracks()) {
+      vt.enabled = false;
+      vt.stop();
+      ms.removeTrack(vt);
+    }
+  }
+
   async enum() {
+    {
+      const dev = await navigator.mediaDevices.getUserMedia({video: true});
+      await this.endStream(dev);
+    }
+
     const parent = document.getElementById('devices');
     const devs = await navigator.mediaDevices.enumerateDevices();
     for (const dev of devs) {
@@ -86,12 +103,17 @@ class Misc {
           } catch (e) {
 
           }
-          if (dev.label.includes('back') || dev.label.startsWith('Android')) {
+          //if (dev.label.includes('back') || dev.label.startsWith('Android')) {
+          if (true) {
             this.track = track;
             /** @type {HTMLVideoElement} */
             const video = document.getElementById('video');
-            if (video) {
+            /** @type {HTMLVideoElement} */
+            const subvideo = document.getElementById('subvideo');
+            if (video && !video.srcObject) {
               video.srcObject = stream;
+            } else {
+              subvideo.srcObject = stream;
             }
           }
         }
