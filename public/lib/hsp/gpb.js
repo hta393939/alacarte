@@ -329,8 +329,15 @@ export class GpbExport extends Gpb {
   writeMesh(p, c, m) {
     let offset = 0;
 
-    // 頂点ごと?
-    // 属性ごと?
+    for (const v of m.vts) {
+      offset += this.writefs(p, c + offset, v.p);
+      offset += this.writefs(p, c + offset, v.n);
+      offset += this.writefs(p, c + offset, v.uv);
+
+      offset += this.writefs(p, c + offset, v.joints);
+      offset += this.writefs(p, c + offset, v.weights);
+      // 属性ごと?
+    }
 
     offset += this.writefs(p, c + offset, m.posmin);
     offset += this.writefs(p, c + offset, m.posmax);
@@ -338,10 +345,13 @@ export class GpbExport extends Gpb {
     offset += this.writefs(p, c + offset, [m.radius]);
 
     {
-      const num = 1;
+      const num = m.parts.length;
       offset += this.write32s(p, c + offset, [num]);
-      for (let i = 0; i < num; ++i) {
-        // TODO: 面頂点
+      for (const part of m.parts) {
+        offset += this.write32s(p, c + offset, [
+          part.type, part.indexFormat, part.indices.length * 4
+        ]);
+        offset += this.write32s(p, c + offset, part.indices);
       }
     }
 
@@ -393,6 +403,11 @@ export class GpbExport extends Gpb {
     }
     {
       // シーン
+      const sceneNum = 1;
+      this.c += this.write32s(p, this.c, [sceneNum]);
+
+
+      
       for (const node of this.nodes) { // ノード
         this.processNode(node);
       }
