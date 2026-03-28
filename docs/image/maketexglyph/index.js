@@ -48,31 +48,34 @@ class Misc {
    * @param {HTMLCanvasElement} canvas 
    */
   draw(canvas) {
+    canvas.width = 1000;
+    canvas.height = 1400;
+
     const w = canvas.width;
     const h = canvas.height;
     const one = w / 8;
+
+    const offsety = (h - one * 8) * 0.5;
 
     const c = canvas.getContext('2d');
     c.fillStyle = 'rgba(255, 255, 255, 1)';
     c.fillRect(0, 0, w, h);
 
-          c.font = `normal 24px Segoe UI Emoji`;
+          c.font = `normal 100px Segoe UI Emoji`;
           c.textAlign = 'center';
           c.textBaseline = 'middle';
           c.fillStyle = 'rgb(0,0,0)';
 
     if (true) {
+      let count = 0;
       for (let i = 0; i < 8; ++i) {
         for (let j = 0; j < 8; ++j) {
           let cx = (j + 0.5) * one;
-          let cy = (i + 0.5) * one;
-
-          //c.rotate(Math.PI * 0.5);
-          //c.fillText(`z`, one * 3 / 2, one * 4);
-          //c.fillText(`a`, one * 3 / 2, one * 1);
-          c.fillText(`\u{1f99c}`, cx, cy);
-          //c.fillText(`c`, one * 3 / 2, one * 3);
-          c.resetTransform();
+          let cy = (i + 0.5) * one + offsety;
+          //let str = String.fromCodePoint(0x1f32d + count); // 食べ物
+          let str = String.fromCodePoint(0x1f400 + count);
+          c.fillText(str, cx, cy);
+          count += 1;
         }
       }
     }
