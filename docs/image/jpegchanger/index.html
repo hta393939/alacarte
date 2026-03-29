@@ -16,14 +16,22 @@
           <div></div>
         </div>
 
-        <div hidden>
+        <div>
+        <div class="row">
           <!-- 8, 12 -->
-          <input type="range" id="divnum" value="8" /><div id="divnumview"></div>
+分割数<input class="pointer" type="range" id="divnum" value="8" min="4" max="12" /><div id="divnumview"></div>
         </div>
 
-        <input type="number" min="0" max="30" value="0" id="startcount" />
-        <input type="number" min="1" max="30" value="1" id="addcount" />
-        <input type="number" min="1" max="30" value="10" id="outcount" />
+        <div class="row">
+        <input type="range" min="0" max="30" value="0" id="startcount" /><div id="startcountview"></div>
+        </div>
+        <div class="row">
+        <input type="range" min="1" max="30" value="1" id="addcount" /><div id="addcountview"></div>
+        </div>
+        <div class="row">
+        <input type="range" min="1" max="30" value="10" id="outcount" /><div id="outcountview"></div>
+        </div>
+        </div>
 
         <button class="pointer" id="openfile">ファイルを開く</button>
         <button class="pointer" id="opendir">ワーキングフォルダを指定する ←</button>

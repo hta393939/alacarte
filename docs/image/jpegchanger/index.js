@@ -94,6 +94,13 @@ class Misc {
       const el = document.getElementById(k);
       obj[k] = el?.checked;
     }
+    for (const k of ['divnum']) {
+      const el = document.getElementById(k);
+      const val = Number.parseFloat(el?.value);
+      if (Number.isFinite(val)) {
+        obj[k] = val;
+      }
+    }
     return obj;
   }
 
@@ -322,12 +329,12 @@ class Misc {
 
     const result = await this.searchDir(dirHandle, param);
     if (!result) {
-      console.warn('miniFiles failure');
+      console.warn('searchDir failure');
       return;
     }
 
-
-
+    await this.miniFiles(result, param);
+    console.log('processDir end');
   }
 
   /**
@@ -338,18 +345,21 @@ class Misc {
   async miniFiles(dirobj, param) {
     const divnum = param.divnum || 8;
     /** @type {FileSystemDirectoryHandle} */
-    const dstDir = param.imagesDir;
+    const dstDir = dirobj.imagesDir;
 
-    for (const [k, v] of dirobj.srcDir.entries()) {
+    for await (const [k, v] of dirobj.srcDir.entries()) {
       if (v.kind !== 'file') {
         continue;
       }
       /** @type {File} */
-      const f = v.getFile();
+      const f = await v.getFile();
       const srcab = await f.arrayBuffer();
 
-      // 分離して2or0を取得して縦横各1/8倍して画像を作成する
-      const off = await this.imageBufToOff(srcab, divnum);
+      // 分離して2or0を取得する
+      const info = await this.parseJpeg(srcab);
+      const onejpeg = info.frames[(info.frames.length >= 3) ? 2 : 0].buffer;
+
+      const off = await this.imageBufToOff(onejpeg, divnum, true);
 
       const dstblob = await off.convertToBlob({type: 'image/jpeg'});
 
@@ -367,13 +377,18 @@ class Misc {
    * @param {*} param 
    */
   async searchDir(dirHandle, param) {
+    console.log('searchDir', dirHandle);
+
     /** @type {FileSystemDirectoryHandle} */
     let srcDir = null;
     /** @type {FileSystemDirectoryHandle} */
     let dstDir = null;
     /** @type {FileSystemDirectoryHandle} */
     let srcSubDir = null;
-    for (const [k, v] of dirHandle.entries()) {
+    /** @type {FileSystemDirectoryHandle} */
+    let dstSubDir = null;
+
+    for await (const [k, v] of dirHandle.entries()) {
       if (v.kind === 'file') {
         continue;
       }
@@ -388,14 +403,21 @@ class Misc {
         srcSubDir = v;
         continue;
       }
+
       dstDir = v;
+      try { // images フォルダを作成する
+        dstSubDir = await dstDir.getDirectoryHandle('images', {create: true});
+      } catch (e) {
+        console.warn('create', e);
+      }
     }
 
     console.log('searchDir end');
     return {
-      src: srcDir,
-      srcSub: srcSubDir,
+      srcDir,
+      srcSubDir,
       dst: dstDir,
+      imagesDir: dstSubDir,
     };
   }
 
@@ -525,7 +547,7 @@ class Misc {
       });
     }
 
-    for (const k of ['startcount', 'addcount', 'outcount']) {
+    for (const k of ['startcount', 'addcount', 'outcount', 'divnum']) {
       const el = document.getElementById(k);
       const _update = () => {
         const val = Number.parseFloat(el.value);
@@ -772,9 +794,9 @@ class Misc {
   }
 
   /**
-   * 
+   * ファイルバイナリからタグパースする
    * @param {ArrayBuffer} ab 
-   * @returns 
+   * @returns {{tags:any[]}}
    */
   async parseOneJpeg(ab) {
     let info = {
@@ -913,6 +935,9 @@ class Misc {
       let end = (i + 1 < frames.length)
         ? frames[i+1].tags[0].offset : byteNum;
       const sub = ab.slice(begin, end);
+
+      one.buffer = sub;
+
       const img = document.createElement('img');
       img.classList.add('thumb');
       img.src = URL.createObjectURL(new Blob([sub]));
@@ -931,15 +956,20 @@ class Misc {
               if (obj) {
                 window.nearfarview.textContent = `${obj.near} ${obj.far}`;
 
-                this.dumpFocalTable(obj.focaltable,
-                  obj.near, obj.far,
-                );
+                if (Array.isArray(obj.focaltable)) {
+                  this.dumpFocalTable(obj.focaltable,
+                    obj.near, obj.far,
+                  );
+                }
               }
             }
           }
         }
       }
+
     }
+
+    info.frames = frames;
 
     return info;
   }
@@ -1051,18 +1081,33 @@ class Misc {
   /**
    * ファイルバイナリからオフキャンバスへ
    * @param {ArrayBuffer} ab ファイルバイト
-   * @param {number} divnum 分割数
+   * @param {number} indivnum 分割数
+   * @param {boolean} samesize 同じサイズに補正する場合
    */
-  async imageBufToOff(ab, divnum = 1) {
-    const bitmap = await window.createImageBitmap(ab);
-    const w = Math.ceil(bitmap.width / divnum);
-    const h = Math.ceil(bitmap.height / divnum);
+  async imageBufToOff(ab, indivnum, samesize) {
+    const bitmap = await window.createImageBitmap(new Blob([ab]));
+    let w = bitmap.width;
+    let h = bitmap.height;
+    if (samesize) { // 6144x8160を基準とする場合
+      if (h > w) {
+        w = 6144;
+        h = 8160;
+      } else {
+        w = 8160;
+        h = 6144;
+      }
+    }
+    w = Math.ceil(w / indivnum);
+    h = Math.ceil(h / indivnum);
+
     const off = new OffscreenCanvas(w, h);
     const c = off.getContext('2d');
     c.drawImage(bitmap,
       0, 0, bitmap.width, bitmap.height,
       0, 0, w, h,
     );
+
+    console.log('ToOff', w, h);
     return off;
   }
 
