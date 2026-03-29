@@ -319,11 +319,84 @@ class Misc {
   async processDir(dirHandle) {
     console.log('processDir');
     const param = this.gatherParam();
-    const result = await this.moveAndFile(dirHandle, param);
+
+    const result = await this.searchDir(dirHandle, param);
     if (!result) {
-      console.warn('moveAndFile failure');
+      console.warn('miniFiles failure');
       return;
     }
+
+
+
+  }
+
+  /**
+   * 
+   * @param {*} dirobj ディレクトリハンドルたち
+   * @param {*} param パラメータたち
+   */
+  async miniFiles(dirobj, param) {
+    const divnum = param.divnum || 8;
+    /** @type {FileSystemDirectoryHandle} */
+    const dstDir = param.imagesDir;
+
+    for (const [k, v] of dirobj.srcDir.entries()) {
+      if (v.kind !== 'file') {
+        continue;
+      }
+      /** @type {File} */
+      const f = v.getFile();
+      const srcab = await f.arrayBuffer();
+
+      // 分離して2or0を取得して縦横各1/8倍して画像を作成する
+      const off = await this.imageBufToOff(srcab, divnum);
+
+      const dstblob = await off.convertToBlob({type: 'image/jpeg'});
+
+      const name = k.split('.')[0]; // 前方だけ
+      const dstFile = await dstDir.getFileHandle(`${name}.jpg`, {create: true});
+      const ws = await dstFile.createWritable();
+      await ws.write(dstblob);
+      await ws.close();
+    }
+  }
+
+  /**
+   * 
+   * @param {FileSystemDirectoryHandle} dirHandle 
+   * @param {*} param 
+   */
+  async searchDir(dirHandle, param) {
+    /** @type {FileSystemDirectoryHandle} */
+    let srcDir = null;
+    /** @type {FileSystemDirectoryHandle} */
+    let dstDir = null;
+    /** @type {FileSystemDirectoryHandle} */
+    let srcSubDir = null;
+    for (const [k, v] of dirHandle.entries()) {
+      if (v.kind === 'file') {
+        continue;
+      }
+      if (k === 'org') {
+        srcDir = v;
+        continue;
+      }
+      if (!k.startsWith('_')) {
+        continue;
+      }
+      if (k.endsWith('db')) {
+        srcSubDir = v;
+        continue;
+      }
+      dstDir = v;
+    }
+
+    console.log('searchDir end');
+    return {
+      src: srcDir,
+      srcSub: srcSubDir,
+      dst: dstDir,
+    };
   }
 
   makeFilename(num) {
@@ -973,6 +1046,24 @@ class Misc {
     }
     let val = far * near / (far - x * (far - near));
     return val;
+  }
+
+  /**
+   * ファイルバイナリからオフキャンバスへ
+   * @param {ArrayBuffer} ab ファイルバイト
+   * @param {number} divnum 分割数
+   */
+  async imageBufToOff(ab, divnum = 1) {
+    const bitmap = await window.createImageBitmap(ab);
+    const w = Math.ceil(bitmap.width / divnum);
+    const h = Math.ceil(bitmap.height / divnum);
+    const off = new OffscreenCanvas(w, h);
+    const c = off.getContext('2d');
+    c.drawImage(bitmap,
+      0, 0, bitmap.width, bitmap.height,
+      0, 0, w, h,
+    );
+    return off;
   }
 
 }
