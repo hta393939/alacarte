@@ -1,4 +1,9 @@
 
+// LINES 1
+// TRIANGLE 4
+// COLOR 3, TAN 4, BINORMAL 5, BLENDWEIGHTS 6, BLENDINDICES 7
+
+
 /**
  * 何回か実装してるからどこかにはありそうだが;;
  * xml から gpb に変換するのとか。
@@ -98,9 +103,13 @@ export class GpbNode {
 export class GpbAttribute {
   static TYPE_POSITION = 0;
   static TYPE_NORMAL = 1;
+  static TYPE_COLOR = 3;
+  static TYPE_TANGENT = 4;
+  static TYPE_BINORMAL = 5;
+  static TYPE_WEIGHTS = 6;
+  static TYPE_JOINTS = 7;
   static TYPE_TEXCOORD0 = 8;
-  static TYPE_WEIGHTS = 10;
-  static TYPE_JOINTS = 11;
+
   constructor() {
     this.type = GpbAttribute.TYPE_POSITION;
     this.num = 3;
@@ -188,19 +197,21 @@ export class GpbMesh {
 export class GpbTable {
   static TYPE_SCENE = 1;
   static TYPE_NODE = 2;
+  static TYPE_ANIMATIONS = 3;
   static TYPE_ANIMATION = 4;
   static TYPE_MESH = 34;
-  static TYPE_ANIMATIONS = 3;
   static TYPE_FONT = 128;
   constructor() {
-    this.type = GpbTable.TYPE_NODENODE;
     this.name = 'node0';
+    this.type = GpbTable.TYPE_NODE;
     this.offset = 0;
     this._infile = 0;
   }
 }
 
 export class GpbAnimation {
+  static ROTATE_TRANSLATE = 16;
+  static SCALE_ROTATE_TRANSLATE = 17;
   constructor() {
     this.channel = '';
   }
@@ -307,6 +318,14 @@ export class GpbExport extends Gpb {
     return num * 4;
   }
 
+  writeNode() {
+
+  }
+
+  writeJoint() {
+
+  }
+
   /**
    * 
    * @param {GpbNode} node 
@@ -334,8 +353,8 @@ export class GpbExport extends Gpb {
       offset += this.writefs(p, c + offset, v.n);
       offset += this.writefs(p, c + offset, v.uv);
 
-      offset += this.writefs(p, c + offset, v.joints);
       offset += this.writefs(p, c + offset, v.weights);
+      offset += this.writefs(p, c + offset, v.joints);
       // 属性ごと?
     }
 
@@ -359,7 +378,7 @@ export class GpbExport extends Gpb {
   }
 
   /**
-   * 
+   * 未実装
    * @param {DataView} p 
    * @param {number} c 
    * @param {GpbAnimation} anim 
@@ -371,9 +390,13 @@ export class GpbExport extends Gpb {
     return offset;
   }
 
+  /**
+   * API
+   * @returns {ArrayBuffer}
+   */
   make() {
     this.c = 0;
-    const buf = new ArrayBuffer(1024 * 1024);
+    const buf = new ArrayBuffer(1024 * this.vts.length + 1024 * 1024);
     const p = new DataView(buf);
 
     { // ヘッダ
@@ -386,11 +409,11 @@ export class GpbExport extends Gpb {
       this.c += this.write32s(p, this.c, [num]);
       for (let i = 0; i < num; ++i) {
         const table = this.tables[i];
-        table._infile = this.c;
 
+        this.c += this.writestr(p, this.c, table.name);
         this.c += this.write32s(p, this.c,
           [table.type, table.offset]);
-        this.c += this.writestr(p, this.c, table.name);
+        table._infile = this.c - 4;
       }
     }
     { // メッシュ
