@@ -447,5 +447,44 @@ export class GpbExport extends Gpb {
     return buf.slice(0, this.c);
   }
 
+  /**
+   * .material ファイルを作成する
+   * @returns {string}
+   */
+  makeMaterial() {
+    const lines = [];
+    {
+      lines.push(...[
+`material material1 {`,
+`  u_worldViewProjectMatrix = WORLD_VIEW_PROJECTION_MATRIX`,
+`  u_matrixPalette = MATRIX_PALETTE`,
+`  sampler u_diffuseTexture {`,
+`    path = res/body_SD.png`,
+`    mipmap = true`,
+`    wrapS = REPEAT`,
+`    wrapT = REPEAT`,
+`    minFilter = LINEAR_MIPMAP_LINEAR`,
+`    magFilter = LINEAR`,
+`  }`,
+`  renderState {`,
+`    cullFace = true`,
+`    depthTest = true`,
+`    blendSrc = SRC_ALPHA`,
+`    blendDst = ONE_MINUS_SRC_ALPHA`,
+`  }`,
+`  technique {`,
+`    pass {`,
+`      vertexShader = res/shaders/textured.vert`,
+`      fragmentShader = res/shaders/textured.frag`,
+`      defines = SKINNING;SKINNING_JOINT_COUNT 12;VERTEX_COLOR`,
+`    }`,
+`  }`,
+`}`,
+'',
+]);
+    }
+    return lines.join('\n');
+  }
+
 }
 

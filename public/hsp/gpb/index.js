@@ -399,14 +399,14 @@ class Misc {
   }
 
   /**
-   * 
+   * ファイル作成
    */
   act() {
     console.log('act start');
 
     const gpb = new Gpb();
     const buf = gpb.make();
-    // 
+    this.download(new Blob([buf]), `a.gpb`);
 
     console.log('act end');
   }
