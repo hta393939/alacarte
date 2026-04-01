@@ -453,13 +453,35 @@ export class GpbExport extends Gpb {
    */
   makeMaterial() {
     const lines = [];
+
     {
       lines.push(...[
-`material material1 {`,
+`material colored {`,
+`  u_worldViewProjectMatrix = WORLD_VIEW_PROJECTION_MATRIX`,
+`  u_matrixPalette = MATRIX_PALETTE`,
+`  renderState {`,
+`    cullFace = true`,
+`    depthTest = true`,
+`    blendSrc = SRC_ALPHA`,
+`    blendDst = ONE_MINUS_SRC_ALPHA`,
+`  }`,
+`  technique {`,
+`    pass {`,
+`      vertexShader = res/shaders/colored.vert`,
+`      fragmentShader = res/shaders/colored.frag`,
+`    }`,
+`  }`,
+`}`,
+'',
+]);
+    }
+
+    {
+      lines.push(...[
+`material textured {`,
 `  u_worldViewProjectMatrix = WORLD_VIEW_PROJECTION_MATRIX`,
 `  u_matrixPalette = MATRIX_PALETTE`,
 `  sampler u_diffuseTexture {`,
-`    path = res/body_SD.png`,
 `    mipmap = true`,
 `    wrapS = REPEAT`,
 `    wrapT = REPEAT`,
@@ -476,13 +498,32 @@ export class GpbExport extends Gpb {
 `    pass {`,
 `      vertexShader = res/shaders/textured.vert`,
 `      fragmentShader = res/shaders/textured.frag`,
-`      defines = SKINNING;SKINNING_JOINT_COUNT 12;VERTEX_COLOR`,
 `    }`,
 `  }`,
 `}`,
 '',
 ]);
     }
+
+    {
+      lines.push(...[
+`material material1: textured {`,
+`  u_matrixPalette = MATRIX_PALETTE`,
+`  sampler u_diffuseTexture {`,
+`    path = res/body_SD.png`,
+`    wrapS = REPEAT`,
+`    wrapT = REPEAT`,
+`  }`,
+`  technique {`,
+`    pass {`,
+`      defines = SKINNING;SKINNING_JOINT_COUNT 12`,
+`    }`,
+`  }`,
+`}`,
+'',
+]);
+    }
+
     return lines.join('\n');
   }
 
