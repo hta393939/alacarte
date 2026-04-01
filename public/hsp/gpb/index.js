@@ -1,4 +1,6 @@
-import {GpbExport} from "../../lib/hsp/gpb.js";
+import {
+  GpbExport, GpbMesh, GpbNode, GpbPart
+} from "../../lib/hsp/gpb.js";
 
 class Misc {
   constructor() {
@@ -401,12 +403,35 @@ class Misc {
     console.log('act start');
 
     const gpb = new GpbExport();
-    {
+    { // 頂点と面
+      const mn = new GpbNode();
+
+      const m = new GpbMesh();
+      const part = new GpbPart();
       // 頂点と面
+      m.parts.push(part);
+      m.compute();
+      gpb.meshes.push(m);
+      gpb.nodes.push(mn);
+    }
+    { // 頂点と面
+      const mn = new GpbNode();
+
+      const m = new GpbMesh();
+      const part = new GpbPart();
+      m.parts.push(part);
+      m.compute();
+      gpb.meshes.push(m);
+      gpb.nodes.push(mn);
     }
 
+    let name = 'foo';
+
     const buf = gpb.make();
-    this.download(new Blob([buf]), `a.gpb`);
+    this.download(new Blob([buf]), `${name}.gpb`);
+
+    const text = gpb.makeMaterial();
+    this.download(new Blob([text]), `${name}.material`);
 
     console.log('act end');
   }
