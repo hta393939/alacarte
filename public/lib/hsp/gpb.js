@@ -254,7 +254,7 @@ export class Gpb {
 
 export class GpbExport extends Gpb {
   constructor() {
-
+    super();
   }
 
   /**
@@ -396,7 +396,7 @@ export class GpbExport extends Gpb {
    */
   make() {
     this.c = 0;
-    const buf = new ArrayBuffer(1024 * this.vts.length + 1024 * 1024);
+    const buf = new ArrayBuffer(1024 * 1024 + 1024 * 1024);
     const p = new DataView(buf);
 
     { // ヘッダ

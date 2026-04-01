@@ -1,4 +1,4 @@
-import {Gpb} from "../../lib/hsp/gpb.js";
+import {GpbExport} from "../../lib/hsp/gpb.js";
 
 class Misc {
   constructor() {
@@ -19,9 +19,7 @@ class Misc {
       destsize: 512,
     };
 
-    /**
-     * @type {FileSystemDirectoryHandle}
-     */
+    /** @type {FileSystemDirectoryHandle} */
     this.dirHandle = null;
   }
 
@@ -29,7 +27,7 @@ class Misc {
     this.loadSetting();
     this.setListener();
 
-    this.replace();
+    //this.replace();
   }
 
   loadSetting() {
@@ -147,9 +145,7 @@ class Misc {
       mode: 'readwrite',
       //id, startIn,
     };
-    /**
-     * @type {FileSystemDirectoryHandle}
-     */
+    /** @type {FileSystemDirectoryHandle} */
     const dh = await window.showDirectoryPicker(opt);
     this.dirHandle = dh;
     const el = document.getElementById('dirview');
@@ -404,7 +400,11 @@ class Misc {
   act() {
     console.log('act start');
 
-    const gpb = new Gpb();
+    const gpb = new GpbExport();
+    {
+      // 頂点と面
+    }
+
     const buf = gpb.make();
     this.download(new Blob([buf]), `a.gpb`);
 
