@@ -966,6 +966,7 @@ class Misc {
               const imaging = result?.imagingmodel;
               if (imaging) {
                 window.focalview.textContent = `${imaging.focallengthx} ${imaging.focallengthy}`;
+                window.whview.textContent = `${imaging.imagewidth} ${imaging.imageheight}`;
               }
             }
           }
