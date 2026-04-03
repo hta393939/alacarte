@@ -1,4 +1,5 @@
 import {
+  GpbAttribute, GpbTable,
   GpbExport, GpbMesh, GpbNode, GpbPart
 } from "../../lib/hsp/gpb.js";
 
@@ -403,7 +404,26 @@ class Misc {
     console.log('act start');
 
     const gpb = new GpbExport();
-    { // 頂点と面
+
+    { // NOTE: オフセットリストはファイル中に登場する順番に揃える
+      for (const v of [
+        {type: GpbTable.TYPE_MESH, name: 'mesh1'},
+        {type: GpbTable.TYPE_MESH, name: 'mesh2'},
+        {type: GpbTable.TYPE_SCENE, name: 'scene1'},
+        {type: GpbTable.TYPE_NODE, name: 'node0'},
+        {type: GpbTable.TYPE_NODE, name: 'node1'},
+        {type: GpbTable.TYPE_NODE, name: 'node2'},
+        {type: GpbTable.TYPE_ANIMATIONS, name: '__ANIMATIONS__'},
+      ]) {
+        const attr = new GpbTable();
+        attr.type = v.type;
+        attr.name = v.name;
+        gpb.tables.push(attr);
+      }
+    }
+
+
+    { // メッシュ 頂点と面
       const mn = new GpbNode();
 
       const m = new GpbMesh();
@@ -424,6 +444,22 @@ class Misc {
       gpb.meshes.push(m);
       gpb.nodes.push(mn);
     }
+
+    { // シーン
+
+    }
+    { // ノード
+
+    }
+    { // ノード
+
+    }
+    { // ノード
+
+    }
+    { // アニメーション 空でいいのか?
+    }
+
 
     let name = 'foo';
 

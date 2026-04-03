@@ -328,15 +328,20 @@ export class GpbExport extends Gpb {
 
   /**
    * 
+   * ※ノード
+   * @param {DataView} p 
    * @param {GpbNode} node 
+   * @returns {void}
    */
-  processNode(node) {
-    // 
-    // 
-    for (const c of node.children) {
-      this.processNode(c);
+  processNode(p, node) {
+    const cnum = node.children.length;
+    this.c += this.write32s(p, this.c, [cnum]);
+    for (const child of node.children) {
+      this.processNode(p, child);
     }
-    // 
+
+    // TODO: ノード
+
   }
 
   /**
