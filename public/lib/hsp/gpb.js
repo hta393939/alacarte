@@ -399,6 +399,8 @@ export class GpbExport extends Gpb {
     const buf = new ArrayBuffer(1024 * 1024 + 1024 * 1024);
     const p = new DataView(buf);
 
+    let offsetIndex = 0;
+
     { // ヘッダ
       this.c += this.write8s(p, this.c,
         [0xAB, 0x47, 0x50, 0x42, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A,  1, 5]
@@ -417,6 +419,10 @@ export class GpbExport extends Gpb {
       }
     }
     { // メッシュ
+      // メッシュ位置
+      this.tables[offsetIndex].offset = this.c;
+      offsetIndex += 1;
+
       const num = this.meshes.length;
       this.c += this.write32s(p, this.c, [num]);
       for (let i = 0; i < num; ++i) {
@@ -424,23 +430,41 @@ export class GpbExport extends Gpb {
         this.c += this.writeMesh(p, this.c, mesh);
       }
     }
+    this.c += this.write32s(p, this.c, [2]); // シーンとアニメ
     {
-      // シーン
-      const sceneNum = 1;
-      this.c += this.write32s(p, this.c, [sceneNum]);
+      // シーン位置
+      this.tables[offsetIndex].offset = this.c;
+      offsetIndex += 1;
 
+      const cNum = 2;
+      this.c += this.write32s(p, this.c, [cNum]);  
+      { // ノード
+        // ノード位置
+        this.tables[offsetIndex].offset = this.c;
+        offsetIndex += 1;
 
-      
-      for (const node of this.nodes) { // ノード
+        const node = this.nodes[0];
         this.processNode(node);
       }
-      // TODO: シーン
+      this.c += this.writestr(p, this.c, ''); // カメラ名
+      this.c += this.writefs(p, this.c, [0.25, 0.25, 0.25]); // ambient
     }
     { // アニメーション
+      // アニメーションズ位置
+      this.tables[offsetIndex].offset = this.c;
+      offsetIndex += 1;
+
       const num = this.animations.length;
       this.c += this.write32s(p, this.c, [num]);
       for (const anim of this.animations) {
         this.c += this.writeAnimation(p, this.c, anim);
+      }
+    }
+
+    { // 戻って書き込む
+      for (const table of this.tables) {
+        this.c = table._infile;
+        this.write32s(p, this.c, [table.offset]);
       }
     }
 

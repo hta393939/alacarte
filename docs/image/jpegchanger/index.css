@@ -31,6 +31,10 @@
   flex-direction: row;
 }
 
+.space {
+  width: 1rem;
+}
+
 #maincanvas {
   max-height: 128px;
 }

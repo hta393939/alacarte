@@ -962,6 +962,11 @@ class Misc {
                   );
                 }
               }
+
+              const imaging = result?.imagingmodel;
+              if (imaging) {
+                window.focalview.textContent = `${imaging.focallengthx} ${imaging.focallengthy}`;
+              }
             }
           }
         }
