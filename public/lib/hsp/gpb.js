@@ -91,6 +91,7 @@ export class GpbNode {
 
   constructor() {
     this.name = '';
+    this.type = GpbNode.TYPE_NODE;
 
     /** ファイルでの位置 */
     this._infile = 0;
@@ -99,6 +100,20 @@ export class GpbNode {
     this.children = [];
   }
 }
+
+/**
+ * シーン
+ */
+export class GpbScene {
+  constructor() {
+    /** @type {GpbNode[]} */
+    this.children = [];
+
+    this.cameraName = '';
+    this.ambient = [0.5, 0.25, 0.125];
+  }
+}
+
 
 export class GpbAttribute {
   static TYPE_POSITION = 0;
@@ -228,14 +243,18 @@ export class GpbAnimations {
 
 export class Gpb {
   constructor() {
+    /** ファイルバイトオフセット */
     this.c = 0;
+
+    this.major = 1;
+    this.minor = 5;
 
     /** @type {GpbTable[]} */
     this.tables = [];
     /** @type {GpbMesh[]} */
     this.meshes = [];
-    /** @type {GpbNode[]} */
-    this.nodes = [];
+    /** シーン */
+    this.scene = new GpbScene();
     /** @type {GpbAnimations[]} */
     this.animations = [];
   }
@@ -247,6 +266,8 @@ export class Gpb {
   parse(ab) {
     const ret = {};
     this.c = 0;
+    this.c += 9;
+
     return ret;
   }
 
@@ -255,6 +276,9 @@ export class Gpb {
 export class GpbExport extends Gpb {
   constructor() {
     super();
+
+    /** テーブル順管理用 */
+    this.tableOffsetIndex = 0;
   }
 
   /**
@@ -318,14 +342,6 @@ export class GpbExport extends Gpb {
     return num * 4;
   }
 
-  writeNode() {
-
-  }
-
-  writeJoint() {
-
-  }
-
   /**
    * 
    * ※ノード
@@ -334,6 +350,12 @@ export class GpbExport extends Gpb {
    * @returns {void}
    */
   processNode(p, node) {
+
+    // NOTE: テーブルオフセット
+    this.tables[this.tableOffsetIndex].offset = this.c;
+    this.tableOffsetIndex += 1;
+
+
     const cnum = node.children.length;
     this.c += this.write32s(p, this.c, [cnum]);
     for (const child of node.children) {
@@ -341,7 +363,29 @@ export class GpbExport extends Gpb {
     }
 
     // TODO: ノード
+  }
 
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {GpbScene} scene 
+   * @returns {undefined}
+   */
+  processScene(p, scene) {
+
+    // NOTE: テーブルオフセット
+    this.tables[this.tableOffsetIndex].offset = this.c;
+    this.tableOffsetIndex += 1;
+
+
+    const num = scene.children.length;
+    this.c += this.write32s(p, this.c, [num]);
+    for (const node of scene.children) {
+      this.processNode(p, node);
+    }
+
+    this.c += this.writestr(p, this.c, scene.cameraName);
+    this.c += this.writefs(p, this.c, scene.ambient);
   }
 
   /**
@@ -400,15 +444,15 @@ export class GpbExport extends Gpb {
    * @returns {ArrayBuffer}
    */
   make() {
+    this.tableOffsetIndex = 0;
     this.c = 0;
     const buf = new ArrayBuffer(1024 * 1024 + 1024 * 1024);
     const p = new DataView(buf);
 
-    let offsetIndex = 0;
-
     { // ヘッダ
       this.c += this.write8s(p, this.c,
-        [0xAB, 0x47, 0x50, 0x42, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A,  1, 5]
+        [0xAB, 0x47, 0x50, 0x42, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A,
+          this.major, this.minor]
       );
     }
     { // テーブル
@@ -424,40 +468,26 @@ export class GpbExport extends Gpb {
       }
     }
     { // メッシュ
-      // メッシュ位置
-      this.tables[offsetIndex].offset = this.c;
-      offsetIndex += 1;
-
       const num = this.meshes.length;
       this.c += this.write32s(p, this.c, [num]);
       for (let i = 0; i < num; ++i) {
+        // NOTE: テーブルオフセット
+        this.tables[this.tableOffsetIndex].offset = this.c;
+        this.tableOffsetIndex += 1;
+
         const mesh = this.meshes[i];
         this.c += this.writeMesh(p, this.c, mesh);
       }
     }
-    this.c += this.write32s(p, this.c, [2]); // シーンとアニメ
-    {
-      // シーン位置
-      this.tables[offsetIndex].offset = this.c;
-      offsetIndex += 1;
+    this.c += this.write32s(p, this.c, [2]); // シーンとアニメで2
 
-      const cNum = 2;
-      this.c += this.write32s(p, this.c, [cNum]);  
-      { // ノード
-        // ノード位置
-        this.tables[offsetIndex].offset = this.c;
-        offsetIndex += 1;
+    this.processScene(p, this.scene);
 
-        const node = this.nodes[0];
-        this.processNode(node);
-      }
-      this.c += this.writestr(p, this.c, ''); // カメラ名
-      this.c += this.writefs(p, this.c, [0.25, 0.25, 0.25]); // ambient
-    }
     { // アニメーション
       // アニメーションズ位置
-      this.tables[offsetIndex].offset = this.c;
-      offsetIndex += 1;
+      // NOTE: テーブルオフセット
+      this.tables[this.tableOffsetIndex].offset = this.c;
+      this.tableOffsetIndex += 1;
 
       const num = this.animations.length;
       this.c += this.write32s(p, this.c, [num]);
@@ -465,6 +495,8 @@ export class GpbExport extends Gpb {
         this.c += this.writeAnimation(p, this.c, anim);
       }
     }
+
+    console.log(`table`, this.tableOffsetIndex, this.tables.length);
 
     { // 戻って書き込む
       for (const table of this.tables) {
