@@ -1,7 +1,8 @@
 import {
   GpbAttribute, GpbTable,
   GpbExport, GpbMesh, GpbNode, GpbPart,
-  GpbVertex
+  GpbVertex,
+  GpbAnimation
 } from "../../lib/hsp/gpb.js";
 
 class Misc {
@@ -411,24 +412,6 @@ class Misc {
 
     const gpb = new GpbExport();
 
-    if (false) { // NOTE: オフセットリストはファイル中に登場する順番に揃える
-      for (const v of [
-        {type: GpbTable.TYPE_MESH, name: 'mesh1'},
-        {type: GpbTable.TYPE_MESH, name: 'mesh2'},
-        {type: GpbTable.TYPE_SCENE, name: 'scene1'},
-        {type: GpbTable.TYPE_NODE, name: 'node0'},
-        {type: GpbTable.TYPE_NODE, name: 'node1'},
-        {type: GpbTable.TYPE_NODE, name: 'node2'},
-        {type: GpbTable.TYPE_ANIMATIONS, name: '__ANIMATIONS__'},
-      ]) {
-        const attr = new GpbTable();
-        attr.type = v.type;
-        attr.name = v.name;
-        gpb.tables.push(attr);
-      }
-    }
-
-
     { // メッシュ 頂点と面
       const m = new GpbMesh();
       const part = new GpbPart();
@@ -440,12 +423,13 @@ class Misc {
           for (let j = 0; j < 2; ++j) {
             const vt = new GpbVertex();
             vt.p = [i * 2 - 1, 1 - j * 2, 0];
+            vt.uv = [i / 1, 1 - j / 1];
             m.vts.push(vt);
           }
         }
 
         for (let i = 0; i < 1; ++i) {
-          part.indices.push(0, 1, 2);
+          part.indices.push(0, 1, 2, 0, 2, 1);
         }
       }
 
@@ -468,7 +452,8 @@ class Misc {
         for (let i = 0; i <= 16; ++i) {
           for (let j = 0; j <= 16; ++j) {
             const vt = new GpbVertex();
-            vt.p = [0, 0, 0];
+            vt.p = [i * 2 - 1, 1 - j * 2, 0];
+            vt.uv = [i / 16, 1 - j / 16];
             m.vts.push(vt);
           }
         }
@@ -503,6 +488,31 @@ class Misc {
       gpb.tables.push(t);
     }
 
+
+    const meshNames = ['colored'];
+    const jointNames = ['joint0', 'joint1'];
+
+    const jn0 = new GpbNode();
+    {
+      const t = new GpbTable();
+      t.name = jointNames[0];
+      t.type = GpbTable.TYPE_NODE;
+      gpb.tables.push(t);
+    }
+    gpb.scene.children.push(jn0);
+
+    const jn1 = new GpbNode();
+    {
+      const t = new GpbTable();
+      t.name = jointNames[1];
+      t.type = GpbTable.TYPE_NODE;
+      gpb.tables.push(t);
+    }
+    jn1.parentName = jointNames[0];
+    jn0.children.push(jn1);
+
+    const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
     // ノード
     const n0 = new GpbNode();
     {
@@ -515,12 +525,13 @@ class Misc {
 
     // ノード
     const n1 = new GpbNode();
-    { // TODO: メッシュ名
+    { // メッシュ名
       n1.modelName = `#mesh1`;
       n1.isskin = 1;
-      //n1.jointNames.push('');
+      n1.jointNames.push(...jointNames);
+      n1.inverseMatrices.push([[...identity], [...identity]]);
 
-      //n1.materials.push('colored');
+      n1.materials.push(...meshNames);
     }
     {
       const t = new GpbTable();
@@ -529,16 +540,18 @@ class Misc {
       gpb.tables.push(t);
     }
     n0.children.push(n1);
+    n1.parentName = 'node0';
     
     // ノード
     const n2 = new GpbNode();
     {
-      // TODO: メッシュ名
+      // メッシュ名
       n2.modelName = `#mesh2`;
       n2.isskin = 1;
-      //n2.jointNames.push('');
+      n2.jointNames.push(...jointNames);
+      n2.inverseMatrices.push([[...identity], [...identity]]);
 
-      //n2.materials.push('colored');
+      n2.materials.push(...meshNames);
     }
     {
       const t = new GpbTable();
@@ -547,6 +560,7 @@ class Misc {
       gpb.tables.push(t);
     }
     n0.children.push(n2);
+    n2.parentName = 'node0';
 
     {
       const t = new GpbTable();
@@ -557,6 +571,11 @@ class Misc {
     gpb.scene.children.push(n0);
     
     { // アニメーション 空でいいのか?
+      const anim = new GpbAnimation();
+      for (let i = 0; i < 2; ++i) {
+        const ch = new GpbChannel();
+
+      }
     }
 
 

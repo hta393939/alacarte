@@ -251,11 +251,30 @@ export class GpbTable {
   }
 }
 
+/**
+ * 未実装
+ */
+export class GpbAnimChannel {
+  constructor() {
+    this.keys = [];
+    this.values = [];
+    this.tangentIn = [];
+    this.tangentOut = [];
+  }
+}
+
+/**
+ * アニメーション
+ */
 export class GpbAnimation {
+  /** 7成分 */
   static ROTATE_TRANSLATE = 16;
+  /** 10成分 */
   static SCALE_ROTATE_TRANSLATE = 17;
   constructor() {
-    this.channel = '';
+    this.name = '';
+    /** @type {GpbAnimChannel[]} */
+    this.channels = [];
   }
 }
 
@@ -263,8 +282,8 @@ export class GpbAnimations {
   constructor() {
     this.name = '';
 
-    /** @type {GpbAnimation} */
-    this.anim = [];
+    /** @type {GpbAnimation[]} */
+    this.anims = [];
   }
 }
 
@@ -287,7 +306,7 @@ export class Gpb {
   }
 
   /**
-   * 
+   * 実装していない
    * @param {ArrayBuffer} ab 
    */
   parse(ab) {
@@ -300,6 +319,7 @@ export class Gpb {
 
 }
 
+/** ファイル生成用クラス */
 export class GpbExport extends Gpb {
   constructor() {
     super();
@@ -337,6 +357,21 @@ export class GpbExport extends Gpb {
       p.setUint8(c + i, vs[i]);
     }
     return num;
+  }
+
+  /**
+   * 符号無し16bit配列の書き出し。面頂点。
+   * @param {DataView} p 
+   * @param {number} c 
+   * @param {number[]} vs 
+   * @returns {number}
+   */
+  write16s(p, c, vs) {
+    const num = vs.length;
+    for (let i = 0; i < num; ++i) {
+      p.setUint16(c + i * 2, vs[i], true);
+    }
+    return num * 2;
   }
 
   /**
