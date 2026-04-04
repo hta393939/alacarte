@@ -90,14 +90,41 @@ export class GpbNode {
   static TYPE_JOINT = 2;
 
   constructor() {
-    this.name = '';
-    this.type = GpbNode.TYPE_NODE;
-
-    /** ファイルでの位置 */
-    this._infile = 0;
+    this._name = '';
+    this.nodeType = GpbNode.TYPE_NODE;
+    this.matrix = [
+      1, 0, 0, 0,
+      0, 1, 0, 1,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    ];
+    this.parentName = '';
 
     /** @type {GpbNode[]} */
     this.children = [];
+
+    this.camlight = [0, 0];
+
+    /**
+     * モデル名。無効の場合は長さ0
+     * 先頭に # がつく．
+     */
+    this.modelName = '';
+    /** スキンを持っているかどうか */
+    this.isskin = 0;
+
+    this.skinmatrix = [1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0, 0, 0, 0, 1];
+    /** @type {string[]} */
+    this.jointNames = [];
+    /** @type {number[][]} */
+    this.inverseMatrices = [];
+
+
+    /** @type {string[]} */
+    this.materials = [];
+
+    /** ファイルでの位置 */
+    this._infile = 0;
   }
 }
 
@@ -343,6 +370,24 @@ export class GpbExport extends Gpb {
   }
 
   /**
+   * row major で格納した matrix を col major で書き出す。
+   * 平行移動成分は 12, 13, 14
+   * @param {DataView} p
+   * @param {number} c
+   * @param {number[]} rm row major な並びの16要素の配列
+   */
+  writermbycm(p, c, rm) {
+    let offset = 0;
+    for (let row = 0; row < 4; ++row) {
+      for (let col = 0; col < 4; ++col) {
+        p.setFloat32(c + offset, rm[row * 4 + col], true);
+        offset += 1;
+      }
+    }
+    return 64;
+  }
+
+  /**
    * 
    * ※ノード
    * @param {DataView} p 
@@ -356,13 +401,49 @@ export class GpbExport extends Gpb {
     this.tableOffsetIndex += 1;
 
 
+    this.c += this.write32s(p, this.c, [node.nodeType]);
+    this.c += this.writermbycm(p, this.c, node.matrix);
+    this.c += this.writestr(p, this.c, node.parentName);
+
     const cnum = node.children.length;
     this.c += this.write32s(p, this.c, [cnum]);
     for (const child of node.children) {
       this.processNode(p, child);
     }
 
-    // TODO: ノード
+    // カメラとライト
+    this.c += this.write8s(p, this.c, node.camlight);
+
+    this.c += this.writestr(p, this.c, node.modelName);
+    if (node.modelName.length >= 1) {
+      this.c += this.writermbycm(p, this.c, node.skinmatrix);
+
+      this.c += this.write8s(p, this.c, [node.isskin]);
+      if (node.isskin) {
+
+        const jnum = node.joints.length;
+        this.c += this.write32s(p, this.c, [jnum]);
+        for (const k of node.joints) {
+          this.c += this.writestr(p, this.c, k);
+        }
+        /** float 数 */
+        const bpnum = node.inverseMatrices.length * 16;
+        this.c += this.write32s(p, this.c, [bpnum]);
+        for (const m of node.inverseMatrices) {
+          this.c += this.writermbycm(p, this.c, m);
+        }
+
+      }
+
+    }
+
+    {
+      const mnum = node.materials.length;
+      this.c += this.write32s(p, this.c, [mnum]);
+      for (const k of node.materials) {
+        this.c += this.writestr(p, this.c, k);
+      }
+    }
   }
 
   /**

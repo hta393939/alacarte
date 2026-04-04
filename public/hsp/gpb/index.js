@@ -498,7 +498,7 @@ class Misc {
 
     { // シーン
       const t = new GpbTable();
-      t.name = 'scene1';
+      t.name = '__SCENE__';
       t.type = GpbTable.TYPE_SCENE;
       gpb.tables.push(t);
     }
@@ -516,7 +516,11 @@ class Misc {
     // ノード
     const n1 = new GpbNode();
     { // TODO: メッシュ名
+      n1.modelName = `#mesh1`;
+      n1.isskin = 1;
+      //n1.jointNames.push('');
 
+      //n1.materials.push('colored');
     }
     {
       const t = new GpbTable();
@@ -530,6 +534,11 @@ class Misc {
     const n2 = new GpbNode();
     {
       // TODO: メッシュ名
+      n2.modelName = `#mesh2`;
+      n2.isskin = 1;
+      //n2.jointNames.push('');
+
+      //n2.materials.push('colored');
     }
     {
       const t = new GpbTable();
@@ -541,7 +550,7 @@ class Misc {
 
     {
       const t = new GpbTable();
-      t.name = '__ANIMATIONS__';
+      t.name = '__Animations__';
       t.type = GpbTable.TYPE_ANIMATIONS;
       gpb.tables.push(t);
     }
