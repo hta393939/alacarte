@@ -1,6 +1,7 @@
 import {
   GpbAttribute, GpbTable,
-  GpbExport, GpbMesh, GpbNode, GpbPart
+  GpbExport, GpbMesh, GpbNode, GpbPart,
+  GpbVertex
 } from "../../lib/hsp/gpb.js";
 
 class Misc {
@@ -71,26 +72,25 @@ class Misc {
   }
 
   setListener() {
-    { // 無効化
-      const el = document;
-      el?.addEventListener('dragover', ev => {
+    const handler = (eff) => {
+      return (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-        ev.dataTransfer.dropEffect = 'none';
-      });
+        ev.dataTransfer.dropEffect = eff;
+      };
+    };
+
+    { // 無効化
+      const el = document;
+      el?.addEventListener('dragover', handler('none'));
     }
 
     { // ドロップ
       const el = document.getElementById('loadimage');
-      el.addEventListener('dragover', ev => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        ev.dataTransfer.dropEffect = 'copy';
-      });
+      el.addEventListener('dragover', handler('copy'));
       el.addEventListener('drop', async ev => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        ev.dataTransfer.dropEffect = 'copy';
+        handler('copy')(ev);
+
         const canvas = document.getElementById('maincanvas');
         await this.loadFileToCanvas(ev.dataTransfer.files[0], canvas);
       });
@@ -143,6 +143,9 @@ class Misc {
 
   }
 
+  /**
+   * この形のままでは使用しない
+   */
   async selectDir() {
     const opt = {
       mode: 'readwrite',
@@ -156,7 +159,7 @@ class Misc {
       el.textContent = `dir, ${dh.name}`;
     }
 
-    { // 1枚だけ表示する
+    if (false) { // 1枚だけ表示する
       const inputdh = await dh.getDirectoryHandle('input');
       const re = /^(?<body>.+)(?<ext>\.[^.]+)$/;
       for await (const [k, h] of inputdh) {
@@ -184,6 +187,9 @@ class Misc {
 
   }
 
+  /**
+   * 使用していない
+   */
   async processForDir() {
     console.log('processForDir called');
     const dh = this.dirHandle;
@@ -424,15 +430,27 @@ class Misc {
 
 
     { // メッシュ 頂点と面
-      const mn = new GpbNode();
-
       const m = new GpbMesh();
       const part = new GpbPart();
       // 頂点と面
       m.parts.push(part);
+
+      {
+        for (let i = 0; i < 2; ++i) {
+          for (let j = 0; j < 2; ++j) {
+            const vt = new GpbVertex();
+            vt.p = [i * 2 - 1, 1 - j * 2, 0];
+            m.vts.push(vt);
+          }
+        }
+
+        for (let i = 0; i < 1; ++i) {
+          part.indices.push(0, 1, 2);
+        }
+      }
+
       m.compute();
       gpb.meshes.push(m);
-      gpb.nodes.push(mn);
 
       {
         const t = new GpbTable();
@@ -442,14 +460,33 @@ class Misc {
       }
     }
     { // 頂点と面
-      const mn = new GpbNode();
-
       const m = new GpbMesh();
       const part = new GpbPart();
       m.parts.push(part);
+
+      {
+        for (let i = 0; i <= 16; ++i) {
+          for (let j = 0; j <= 16; ++j) {
+            const vt = new GpbVertex();
+            vt.p = [0, 0, 0];
+            m.vts.push(vt);
+          }
+        }
+
+        for (let i = 0; i < 16; ++i) {
+          for (let j = 0; j < 16; ++j) {
+            let v0 = 0;
+            let v1 = v0 + 1;
+            let v2 = v0 + 16 + 1;
+            let v3 = v2 + 1;
+            part.indices.push(v0, v1, v2);
+            part.indices.push(v2, v1, v3);
+          }
+        }
+      }
+
       m.compute();
       gpb.meshes.push(m);
-      gpb.nodes.push(mn);
 
       {
         const t = new GpbTable();
@@ -478,9 +515,10 @@ class Misc {
 
     // ノード
     const n1 = new GpbNode();
-    {
-      // TODO: メッシュ
+    { // TODO: メッシュ名
 
+    }
+    {
       const t = new GpbTable();
       t.name = 'node1';
       t.type = GpbTable.TYPE_NODE;
@@ -491,8 +529,9 @@ class Misc {
     // ノード
     const n2 = new GpbNode();
     {
-      // TODO: メッシュ
-
+      // TODO: メッシュ名
+    }
+    {
       const t = new GpbTable();
       t.name = 'node2';
       t.type = GpbTable.TYPE_NODE;
