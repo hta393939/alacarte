@@ -405,7 +405,7 @@ class Misc {
 
     const gpb = new GpbExport();
 
-    { // NOTE: オフセットリストはファイル中に登場する順番に揃える
+    if (false) { // NOTE: オフセットリストはファイル中に登場する順番に揃える
       for (const v of [
         {type: GpbTable.TYPE_MESH, name: 'mesh1'},
         {type: GpbTable.TYPE_MESH, name: 'mesh2'},
@@ -433,6 +433,13 @@ class Misc {
       m.compute();
       gpb.meshes.push(m);
       gpb.nodes.push(mn);
+
+      {
+        const t = new GpbTable();
+        t.name = 'mesh1';
+        t.type = GpbTable.TYPE_MESH;
+        gpb.tables.push(t);
+      }
     }
     { // 頂点と面
       const mn = new GpbNode();
@@ -443,20 +450,64 @@ class Misc {
       m.compute();
       gpb.meshes.push(m);
       gpb.nodes.push(mn);
+
+      {
+        const t = new GpbTable();
+        t.name = 'mesh2';
+        t.type = GpbTable.TYPE_MESH;
+        gpb.tables.push(t);
+      }
     }
 
     { // シーン
-
+      const t = new GpbTable();
+      t.name = 'scene1';
+      t.type = GpbTable.TYPE_SCENE;
+      gpb.tables.push(t);
     }
-    { // ノード
 
+    // ノード
+    const n0 = new GpbNode();
+    {
+      const t = new GpbTable();
+      t.name = 'node0';
+      t.type = GpbTable.TYPE_NODE;
+      gpb.tables.push(t);      
     }
-    { // ノード
+    gpb.scene.children.push(n0);
 
-    }
-    { // ノード
+    // ノード
+    const n1 = new GpbNode();
+    {
+      // TODO: メッシュ
 
+      const t = new GpbTable();
+      t.name = 'node1';
+      t.type = GpbTable.TYPE_NODE;
+      gpb.tables.push(t);
     }
+    n0.children.push(n1);
+    
+    // ノード
+    const n2 = new GpbNode();
+    {
+      // TODO: メッシュ
+
+      const t = new GpbTable();
+      t.name = 'node2';
+      t.type = GpbTable.TYPE_NODE;
+      gpb.tables.push(t);
+    }
+    n0.children.push(n2);
+
+    {
+      const t = new GpbTable();
+      t.name = '__ANIMATIONS__';
+      t.type = GpbTable.TYPE_ANIMATIONS;
+      gpb.tables.push(t);
+    }
+    gpb.scene.children.push(n0);
+    
     { // アニメーション 空でいいのか?
     }
 
