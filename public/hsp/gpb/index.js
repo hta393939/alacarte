@@ -2,7 +2,7 @@ import {
   GpbAttribute, GpbTable,
   GpbExport, GpbMesh, GpbNode, GpbPart,
   GpbVertex,
-  GpbAnimation
+  GpbAnimation, GpbAnimChannel,
 } from "../../lib/hsp/gpb.js";
 
 class Misc {
@@ -412,8 +412,22 @@ class Misc {
 
     const gpb = new GpbExport();
 
+    const attrSet = [
+      {type: GpbAttribute.TYPE_POSITION, num: 3},
+      {type: GpbAttribute.TYPE_NORMAL, num: 3},
+      {type: GpbAttribute.TYPE_TEXCOORD0, num: 2},
+      {type: GpbAttribute.TYPE_WEIGHTS, num: 4},
+      {type: GpbAttribute.TYPE_JOINTS, num: 4},
+    ].map(v => {
+      const attr = new GpbAttribute();
+      attr.type = v.type;
+      attr.num = v.num;
+      return attr;
+    });
+
     { // メッシュ 頂点と面
       const m = new GpbMesh();
+      m.attrs = [...attrSet];
       const part = new GpbPart();
       // 頂点と面
       m.parts.push(part);
@@ -445,6 +459,7 @@ class Misc {
     }
     { // 頂点と面
       const m = new GpbMesh();
+      m.attrs = [...attrSet];
       const part = new GpbPart();
       m.parts.push(part);
 
@@ -489,6 +504,8 @@ class Misc {
     }
 
 
+    const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
     const meshNames = ['colored'];
     const jointNames = ['joint0', 'joint1'];
 
@@ -510,8 +527,6 @@ class Misc {
     }
     jn1.parentName = jointNames[0];
     jn0.children.push(jn1);
-
-    const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
     // ノード
     const n0 = new GpbNode();
@@ -572,9 +587,15 @@ class Misc {
     
     { // アニメーション 空でいいのか?
       const anim = new GpbAnimation();
-      for (let i = 0; i < 2; ++i) {
-        const ch = new GpbChannel();
+      //anims.animations.push(anim);
 
+      for (let i = 0; i < 2; ++i) {
+        const ch = new GpbAnimChannel();
+        ch.keys = [0, 30000, 60000];
+        ch.values = [0, 0, 0, 1, 0.0, 0,  1];
+        ch.values = [0, 0, 0, 1, 0.5, 1,  0];
+        ch.values = [0, 0, 0, 1, 1.0, 0, -1];
+        anim.channels.push(ch);
       }
     }
 

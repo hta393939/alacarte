@@ -145,10 +145,13 @@ export class GpbScene {
 export class GpbAttribute {
   static TYPE_POSITION = 0;
   static TYPE_NORMAL = 1;
+  static TYPE_2 = 2;
   static TYPE_COLOR = 3;
   static TYPE_TANGENT = 4;
   static TYPE_BINORMAL = 5;
+  /** 6 */
   static TYPE_WEIGHTS = 6;
+  /** 7 */
   static TYPE_JOINTS = 7;
   static TYPE_TEXCOORD0 = 8;
 
@@ -278,15 +281,6 @@ export class GpbAnimation {
   }
 }
 
-export class GpbAnimations {
-  constructor() {
-    this.name = '';
-
-    /** @type {GpbAnimation[]} */
-    this.anims = [];
-  }
-}
-
 export class Gpb {
   constructor() {
     /** ファイルバイトオフセット */
@@ -301,7 +295,7 @@ export class Gpb {
     this.meshes = [];
     /** シーン */
     this.scene = new GpbScene();
-    /** @type {GpbAnimations[]} */
+    /** @type {GpbAnimation[]} */
     this.animations = [];
   }
 
