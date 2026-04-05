@@ -510,18 +510,20 @@ class Misc {
     const jointNames = ['joint0', 'joint1'];
 
     const jn0 = new GpbNode();
+    jn0._name = jointNames[0];
     {
       const t = new GpbTable();
-      t.name = jointNames[0];
+      t.name = jn0._name;
       t.type = GpbTable.TYPE_NODE;
       gpb.tables.push(t);
     }
     gpb.scene.children.push(jn0);
 
     const jn1 = new GpbNode();
+    jn1._name = jointNames[1];
     {
       const t = new GpbTable();
-      t.name = jointNames[1];
+      t.name = jn1._name;
       t.type = GpbTable.TYPE_NODE;
       gpb.tables.push(t);
     }
@@ -530,9 +532,10 @@ class Misc {
 
     // ノード
     const n0 = new GpbNode();
+    n0._name = 'node0';
     {
       const t = new GpbTable();
-      t.name = 'node0';
+      t.name = n0._name;
       t.type = GpbTable.TYPE_NODE;
       gpb.tables.push(t);      
     }
@@ -540,6 +543,7 @@ class Misc {
 
     // ノード
     const n1 = new GpbNode();
+    n1._name = 'node1';
     { // メッシュ名
       n1.modelName = `#mesh1`;
       n1.isskin = 1;
@@ -550,7 +554,7 @@ class Misc {
     }
     {
       const t = new GpbTable();
-      t.name = 'node1';
+      t.name = n1._name;
       t.type = GpbTable.TYPE_NODE;
       gpb.tables.push(t);
     }
@@ -559,6 +563,7 @@ class Misc {
     
     // ノード
     const n2 = new GpbNode();
+    n2._name = 'node2';
     {
       // メッシュ名
       n2.modelName = `#mesh2`;
@@ -570,7 +575,7 @@ class Misc {
     }
     {
       const t = new GpbTable();
-      t.name = 'node2';
+      t.name = n2._name;
       t.type = GpbTable.TYPE_NODE;
       gpb.tables.push(t);
     }

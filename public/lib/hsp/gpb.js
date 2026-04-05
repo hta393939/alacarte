@@ -90,6 +90,7 @@ export class GpbNode {
   static TYPE_JOINT = 2;
 
   constructor() {
+    /** RefTable の名称 */
     this._name = '';
     this.nodeType = GpbNode.TYPE_NODE;
     this.matrix = [
@@ -424,6 +425,9 @@ export class GpbExport extends Gpb {
    * @returns {void}
    */
   processNode(p, node) {
+    console.log('processNode',
+      node._name,
+      this.tableOffsetIndex, this.tables);
 
     // NOTE: テーブルオフセット
     this.tables[this.tableOffsetIndex].offset = this.c;
@@ -450,9 +454,9 @@ export class GpbExport extends Gpb {
       this.c += this.write8s(p, this.c, [node.isskin]);
       if (node.isskin) {
 
-        const jnum = node.joints.length;
+        const jnum = node.jointNames.length;
         this.c += this.write32s(p, this.c, [jnum]);
-        for (const k of node.joints) {
+        for (const k of node.jointNames) {
           this.c += this.writestr(p, this.c, k);
         }
         /** float 数 */
@@ -687,7 +691,26 @@ export class GpbExport extends Gpb {
 `  }`,
 `  technique {`,
 `    pass {`,
-`      defines = SKINNING;SKINNING_JOINT_COUNT 12`,
+`      defines = SKINNING;SKINNING_JOINT_COUNT 2`,
+`    }`,
+`  }`,
+`}`,
+'',
+]);
+    }
+
+    {
+      lines.push(...[
+`material material2: colored {`,
+`  u_matrixPalette = MATRIX_PALETTE`,
+`  u_cameraPosition = CAMERA_WORLD_POSITION`,
+`  u_inverseTransposeWorldViewMatrix = INVERSE_TRANSPOSE_WORLD_VIEW_MATRIX`,
+`  u_ambientColor = 0.5 1.0, 0.25, 1`,
+`  u_diffuseColor = 0.25, 0.0, 1.0, 1`,
+`  u_specularExponent = 6.31179`,
+`  technique {`,
+`    pass {`,
+`      defines = DIRECTIONAL_LIGHT_COUNT 1;SKINNING;SKINNING_JOINT_COUNT 2;SPECULAR`,
 `    }`,
 `  }`,
 `}`,
