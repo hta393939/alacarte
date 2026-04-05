@@ -509,8 +509,10 @@ class Misc {
     const meshNames = ['colored'];
     const jointNames = ['joint0', 'joint1'];
 
+    // ノード(ジョイント)
     const jn0 = new GpbNode();
     jn0._name = jointNames[0];
+    jn0.nodeType = GpbNode.TYPE_JOINT;
     {
       const t = new GpbTable();
       t.name = jn0._name;
@@ -519,8 +521,10 @@ class Misc {
     }
     gpb.scene.children.push(jn0);
 
+    // ノード(ジョイント)
     const jn1 = new GpbNode();
     jn1._name = jointNames[1];
+    jn0.nodeType = GpbNode.TYPE_JOINT;
     {
       const t = new GpbTable();
       t.name = jn1._name;
@@ -569,7 +573,7 @@ class Misc {
       n2.modelName = `#mesh2`;
       n2.isskin = 1;
       n2.jointNames.push(...jointNames);
-      n2.inverseMatrices.push([[...identity], [...identity]]);
+      n2.inverseMatrices.push([...identity], [...identity]);
 
       n2.materials.push(...meshNames);
     }

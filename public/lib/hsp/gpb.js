@@ -181,11 +181,14 @@ export class GpbPart {
   /** GL_UNSIGNED_INT */
   static INDEX32 = 0x1405;
 
-  static TRIANGLES = 4;
-  static TRIANGLE_STRIP = 5;
+  /** 1 線分 */
   static LINES = 1;
   static LINE_STRIP = 3;
   static POINTS = 0;
+  /** 4 三角 */
+  static TRIANGLES = 4;
+  static TRIANGLE_STRIP = 5;
+
   constructor() {
     this.type = GpbPart.TRIANGLES;
     this.indexFormat = GpbPart.INDEX32;
