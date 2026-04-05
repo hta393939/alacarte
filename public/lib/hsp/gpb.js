@@ -544,10 +544,18 @@ export class GpbExport extends Gpb {
       const num = m.parts.length;
       offset += this.write32s(p, c + offset, [num]);
       for (const part of m.parts) {
+        let indexByte = 4;
+        if (part.indexFormat !== GpbPart.INDEX32) {
+          indexByte = 2;
+        }
         offset += this.write32s(p, c + offset, [
-          part.type, part.indexFormat, part.indices.length * 4
+          part.type, part.indexFormat, part.indices.length * indexByte
         ]);
-        offset += this.write32s(p, c + offset, part.indices);
+        if (indexByte === 4) {
+          offset += this.write32s(p, c + offset, part.indices);
+        } else {
+          offset += this.write16s(p, c + offset, part.indices);
+        }
       }
     }
 

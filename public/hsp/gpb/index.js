@@ -559,7 +559,7 @@ class Misc {
       gpb.tables.push(t);
     }
     n0.children.push(n1);
-    n1.parentName = 'node0';
+    n1.parentName = n0._name;
     
     // ノード
     const n2 = new GpbNode();
@@ -580,7 +580,7 @@ class Misc {
       gpb.tables.push(t);
     }
     n0.children.push(n2);
-    n2.parentName = 'node0';
+    n2.parentName = n0._name;
 
     {
       const t = new GpbTable();
