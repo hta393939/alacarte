@@ -548,7 +548,7 @@ class Misc {
       n1.modelName = `#mesh1`;
       n1.isskin = 1;
       n1.jointNames.push(...jointNames);
-      n1.inverseMatrices.push([[...identity], [...identity]]);
+      n1.inverseMatrices.push([...identity], [...identity]);
 
       n1.materials.push(...meshNames);
     }

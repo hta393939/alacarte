@@ -411,10 +411,10 @@ export class GpbExport extends Gpb {
     for (let col = 0; col < 4; ++col) {
       for (let row = 0; row < 4; ++row) {
         p.setFloat32(c + offset, rm[row * 4 + col], true);
-        offset += 1;
+        offset += 4;
       }
     }
-    return 16 * 4;
+    return offset;
   }
 
   /**
@@ -511,14 +511,28 @@ export class GpbExport extends Gpb {
   writeMesh(p, c, m) {
     let offset = 0;
 
-    for (const v of m.vts) {
-      offset += this.writefs(p, c + offset, v.p);
-      offset += this.writefs(p, c + offset, v.n);
-      offset += this.writefs(p, c + offset, v.uv);
+    let attrByte = 0;
+    { // 属性
+      const num = m.attrs.length;
+      offset += this.write32s(p, c + offset, [num]);
+      for (const attr of m.attrs) {
+        offset += this.write32s(p, c + offset, [attr.type, attr.num]);
+        attrByte += attr.num;
+      }
+    }
+    console.log('attrByte', attrByte);
+    {
+      const num = m.vts.length * attrByte;
+      offset += this.write32s(p, c + offset, [num]);
+      for (const v of m.vts) {
+        offset += this.writefs(p, c + offset, v.p);
+        offset += this.writefs(p, c + offset, v.n);
+        offset += this.writefs(p, c + offset, v.uv);
 
-      offset += this.writefs(p, c + offset, v.weights);
-      offset += this.writefs(p, c + offset, v.joints);
-      // 属性ごと?
+        offset += this.writefs(p, c + offset, v.weights);
+        offset += this.writefs(p, c + offset, v.joints);
+        // 属性ごと?
+      }
     }
 
     offset += this.writefs(p, c + offset, m.posmin);
