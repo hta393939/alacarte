@@ -401,20 +401,20 @@ export class GpbExport extends Gpb {
 
   /**
    * row major で格納した matrix を col major で書き出す。
-   * 平行移動成分は 12, 13, 14
+   * 平行移動成分は col major だと 12, 13, 14
    * @param {DataView} p
    * @param {number} c
    * @param {number[]} rm row major な並びの16要素の配列
    */
   writermbycm(p, c, rm) {
     let offset = 0;
-    for (let row = 0; row < 4; ++row) {
-      for (let col = 0; col < 4; ++col) {
+    for (let col = 0; col < 4; ++col) {
+      for (let row = 0; row < 4; ++row) {
         p.setFloat32(c + offset, rm[row * 4 + col], true);
         offset += 1;
       }
     }
-    return 64;
+    return 16 * 4;
   }
 
   /**
@@ -610,6 +610,8 @@ export class GpbExport extends Gpb {
       }
     }
 
+    const fileByte = this.c;
+
     console.log(`table`, this.tableOffsetIndex, this.tables.length);
 
     { // 戻って書き込む
@@ -619,7 +621,7 @@ export class GpbExport extends Gpb {
       }
     }
 
-    return buf.slice(0, this.c);
+    return buf.slice(0, fileByte);
   }
 
   /**

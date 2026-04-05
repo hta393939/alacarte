@@ -588,11 +588,10 @@ class Misc {
       t.type = GpbTable.TYPE_ANIMATIONS;
       gpb.tables.push(t);
     }
-    gpb.scene.children.push(n0);
     
     { // アニメーション 空でいいのか?
       const anim = new GpbAnimation();
-      //anims.animations.push(anim);
+      //gpb.animations.push(anim);
 
       for (let i = 0; i < 2; ++i) {
         const ch = new GpbAnimChannel();
@@ -604,6 +603,8 @@ class Misc {
       }
     }
 
+    console.log('gpb', gpb);
+    ////
 
     let name = 'foo';
 
