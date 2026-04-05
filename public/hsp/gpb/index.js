@@ -429,15 +429,16 @@ class Misc {
       const m = new GpbMesh();
       m.attrs = [...attrSet];
       const part = new GpbPart();
-      // 頂点と面
+
       m.parts.push(part);
+      part.indexFormat = GpbPart.INDEX16;
 
       {
         for (let i = 0; i < 2; ++i) {
           for (let j = 0; j < 2; ++j) {
             const vt = new GpbVertex();
-            vt.p = [i * 2 - 1, 1 - j * 2, 0];
-            vt.uv = [i / 1, 1 - j / 1];
+            vt.p = [j * 2 - 1, 1 - i * 2, 0];
+            vt.uv = [j / 1, 1 - i / 1];
             m.vts.push(vt);
           }
         }
@@ -457,30 +458,32 @@ class Misc {
         gpb.tables.push(t);
       }
     }
+
     { // 頂点と面
       const m = new GpbMesh();
       m.attrs = [...attrSet];
       const part = new GpbPart();
       m.parts.push(part);
+      part.indexFormat = GpbPart.INDEX16;
 
       {
         for (let i = 0; i <= 16; ++i) {
           for (let j = 0; j <= 16; ++j) {
             const vt = new GpbVertex();
-            vt.p = [i * 2 - 1, 1 - j * 2, 0];
-            vt.uv = [i / 16, 1 - j / 16];
+            vt.p = [j / 16 * 2 - 1, 1 - i / 16 * 2, 0];
+            vt.uv = [j / 16, 1 - i / 16];
             m.vts.push(vt);
           }
         }
 
         for (let i = 0; i < 16; ++i) {
           for (let j = 0; j < 16; ++j) {
-            let v0 = 0;
+            let v0 = (16 + 1) * i + j;
             let v1 = v0 + 1;
             let v2 = v0 + 16 + 1;
             let v3 = v2 + 1;
-            part.indices.push(v0, v1, v2);
-            part.indices.push(v2, v1, v3);
+            part.indices.push(v0, v2, v1);
+            part.indices.push(v1, v2, v3);
           }
         }
       }
@@ -506,7 +509,9 @@ class Misc {
 
     const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
-    const meshNames = ['colored'];
+    const meshNames = ['material2',
+      //'material2'
+    ];
     const jointNames = ['joint0', 'joint1'];
 
     // ノード(ジョイント)
@@ -551,7 +556,7 @@ class Misc {
     { // メッシュ名
       n1.modelName = `#mesh1`;
       n1.isSkin = 1;
-      n1.jointNames.push(...jointNames);
+      n1.jointNames.push(...jointNames.map(n => `#${n}`));
       n1.inverseMatrices.push([...identity], [...identity]);
 
       n1.materials.push(...meshNames);
@@ -572,7 +577,7 @@ class Misc {
       // メッシュ名
       n2.modelName = `#mesh2`;
       n2.isSkin = 1;
-      n2.jointNames.push(...jointNames);
+      n2.jointNames.push(...jointNames.map(n => `#${n}`));
       n2.inverseMatrices.push([...identity], [...identity]);
 
       n2.materials.push(...meshNames);
