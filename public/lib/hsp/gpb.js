@@ -112,9 +112,9 @@ export class GpbNode {
      */
     this.modelName = '';
     /** スキンを持っているかどうか */
-    this.isskin = 0;
+    this.isSkin = 0;
 
-    this.skinmatrix = [1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0, 0, 0, 0, 1];
+    this.skinMatrix = [1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1];
     /** @type {string[]} */
     this.jointNames = [];
     /** @type {number[][]} */
@@ -452,10 +452,9 @@ export class GpbExport extends Gpb {
 
     this.c += this.writestr(p, this.c, node.modelName);
     if (node.modelName.length >= 1) {
-      this.c += this.writermbycm(p, this.c, node.skinmatrix);
-
-      this.c += this.write8s(p, this.c, [node.isskin]);
-      if (node.isskin) {
+      this.c += this.write8s(p, this.c, [node.isSkin]);
+      if (node.isSkin) {
+        this.c += this.writermbycm(p, this.c, node.skinMatrix);
 
         const jnum = node.jointNames.length;
         this.c += this.write32s(p, this.c, [jnum]);
@@ -471,15 +470,13 @@ export class GpbExport extends Gpb {
 
       }
 
-    }
-
-    {
       const mnum = node.materials.length;
       this.c += this.write32s(p, this.c, [mnum]);
       for (const k of node.materials) {
         this.c += this.writestr(p, this.c, k);
       }
     }
+
   }
 
   /**

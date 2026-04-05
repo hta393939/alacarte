@@ -550,7 +550,7 @@ class Misc {
     n1._name = 'node1';
     { // メッシュ名
       n1.modelName = `#mesh1`;
-      n1.isskin = 1;
+      n1.isSkin = 1;
       n1.jointNames.push(...jointNames);
       n1.inverseMatrices.push([...identity], [...identity]);
 
@@ -571,7 +571,7 @@ class Misc {
     {
       // メッシュ名
       n2.modelName = `#mesh2`;
-      n2.isskin = 1;
+      n2.isSkin = 1;
       n2.jointNames.push(...jointNames);
       n2.inverseMatrices.push([...identity], [...identity]);
 
