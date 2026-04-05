@@ -511,19 +511,19 @@ export class GpbExport extends Gpb {
   writeMesh(p, c, m) {
     let offset = 0;
 
-    let attrByte = 0;
+    let valNum = 0;
     { // 属性
       const num = m.attrs.length;
       offset += this.write32s(p, c + offset, [num]);
       for (const attr of m.attrs) {
         offset += this.write32s(p, c + offset, [attr.type, attr.num]);
-        attrByte += attr.num;
+        valNum += attr.num;
       }
     }
-    console.log('attrByte', attrByte);
+    console.log('valNum', valNum);
     {
-      const num = m.vts.length * attrByte;
-      offset += this.write32s(p, c + offset, [num]);
+      const byteNum = m.vts.length * valNum * 4;
+      offset += this.write32s(p, c + offset, [byteNum]);
       for (const v of m.vts) {
         offset += this.writefs(p, c + offset, v.p);
         offset += this.writefs(p, c + offset, v.n);
