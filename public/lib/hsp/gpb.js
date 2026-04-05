@@ -156,6 +156,7 @@ export class GpbAttribute {
   /** 7 */
   static TYPE_JOINTS = 7;
   static TYPE_TEXCOORD0 = 8;
+  static TYPE_TEXCOORD1 = 9;
 
   constructor() {
     this.type = GpbAttribute.TYPE_POSITION;
@@ -178,6 +179,7 @@ export class GpbVertex {
  */
 export class GpbPart {
   static INDEX8 = 0x1401;
+  /** GL_UNSIGNED_SHORT */
   static INDEX16 = 0x1403;
   /** GL_UNSIGNED_INT */
   static INDEX32 = 0x1405;
@@ -269,7 +271,7 @@ export class GpbAnimChannel {
 
     this.tangentsIn = [];
     this.tangentsOut = [];
-    this.interpolations = [];
+    this.interpolations = [1];
   }
 }
 
@@ -312,8 +314,12 @@ export class Gpb {
    */
   parse(ab) {
     const ret = {};
+    const p = new DataView(ab);
+
     this.c = 0;
     this.c += 9;
+
+    
 
     return ret;
   }
@@ -534,7 +540,7 @@ export class GpbExport extends Gpb {
 
         offset += this.writefs(p, c + offset, v.weights);
         offset += this.writefs(p, c + offset, v.joints);
-        // 属性ごと?
+        // 属性ごと
       }
     }
 

@@ -405,10 +405,10 @@ class Misc {
   }
 
   /**
-   * ファイル作成
+   * gpbの素を作成する
    */
-  act() {
-    console.log('act start');
+  createGpb1() {
+    console.log('createGpb1 start');
 
     const gpb = new GpbExport();
 
@@ -627,9 +627,112 @@ class Misc {
     }
 
     console.log('gpb', gpb);
-    ////
+    return gpb;
+  }
 
-    let name = 'foo';
+  /**
+   * gpbの素を作成する
+   */
+  createGpb2() {
+    console.log('createGpb2 start');
+
+    const gpb = new GpbExport();
+
+    const attrSet = [
+      {type: GpbAttribute.TYPE_POSITION, num: 3},
+      {type: GpbAttribute.TYPE_NORMAL, num: 3},
+      {type: GpbAttribute.TYPE_TEXCOORD0, num: 2},
+      {type: GpbAttribute.TYPE_WEIGHTS, num: 4},
+      {type: GpbAttribute.TYPE_JOINTS, num: 4},
+    ].map(v => {
+      const attr = new GpbAttribute();
+      attr.type = v.type;
+      attr.num = v.num;
+      return attr;
+    });
+
+    { // 頂点と面
+      const m = new GpbMesh();
+      m.attrs = [...attrSet];
+      const part = new GpbPart();
+      m.parts.push(part);
+      part.indexFormat = GpbPart.INDEX16;
+
+      {
+        for (let i = 0; i <= 8; ++i) {
+          for (let j = 0; j <= 16; ++j) {
+            const vt = new GpbVertex();
+
+            const hang = (j % 16) * 2 * Math.PI / 16;
+            const vang = (i % 16) * 2 * Math.PI / 16;
+            const rr = Math.sin(vang);
+
+            vt.p = [
+              - Math.sin(hang) * rr,
+              Math.cos(vang),
+              - Math.cos(hang) * rr];
+            vt.n = [...vt.p];
+            vt.uv = [j / 16, 1 - i / 16];
+            m.vts.push(vt);
+          }
+        }
+
+        for (let i = 0; i < 8; ++i) {
+          for (let j = 0; j < 16; ++j) {
+            let v0 = (16 + 1) * i + j;
+            let v1 = v0 + 1;
+            let v2 = v0 + 16 + 1;
+            let v3 = v2 + 1;
+            part.indices.push(v0, v2, v1);
+            part.indices.push(v1, v2, v3);
+          }
+        }
+      }
+
+      m.compute();
+      gpb.meshes.push(m);
+
+      {
+        const t = new GpbTable();
+        t.name = 'mesh1';
+        t.type = GpbTable.TYPE_MESH;
+        gpb.tables.push(t);
+      }
+    }
+
+    { // シーン
+      const t = new GpbTable();
+      t.name = '__SCENE__';
+      t.type = GpbTable.TYPE_SCENE;
+      gpb.tables.push(t);
+    }
+
+    // ノード
+    const n1 = new GpbNode();
+    n1._name = 'node1';
+    { // メッシュ名
+      n1.modelName = `#mesh1`;
+      n1.materials.push('material1');
+    }
+    {
+      const t = new GpbTable();
+      t.name = n1._name;
+      t.type = GpbTable.TYPE_NODE;
+      gpb.tables.push(t);
+    }
+    gpb.scene.children.push(n1);
+
+    console.log('gpb', gpb);
+    return gpb;
+  }
+
+  act() {
+    //const gpb = this.createGpb1();
+    //let name = 'foo';
+
+    const gpb = this.createGpb2();
+    let name = 'bar';
+
 
     const buf = gpb.make();
     this.download(new Blob([buf]), `${name}.gpb`);
