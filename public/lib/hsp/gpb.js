@@ -583,6 +583,9 @@ export class GpbExport extends Gpb {
    * @returns {ArrayBuffer}
    */
   make() {
+    const useAnim = false;
+
+
     this.tableOffsetIndex = 0;
     this.c = 0;
     const buf = new ArrayBuffer(1024 * 1024 + 1024 * 1024);
@@ -618,11 +621,11 @@ export class GpbExport extends Gpb {
         this.c += this.writeMesh(p, this.c, mesh);
       }
     }
-    this.c += this.write32s(p, this.c, [2]); // シーンとアニメで2
+    this.c += this.write32s(p, this.c, [(useAnim ? 2 : 1)]); // シーンとアニメで2
 
     this.processScene(p, this.scene);
 
-    { // アニメーション
+    if (useAnim) { // アニメーション
       // アニメーションズ位置
       // NOTE: テーブルオフセット
       this.tables[this.tableOffsetIndex].offset = this.c;

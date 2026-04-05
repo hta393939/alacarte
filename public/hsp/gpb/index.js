@@ -437,14 +437,17 @@ class Misc {
         for (let i = 0; i < 2; ++i) {
           for (let j = 0; j < 2; ++j) {
             const vt = new GpbVertex();
-            vt.p = [j * 2 - 1, 1 - i * 2, 0];
+            vt.p = [
+              (j * 2 - 1) * 2, (1 - i * 2) * 2,
+              (((i & 1) + (j & 1)) & 1) * 0.5];
             vt.uv = [j / 1, 1 - i / 1];
             m.vts.push(vt);
           }
         }
 
         for (let i = 0; i < 1; ++i) {
-          part.indices.push(0, 1, 2, 0, 2, 1);
+          part.indices.push(0, 2, 1, 1, 2, 3);
+          //part.indices.push(0, 1, 2, 2, 1, 3);
         }
       }
 
@@ -467,16 +470,25 @@ class Misc {
       part.indexFormat = GpbPart.INDEX16;
 
       {
-        for (let i = 0; i <= 16; ++i) {
+        for (let i = 0; i <= 8; ++i) {
           for (let j = 0; j <= 16; ++j) {
             const vt = new GpbVertex();
-            vt.p = [j / 16 * 2 - 1, 1 - i / 16 * 2, 0];
+
+            const hang = (j % 16) * 2 * Math.PI / 16;
+            const vang = (i % 16) * 2 * Math.PI / 16;
+            const rr = Math.sin(vang);
+
+            vt.p = [
+              - Math.sin(hang) * rr,
+              Math.cos(vang),
+              - Math.cos(hang) * rr];
+            vt.n = [...vt.p];
             vt.uv = [j / 16, 1 - i / 16];
             m.vts.push(vt);
           }
         }
 
-        for (let i = 0; i < 16; ++i) {
+        for (let i = 0; i < 8; ++i) {
           for (let j = 0; j < 16; ++j) {
             let v0 = (16 + 1) * i + j;
             let v1 = v0 + 1;
@@ -509,8 +521,10 @@ class Misc {
 
     const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
-    const meshNames = ['material2',
-      //'material2'
+    const materialNames = [
+      'colored',
+      'material1',
+      'material2',
     ];
     const jointNames = ['joint0', 'joint1'];
 
@@ -559,7 +573,7 @@ class Misc {
       n1.jointNames.push(...jointNames.map(n => `#${n}`));
       n1.inverseMatrices.push([...identity], [...identity]);
 
-      n1.materials.push(...meshNames);
+      n1.materials.push(materialNames[1]);
     }
     {
       const t = new GpbTable();
@@ -580,7 +594,7 @@ class Misc {
       n2.jointNames.push(...jointNames.map(n => `#${n}`));
       n2.inverseMatrices.push([...identity], [...identity]);
 
-      n2.materials.push(...meshNames);
+      n2.materials.push(materialNames[2]);
     }
     {
       const t = new GpbTable();
@@ -591,7 +605,7 @@ class Misc {
     n0.children.push(n2);
     n2.parentName = n0._name;
 
-    {
+    if (false) {
       const t = new GpbTable();
       t.name = '__Animations__';
       t.type = GpbTable.TYPE_ANIMATIONS;
