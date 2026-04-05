@@ -108,14 +108,15 @@ export class GpbNode {
 
     /**
      * モデル名。無効の場合は長さ0
-     * 先頭に # がつく．
+     * 先頭に # がつく。
      */
     this.modelName = '';
     /** スキンを持っているかどうか */
     this.isSkin = 0;
 
     this.skinMatrix = [1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1];
-    /** @type {string[]} */
+    /** @type {string[]} 各ジョイント名の先頭に # がつく。
+     */
     this.jointNames = [];
     /** @type {number[][]} */
     this.inverseMatrices = [];
@@ -144,9 +145,9 @@ export class GpbScene {
 
 
 export class GpbAttribute {
-  static TYPE_POSITION = 0;
-  static TYPE_NORMAL = 1;
-  static TYPE_2 = 2;
+  /** 1 POSITION */
+  static TYPE_POSITION = 1;
+  static TYPE_NORMAL = 2;
   static TYPE_COLOR = 3;
   static TYPE_TANGENT = 4;
   static TYPE_BINORMAL = 5;
@@ -265,8 +266,10 @@ export class GpbAnimChannel {
   constructor() {
     this.keys = [];
     this.values = [];
-    this.tangentIn = [];
-    this.tangentOut = [];
+
+    this.tangentsIn = [];
+    this.tangentsOut = [];
+    this.interpolations = [];
   }
 }
 
@@ -656,7 +659,7 @@ export class GpbExport extends Gpb {
     {
       lines.push(...[
 `material colored {`,
-`  u_worldViewProjectMatrix = WORLD_VIEW_PROJECTION_MATRIX`,
+`  u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX`,
 `  u_matrixPalette = MATRIX_PALETTE`,
 `  renderState {`,
 `    cullFace = true`,
@@ -678,7 +681,7 @@ export class GpbExport extends Gpb {
     {
       lines.push(...[
 `material textured {`,
-`  u_worldViewProjectMatrix = WORLD_VIEW_PROJECTION_MATRIX`,
+`  u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX`,
 `  u_matrixPalette = MATRIX_PALETTE`,
 `  sampler u_diffuseTexture {`,
 `    mipmap = true`,
@@ -729,7 +732,7 @@ export class GpbExport extends Gpb {
 `  u_matrixPalette = MATRIX_PALETTE`,
 `  u_cameraPosition = CAMERA_WORLD_POSITION`,
 `  u_inverseTransposeWorldViewMatrix = INVERSE_TRANSPOSE_WORLD_VIEW_MATRIX`,
-`  u_ambientColor = 0.5 1.0, 0.25, 1`,
+`  u_ambientColor = 0.5, 1.0, 0.25, 1`,
 `  u_diffuseColor = 0.25, 0.0, 1.0, 1`,
 `  u_specularExponent = 6.31179`,
 `  technique {`,
