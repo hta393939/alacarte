@@ -1,4 +1,6 @@
 
+import { BinParser } from "./binparser.js";
+
 const _pad = (v, n = 2) => {
   return new String(v).padStart(n, '0');
 };
@@ -335,6 +337,91 @@ class Misc {
 
     await this.miniFiles(result, param);
     console.log('processDir end');
+  }
+
+  /**
+   * 二段下まで sparse/0/ を探してそこの \*.bin をパースする
+   * @param {FileSystemDirectoryHandle} dirHandle 
+   */
+  async parseBins(dirHandle) {
+    console.log('parseBins');
+
+    let sparseDir = null;
+
+    for await (const [k, v] of dirHandle.entries()) {
+      if (v.kind === 'file') {
+        continue;
+      }
+      if (k === 'sparse') {
+        sparseDir = v;
+        break;
+      }
+
+      for await (const [k2, v2] of v.entries()) {
+        if (v2.kind === 'file') {
+          continue;
+        }
+        if (k2 === 'sparse') {
+          sparseDir = v2;
+          break;
+        }
+      }
+
+      if (sparseDir) {
+        break;
+      }
+    }
+
+    if (!sparseDir) {
+      return null;
+    }
+
+    let zeroDir = null;
+
+    for await (const [k, v] of sparseDir.entries()) {
+      if (v.kind === 'file') {
+        continue;
+      }
+      if (k === '0') {
+        zeroDir = v;
+        break;        
+      }
+    }
+
+    if (!zeroDir) {
+      return null;
+    }
+
+    const ret = {
+      zeroDir,
+    };
+    const parser = new BinParser();
+
+    for await (const [k, v] of zeroDir.entries()) {
+      if (v.kind !== 'file') {
+        continue;
+      }
+
+      const f = await v.getFile();
+      const ab = await f.arrayBuffer();
+
+      switch (k) {
+      case 'cameras.bin':
+        ret.cameras = parser.parseCamera(ab);
+        break;
+      case 'images.bin':
+        ret.images = parser.parseImage(ab);
+        break;
+      case 'points3d.bin':
+        ret.points3d = parser.parsePoint(ab);
+        break;
+      default:
+        console.warn('ignore', k);
+        break;
+      }
+    }
+
+    return ret;
   }
 
   /**
