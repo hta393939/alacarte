@@ -108,12 +108,28 @@ export class BinParser {
   }
 
   /**
-   * u64の幅を進むがu32だけ読む
+   * 
+   * @param {DataView} p 
+   * @param {number} num 
+   * @returns 
+   */
+  read32s(p, num) {
+    const ret = new Uint32Array(num);
+    for (let i = 0; i < num; ++i) {
+      ret[i] = p.getUint32(this.c, true);
+      this.c += 4;
+    }
+    return ret;
+  }
+
+  /**
+   * u64の幅を読み進むが32bitだけ格納する。
+   * ffが8バイトのときは-1を格納する。
    * @param {DataView} p 
    * @param {number} num 
    */
   readu64s(p, num) {
-    const ret = new Uint32Array(num);
+    const ret = new Array(num);
     for (let i = 0; i < num; ++i) {
       ret[i] = p.getUint32(this.c, true);
       const hi = p.getUint32(this.c + 4, true);
@@ -147,18 +163,18 @@ export class BinParser {
     const ret = { cameras: [] };
     const p = new DataView(ab);
     this.c = 0;
-    ret.num = p.getUint32(this.c, true);
-    this.c += 8;
+    ret.num = this.readu64s(p, 1)[0];
     for (let i = 0; i < ret.num; ++i) {
       const cam = new Cam();
-      cam.id = p.getUint32(this.c, true);
-      cam.type = p.getUint32(this.c + 4, true);
-      cam.width = p.getUint32(this.c + 8, true);
-      cam.height = p.getUint32(this.c + 16, true);
-      this.c += 24;
+      cam.id = this.read32s(p, 1)[0];
+      cam.type = this.read32s(p, 1)[0];
+      cam.width = this.readds(p, 1)[0];
+      cam.height = this.readds(p, 1)[0];
       cam.params = this.readds(p, 4);
 
       ret.cameras.push(cam);
+
+      console.log('cam', cam);
     }
     console.log('parseCamera', this.c, ab.byteLength);
     return ret;
@@ -172,20 +188,20 @@ export class BinParser {
     const ret = { images: [] };
     const p = new DataView(ab);
     this.c = 0;
-    ret.num = p.getUint32(this.c, true);
-    this.c += 8;
+    ret.num = this.readu64s(p, 1)[0];
     for (let i = 0; i < ret.num; ++i) {
       const img = new Image();
 
       img.name = this.readstr(p);
-      const len = p.getUint32(this.c, true);
-      this.c += 8;
+      const len = this.readu64s(p, 1)[0];
       for (let j = 0; j < len; ++j) {
         const p2 = new Point2D();
         p2.p = this.readds(p, 2);
         p2.id3d = this.readu64s(p, 1)[0];
 
-        img.point2ds.push(p2);
+        if (false) {
+          img.point2ds.push(p2);
+        }
       }
 
       ret.images(img);
@@ -202,23 +218,21 @@ export class BinParser {
     const ret = { points: [] };
     const p = new DataView(ab);
     this.c = 0;
-    ret.num = p.getUint32(this.c, true);
-    this.c += 8;
+    ret.num = this.readu64s(p, 1)[0];
     for (let i = 0; i < ret.num; ++i) {
       const pt = new Point();
-      pt.id = p.getUint32(this.c, true);
-      this.c += 8;
+      pt.id = this.readu64s(p, 1)[0];
       pt.p = this.readds(p, 3);
       pt.color = this.readu8s(p, 3);
       pt.err = this.readds(p, 1)[0];
-      const len = p.getUint32(this.c, true);
-      this.c += 8;
+      const len = this.readu64s(p, 1)[0];
       for (let j = 0; j < len; ++j) {
         const track = new Track();
-        track.imageid = p.getUint32(this.c, true);
-        track.index = p.getUint32(this.c + 4, true);
-        this.c += 8;
-        pt.tracks.push(track);
+        track.imageid = this.read32s(p, 1)[0];
+        track.index = this.read32s(p, 1)[0];
+        if (false) {
+          pt.tracks.push(track);
+        }
       }
 
       ret.points.push(pt);
