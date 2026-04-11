@@ -250,3 +250,113 @@ export class BinParser {
 
 }
 
+export class BinExporter extends BinParser {
+  constructor() {
+    super();
+  }
+
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} c 
+   * @param {number[]} vals 
+   */
+  writeu8s(p, c, vals) {
+    let offset = 0;
+    for (const val of vals) {
+      p.setUint8(c + offset, val);
+      offset += 1;
+    }
+    return offset;
+  }
+
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} c 
+   * @param {numbers} vals 
+   */
+  write32s(p, c, vals) {
+    let offset = 0;
+    for (const val of vals) {
+      p.setUint32(c + offset, val, true);
+      offset += 4;
+    }
+    return offset;
+  }
+
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} c 
+   * @param {number[]} vals 
+   * @returns 
+   */
+  writeu64s(p, c, vals) {
+    let offset = 0;
+    for (let i = 0; i < vals.length; ++i) {
+      const val = vals[i];
+      if (val !== -1) {
+        p.setUint32(c + offset, val, true);
+      } else {
+        p.setUint32(c + offset, 0xffffff, true);
+        p.setUint32(c + offset + 4, 0xffffffff, true);
+      }
+      offset += 8;
+    }
+    return offset;
+  }
+
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} c 
+   * @param {number[]} vals 
+   * @returns 
+   */
+  writeds(p, c, vals) {
+    let offset = 0;
+    for (const val of vals) {
+      p.setFloat64(c + offset, val, true);
+      offset += 8;
+    }
+    return offset;  
+  }
+
+  /**
+   * points3D.bin バイナリを作成する
+   * @param {Point[]} pts 
+   * @returns {object[]}
+   */
+  makePoint(pts, usetrack = false) {
+    const chunks = [];
+
+    let num = pts.length;
+    {
+      const buf = new Uint32Array(2);
+      buf[0] = num;
+      chunks.push(buf);
+    }
+
+    for (let i = 0; i < num; ++i) {
+      const pt = pts[i];
+      let len = usetrack ? pt.tracks.length : 0;
+      const ab = new ArrayBuffer(64 + len * 8);
+      const p = new DataView(ab);
+      let c = 0;
+      c += this.writeu64s(p, c, [pt.id]);
+      c += this.writeds(p, c, pt.p);
+      c += this.writeu8s(p, c, pt.color);
+      c += this.writeds(p, c, [pt.err]);
+      c += this.writeu64s(p, c, [len]);
+      for (let j = 0; j < len; ++j) {
+        const track = pt.tracks[j];
+        c += this.write32s(p, c, [track.imageid, track.index]);
+      }
+      chunks.push(buf.slice(0, c));
+    }
+    return chunks;
+  }
+
+}
+
