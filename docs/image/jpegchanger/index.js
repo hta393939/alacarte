@@ -68,7 +68,7 @@ class Misc {
     this.outcount = 1;
     this.maxcount = -1;
 
-    /** @type {FileSystemDirectoryHandle} */
+    /** @type {FileSystemDirectoryHandle} フォルダ選択で開く */
     this.root = null;
     this.srcdh = null;
     this.dstdh = null;
@@ -616,6 +616,23 @@ class Misc {
         await this.processDir(dirHandle);
       });
     }
+
+    { // ワーキングディレクトリ
+      const el = document.getElementById('selectdir');
+      el?.addEventListener('click', async () => {
+        const dirHandle = await this.openDir();
+        this.setContent('#rootview', dirHandle.name);
+        this.root = dirHandle;
+      });
+    }
+
+    {
+      const el = document.getElementById('parsebin');
+      el?.addEventListener('click', async () => {
+        await this.parseBins(this.root);
+      });
+    }
+
     {
       const el = document.getElementById('openfile');
       el?.addEventListener('click', async () => {

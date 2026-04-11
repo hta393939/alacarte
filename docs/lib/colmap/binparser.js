@@ -168,9 +168,11 @@ export class BinParser {
       const cam = new Cam();
       cam.id = this.read32s(p, 1)[0];
       cam.type = this.read32s(p, 1)[0];
-      cam.width = this.readds(p, 1)[0];
-      cam.height = this.readds(p, 1)[0];
-      cam.params = this.readds(p, 4);
+      cam.width = this.readu64s(p, 1)[0];
+      cam.height = this.readu64s(p, 1)[0];
+
+      let len = (cam.type === Cam.TYPE_SIMPLE_PINHOLE) ? 3 : 4;
+      cam.params = this.readds(p, len);
 
       ret.cameras.push(cam);
 
@@ -185,13 +187,19 @@ export class BinParser {
    * @param {ArrayBuffer} ab 
    */
   parseImage(ab) {
+    console.log('parseImage');
     const ret = { images: [] };
     const p = new DataView(ab);
     this.c = 0;
     ret.num = this.readu64s(p, 1)[0];
+    console.log('num', ret.num);
     for (let i = 0; i < ret.num; ++i) {
       const img = new Image();
 
+      img.id = this.read32s(p, 1)[0];
+      img.wtop = this.readds(p, 4);
+      img.t = this.readds(p, 3);
+      img.cameraid = this.read32s(p, 1)[0];
       img.name = this.readstr(p);
       const len = this.readu64s(p, 1)[0];
       for (let j = 0; j < len; ++j) {
