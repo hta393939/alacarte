@@ -416,7 +416,7 @@ class Misc {
         ret.points3d = parser.parsePoint(ab);
         break;
       default:
-        console.warn('ignore', k);
+        console.log('ignore', k);
         break;
       }
     }

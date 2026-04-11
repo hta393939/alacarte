@@ -83,11 +83,11 @@ export class BinParser {
     let text = null;
     for (let i = 0; i < 256; ++i) {
       buf[i] = p.getUint8(this.c);
+      this.c += 1;
       if (buf[i] === 0) {
         text = new TextDecoder().decode(buf.slice(0, i));
         break;
       }
-      this.c += 1;
     }
     return text;
   }
@@ -212,7 +212,7 @@ export class BinParser {
         }
       }
 
-      ret.images(img);
+      ret.images.push(img);
     }
     console.log('parseImage', this.c, ab.byteLength);
     return ret;
