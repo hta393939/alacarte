@@ -88,6 +88,11 @@ class Misc {
             deviceId: {exact: dev.deviceId},
           },
         };
+        if (true) {
+          opt.video.width = {exact: 1024};
+          opt.video.height = {exact: 1024};
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia(opt);
         let str = `getUserMedia succ,${dev.label}`;
         this.log(str);
@@ -112,6 +117,15 @@ class Misc {
             const subvideo = document.getElementById('subvideo');
             if (video && !video.srcObject) {
               video.srcObject = stream;
+
+              video.addEventListener('click', async () => {
+                const vt = stream.getVideoTracks()[0];
+                const ic = new ImageCapture(vt);
+                const photoOpt = {};
+                const blob = await ic.takePhoto(photoOpt);
+                this.download(blob, `photo.jpg`);
+              });
+
             } else {
               subvideo.srcObject = stream;
             }
@@ -120,6 +134,13 @@ class Misc {
       });
       parent.appendChild(el);
     }
+  }
+
+  download(blob, name) {
+    const a = document.createElement('a');
+    a.download = name;
+    a.href = URL.createObjectURL(blob);
+    a.click();
   }
 
   makeFilename(num) {
