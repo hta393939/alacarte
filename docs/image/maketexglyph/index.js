@@ -44,7 +44,7 @@ class Misc {
   }
 
   /**
-   * 
+   * 1000x1400 サイズ
    * @param {HTMLCanvasElement} canvas 
    */
   draw(canvas) {

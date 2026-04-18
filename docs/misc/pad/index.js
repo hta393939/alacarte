@@ -6,6 +6,8 @@ const _pad = (v, n = 2) => {
 class Misc {
   constructor() {
     this.consoles = [];
+    this.nextDual = false;
+    this.nextTrigger = false;
   }
 
   async initialize() {
@@ -32,11 +34,12 @@ class Misc {
     return `${this.prefix}${_pad(num, this.num)}.${this.ext}`;
   }
 
-  view() {
+  async view() {
     const pads = navigator.getGamepads();
     if (!pads) {
       return;
     }
+    let first = true;
     for (let i = 0; i < pads.length; ++i) {
       const pad = pads[i];
       const el = document.getElementById(`padview${i}`);
@@ -47,6 +50,20 @@ class Misc {
         el.textContent = `null ${i}`;
         continue;
       }
+
+      if (first) {
+        if (this.nextDual) {
+          this.nextDual = false;
+          await this.dualVibe(pad);
+
+        }
+        if (this.nextTrigger) {
+          this.nextTrigger = false;
+          await this.triggerVibe(pad);
+        }
+        first = false;
+      }
+
       let str = ``;
       for (let j = 0; j < pad.buttons.length; ++j) {
         str += `,${j}-${pad.buttons[j].value}`;
@@ -64,6 +81,8 @@ class Misc {
         }
       }
       str += `,${pad.id}`;
+      str += `,${pad.mapping}, actu${(pad.vibrationActuator !== null)}, ${pad.vibrationActuator?.effects}`;
+
       el.innerHTML = str;
     }
   }
@@ -74,6 +93,44 @@ class Misc {
     });
 
     this.view();
+  }
+
+  /**
+   * 
+   * @param {Gamepad} pad 
+   */
+  async dualVibe(pad) {
+    const actu = pad.vibrationActuator;
+    if (!actu) {
+      return;
+    }
+
+    const opt = {
+      startDelay: 0,
+      duration: 1000,
+      strongMagnitude: 1.0, // 強い振動。ミリ秒
+      weakMagnitude: 1.0, // 弱い振動
+    };
+    const result = await actu.playEffect('dual-rumble', opt);
+  }
+
+  /**
+   * 
+   * @param {Gamepad} pad 
+   */
+  async triggerVibe(pad) {
+    const actu = pad.vibrationActuator;
+    if (!actu) {
+      return;
+    }
+
+    const opt = {
+      startDelay: 0,
+      duration: 2000,
+      leftTrigger: 1.0, // 0.0-1.0
+      rightTrigger: 0.5, // 
+    };
+    const result = await actu.playEffect('trigger-rumble', opt);
   }
 
   setListener() {
@@ -110,6 +167,19 @@ class Misc {
       });
       window.addEventListener('gamepaddisconnected', ev => {
         console.log(ev.type, ev.gamepad);
+      });
+    }
+
+    {
+      const el = document.getElementById('dualbutton');
+      el?.addEventListener('click', () => {
+        this.nextDual = true;
+      });
+    }
+    {
+      const el = document.getElementById('triggerbutton');
+      el?.addEventListener('click', () => {
+        this.nextTrigger = true;
       });
     }
 
