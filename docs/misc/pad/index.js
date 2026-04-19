@@ -99,6 +99,8 @@ class Misc {
   /**
    * dual で指示する
    * @param {Gamepad} pad 
+   * @param {number} strongMag 0.0-1.0
+   * @param {number} weakMag 0.0-1.0
    */
   async dualVibe(pad, strongMag, weakMag) {
     const actu = pad.vibrationActuator;
