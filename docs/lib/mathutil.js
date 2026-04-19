@@ -1,5 +1,61 @@
 
 
+export class Vector2 {
+  constructor(x = 0, y = 0) {
+    this._x = 0;
+    this._y = 0;
+  }
+
+  get x() {
+    return this._x;
+  }
+  set x(val) {
+    this._x = val;
+  }
+
+  get y() {
+    return this._y;
+  }
+  set y(val) {
+    this._y = val;
+  }
+
+  static fromArray(vs) {
+    return new Vector2(vs[0], vs[1]);
+  }
+
+  asArray() {
+    return [this.x, this.y];
+  }
+
+  /**
+   * 
+   * @param {Vector2} b 
+   */
+  dot(b) {
+    return this.x * b.x + this.y * b.y;
+  }
+
+  length() {
+    return Math.sqrt(this.dot(this));
+  }
+
+  /**
+   * Z 成分
+   * @param {Vector2} b 
+   */
+  cross(b) {
+    return this.x * b.y - this.y * b.x;
+  }
+
+  normal() {
+    const len = this.length();
+    const k = (len > 0) ? 1 / len : 1;
+    return new Vector2(this.x * k, this.y * k);
+  }
+}
+
+
 export class Vector3 {
   constructor(x = 0, y = 0, z = 0) {
     this._x = x;
@@ -216,6 +272,10 @@ export class Quaternion {
     return ret;
   }
 
+  real() {
+    return new Vector3(this.x, this.y, this.z);
+  }
+
   conjugate() {
     const ret = new Quaternion();
     ret.x = -this.x;
@@ -234,7 +294,7 @@ export class Quaternion {
     const pt = Quaternion.point(v3);
     const c1 = this.mul(pt);
     const c2 = c1.mul(conj);
-    const ret = c2.clone();
+    return c2.real();
   }
 
 }
