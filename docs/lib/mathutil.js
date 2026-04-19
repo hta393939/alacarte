@@ -298,3 +298,20 @@ export class Quaternion {
   }
 
 }
+
+
+
+export class MathUtil {
+  constructor() {
+
+  }
+
+  static f1() {
+
+  }
+  static f2() {
+
+  }
+}
+
+
