@@ -184,6 +184,8 @@ class Misc {
       { name: 'dualbutton0_1', strong: 0, weak: 1 },
       { name: 'dualbutton5_0', strong: 0.5, weak: 0 },
       { name: 'dualbutton0_5', strong: 0, weak: 0.5 },
+      { name: 'dualbuttonq_0', strong: 0.25, weak: 0 },
+      { name: 'dualbutton0_q', strong: 0, weak: 0.25 },
     ]) {
       const el = document.getElementById(v.name);
       el?.addEventListener('click', () => {
