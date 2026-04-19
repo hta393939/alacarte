@@ -7,6 +7,8 @@ class Misc {
   constructor() {
     this.consoles = [];
     this.nextDual = false;
+    this.strong = 1;
+    this.weak = 1;
     this.nextTrigger = false;
   }
 
@@ -54,8 +56,7 @@ class Misc {
       if (first) {
         if (this.nextDual) {
           this.nextDual = false;
-          await this.dualVibe(pad);
-
+          await this.dualVibe(pad, this.strong, this.weak);
         }
         if (this.nextTrigger) {
           this.nextTrigger = false;
@@ -96,10 +97,10 @@ class Misc {
   }
 
   /**
-   * 
+   * dual で指示する
    * @param {Gamepad} pad 
    */
-  async dualVibe(pad) {
+  async dualVibe(pad, strongMag, weakMag) {
     const actu = pad.vibrationActuator;
     if (!actu) {
       return;
@@ -108,8 +109,8 @@ class Misc {
     const opt = {
       startDelay: 0,
       duration: 1000,
-      strongMagnitude: 1.0, // 強い振動。ミリ秒
-      weakMagnitude: 1.0, // 弱い振動
+      strongMagnitude: strongMag, // 強い振動
+      weakMagnitude: weakMag, // 弱い振動
     };
     const result = await actu.playEffect('dual-rumble', opt);
   }
@@ -176,6 +177,20 @@ class Misc {
         this.nextDual = true;
       });
     }
+    for (const v of [
+      { name: 'dualbutton1_0', strong: 1, weak: 0 },
+      { name: 'dualbutton0_1', strong: 0, weak: 1 },
+      { name: 'dualbutton5_0', strong: 0.5, weak: 0 },
+      { name: 'dualbutton0_5', strong: 0, weak: 0.5 },
+    ]) {
+      const el = document.getElementById(v.name);
+      el?.addEventListener('click', () => {
+        this.strong = v.strong;
+        this.weak = v.weak;
+        this.nextDual = true;
+      });
+    }
+
     {
       const el = document.getElementById('triggerbutton');
       el?.addEventListener('click', () => {
