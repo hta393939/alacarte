@@ -1,5 +1,5 @@
 
-import { BinParser } from "../../lib/colmap/binparser.js";
+import { BinParser } from "../../lib/colmap/colmapbin.js";
 
 const _pad = (v, n = 2) => {
   return new String(v).padStart(n, '0');
