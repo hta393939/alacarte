@@ -402,6 +402,8 @@ class Misc {
 
       }
     }
+
+    console.log('processFont');
   }
 
   /**

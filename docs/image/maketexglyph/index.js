@@ -41,6 +41,7 @@ class Misc {
     this.setListener();
 
     this.draw(window.maincanvas);
+    this.drawCyrl(window.subcanvas);
   }
 
   /**
@@ -251,6 +252,113 @@ class Misc {
     }
 
     console.log('draw2 end');
+    return;
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  drawCyrl(canvas) {
+    const one = 32;
+    const w = one * 16;
+    const h = one * 16;
+
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    c.fillStyle = 'rgba(51, 153, 51, 1)';
+    c.fillStyle = 'rgba(0, 0, 0, 1)';
+    c.fillRect(0, 0, w, h);
+
+    const dirs = [
+      { // Y-
+        col: (j, i) => {
+        return [i,0,j];
+      },
+        pos: (j, i) => {
+          return [one * 3 / 2 + j, i];
+        }
+      },
+      { // Z-
+        col: (j, i) => {
+        return [j,i,0];
+      },
+        pos: (j, i) => {
+          return [one * 1 / 2 + j, i + one];
+        }
+      },
+      { // X+
+        col: (j, i) => {
+        return [255,i,j];
+      },
+        pos: (j, i) => {
+          return [one * 3 / 2 + j, i + one];
+        }},
+      { // Z+
+        col: (j, i) => {
+        return [255-j,i,255];
+      },
+        pos: (j, i) => {
+          return [one * 5 / 2 + j, i + one];
+        }},
+      { // Y+
+        col: (j, i) => {
+        return [255-i,255,j];
+      },
+        pos: (j, i) => {
+          return [one * 3 / 2 + j, i + one * 2];
+        }},
+      { // X-
+        col: (j, i) => {
+        return [0,255-i,j];
+      },
+        pos: (j, i) => {
+          return [one * 3 / 2 + j, i + one * 3];
+        }
+      },
+    ];
+    const img = c.getImageData(0, 0, w, h);
+    for (const dir of dirs) {
+
+      for (let i = 0; i < one; ++i) {
+        for (let j = 0; j < one; ++j) {
+          const col = dir.col?.(j, i) || [0, 0, 0];
+          const pos = dir.pos?.(j, i) || [0, 0];
+          let offset = (pos[0] + w * pos[1]) * 4;
+          img.data[offset] = col[0];
+          img.data[offset+1] = col[1];
+          img.data[offset+2] = col[2];
+          img.data[offset+3] = 255;
+        }
+      }
+
+    }
+    //c.putImageData(img, 0, 0);
+
+    if (true) {
+      //c.font = `normal 20px ＭＳ ゴシック`;
+      c.font = `normal 22px ＭＳ 明朝`;
+      c.font = `normal 24px ＭＳ 明朝`;
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillStyle = 'rgb(51,51,255)';
+
+      for (let i = 0; i < 16; ++i) {
+        for (let j = 0; j < 16; ++j) {
+          let code = 0x400 + j + i * 16;
+      //c.translate(one * 6 / 2, one * 3 / 2);
+      //c.rotate(Math.PI * 0.5);
+      //c.fillText(`z`, one * 3 / 2, one * 4);
+      //c.fillText(`a`, one * 3 / 2, one * 1);
+      c.fillText(`${String.fromCodePoint(code)}`, j * 32 + 16, i * 32 + 16);
+      //c.fillText(`c`, one * 3 / 2, one * 3);
+      c.resetTransform();
+        }
+      }
+    }
+
+    console.log('drawCyrl end');
     return;
   }
 

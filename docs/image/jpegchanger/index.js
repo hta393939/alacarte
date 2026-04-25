@@ -459,7 +459,7 @@ class Misc {
   }
 
   /**
-   * 
+   * 直下に dst/, _foo/, _foodb/ を含むフォルダを指定する。 
    * @param {FileSystemDirectoryHandle} dirHandle 
    * @param {*} param 
    */
