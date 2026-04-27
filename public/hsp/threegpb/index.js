@@ -153,13 +153,6 @@ class Misc {
       });
     }
 
-    {
-      const el = document.getElementById('processfont');
-      el?.addEventListener('click', () => {
-        this.processFont();
-      });
-    }
-
   }
 
   initThree() {
@@ -218,6 +211,9 @@ class Misc {
 
         const exporter = this.toGpb(model);
         console.log('exporter', exporter);
+        if (window.downloadgpb?.checked) {
+          this.downloadGpb(exporter);
+        }
       },
       xhr => {
         console.log('xhr', xhr);
@@ -230,10 +226,26 @@ class Misc {
   }
 
   /**
+   * 
+   * @param {GpbExport} exporter 
+   */
+  downloadGpb(exporter) {
+    console.log('downloadGpb');
+    {
+      const buf = exporter.make(false);
+      this.download(new Blob([buf]), `foo.gpb`);
+    }
+    {
+      const text = exporter._materialFile.toString();
+      this.download(new Blob([text]), `foo.material`);
+    }
+  }
+
+  /**
    * @param {THREE.Mesh} m
    */
   toGpb(obj) {
-    const exporter = new GpbExport();
+    const gpb = new GpbExport();
 
     let m = obj;
     while (m?.isMesh !== true) {
@@ -305,26 +317,44 @@ class Misc {
         }
         gpbmesh.compute();
 
-        exporter.meshes.push(gpbmesh);
+        gpb.meshes.push(gpbmesh);
 
-        // TODO: 位置
+        
+        { // 位置
+          const t = new GpbTable();
+          t.name = modelName;
+          t.type = GpbTable.TYPE_MESH;
+          gpb.tables.push(t);
+        }
+
       }
       { // シーン
-        // TODO: 位置
+        { // 位置
+          const t = new GpbTable();
+          t.name = 'scene0';
+          t.type = GpbTable.TYPE_MESH;
+          gpb.tables.push(t);
+        }
       }
       { // メッシュノード
         const node = new GpbNode();
         node._name = 'node0';
         node.modelName = `#${modelName}`;
+        node.materials.push(materialName);
+        gpb.scene.children.push(node);
 
-        // TODO: 位置
+        { // 位置
+          const t = new GpbTable();
+          t.name = 'node0';
+          t.type = GpbTable.TYPE_NODE;
+          gpb.tables.push(t);
+        }       
       }
 
-      exporter._materialFile = mtlFile;
+      gpb._materialFile = mtlFile;
     }
 
-
-    return exporter;
+    return gpb;
   }
 
   /**
@@ -451,142 +481,6 @@ class Misc {
     a.download = name;
     a.click();
     //URL.revokeObjectURL(a.href);
-  }
-
-  /**
-   * 
-   */
-  replace() {
-    const size = 8;
-    const img = document.getElementById('afont8');
-    /**
-     * @type {HTMLCanvasElement}
-     */
-    const canvas = document.getElementById('maincanvas');
-    canvas.width = size * 16;
-    canvas.height = size * 16;
-    const c = canvas.getContext('2d');
-
-    const colOffset = 0; // white
-    //const colOffset = 1; // dark blue
-    //const colOffset = 8; // red
-    for (let y = 0; y < 16; ++y) {
-      for (let x = 0; x < 16; ++x) {
-        let index = x + 16 * y;
-        let sx = size * (index % 64);
-        let sy = size * (Math.floor(index / 64) + colOffset * 4);
-        c.drawImage(img, sx, sy, size, size,
-          x * size, y * size, size, size);
-      }
-    }
-
-    c.fillStyle = 'rgba(255, 255, 255, 1.0)';
-    for (let y = 13; y < 16; ++y) {
-      for (let x = 0; x < 16; ++x) {
-        let index = x + y * 16;
-
-        let r = x * 16;
-        let g = x * 16;
-        let b = x * 16;
-
-        if (y === 13) {
-
-        } else {
-          let gr = Math.floor((index - 14 * 16) / 4);
-          r = ((gr >> 1) & 1) * 256;
-          g = ((gr >> 2) & 1) * 256;
-          b = (gr & 1) * 256;
-          let div = 1 << (index & 3);
-          {
-            r /= div;
-            g /= div;
-            b /= div;
-          }
-        }
-
-        r = Math.min(255, r);
-        g = Math.min(255, g);
-        b = Math.min(255, b);
-        c.fillStyle = `rgba(${r},${g},${b},1.0)`;
-        c.fillRect(x * size, y * size, size, size);
-      }
-    }
-
-  }
-
-  /**
-   * 
-   */
-  processFont() {
-    console.log('processFont');
-    /**
-     * @type {HTMLImageElement}
-     */
-    const srcimg = document.getElementById('chip8dblue');
-    const sw = srcimg.naturalWidth;
-    const sh = srcimg.naturalHeight;
-
-    const dstimg = document.getElementById('chip16');
-    const dw = dstimg.naturalWidth;
-    const dh = dstimg.naturalHeight;
-
-    /**
-     * @type {HTMLCanvasElement}
-     */
-    const canvass = document.getElementById('maincanvas');
-    canvass.width = sw;
-    canvass.height = sh;
-    const cs = canvass.getContext('2d');
-    /**
-     * @type {HTMLCanvasElement}
-     */
-    const canvasd = document.getElementById('subcanvas');
-    canvasd.width = dw;
-    canvasd.height = dh;
-    const cd = canvasd.getContext('2d');
-
-    // 参照
-    cs.drawImage(srcimg, 0, 0);
-    cd.drawImage(dstimg, 0, 0);
-    // 書き出し先
-
-    let side = 2;
-    let w1 = 8 * 16;
-    let h1 = 8 * 11;
-
-    const img = cs.getImageData(0, 0, sw, sh);
-    for (let y = 0; y < h1; ++y) {
-      for (let x = 0; x < w1; ++x) {
-        let sx = x;
-        let sy = y + 8 * 2;
-        let offset = (sx + sw * sy) * 4;
-
-        let cx = sx * side;
-        let cy = sy * side;
-        let r = img.data[offset];
-        let g = img.data[offset+1];
-        let b = img.data[offset+2];
-        let a = img.data[offset+3];
-
-        if (a !== 0) {
-          r = 0;
-          g = 255;
-          b = 0;
-          a = 1;
-
-          cd.fillStyle = `rgba(${r},${g},${b}, ${a})`;
-          cd.fillRect(cx, cy, side, side);
-        } else {
-          a = 0;
-
-          cd.fillStyle = `rgba(${r},${g},${b}, ${a})`;
-          cd.clearRect(cx, cy, side, side);
-        }
-
-      }
-    }
-
-    console.log('processFont');
   }
 
   /**

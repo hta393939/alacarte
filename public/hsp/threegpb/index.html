@@ -2,14 +2,14 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <title>gpb?</title>
+    <title>make gpb from glb</title>
     <link rel="stylesheet" href="./index.css" />
   </head>
   <body>
     <div class="toright">
 
       <div>
-        <button class="pointer" id="act">処理する←</button>
+        <button class="pointer" id="act">処理する</button>
         <button class="pointer" id="downloadact">処理後をダウンロードする</button>
         <br />
         <button class="pointer" id="selectdir">フォルダを選択する</button>
@@ -80,8 +80,6 @@
     <div class="toright">
       <div class="tobottom">
         <canvas class="limit" id="maincanvas"></canvas>
-        <div class="drop" id="fromglb">glbファイルをドロップする</div>
-        <div class="drop" id="loadimage">画像読み取り</div>
         <div>
           <div id="idsourceinfo"></div>
         </div>
@@ -92,9 +90,13 @@
           <div id="iddestinfo"></div>
         </div>
       </div>
+      <div class="drop" id="fromglb">glbファイルをドロップする</div>
+      <div class="drop" id="loadimage">画像読み取り</div>
     </div>
 
-    <button class="pointer" id="processfont">フォント移動</button>
+    <div>
+      <label><input checked type="checkbox" id="downloadgpb" />gpbダウンロードまで実行する</label>
+    </div>
 
     <!--
     <img id="afont8" src="afont8.png" />

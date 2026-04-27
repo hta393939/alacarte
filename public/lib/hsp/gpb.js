@@ -315,13 +315,19 @@ export class GpbAnimation {
 }
 
 export class GpbMaterial {
+  static NAME_TEXTURED = 'textured';
+  static NAME_COLORED = 'colored';
+
   constructor() {
     this.name = 'material0';
     /** '' の場合は派生無し */
-    this.superClass = 'textured';
+    this.superClass = GpbMaterial.NAME_TEXTURED;
+
+    this.type = '';
 
     this.texturePath = 'res/body_SD.png';
-    this.defines = ['SKINNING', 'SKINNING_JOINT_COUNT 2'];
+    this.defines = [];
+    //this.defines = ['SKINNING', 'SKINNING_JOINT_COUNT 2'];
   }
 
   /**
@@ -335,8 +341,12 @@ export class GpbMaterial {
     } else {
       lines.push(`material ${this.name} {`);
     }
-    {
-      lines.push(...[
+
+    if (this.name !== GpbMaterial.NAME_TEXTURED
+      && this.name !== GpbMaterial.NAME_COLORED) {
+      // 派生クラスの場合
+      if (this.superClass === GpbMaterial.NAME_TEXTURED) {
+        lines.push(...[
 `  u_matrixPalette = MATRIX_PALETTE`,
 `  sampler u_diffuseTexture {`,
 `    path = ${this.texturePath}`,
@@ -350,8 +360,27 @@ export class GpbMaterial {
 `  }`,
 `}`,
 '',
-]);
+        ]);
+      } else if (this.superClass === GpbMaterial.NAME_COLORED) {
+        lines.push(...[
+`  u_diffuseColor = 0.1, 1.0, 0.5`,
+`  technique {`,
+`    pass {`,
+`    }`,
+`  }`,
+''
+        ]);
+      }
+    } else {
+      if (this.name === GpbMaterial.NAME_TEXTURED) {
+        // textured 共通
+        // 未実装
+      } else if (this.name === GpbMaterial.NAME_COLORED) {
+        // colored 共通
+        // 未実装
+      }
     }
+
     return lines;
   }
 
@@ -369,13 +398,13 @@ export class GpbMaterialFile {
     { // colored
       const mtl = new GpbMaterial();
       mtl.superClass = '';
-      mtl.name = 'colored';
+      mtl.name = GpbMaterial.NAME_COLORED;
       this.materials.push(mtl);
     }
     { // textured
       const mtl = new GpbMaterial();
       mtl.superClass = '';
-      mtl.name = 'textured';
+      mtl.name = GpbMaterial.NAME_TEXTURED;
       this.materials.push(mtl);
     }
   }
