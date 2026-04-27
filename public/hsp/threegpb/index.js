@@ -171,8 +171,21 @@ class Misc {
     this.renderer = renderer;
     const scene = new THREE.Scene();
     this.scene = scene;
+    scene.background = new THREE.Color(0x999999);
     const camera = new THREE.PerspectiveCamera();
     this.camera = camera;
+    {
+      camera.position.set(1, 1, 10);
+      camera.lookAt(new THREE.Vector3(0, 0, 0));
+    }
+    {
+      const light = new THREE.AmbientLight(0xffffff);
+      scene.add(light);
+    }
+    {
+      const axes = new THREE.AxesHelper(10);
+      scene.add(axes);
+    }
 
     const control = new OrbitControls(camera, opt.canvas);
     this.control = control;
@@ -203,7 +216,8 @@ class Misc {
         const model = gltf.scene;
         this.scene.add(model);
 
-        this.toGpb(model);
+        const exporter = this.toGpb(model);
+        console.log('exporter', exporter);
       },
       xhr => {
         console.log('xhr', xhr);
@@ -232,6 +246,7 @@ class Misc {
     {
       const geo = m.geometry;
       const mtl = m.material;
+      mtl.wireframe = true;
       console.log('toGpb, geo, mtl', geo, mtl, m);
 
       // 材質作る
@@ -304,9 +319,11 @@ class Misc {
 
         // TODO: 位置
       }
+
+      exporter._materialFile = mtlFile;
     }
 
-    exporter._materialFile = mtlFile;
+
     return exporter;
   }
 
