@@ -8,6 +8,7 @@ import {
 import * as THREE from "three";
 
 import {OrbitControls} from "three/addon/controls/OrbitControls.js";
+import {GLTFLoader} from "three/addon/loaders/GLTFLoader.js";
 
 class Misc {
   constructor() {
@@ -103,6 +104,16 @@ class Misc {
       });
     }
 
+    { // ドロップ
+      const el = document.getElementById('fromglb');
+      el.addEventListener('dragover', handler('copy'));
+      el.addEventListener('drop', async ev => {
+        handler('copy')(ev);
+
+        this.loadGlb(ev.dataTransfer.files[0]);
+      });
+    }
+
     // パラメータ群
     for (const k in this.param) {
       const el = document.getElementById(`${k}`);
@@ -176,6 +187,118 @@ class Misc {
 
     this.control?.update();
     this.renderer?.render(this.scene, this.camera);
+  }
+
+  /**
+   * 
+   * @param {Blob} blob
+   * @param {ArrayBuffer} ab 
+   */
+  loadGlb(blob) {
+    const loader = new GLTFLoader();
+    const url = URL.createObjectURL(blob);
+    loader.load(url, (gltf) => {
+        console.log('gltf', gltf);
+        const model = gltf.scene;
+        this.scene.add(model);
+
+        this.toGpb(model);
+      },
+      xhr => {
+        console.log('xhr', xhr);
+      },
+      err => {
+        console.log('loader err', err);
+      }
+    );
+    console.log('loadGlb');
+  }
+
+  /**
+   * @param {THREE.Mesh} m
+   */
+  toGpb(obj) {
+    const exporter = new GpbExport();
+
+    let m = obj;
+    while (m?.isMesh !== true) {
+      if (m.children.length === 0) {
+        break;
+      }
+      m = m.children[0];
+    }
+
+    {
+      const geo = m.geometry;
+      const mtl = m.material;
+      console.log('toGpb, geo, mtl', geo, mtl, m);
+
+      // 材質作る
+      // ジオメトリ作って面張る
+      const attrs = geo.attributes;
+      const fis = geo.index.array;
+      /** 頂点の個数 */
+      const vn = attrs.position.array.length / 3;
+      // normal 無かったら計算する
+      if (!('normal' in attrs)) {
+        geo.computeNormals();
+      }
+      // joint, weight は無かったら 0, 1.0 で。
+      if (!('skinIndex' in attrs)) {
+        const ba = new THREE.BufferAttribute(new Float32Array(vn * 4), 4);
+        geo.setAttribute('skinIndex', ba);
+      }
+      if (!('skinWeight' in attrs)) {
+        const ba = new THREE.BufferAttribute(new Float32Array(vn * 4), 4);
+        for (let i = 0; i < vn; ++i) {
+          ba.array[i * 4] = 1.0;
+        }
+        geo.setAttribute('skinWeight', ba);
+      }
+
+      //// Gpbへの読み替え
+      const modelName = 'mesh0';
+      const materialName = 'material0';
+
+      { // メッシュの読み替え
+        const gpbmesh = new GpbMesh();
+        const gpbpart = new GpbPart();
+        gpbpart.indices = fis;
+
+        const glbp = attrs['position'].array;
+        const glbn = attrs['normal'].array;
+        const glbuv = attrs['uv'].array;
+        for (let i = 0; i < vn; ++i) {
+          const i3 = i * 3;
+          const vt = new GpbVertex();
+          vt.p = [glbp[i3], glbp[i3 + 1], glbp[i3 + 2]];
+          vt.n = glbn.slice(i3, i3 + 3);
+          vt.uv = [glbuv[i * 2], glbuv[i * 2 + 1]];
+          vt.joints = [0, 0, 0, 0];
+          vt.weights = [1, 0, 0, 0];
+          gpbmesh.vts.push(vt);
+        }
+        gpbmesh.compute();
+
+        exporter.meshes.push(gpbmesh);
+
+        // TODO: 位置
+      }
+      { // 材質
+
+      }
+      { // シーン
+        // TODO: 位置
+      }
+      { // メッシュノード
+        const node = new GpbNode();
+        node._name = 'node0';
+        node.modelName = `#${modelName}`;
+
+        // TODO: 位置
+      }
+    }
+    return exporter;
   }
 
   /**
