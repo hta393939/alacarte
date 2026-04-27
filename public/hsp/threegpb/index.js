@@ -3,6 +3,7 @@ import {
   GpbExport, GpbMesh, GpbNode, GpbPart,
   GpbVertex,
   GpbAnimation, GpbAnimChannel,
+  GpbMaterialFile, GpbMaterial,
 } from "../../lib/hsp/gpb.js";
 
 import * as THREE from "three";
@@ -260,6 +261,13 @@ class Misc {
       const modelName = 'mesh0';
       const materialName = 'material0';
 
+      const mtlFile = new GpbMaterialFile();
+      mtlFile.addStandards();
+      {
+        const gpbmtl = new GpbMaterial();
+        mtlFile.materials.push(gpbmtl);
+      }
+
       { // メッシュの読み替え
         const gpbmesh = new GpbMesh();
         gpbmesh.ready(true);
@@ -286,9 +294,6 @@ class Misc {
 
         // TODO: 位置
       }
-      { // 材質
-
-      }
       { // シーン
         // TODO: 位置
       }
@@ -300,6 +305,8 @@ class Misc {
         // TODO: 位置
       }
     }
+
+    exporter._materialFile = mtlFile;
     return exporter;
   }
 
