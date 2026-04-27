@@ -262,6 +262,8 @@ class Misc {
 
       { // メッシュの読み替え
         const gpbmesh = new GpbMesh();
+        gpbmesh.ready(true);
+
         const gpbpart = new GpbPart();
         gpbpart.indices = fis;
 

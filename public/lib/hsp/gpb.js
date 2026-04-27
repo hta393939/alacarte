@@ -244,6 +244,30 @@ export class GpbMesh {
     }
     this.radius = Math.sqrt(sum);
   }
+
+  /**
+   * 標準的な属性を用意する
+   * @param {boolean} isSkin 
+   */
+  ready(isSkin) {
+    this.attrs = [];
+    const pair = [
+      {type: GpbAttribute.TYPE_POSITION, num: 3},
+      {type: GpbAttribute.TYPE_NORMAL, num: 3},
+      {type: GpbAttribute.TYPE_TEXCOORD0, num: 2},
+    ];
+    if (isSkin) {
+      pair.push({type: GpbAttribute.TYPE_WEIGHTS, num: 4});
+      pair.push({type: GpbAttribute.TYPE_JOINTS, num: 4});
+    }
+    for (const v of pair) {
+      const attr = new GpbAttribute();
+      attr.type = v.type;
+      attr.num = v.num;
+      this.attrs.push(attr);
+    }
+  }
+
 }
 
 export class GpbTable {
