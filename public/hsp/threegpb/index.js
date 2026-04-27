@@ -292,15 +292,19 @@ class Misc {
       mtlFile.addStandards();
       {
         const gpbmtl = new GpbMaterial();
+        gpbmtl.superClass = GpbMaterial.NAME_TEXTURED;
+        gpbmtl.name = materialName;
         mtlFile.materials.push(gpbmtl);
       }
 
       { // メッシュの読み替え
         const gpbmesh = new GpbMesh();
-        gpbmesh.ready(true);
+        gpbmesh.readyAttrs(true);
 
         const gpbpart = new GpbPart();
         gpbpart.indices = fis;
+        gpbpart.indexFormat = GpbPart.INDEX16;
+        gpbmesh.parts.push(gpbpart);
 
         const glbp = attrs['position'].array;
         const glbn = attrs['normal'].array;
@@ -308,7 +312,7 @@ class Misc {
         for (let i = 0; i < vn; ++i) {
           const i3 = i * 3;
           const vt = new GpbVertex();
-          vt.p = [glbp[i3], glbp[i3 + 1], glbp[i3 + 2]];
+          vt.p = glbp .slice(i3, i3 + 3);
           vt.n = glbn.slice(i3, i3 + 3);
           vt.uv = [glbuv[i * 2], glbuv[i * 2 + 1]];
           vt.joints = [0, 0, 0, 0];
@@ -331,13 +335,14 @@ class Misc {
       { // シーン
         { // 位置
           const t = new GpbTable();
-          t.name = 'scene0';
-          t.type = GpbTable.TYPE_MESH;
+          t.name = '__SCENE__';
+          t.type = GpbTable.TYPE_SCENE;
           gpb.tables.push(t);
         }
       }
       { // メッシュノード
         const node = new GpbNode();
+        node.parentName = '__SCENE__';
         node._name = 'node0';
         node.modelName = `#${modelName}`;
         node.materials.push(materialName);
@@ -345,7 +350,7 @@ class Misc {
 
         { // 位置
           const t = new GpbTable();
-          t.name = 'node0';
+          t.name = node._name;
           t.type = GpbTable.TYPE_NODE;
           gpb.tables.push(t);
         }       

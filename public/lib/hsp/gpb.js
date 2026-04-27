@@ -95,7 +95,7 @@ export class GpbNode {
     this.nodeType = GpbNode.TYPE_NODE;
     this.matrix = [
       1, 0, 0, 0,
-      0, 1, 0, 1,
+      0, 1, 0, 0,
       0, 0, 1, 0,
       0, 0, 0, 1,
     ];
@@ -179,9 +179,9 @@ export class GpbVertex {
  */
 export class GpbPart {
   static INDEX8 = 0x1401;
-  /** GL_UNSIGNED_SHORT */
+  /** GL_UNSIGNED_SHORT 0x1403 */
   static INDEX16 = 0x1403;
-  /** GL_UNSIGNED_INT */
+  /** GL_UNSIGNED_INT 0x1405 */
   static INDEX32 = 0x1405;
 
   /** 1 線分 */
@@ -224,6 +224,9 @@ export class GpbMesh {
     this.parts = [];
   }
 
+  /**
+   * 最大最小を計算し対角線で半径とする。
+   */
   compute() {
     const num = this.vts.length;
     if (num === 0) {
@@ -249,7 +252,7 @@ export class GpbMesh {
    * 標準的な属性を用意する
    * @param {boolean} isSkin 
    */
-  ready(isSkin) {
+  readyAttrs(isSkin) {
     this.attrs = [];
     const pair = [
       {type: GpbAttribute.TYPE_POSITION, num: 3},
@@ -323,11 +326,22 @@ export class GpbMaterial {
     /** '' の場合は派生無し */
     this.superClass = GpbMaterial.NAME_TEXTURED;
 
-    this.type = '';
-
-    this.texturePath = 'res/body_SD.png';
     this.defines = [];
     //this.defines = ['SKINNING', 'SKINNING_JOINT_COUNT 2'];
+
+    /** for textured */
+    this.texturePath = 'res/body_SD.png';
+
+    /** for colored */
+    this.diffuses = [1, 1, 1, 1];
+  }
+
+  /**
+   * 
+   * @param {number} num 
+   */
+  setJointCount(num) {
+    this.defines.push(`SKINNING`, `SKINNING_JOINT_COUNT ${num}`);
   }
 
   /**
@@ -345,41 +359,77 @@ export class GpbMaterial {
     if (this.name !== GpbMaterial.NAME_TEXTURED
       && this.name !== GpbMaterial.NAME_COLORED) {
       // 派生クラスの場合
+
+      // 共通部分
+      lines.push(...[
+`  u_matrixPalette = MATRIX_PALETTE`,
+`  renderState {`,
+`    cullFace = true`,
+`    depthTest = true`,
+`    blend = true`,
+`    blendSrc = SRC_ALPHA`,
+`    blendDst = ONE_MINUS_SRC_ALPHA`,
+`  }`,
+      ]);
+
       if (this.superClass === GpbMaterial.NAME_TEXTURED) {
         lines.push(...[
-`  u_matrixPalette = MATRIX_PALETTE`,
 `  sampler u_diffuseTexture {`,
 `    path = ${this.texturePath}`,
 `    wrapS = REPEAT`,
 `    wrapT = REPEAT`,
+`    minFilter = LINEAR_MIPMAP_LINEAR`,
+`    magFilter = LINEAR`,
 `  }`,
+        ]);
+      } else if (this.superClass === GpbMaterial.NAME_COLORED) {
+        lines.push(...[
+`  u_diffuseColor = ${this.diffuses.join(', ')}`,
+        ]);
+      }
+
+      // 共通
+      if (this.defines.length > 0) {
+        lines.push(...[
 `  technique {`,
 `    pass {`,
 `      defines = ${this.defines.join(';')}`,
 `    }`,
 `  }`,
-`}`,
-'',
-        ]);
-      } else if (this.superClass === GpbMaterial.NAME_COLORED) {
-        lines.push(...[
-`  u_diffuseColor = 0.1, 1.0, 0.5`,
-`  technique {`,
-`    pass {`,
-`    }`,
-`  }`,
-''
         ]);
       }
+
     } else {
+
+      // 基底クラス
       if (this.name === GpbMaterial.NAME_TEXTURED) {
         // textured 共通
-        // 未実装
+        lines.push(...[
+`  u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX`,
+`  technique {`,
+`    pass {`,
+`      vertexShader = res/shaders/textured.vert`,
+`      fragmentShader = res/shaders/textured.frag`,
+`    }`,
+`  }`,
+        ]);
+
       } else if (this.name === GpbMaterial.NAME_COLORED) {
         // colored 共通
-        // 未実装
+        lines.push(...[
+`  u_worldViewProjectionMatrix = WORLD_VIEW_PROJECTION_MATRIX`,
+`  technique {`,
+`    pass {`,
+`      vertexShader = res/shaders/colored.vert`,
+`      fragmentShader = res/shaders/colored.frag`,
+`    }`,
+`  }`,
+        ]);
+
       }
     }
+
+    lines.push('}', ''); // material の閉じ
 
     return lines;
   }
@@ -797,6 +847,7 @@ export class GpbExport extends Gpb {
    * @returns {string}
    */
   makeMaterial() {
+    console.log('makeMaterial');
     const lines = [];
 
     {
