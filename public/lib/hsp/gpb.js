@@ -314,6 +314,83 @@ export class GpbAnimation {
   }
 }
 
+export class GpbMaterial {
+  constructor() {
+    this.name = 'material0';
+    /** '' の場合は派生無し */
+    this.superClass = 'textured';
+
+    this.texturePath = 'res/body_SD.png';
+    this.defines = ['SKINNING', 'SKINNING_JOINT_COUNT 2'];
+  }
+
+  /**
+   * 行として作成する
+   * @returns {string[]}
+   */
+  make() {
+    const lines = [];
+    if (this.superClass) {
+      lines.push(`material ${this.name}: ${this.superClass} {`);
+    } else {
+      lines.push(`material ${this.name} {`);
+    }
+    {
+      lines.push(...[
+`  u_matrixPalette = MATRIX_PALETTE`,
+`  sampler u_diffuseTexture {`,
+`    path = ${this.texturePath}`,
+`    wrapS = REPEAT`,
+`    wrapT = REPEAT`,
+`  }`,
+`  technique {`,
+`    pass {`,
+`      defines = ${this.defines.join(';')}`,
+`    }`,
+`  }`,
+`}`,
+'',
+]);
+    }
+    return lines;
+  }
+
+}
+
+export class GpbMaterialFile {
+  constructor() {
+    this.materials = [];
+  }
+
+  /**
+   * colored と textured を作成する
+   */
+  addStandards() {
+    { // colored
+      const mtl = new GpbMaterial();
+      mtl.superClass = '';
+      mtl.name = 'colored';
+      this.materials.push(mtl);
+    }
+    { // textured
+      const mtl = new GpbMaterial();
+      mtl.superClass = '';
+      mtl.name = 'textured';
+      this.materials.push(mtl);
+    }
+  }
+
+  toString() {
+    const lines = [];
+    for (const mtl of this.materials) {
+      lines.push(...mtl.make());
+    }
+    lines.push('');
+    return lines.join('\n');
+  }
+
+}
+
 export class Gpb {
   constructor() {
     /** ファイルバイトオフセット */
@@ -610,15 +687,19 @@ export class GpbExport extends Gpb {
 
   /**
    * API
+   * @param {boolean} useAnim false だとそもそも格納しない
    * @returns {ArrayBuffer}
    */
-  make() {
-    const useAnim = false;
-
+  make(useAnim = false) {
 
     this.tableOffsetIndex = 0;
     this.c = 0;
-    const buf = new ArrayBuffer(1024 * 1024 + 1024 * 1024);
+
+    const vncand = Math.max(1024,
+      this.meshes[0].vts.length,
+    );
+
+    const buf = new ArrayBuffer(1024 * 1024 + vncand * 1024);
     const p = new DataView(buf);
 
     { // ヘッダ
