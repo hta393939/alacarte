@@ -147,6 +147,7 @@ export class GpbScene {
 export class GpbAttribute {
   /** 1 POSITION */
   static TYPE_POSITION = 1;
+  /** 2 NORMAL */
   static TYPE_NORMAL = 2;
   static TYPE_COLOR = 3;
   static TYPE_TANGENT = 4;
@@ -155,6 +156,7 @@ export class GpbAttribute {
   static TYPE_WEIGHTS = 6;
   /** 7 */
   static TYPE_JOINTS = 7;
+  /** 8 TEXCOORD0 */
   static TYPE_TEXCOORD0 = 8;
   static TYPE_TEXCOORD1 = 9;
 
@@ -193,9 +195,11 @@ export class GpbPart {
   static TRIANGLE_STRIP = 5;
 
   constructor() {
+    /** インデックスが何を張っているか */
     this.type = GpbPart.TRIANGLES;
+    /** インデックスの型 */
     this.indexFormat = GpbPart.INDEX32;
-    /** @type {number[]} */
+    /** 面頂点 @type {number[]} */
     this.indices = [];
   }
 }
