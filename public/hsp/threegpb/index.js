@@ -43,6 +43,18 @@ class Misc {
     this.initThree();
   }
 
+  getCommonParam() {
+    const param = {};
+    for (const k of ['forcenormal']) { // checkbox
+      const el = document.getElementById(k);
+      param[k] = el?.checked ? true : false;
+    }
+    {
+
+    }
+    return param;
+  }
+
   loadSetting() {
     const param = this.param;
     try {
@@ -245,6 +257,8 @@ class Misc {
    * @param {THREE.Mesh} m
    */
   toGpb(obj) {
+    const param = this.getCommonParam();
+
     const gpb = new GpbExport();
 
     let m = obj;
@@ -258,7 +272,8 @@ class Misc {
     {
       const geo = m.geometry;
       const mtl = m.material;
-      mtl.wireframe = true;
+      //mtl.wireframe = true;
+      m.name = 'target';
       console.log('toGpb, geo, mtl', geo, mtl, m);
 
       // 材質作る
@@ -268,8 +283,8 @@ class Misc {
       /** 頂点の個数 */
       const vn = attrs.position.array.length / 3;
       // normal 無かったら計算する
-      if (!('normal' in attrs)) {
-        geo.computeNormals();
+      if (param.forcenormal || !('normal' in attrs)) {
+        geo.computeVertexNormals(); // flat でないタイプ
       }
       // joint, weight は無かったら 0, 1.0 で。
       if (!('skinIndex' in attrs)) {
@@ -976,6 +991,84 @@ class Misc {
     n2.parentName = n0._name;
 
     console.log('gpb 3', gpb);
+    return gpb;
+  }
+
+  /**
+   * gpbの素を作成する。
+   * ジョイントノード無しのモデル
+   * 1メッシュノード
+   */
+  createGpb4() {
+    console.log('createGpb4 start');
+
+    const gpb = new GpbExport();
+
+    { // メッシュ 頂点と面
+      const m = new GpbMesh();
+      m.readyAttrs(true);
+      const part = new GpbPart();
+
+      m.parts.push(part);
+      part.indexFormat = GpbPart.INDEX16;
+
+      {
+        for (let i = 0; i < 2; ++i) {
+          for (let j = 0; j < 2; ++j) {
+            const vt = new GpbVertex();
+            vt.p = [
+              (j * 2 - 1) * 2, (1 - i * 2) * 2,
+              (((i & 1) + (j & 1)) & 1) * 0.5];
+            vt.uv = [j / 1, 1 - i / 1];
+            m.vts.push(vt);
+          }
+        }
+
+        for (let i = 0; i < 1; ++i) {
+          part.indices.push(0, 2, 1, 1, 2, 3);
+          //part.indices.push(0, 1, 2, 2, 1, 3);
+        }
+      }
+
+      m.compute();
+      gpb.meshes.push(m);
+
+      {
+        const t = new GpbTable();
+        t.name = 'mesh0';
+        t.type = GpbTable.TYPE_MESH;
+        gpb.tables.push(t);
+      }
+    }
+
+    { // シーン
+      const t = new GpbTable();
+      t.name = '__SCENE__';
+      t.type = GpbTable.TYPE_SCENE;
+      gpb.tables.push(t);
+    }
+
+    const materialNames = [
+      'material0',
+    ];
+
+    // ノード
+    const n0 = new GpbNode();
+    n0._name = 'node0';
+    { // メッシュ名
+      n0.modelName = `#mesh0`;
+      n0.materials.push(materialNames[0]);
+    }
+    {
+      const t = new GpbTable();
+      t.name = n0._name;
+      t.type = GpbTable.TYPE_NODE;
+      gpb.tables.push(t);
+    }
+    gpb.scene.children.push(n0);
+    n0.parentName = '__SCENE__';
+
+    console.log('gpb 4', gpb);
     return gpb;
   }
 
