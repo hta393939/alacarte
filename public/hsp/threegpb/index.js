@@ -212,6 +212,11 @@ class Misc {
     const control = new OrbitControls(camera, opt.canvas);
     this.control = control;
 
+    {
+      const m = this.makeCurve();
+      scene.add(m);
+    }
+
     this.update();
     console.log('initThree');
   }
@@ -1053,6 +1058,7 @@ class Misc {
   }
 
   /**
+   * カーブ作るか
    * gpbの素を作成する。
    * ジョイントノード無しのモデル
    * 1メッシュノード
@@ -1071,14 +1077,16 @@ class Misc {
       part.indexFormat = GpbPart.INDEX16;
 
       {
-        for (let i = 0; i < 2; ++i) {
-          for (let j = 0; j < 2; ++j) {
-            const vt = new GpbVertex();
-            vt.p = [
-              (j * 2 - 1) * 2, (1 - i * 2) * 2,
-              (((i & 1) + (j & 1)) & 1) * 0.5];
-            vt.uv = [j / 1, 1 - i / 1];
-            m.vts.push(vt);
+        for (let l = 0; l < 1; ++l) {
+          for (let i = 0; i < 2; ++i) {
+            for (let j = 0; j < 2; ++j) {
+              const vt = new GpbVertex();
+              vt.p = [
+                (j * 2 - 1) * 2, (1 - i * 2) * 2,
+                (((i & 1) + (j & 1)) & 1) * 0.5];
+              vt.uv = [j / 1, 1 - i / 1];
+              m.vts.push(vt);
+            }
           }
         }
 
@@ -1128,6 +1136,157 @@ class Misc {
 
     console.log('gpb 4', gpb);
     return gpb;
+  }
+
+  /**
+   * THREE.Mesh を作成する
+   * 左上カーブ。右へ曲がる
+   */
+  makeCurve() {
+    console.log('makeCurve');
+    const geo = new THREE.BufferGeometry();
+    const mtl = new THREE.MeshStandardMaterial({
+      color: 0xff8000,
+      side: THREE.FrontSide,
+    });
+    //mtl.wireframe = true;
+    {
+      const div = 64;
+      const height = 0.5;
+      const rr = 1;
+
+      /** 1層の頂点数 */
+      const ninl = 1 + div / 4 + 1;
+      /** 頂点数 */
+      const vn = ninl * 2;
+
+      const pb = new Float32Array(vn * 3);
+      const nb = new Float32Array(vn * 3);
+      const uvb = new Float32Array(vn * 2);
+
+      /** 頂点ごとのインデックス */
+      let vi = 0;
+
+      const _f = (p, n, uv) => {
+        pb[vi * 3] = p[0];
+        pb[vi * 3 + 1] = p[1];
+        pb[vi * 3 + 2] = p[2];
+        nb[vi * 3] = n[0];
+        nb[vi * 3 + 1] = n[1];
+        nb[vi * 3 + 2] = n[2];
+        uvb[vi * 2] = uv[0];
+        uvb[vi * 2 + 1] = uv[1];
+      };
+
+      let p = [0, 0, 0];
+      let n = [0, 0, 0];
+      let uv = [0.5, 0.5];
+      for (let l = 0; l < 2; ++l) {
+        p[0] = -1 * rr;
+        p[1] = l * height;
+        p[2] = -1 * rr;
+        { // 角
+          n[0] = 0;
+          n[1] = (l === 0) ? -1 : 1;
+          n[2] = 0;
+          uv[0] = 0;
+          uv[1] = 1;
+          _f(p, n, uv);
+          vi += 1;
+        }
+        for (let i = 0; i <= div / 4; ++i) {
+          const ang = Math.PI * 2 * i / div;
+          const cs = Math.cos(ang);
+          const sn = Math.sin(ang);
+          let x = -cs;
+          let z = -sn;
+          p[0] = x * rr;
+          p[2] = z * rr;
+          n[0] = -x;
+          n[1] = 0;
+          n[2] = -z;
+          uv[0] = x;
+          uv[1] = -z;
+          _f(p, n, uv);
+          vi += 1;          
+        }
+      }
+
+      /** 面数 */
+      let fn = div / 4 * 2 + div / 4 * 2 + 4;
+      const fis = new Uint16Array(fn * 3);
+      let index = 0;
+      { // 上面と下面(div/4 * 2)
+        for (let l = 0; l < 2; ++l) {
+          for (let i = 0; i < div / 4; ++i) {
+            const v0 = l * ninl;
+            let v1 = v0 + 1 + i;
+            let v2 = v1 + 1;
+            if (l === 0) {
+              const tmp = v2;
+              v2 = v1;
+              v1 = tmp;
+            }
+            fis[index] = v0;
+            fis[index+1] = v1;
+            fis[index+2] = v2;
+            index += 3;
+          }
+        }
+      }
+      { // カーブ側面(div/4 * 2)
+        for (let i = 0; i < div / 4; ++i) {
+          const v0 = 1 + i; // 左下
+          const v1 = v0 + 1; // 右下
+          const v2 = v0 + ninl;
+          const v3 = v1 + ninl;
+          fis[index] = v2;
+          fis[index+1] = v0;
+          fis[index+2] = v1;
+          fis[index+3] = v3;
+          fis[index+4] = v2;
+          fis[index+5] = v1;
+          index += 6;
+        }
+      }
+      { // 側面2つ(4面)
+        const v0 = 0; // 下の角
+        const v1 = 1; // 下のカーブ開始
+        const v2 = ninl - 1; // 下のカーブ最後
+        const v3 = v0 + ninl;
+        const v4 = v1 + ninl;
+        const v5 = v2 + ninl;
+        // z字 v3, v4, v0, v1 
+        fis[index] = v3;
+        fis[index+1] = v0;
+        fis[index+2] = v4;
+        fis[index+3] = v4;
+        fis[index+4] = v0;
+        fis[index+5] = v1;
+        index += 6;
+        // z字 v5, v3, v2, v0
+        fis[index] = v5;
+        fis[index+1] = v2;
+        fis[index+2] = v3;
+        fis[index+3] = v3;
+        fis[index+4] = v2;
+        fis[index+5] = v0;           
+        index += 6;
+      }
+      console.log('vi', vi, vn);
+      console.log('index', index, fn * 3);
+
+      geo.setAttribute('position', new THREE.BufferAttribute(pb, 3));
+      geo.setAttribute('normal', new THREE.BufferAttribute(nb, 3));
+      geo.setAttribute('uv', new THREE.BufferAttribute(uvb, 2));
+
+      geo.setIndex(new THREE.BufferAttribute(fis, 1));
+    }
+
+    const m = new THREE.Mesh(geo, mtl);
+    m.name = 'curve';
+    console.log('makeCurve', m);
+    return m;
   }
 
   act() {
