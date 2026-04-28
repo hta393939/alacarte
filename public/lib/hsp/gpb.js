@@ -702,6 +702,9 @@ export class GpbExport extends Gpb {
    * @param {GpbMesh} m 
    */
   writeMesh(p, c, m) {
+    /** m から判別 @type {number|boolean} */
+    let useSkin = 0x00;
+
     let offset = 0;
 
     let valNum = 0;
@@ -711,9 +714,17 @@ export class GpbExport extends Gpb {
       for (const attr of m.attrs) {
         offset += this.write32s(p, c + offset, [attr.type, attr.num]);
         valNum += attr.num;
+
+        if (attr.type === GpbAttribute.TYPE_WEIGHTS) {
+          useSkin |= 0x01;
+        }
+        if (attr.type === GpbAttribute.TYPE_JOINTS) {
+          useSkin |= 0x02;
+        }
       }
     }
-    console.log('valNum', valNum);
+    console.log('valNum', valNum, useSkin);
+    useSkin = (useSkin === 3);
     {
       const byteNum = m.vts.length * valNum * 4;
       offset += this.write32s(p, c + offset, [byteNum]);
@@ -722,8 +733,10 @@ export class GpbExport extends Gpb {
         offset += this.writefs(p, c + offset, v.n);
         offset += this.writefs(p, c + offset, v.uv);
 
-        offset += this.writefs(p, c + offset, v.weights);
-        offset += this.writefs(p, c + offset, v.joints);
+        if (useSkin) {
+          offset += this.writefs(p, c + offset, v.weights);
+          offset += this.writefs(p, c + offset, v.joints);
+        }
         // 属性ごと
       }
     }

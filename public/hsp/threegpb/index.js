@@ -182,6 +182,25 @@ class Misc {
       });
     }
 
+    {
+      const el = document.getElementById('getcurrent');
+      el?.addEventListener('click', () => {
+        this.getCurrent();
+      });
+    }
+
+  }
+
+  getCurrent() {
+    const obj = this.scene.getObjectByName('target');
+    if (!obj) {
+      console.warn('target not found');
+      return;
+    }
+    const exporter = this.toGpb(obj);
+    this.downloadGpb(exporter, 'curve1');
+
+    console.log('getCurrent');
   }
 
   initThree() {
@@ -250,7 +269,7 @@ class Misc {
         const exporter = this.toGpb(model);
         console.log('exporter', exporter);
         if (window.downloadgpb?.checked) {
-          this.downloadGpb(exporter);
+          this.downloadGpb(exporter, 'garply');
         }
       },
         xhr => {
@@ -279,7 +298,7 @@ class Misc {
           const exporter = this.toGpb(result);
           console.log('exporter', exporter);
           if (window.downloadgpb?.checked) {
-            this.downloadGpb(exporter);
+            this.downloadGpb(exporter, 'grault');
           }
         },
         xhr => {
@@ -295,16 +314,17 @@ class Misc {
   /**
    * 
    * @param {GpbExport} exporter 
+   * @param {string} base 
    */
-  downloadGpb(exporter) {
-    console.log('downloadGpb');
+  downloadGpb(exporter, base) {
+    console.log('downloadGpb', base);
     {
       const buf = exporter.make(false);
-      this.download(new Blob([buf]), `foo.gpb`);
+      this.download(new Blob([buf]), `${base}.gpb`);
     }
     {
       const text = exporter._materialFile.toString();
-      this.download(new Blob([text]), `foo.material`);
+      this.download(new Blob([text]), `${base}.material`);
     }
   }
 
@@ -377,7 +397,7 @@ class Misc {
 
       { // メッシュの読み替え
         const gpbmesh = new GpbMesh();
-        gpbmesh.readyAttrs(true);
+        gpbmesh.readyAttrs(param.useskin);
 
         const gpbpart = new GpbPart();
         gpbpart.indices = fis;
@@ -1152,8 +1172,8 @@ class Misc {
     //mtl.wireframe = true;
     {
       const div = 64;
-      const height = 0.5;
-      const rr = 1;
+      const height = 1;
+      const rr = 10;
 
       /** 1層の頂点数 */
       const ninl = 1 + div / 4 + 1;
