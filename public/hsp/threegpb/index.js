@@ -230,7 +230,7 @@ class Misc {
    * @param {File} blob
    * @param {ArrayBuffer} ab 
    */
-  loadGlb(blob, mtlFile) {
+  async loadGlb(blob, mtlFile) {
     const url = URL.createObjectURL(blob);
 
     let loader = null;
@@ -266,7 +266,7 @@ class Misc {
       mtls.preload();
 
       loader = new OBJLoader();
-      loader.setMaterial(mtls);
+      loader.setMaterials(mtls);
       loader.load(url, (result) => {
           console.log('obj', result);
           this.scene.add(result);
@@ -304,7 +304,7 @@ class Misc {
   }
 
   /**
-   * @param {THREE.Mesh} m
+   * @param {THREE.Mesh} obj
    */
   toGpb(obj) {
     const param = this.getCommonParam();
@@ -329,9 +329,17 @@ class Misc {
       // 材質作る
       // ジオメトリ作って面張る
       const attrs = geo.attributes;
-      const fis = geo.index.array;
       /** 頂点の個数 */
       const vn = attrs.position.array.length / 3;
+      /** 面頂点の配列 */
+      let fis = geo.index?.array;
+      if (!fis) {
+        fis = new Uint16Array(vn * 3);
+        for (let i = 0; i < fis.length; ++i) {
+          fis[i] = i;
+        }
+      }
+
       // normal 無かったら計算する
       if (param.forcenormal || !('normal' in attrs)) {
         geo.computeVertexNormals(); // flat でないタイプ
@@ -377,11 +385,11 @@ class Misc {
         for (let i = 0; i < vn; ++i) {
           const i3 = i * 3;
           const vt = new GpbVertex();
-          vt.p = glbp .slice(i3, i3 + 3);
+          vt.p = glbp.slice(i3, i3 + 3);
           vt.n = glbn.slice(i3, i3 + 3);
           vt.uv = [glbuv[i * 2], glbuv[i * 2 + 1]];
-          vt.joints = [0, 0, 0, 0];
           vt.weights = [1, 0, 0, 0];
+          vt.joints = [0, 0, 0, 0];
           gpbmesh.vts.push(vt);
         }
         gpbmesh.compute();
