@@ -10,6 +10,8 @@ import * as THREE from "three";
 
 import {OrbitControls} from "three/addon/controls/OrbitControls.js";
 import {GLTFLoader} from "three/addon/loaders/GLTFLoader.js";
+import {OBJLoader} from "three/addon/loaders/OBJLoader.js";
+import {MTLLoader} from "three/addon/loaders/MTLLoader.js";
 
 class Misc {
   constructor() {
@@ -123,7 +125,22 @@ class Misc {
       el.addEventListener('drop', async ev => {
         handler('copy')(ev);
 
-        this.loadGlb(ev.dataTransfer.files[0]);
+        let firstFile = null;
+        let mtlFile = null;
+        const files = ev.dataTransfer.files;
+        if (files.length >= 2) {
+          console.log('obj sets');
+          firstFile = files[0];
+          mtlFile = files[1];
+          if (!mtlFile.name.endsWith('.mtl')) {
+            firstFile = files[1];
+            mtlFile = files[0];
+          }
+        } else {
+          firstFile = files[0];
+        }
+
+        this.loadGlb(firstFile, mtlFile);
       });
     }
 
@@ -210,15 +227,19 @@ class Misc {
 
   /**
    * 
-   * @param {Blob} blob
+   * @param {File} blob
    * @param {ArrayBuffer} ab 
    */
-  loadGlb(blob) {
-    const loader = new GLTFLoader();
+  loadGlb(blob, mtlFile) {
     const url = URL.createObjectURL(blob);
-    loader.load(url, (gltf) => {
-        console.log('gltf', gltf);
-        const model = gltf.scene;
+
+    let loader = null;
+    if (blob.name.endsWith('.glb')) {
+      loader = new GLTFLoader();
+
+      loader.load(url, (result) => {
+        console.log('gltf', result);
+        const model = result.scene || result;
         this.scene.add(model);
 
         const exporter = this.toGpb(model);
@@ -227,14 +248,43 @@ class Misc {
           this.downloadGpb(exporter);
         }
       },
-      xhr => {
-        console.log('xhr', xhr);
-      },
-      err => {
-        console.log('loader err', err);
-      }
-    );
-    console.log('loadGlb');
+        xhr => {
+          console.log('xhr', xhr);
+        },
+        err => {
+          console.log('loader err', err);
+        }
+      );
+      console.log('loadGlb');
+      return;
+
+    }
+
+    const mtlLoader = new MTLLoader();
+    const mtlurl = URL.createObjectURL(mtlFile);
+    mtlLoader.load(mtlurl, mtls => {
+      mtls.preload();
+
+      loader = new OBJLoader();
+      loader.setMaterial(mtls);
+      loader.load(url, (result) => {
+          console.log('obj', result);
+          this.scene.add(result);
+
+          const exporter = this.toGpb(result);
+          console.log('exporter', exporter);
+          if (window.downloadgpb?.checked) {
+            this.downloadGpb(exporter);
+          }
+        },
+        xhr => {
+          console.log('xhr', xhr);
+        },
+        err => {
+          console.log('loader err', err);
+        });
+    });
+    console.log('load obj');
   }
 
   /**
