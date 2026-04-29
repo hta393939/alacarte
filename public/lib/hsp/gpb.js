@@ -139,7 +139,8 @@ export class GpbScene {
     this.children = [];
 
     this.cameraName = '';
-    this.ambient = [0.5, 0.25, 0.125];
+    this.ambient = [1, 1, 1];
+    //this.ambient = [0.5, 0.25, 0.125];
   }
 }
 

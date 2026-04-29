@@ -192,7 +192,8 @@ class Misc {
   }
 
   getCurrent() {
-    const obj = this.scene.getObjectByName('target');
+    const name = 'curve';
+    const obj = this.scene.getObjectByName(name);
     if (!obj) {
       console.warn('target not found');
       return;
