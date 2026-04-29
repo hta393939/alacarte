@@ -331,8 +331,8 @@ export class GpbMaterial {
     /** '' の場合は派生無し */
     this.superClass = GpbMaterial.NAME_TEXTURED;
 
-    this.defines = [];
-    //this.defines = ['SKINNING', 'SKINNING_JOINT_COUNT 2'];
+    //this.defines = [];
+    this.defines = ['SPECULAR', 'DIRECTIONAL_LIGHT_COUNT 1'];
 
     /** for textured */
     this.texturePath = 'res/body_SD.png';
@@ -368,6 +368,7 @@ export class GpbMaterial {
       // 共通部分
       lines.push(...[
 `  u_matrixPalette = MATRIX_PALETTE`,
+`  u_specularExponent = 50`,
 `  renderState {`,
 `    cullFace = true`,
 `    depthTest = true`,
@@ -380,9 +381,10 @@ export class GpbMaterial {
       if (this.superClass === GpbMaterial.NAME_TEXTURED) {
         lines.push(...[
 `  sampler u_diffuseTexture {`,
+`    mipmap = true`,
 `    path = ${this.texturePath}`,
-`    wrapS = REPEAT`,
-`    wrapT = REPEAT`,
+`    wrapS = CLAMP`,
+`    wrapT = CLAMP`,
 `    minFilter = LINEAR_MIPMAP_LINEAR`,
 `    magFilter = LINEAR`,
 `  }`,
