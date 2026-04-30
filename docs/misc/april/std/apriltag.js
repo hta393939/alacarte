@@ -1,5 +1,5 @@
 importScripts('apriltag_wasm.js');
-importScripts("https://unpkg.com/comlink/dist/umd/comlink.js");
+importScripts("comlink.js");
 
 /**
  * This is a wrapper class that calls apriltag_wasm to load the WASM module and wraps the c implementation calls.

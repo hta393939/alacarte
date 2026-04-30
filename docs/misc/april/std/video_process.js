@@ -1,13 +1,9 @@
-import * as Comlink from "https://unpkg.com/comlink/dist/esm/comlink.mjs";
-
-//import * as Base64 from "./base64.js";
+import * as Comlink from "./comlink.mjs";
 
 var detections=[];
 
 window.onload = (event) => {
   init();
-
-  loadImg('saved_det');
 }
 
 async function init() {
@@ -76,7 +72,12 @@ async function process_frame() {
   // detect aprilTag in the grayscale image given by grayscalePixels
   detections = await apriltag.detect(grayscalePixels, ctx.canvas.width, ctx.canvas.height);
 
-//  if (detections.length > 0) {
+  if (detections.length > 0) {
+    if (!window._notfirst) {
+      window._notfirst = true;
+      console.log('detections', detections);
+    }
+  }
 
   window.requestAnimationFrame(process_frame);
 }
