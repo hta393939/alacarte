@@ -42,6 +42,11 @@ class Misc {
 
     this.drawGradRB(window.maincanvas, true);
     this.drawGradRB(window.subcanvas, false);
+
+    {
+      await this.copyImage();
+      this.toSVG(window.canvas);
+    }
   }
 
   /**
@@ -235,9 +240,13 @@ class Misc {
           let r = (j / w) * 256;
           let g = 0;
           let b = (i / h) * 256;
-          if (xy) {
+          if (false) {
             g = ((h - 1 - i) / h) * 256;
             b = 0;
+          } else {
+            r = 0;
+            g = ((h - 1 - i) / h) * 256;
+            b = ((w - 1 - j) / w) * 256;
           }
 
           let offset = (j + w * i) * 4;
@@ -258,34 +267,73 @@ class Misc {
    * @returns 
    */
   async fromImage(file) {
-    const text = await file.text();
-    const lines = text.split('\n');
-    const result = {
-      objs: []
-    };
-    for (const line of lines) {
-      const vals = line.split(',').map(val => Number.parseFloat(val));
-      if (!Number.isFinite(vals[0])) {
-        continue;
-      }
+    const ab = await file.arrayBuffer();
 
-      const obj = {
-        index: vals[0],
-        id: vals[1],
-        x: vals[2],
-        y: vals[3],
-        a: vals[4],
-        rx: vals[5],
-        ry: vals[6],
-      };
-      result.objs.push(obj);
-    }
-    console.log('result', result);
-
-    this.draw(window.canvas, result.objs);
-
-    return result;
+    const bmp = await window.createImageBitmap(file);
+    const w = bmp.width;
+    const h = bmp.height;
+    /** @type {HTMLCanvasElement} */
+    const canvas = document.getElementById('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    c.drawImage(bmp, 0, 0);
+    return;
   }
+
+  async copyImage() {
+    const bmp = document.getElementById('allcircle');
+    const w = bmp.naturalWidth;
+    const h = bmp.naturalHeight;
+    /** @type {HTMLCanvasElement} */
+    const canvas = document.getElementById('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    c.drawImage(bmp, 0, 0);
+    return;
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  toSVG(canvas) {
+    const c = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    const img = c.getImageData(0, 0, w, h);
+    const size = 9;
+    let count = 0;
+    for (let i = 0; i < 7; ++i) {
+      for (let j = 0; j < 6; ++j) {
+        let bx = j * 10;
+        let by = i * 10;
+        for (let my = 0; my < size; ++my) {
+          for (let mx = 0; mx < size; ++mx) {
+            let x = mx + bx;
+            let y = my + by;
+            let offset = (x + w * y) * 4;
+            let r = img.data[offset];
+            let a = img.data[offset+3];
+
+            if (a !== 0) {
+              img.data[offset] = (r === 0) ? 255 : 0;
+              img.data[offset+1] = (r === 0) ? 0 : 255;
+              if (r === 0) {
+                console.log('black', bx, by);
+              }
+            }
+          }
+        }
+        count += 1;
+      }
+    }
+    c.putImageData(img, 0, 0);
+
+    console.log('toSVG');
+  }
+
 
   setListener() {
     {
@@ -311,22 +359,7 @@ class Misc {
       el?.addEventListener('drop', ev => {
         ev.stopPropagation();
         ev.preventDefault();
-        this.analyzeText(ev.dataTransfer.files[0]);
-      });
-    }
-    {
-      const el = document.getElementById('enumvoice');
-      el?.addEventListener('click', () => {
-        this.enumVoice();
-      });
-    }
-
-    {
-      const el = document.getElementById('saytext');
-      el?.addEventListener('click', () => {
-        this.speakerid = Number.parseInt(window.speakerid.value);
-        //this.say('こんにちなのだ', true);
-        this.say(window.text.value, true);
+        this.fromImage(ev.dataTransfer.files[0]);
       });
     }
 
