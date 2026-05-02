@@ -51,6 +51,8 @@ class Misc {
       contour.init(window.canvas);
       const routes = contour.search();
       console.log('routes', routes);
+      const canvas = this.makeCanvas(routes);
+      document.body.appendChild(canvas);
     }
   }
 
@@ -301,42 +303,37 @@ class Misc {
 
   /**
    * 
+   * @param {Route[]} routes
    * @param {HTMLCanvasElement} canvas 
    */
-  toSVG(canvas) {
+  makeCanvas(routes) {
+    const canvas = document.createElement('canvas');
+    canvas.id = 'makecanvas';
+    canvas.width = 11 * 10;
+    canvas.height = 11 * 10;
     const c = canvas.getContext('2d');
     const w = canvas.width;
     const h = canvas.height;
-    const img = c.getImageData(0, 0, w, h);
-    const size = 9;
-    let count = 0;
-    for (let i = 0; i < 7; ++i) {
-      for (let j = 0; j < 6; ++j) {
-        let bx = j * 10;
-        let by = i * 10;
-        for (let my = 0; my < size; ++my) {
-          for (let mx = 0; mx < size; ++mx) {
-            let x = mx + bx;
-            let y = my + by;
-            let offset = (x + w * y) * 4;
-            let r = img.data[offset];
-            let a = img.data[offset+3];
+    c.lineWidth = 2;
 
-            if (a !== 0) {
-              img.data[offset] = (r === 0) ? 255 : 0;
-              img.data[offset+1] = (r === 0) ? 0 : 255;
-              if (r === 0) {
-                console.log('black', bx, by);
-              }
-            }
-          }
-        }
-        count += 1;
+    for (const route of routes) {
+      const n = route.pts.length;
+      let index = 1;
+      c.strokeStyle = `#ff0000`;
+      c.beginPath();
+      c.moveTo(route.pts[0][0] * 10, route.pts[0][1] * 10);
+      for (let i = 1; i < n; ++i) {
+        const pt = route.pts[i];
+        c.lineTo(pt[0] * 10, pt[1] * 10);
       }
+      if (routes[0][0] === routes[n-1][0] && routes[1][1] === routes[n-1][1]) {
+        c.closePath();
+      }
+      c.stroke();
     }
-    c.putImageData(img, 0, 0);
 
-    console.log('toSVG');
+    console.log('makeCanvas');
+    return canvas;
   }
 
 

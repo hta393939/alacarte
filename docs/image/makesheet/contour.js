@@ -92,6 +92,50 @@ export class Dot {
     return (this.col === b.col) && (this.a === b.a);
   }
 
+  /**
+   * 順番を考慮した向き有りエッジの始点と終点を返す
+   */
+  calcLP(edge, dir) {
+    let ret = [
+      [0, 0],
+      [0, 0],
+    ];
+    if (edge === Edge.DIR_LEFT) { // ドットの左エッジ
+      if (dir === Edge.DIR_DOWN) { // 上から下
+        ret = [[0, 0], [0, 1]];
+      } else { // 下から上
+        ret = [[0, 1], [0, 0]];
+      }
+    } else if (edge === Edge.DIR_UP) { // ドットの上エッジ
+      if (dir === Edge.DIR_RIGHT) { // 左から右
+        ret = [[0, 0], [1, 0]];
+      } else { // 右から左
+        ret = [[1, 0], [0, 0]];
+      }
+    } else { // 基本的に使用しない
+      console.warn('calcLP warn', edge, this);
+      if (edge === Edge.DIR_RIGHT) {
+        if (dir === Edge.DIR_DOWN) {
+          ret = [[1, 0], [1, 1]];
+        } else {
+          ret = [[1, 1], [1, 0]];
+        }
+      } else {
+        if (dir === Edge.DIR_RIGHT) {
+          ret = [[0, 1], [1, 1]];
+        } else {
+          ret = [[1, 1], [0, 1]];
+        }
+      }
+    }
+
+    for (let i = 0; i < 2; ++i) {
+      ret[i][0] += this.x;
+      ret[i][1] += this.y;
+    }
+    return ret;
+  }
+
 }
 
 
@@ -125,6 +169,9 @@ export class Route {
         continue;
       }
       break;
+    }
+    if (!curEnd) {
+      return [];
     }
 
     while (index < this.pts.length) {
@@ -252,9 +299,10 @@ export class Contour {
               continue;
             }
 
-            let firstPt = [firstDot.x, firstDot.y];
-            let secondPt = [firstDot.x, firstDot.y];
-            // 
+            const lp = firstDot.calcLP(firstEdge.side, firstWithD.dir);
+            let firstPt = [...lp[0]];
+            let secondPt = [...lp[1]];
+
 
             // 探し回る
             const route = new Route();
@@ -270,6 +318,8 @@ export class Contour {
 
               break;
             }
+
+            route.pts = route.connectLines();
           }
 
         }
