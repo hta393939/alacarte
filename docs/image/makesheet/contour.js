@@ -64,6 +64,9 @@ export class Dot {
     /** a を含まない 0x00rrggbb */
     this.col = 0;
 
+    this.x = 0;
+    this.y = 0;
+
     /**
      * 左と上隣接
      * @type {Edge[]}
@@ -155,10 +158,10 @@ export class Contour {
   constructor() {
     this.width = 10;
     this.height = 10;
-
+    /**
+     * @type {Dot[]}
+     */
     this.dots = [];
-    this.hors = [];
-    this.verts = [];
   }
 
   /**
@@ -207,13 +210,13 @@ export class Contour {
         dot.col = Contour.cstoone(r, g, b);
 
         if (j >= 1) { // 左を見る
-          const comp = this.dots(index - 1);
+          const comp = this.dots[index - 1];
           const edge = dot.ns[Edge.DIR_LEFT];
           edge.canMove = !dot.eqCols(comp);
           edge.set(Edge.DIR_LEFT, (comp.a !== 0), (dot.a !== 0));
         }
         if (i >= 1) { // 上を見る
-          const comp = this.dots(index - w);
+          const comp = this.dots[index - w];
           const edge = dot.ns[Edge.DIR_UP];
           edge.canMove = !dot.eqCols(comp);
           edge.set(Edge.DIR_UP, (comp.a !== 0), (dot.a !== 0));
@@ -232,27 +235,36 @@ export class Contour {
     for (let i = 0; i < h; ++i) {
       for (let j = 0; j < w; ++j) {
         let index = j + w * i;
-        const dot = this.dots[index];
+        /** 開始ドット */
+        const firstDot = this.dots[index];
 
         for (let k = 0; k < 2; ++k) {
-          const edge = dot.ns[k];
-          if (!edge.canMove) {
+          /** 最初の線分 */
+          const firstEdge = firstDot.ns[k];
+          if (!firstEdge.canMove) {
             continue;
           }
 
           for (let l = 0; l < 2; ++l) {
-            const withD = edge.withDirs[l];
-            if (!withD.enable || withD.passed) {
+            /** 最初の向きつき線分 */
+            const firstWithD = firstEdge.withDirs[l];
+            if (!firstWithD.enable || firstWithD.passed) {
               continue;
             }
+
+            let firstPt = [firstDot.x, firstDot.y];
+            let secondPt = [firstDot.x, firstDot.y];
+            // 
 
             // 探し回る
             const route = new Route();
             ret.push(route);
-            route.col = dot.col;
-            route.a = dot.a;
+            route.col = firstDot.col;
+            route.a = firstDot.a;
+            route.pts.push(firstPt);
+            route.pts.push(secondPt);
 
-            let curWithD = withD;
+            let curWithD = firstWithD;
             while (true) {
               curWithD.passed = true;
 

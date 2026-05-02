@@ -1,4 +1,6 @@
 
+import {Contour} from "./contour.js";
+
 /**
  * 
  * @param {number} r 
@@ -45,7 +47,10 @@ class Misc {
 
     {
       await this.copyImage();
-      this.toSVG(window.canvas);
+      const contour = new Contour();
+      contour.init(window.canvas);
+      const routes = contour.search();
+      console.log('routes', routes);
     }
   }
 
