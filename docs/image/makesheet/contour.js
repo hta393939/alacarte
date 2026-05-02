@@ -304,6 +304,8 @@ export class Contour {
 
   
   search() {
+    debugger;
+
     const ret = [];
     const w = this.width;
     const h = this.height;
@@ -336,6 +338,9 @@ export class Contour {
             ret.push(route);
             route.col = firstDot.col;
             route.a = firstDot.a;
+            if (route.a === 0) {
+              console.warn('miss', firstPt, secondPt);
+            }
             route.pts.push(firstPt);
             route.pts.push(secondPt);
 
@@ -343,7 +348,9 @@ export class Contour {
             neigh.passed = true;
             neigh.ex = secondPt[0];
             neigh.ey = secondPt[1];
-            while (true) {
+
+
+            for (let cnt = 0; cnt < 10000; ++cnt) {
               let x = neigh.ex;
               let y = neigh.ey;
 
@@ -359,7 +366,7 @@ new Arrow().init({dx: x, dy: y, side: Const.DIR_LEFT, index: 0, ex: x, ey: y + 1
               ];
 
               for (const cand of cands) {
-                const edge = this.dots[cand.dx + this.width * cand.dy].ns[cand.side];
+                const edge = this.dots[cand.dx + w * cand.dy].ns[cand.side];
                 const next0 = edge.arrows[0];
                 if (next0.enable && !next0.passed) {
                   if (next0.col === route.col && next0.a === route.a) {

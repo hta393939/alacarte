@@ -330,6 +330,9 @@ class Misc {
 
     for (const route of routes) {
       const n = route.pts.length;
+      if (n <= 1) {
+        continue;
+      }
       let index = 1;
       c.strokeStyle = `#ff0000`;
       c.beginPath();
@@ -338,7 +341,7 @@ class Misc {
         const pt = route.pts[i];
         c.lineTo(pt[0] * 10, pt[1] * 10);
       }
-      if (routes[0][0] === routes[n-1][0] && routes[1][1] === routes[n-1][1]) {
+      if (route.pts[0][0] === route.pts[n-1][0] && route.pts[0][1] === route.pts[n-1][1]) {
         c.closePath();
       }
       c.stroke();
