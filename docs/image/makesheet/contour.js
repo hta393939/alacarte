@@ -1,12 +1,39 @@
 
-
-export class Edge {
-  /** 0 左 */
+export class Const {
+  /** 0: 左 */
   static DIR_LEFT = 0;
-  /** 1 上 */
+  /** 1: 上 */
   static DIR_UP = 1;
   static DIR_RIGHT = 2;
   static DIR_DOWN = 3;
+}
+
+export class Arrow {
+  constructor() {
+    this.enable = true;
+    this.passed = false;
+    /** 矢の向き */
+    this.dir = Const.DIR_RIGHT;
+    /** dir を向いたときの右手 */
+    this.in = Const.DIR_DOWN;
+    this.pts = [[0, 0], [1, 0]];
+    this.x = 0;
+    this.y = 0;
+    this.ex = 0;
+    this.ey = 0;
+    this.side = Const.DIR_UP;
+    this.col = 0x000000;
+    this.a = 0;
+  }
+
+  init(param) {
+    Object.assign(this, param);
+    return this;
+  }
+}
+
+export class Edge {
+
   constructor() {
     /** 通行可能かどうか */
     this.canMove = false;
@@ -17,15 +44,15 @@ export class Edge {
     this.x = 0;
     this.y = 0;
     /** ドットのどちら側か。UP or LEFT */
-    this.side = Edge.DIR_UP;
+    this.side = Const.DIR_UP;
 
     /**
      * 向き有り
      * in: 時計周りの場合の内側の方向
      */
-    this.withDirs = [
-      {dir: Edge.DIR_LEFT, in: Edge.DIR_UP, enable: false, passed: false},
-      {dir: Edge.DIR_RIGHT, in: Edge.DIR_DOWN, enable: false, passed: false},
+    this.arrows = [
+      {dir: Const.DIR_LEFT, in: Const.DIR_UP, enable: false, passed: false},
+      {dir: Const.DIR_RIGHT, in: Const.DIR_DOWN, enable: false, passed: false},
     ];
 
   }
@@ -38,22 +65,23 @@ export class Edge {
    */
   set(side, e0, e1) {
     this.side = side;
-    if (side === Edge.DIR_LEFT) {
-      this.withDirs = [
-        {dir: Edge.DIR_DOWN, in: Edge.DIR_LEFT, enable: false, passed: false},
-        {dir: Edge.DIR_UP, in: Edge.DIR_RIGHT, enable: false, passed: false},
+    if (side === Const.DIR_LEFT) {
+      this.arrows = [
+        new Arrow().init({dir: Const.DIR_DOWN, in: Const.DIR_LEFT, enable: false, passed: false}),
+        new Arrow().init({dir: Const.DIR_UP, in: Const.DIR_RIGHT, enable: false, passed: false}),
       ];
     } else {
-      this.withDirs = [
-        {dir: Edge.DIR_LEFT, in: Edge.DIR_UP, enable: false, passed: false},
-        {dir: Edge.DIR_RIGHT, in: Edge.DIR_DOWN, enable: false, passed: false},
+      this.arrows = [
+        new Arrow().init({dir: Const.DIR_LEFT, in: Const.DIR_UP, enable: false, passed: false}),
+        new Arrow().init({dir: Const.DIR_RIGHT, in: Const.DIR_DOWN, enable: false, passed: false}),
       ];
     }
-    this.withDirs[0].enable = e0;
-    this.withDirs[1].enable = e1;
+    this.arrows[0].enable = e0;
+    this.arrows[1].enable = e1;
   }
 
 }
+
 
 
 export class Dot {
@@ -100,28 +128,28 @@ export class Dot {
       [0, 0],
       [0, 0],
     ];
-    if (edge === Edge.DIR_LEFT) { // ドットの左エッジ
-      if (dir === Edge.DIR_DOWN) { // 上から下
+    if (edge === Const.DIR_LEFT) { // ドットの左エッジ
+      if (dir === Const.DIR_DOWN) { // 上から下
         ret = [[0, 0], [0, 1]];
       } else { // 下から上
         ret = [[0, 1], [0, 0]];
       }
-    } else if (edge === Edge.DIR_UP) { // ドットの上エッジ
-      if (dir === Edge.DIR_RIGHT) { // 左から右
+    } else if (edge === Const.DIR_UP) { // ドットの上エッジ
+      if (dir === Const.DIR_RIGHT) { // 左から右
         ret = [[0, 0], [1, 0]];
       } else { // 右から左
         ret = [[1, 0], [0, 0]];
       }
     } else { // 基本的に使用しない
       console.warn('calcLP warn', edge, this);
-      if (edge === Edge.DIR_RIGHT) {
-        if (dir === Edge.DIR_DOWN) {
+      if (edge === Const.DIR_RIGHT) {
+        if (dir === Const.DIR_DOWN) {
           ret = [[1, 0], [1, 1]];
         } else {
           ret = [[1, 1], [1, 0]];
         }
       } else {
-        if (dir === Edge.DIR_RIGHT) {
+        if (dir === Const.DIR_RIGHT) {
           ret = [[0, 1], [1, 1]];
         } else {
           ret = [[1, 1], [0, 1]];
@@ -258,15 +286,15 @@ export class Contour {
 
         if (j >= 1) { // 左を見る
           const comp = this.dots[index - 1];
-          const edge = dot.ns[Edge.DIR_LEFT];
+          const edge = dot.ns[Const.DIR_LEFT];
           edge.canMove = !dot.eqCols(comp);
-          edge.set(Edge.DIR_LEFT, (comp.a !== 0), (dot.a !== 0));
+          edge.set(Const.DIR_LEFT, (comp.a !== 0), (dot.a !== 0));
         }
         if (i >= 1) { // 上を見る
           const comp = this.dots[index - w];
-          const edge = dot.ns[Edge.DIR_UP];
+          const edge = dot.ns[Const.DIR_UP];
           edge.canMove = !dot.eqCols(comp);
-          edge.set(Edge.DIR_UP, (comp.a !== 0), (dot.a !== 0));
+          edge.set(Const.DIR_UP, (comp.a !== 0), (dot.a !== 0));
         }
 
       }
@@ -294,15 +322,14 @@ export class Contour {
 
           for (let l = 0; l < 2; ++l) {
             /** 最初の向きつき線分 */
-            const firstWithD = firstEdge.withDirs[l];
-            if (!firstWithD.enable || firstWithD.passed) {
+            const firstArrow = firstEdge.arrows[l];
+            if (!firstArrow.enable || firstArrow.passed) {
               continue;
             }
 
-            const lp = firstDot.calcLP(firstEdge.side, firstWithD.dir);
+            const lp = firstDot.calcLP(firstEdge.side, firstArrow.dir);
             let firstPt = [...lp[0]];
             let secondPt = [...lp[1]];
-
 
             // 探し回る
             const route = new Route();
@@ -312,11 +339,48 @@ export class Contour {
             route.pts.push(firstPt);
             route.pts.push(secondPt);
 
-            let curWithD = firstWithD;
+            let neigh = firstArrow;
+            neigh.passed = true;
+            neigh.ex = secondPt[0];
+            neigh.ey = secondPt[1];
             while (true) {
-              curWithD.passed = true;
+              let x = neigh.ex;
+              let y = neigh.ey;
 
-              break;
+              // 隣接を探す。
+              neigh = null;
+              // 論理ブロックで外に出ずに同じ色のつながる有向エッジが存在する
+              /** @type {any[]} */
+              let cands = [
+new Arrow().init({dx: x - 1, dy: y, side: Const.DIR_UP, index: 0, ex: x - 1, ey: y, dir: Const.DIR_LEFT}),
+new Arrow().init({dx: x, dy: y - 1, side: Const.DIR_LEFT, index: 0, ex: x, ey: y - 1, dir: Const.DIR_UP}),
+new Arrow().init({dx: x, dy: y, side: Const.DIR_UP, index: 0, ex: x + 1, ey: y, dir: Const.DIR_RIGHT}),
+new Arrow().init({dx: x, dy: y, side: Const.DIR_LEFT, index: 0, ex: x, ey: y + 1, dir: Const.DIR_DOWN}),
+              ];
+
+              for (const cand of cands) {
+                const edge = this.dots[cand.dx + this.width * cand.dy].ns[cand.side];
+                const next0 = edge.arrows[0];
+                if (next0.enable && !next0.passed) {
+                  if (next0.col === route.col && next0.a === route.a) {
+                    neigh = cand;
+                  }
+                } else {
+                  const next1 = edge.arrows[1];
+                  if (next1.enable && !next1.passed) {
+                    if (next1.col === route.col && next1.a === route.a) {
+                      neigh = cand;
+                    }
+                  }
+                }
+              }
+
+              // 見つからなかったら終了
+              if (!neigh) {
+                break;
+              }
+              neigh.passed = true;
+              route.pts.push([neigh.ex, neigh.ey]);
             }
 
             route.pts = route.connectLines();
