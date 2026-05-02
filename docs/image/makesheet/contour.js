@@ -9,8 +9,12 @@ export class Const {
 }
 
 export class Arrow {
-  constructor() {
-    this.enable = true;
+  constructor(parent) {
+    /** @type {Dot} */
+    this.parent = parent;
+    /** 有効かどうか */
+    this.enable = false;
+    /** 採用済みかどうか */
     this.passed = false;
     /** 矢の向き */
     this.dir = Const.DIR_RIGHT;
@@ -19,6 +23,8 @@ export class Arrow {
     this.pts = [[0, 0], [1, 0]];
     this.x = 0;
     this.y = 0;
+    this.sx = 0;
+    this.sy = 0;
     this.ex = 0;
     this.ey = 0;
     this.side = Const.DIR_UP;
@@ -26,63 +32,11 @@ export class Arrow {
     this.a = 0;
   }
 
-  init(param) {
+  set(param) {
     Object.assign(this, param);
     return this;
   }
 }
-
-export class Edge {
-
-  constructor() {
-    /** 通行可能かどうか */
-    this.canMove = false;
-
-    /**
-     * ドットとしての位置
-     */
-    this.x = 0;
-    this.y = 0;
-    /** ドットのどちら側か。UP or LEFT */
-    this.side = Const.DIR_UP;
-
-    /**
-     * 向き有り
-     * in: 時計周りの場合の内側の方向
-     */
-    this.arrows = [
-      {dir: Const.DIR_LEFT, in: Const.DIR_UP, enable: false, passed: false},
-      {dir: Const.DIR_RIGHT, in: Const.DIR_DOWN, enable: false, passed: false},
-    ];
-
-  }
-
-  /**
-   * 
-   * @param {number} side LEFT or UP 
-   * @param {boolean} e0 上または左
-   * @param {boolean} e1 下または右
-   */
-  set(side, e0, e1) {
-    this.side = side;
-    if (side === Const.DIR_LEFT) {
-      this.arrows = [
-        new Arrow().init({dir: Const.DIR_DOWN, in: Const.DIR_LEFT, enable: false, passed: false}),
-        new Arrow().init({dir: Const.DIR_UP, in: Const.DIR_RIGHT, enable: false, passed: false}),
-      ];
-    } else {
-      this.arrows = [
-        new Arrow().init({dir: Const.DIR_LEFT, in: Const.DIR_UP, enable: false, passed: false}),
-        new Arrow().init({dir: Const.DIR_RIGHT, in: Const.DIR_DOWN, enable: false, passed: false}),
-      ];
-    }
-    this.arrows[0].enable = e0;
-    this.arrows[1].enable = e1;
-  }
-
-}
-
-
 
 export class Dot {
 
@@ -97,11 +51,13 @@ export class Dot {
 
     /**
      * 左と上隣接
-     * @type {Edge[]}
+     * @type {Arrow[]}
      */
     this.ns = [
-      new Edge(),
-      new Edge(),
+      new Arrow(this),
+      new Arrow(this),
+      new Arrow(this),
+      new Arrow(this),
     ];
   }
 
@@ -194,6 +150,7 @@ export class Route {
       curEnd = this.pts[index];
       dv = Route.normal([curEnd[0] - curStart[0], curEnd[1] - curStart[1]]);
       if (dv[0] === 0 && dv[1] === 0) {
+        index += 1;
         continue;
       }
       break;
@@ -283,18 +240,47 @@ export class Contour {
         dot.y = i;
         dot.a = a;
         dot.col = Contour.cstoone(r, g, b);
+      }
+    }
+
+    for (let i = 0; i < h; ++i) {
+      for (let j = 0; j < w; ++j) {
+        let index = j + w * i;
+
+        const dot = this.dots[index];
+        if (dot.a === 0) {
+          continue;
+        }
+        let x = dot.x;
+        let y = dot.y;
+
+        for (let k = 0; k < 4; ++k) {
+          const arrow = dot.ns[k];
+          arrow.enable = false;
+          arrow.passed = false;
+          arrow.col = dot.col;
+          arrow.a = dot.a;
+        }
 
         if (j >= 1) { // 左を見る
           const comp = this.dots[index - 1];
-          const edge = dot.ns[Const.DIR_LEFT];
-          edge.canMove = !dot.eqCols(comp);
-          edge.set(Const.DIR_LEFT, (comp.a !== 0), (dot.a !== 0));
+          const arrow = dot.ns[Const.DIR_LEFT];
+          arrow.set({ enable: !dot.eqCols(comp), dir: Const.DIR_UP, sx: x, sy: y + 1, ex: x, ey: y });
         }
         if (i >= 1) { // 上を見る
           const comp = this.dots[index - w];
-          const edge = dot.ns[Const.DIR_UP];
-          edge.canMove = !dot.eqCols(comp);
-          edge.set(Const.DIR_UP, (comp.a !== 0), (dot.a !== 0));
+          const arrow = dot.ns[Const.DIR_UP];
+          arrow.set({ enable: !dot.eqCols(comp), dir: Const.DIR_RIGHT, sx: x, sy: y, ex: x+1, ey: y });
+        }
+        if (j < w - 1) { // 右を見る
+          const comp = this.dots[index + 1];
+          const arrow = dot.ns[Const.DIR_RIGHT];
+          arrow.set({ enable: !dot.eqCols(comp), dir: Const.DIR_DOWN, sx: x+1, sy: y, ex: x+1, ey: y+1 });
+        }
+        if (i < h - 1) { // 下を見る
+          const comp = this.dots[index + w];
+          const arrow = dot.ns[Const.DIR_DOWN];
+          arrow.set({ enable: !dot.eqCols(comp), dir: Const.DIR_LEFT, sx: x + 1, sy: y + 1, ex: x, ey: y + 1 });
         }
 
       }
@@ -315,69 +301,50 @@ export class Contour {
         /** 開始ドット */
         const firstDot = this.dots[index];
 
-        for (let k = 0; k < 2; ++k) {
+        for (let k = 0; k < 4; ++k) {
           /** 最初の線分 */
-          const firstEdge = firstDot.ns[k];
-          if (!firstEdge.canMove) {
+          const firstArrow = firstDot.ns[k];
+          if (!firstArrow.enable || firstArrow.passed) {
             continue;
           }
 
-          for (let l = 0; l < 2; ++l) {
-            /** 最初の向きつき線分 */
-            const firstArrow = firstEdge.arrows[l];
-            if (!firstArrow.enable || firstArrow.passed) {
-              continue;
-            }
+          let firstPt = [firstArrow.sx, firstArrow.sy];
+          let secondPt = [firstArrow.ex, firstArrow.ey];
 
-            const lp = firstDot.calcLP(firstEdge.side, firstArrow.dir);
-            let firstPt = [...lp[0]];
-            let secondPt = [...lp[1]];
+          // 探し回る
+          const route = new Route();
+          ret.push(route);
+          route.col = firstDot.col;
+          route.a = firstDot.a;
+          if (route.a === 0) {
+            console.warn('miss', firstPt, secondPt);
+          }
+          route.pts.push(firstPt);
+          route.pts.push(secondPt);
 
-            // 探し回る
-            const route = new Route();
-            ret.push(route);
-            route.col = firstDot.col;
-            route.a = firstDot.a;
-            if (route.a === 0) {
-              console.warn('miss', firstPt, secondPt);
-            }
-            route.pts.push(firstPt);
-            route.pts.push(secondPt);
+          let neigh = firstArrow;
+          neigh.passed = true;
 
-            let neigh = firstArrow;
-            neigh.passed = true;
-            neigh.ex = secondPt[0];
-            neigh.ey = secondPt[1];
+          for (let cnt = 0; cnt < 100; ++cnt) {
+            let x = neigh.ex;
+            let y = neigh.ey;
 
-
-            for (let cnt = 0; cnt < 10000; ++cnt) {
-              let x = neigh.ex;
-              let y = neigh.ey;
-
-              // 隣接を探す。
-              neigh = null;
-              // 論理ブロックで外に出ずに同じ色のつながる有向エッジが存在する
-              /** @type {any[]} */
-              let cands = [
-new Arrow().init({dx: x - 1, dy: y, side: Const.DIR_UP, index: 0, ex: x - 1, ey: y, dir: Const.DIR_LEFT}),
-new Arrow().init({dx: x, dy: y - 1, side: Const.DIR_LEFT, index: 0, ex: x, ey: y - 1, dir: Const.DIR_UP}),
-new Arrow().init({dx: x, dy: y, side: Const.DIR_UP, index: 0, ex: x + 1, ey: y, dir: Const.DIR_RIGHT}),
-new Arrow().init({dx: x, dy: y, side: Const.DIR_LEFT, index: 0, ex: x, ey: y + 1, dir: Const.DIR_DOWN}),
+            // 隣接を探す。
+            neigh = null;
+            // 論理ブロックで外に出ずに同じ色のつながる有向エッジが存在する
+            /** @type {any[]} */
+            let cands = [
+{dx: x - 1, dy: y - 1, index: Const.DIR_DOWN }, // 左へ
+{dx: x, dy: y - 1, index: Const.DIR_LEFT, }, // 上へ
+{dx: x, dy: y, index: Const.DIR_UP, }, // 右へ
+{dx: x - 1, dy: y, index: Const.DIR_RIGHT, }, // 下へ
               ];
 
               for (const cand of cands) {
-                const edge = this.dots[cand.dx + w * cand.dy].ns[cand.side];
-                const next0 = edge.arrows[0];
-                if (next0.enable && !next0.passed) {
-                  if (next0.col === route.col && next0.a === route.a) {
-                    neigh = cand;
-                  }
-                } else {
-                  const next1 = edge.arrows[1];
-                  if (next1.enable && !next1.passed) {
-                    if (next1.col === route.col && next1.a === route.a) {
-                      neigh = cand;
-                    }
+                const arrow = this.dots[cand.dx + w * cand.dy].ns[cand.index];
+                if (arrow.enable && !arrow.passed) {
+                  if (arrow.col === route.col && arrow.a === route.a) {
+                    neigh = arrow;
                   }
                 }
               }
@@ -388,11 +355,9 @@ new Arrow().init({dx: x, dy: y, side: Const.DIR_LEFT, index: 0, ex: x, ey: y + 1
               }
               neigh.passed = true;
               route.pts.push([neigh.ex, neigh.ey]);
-            }
-
-            route.pts = route.connectLines();
           }
 
+          route.pts = route.connectLines();
         }
       }
     }
