@@ -288,10 +288,7 @@ export class Contour {
 
   }
 
-  
   search() {
-    debugger;
-
     const ret = [];
     const w = this.width;
     const h = this.height;
@@ -365,6 +362,26 @@ export class Contour {
     return ret;
   }  
 
-}
+  /**
+   * 同一カラーでまとめる
+   * @param {Route} routes 
+   * @returns 
+   */
+  gatherByColor(routes) {
+    const ret = [];
+    for (const route of routes) {
+      let found = ret.find(v => v.dot.eqCols(route));
+      if (!found) {
+        found = { dot: new Dot(), routes: [] };
+        found.dot.col = route.col;
+        found.dot.a = route.a;
+        ret.push(found);
+      }
 
+      found.routes.push(route);
+    }
+    return ret;
+  }
+
+}
 

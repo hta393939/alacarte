@@ -63,7 +63,8 @@ class Misc {
       contour.init(window.onewmargin);
       const routes = contour.search();
       console.log('routes', routes);
-      const canvas = this.makeCanvas(routes);
+      const colorRoutes = contour.gatherByColor(routes);
+      const canvas = this.makeCanvas(colorRoutes);
       document.body.appendChild(canvas);
     }
   }
@@ -315,10 +316,10 @@ class Misc {
 
   /**
    * 
-   * @param {Route[]} routes
+   * @param {Object[]} colorRoutes
    * @param {HTMLCanvasElement} canvas 
    */
-  makeCanvas(routes) {
+  makeCanvas(colorRoutes) {
     const canvas = document.createElement('canvas');
     canvas.id = 'makecanvas';
     canvas.width = 11 * 10;
@@ -328,23 +329,30 @@ class Misc {
     const h = canvas.height;
     c.lineWidth = 2;
 
-    for (const route of routes) {
-      const n = route.pts.length;
-      if (n <= 1) {
-        continue;
+    c.strokeStyle = `#ff0000`;
+    for (const colorRoute of colorRoutes) {
+      c.fillStyle = `#${colorRoute.dot.col.toString(16).padStart(6, '0')}`;
+      for (const route of colorRoute.routes) {
+        const n = route.pts.length;
+        if (n <= 1) {
+          continue;
+        }
+        let index = 1;
+
+        c.beginPath();
+        c.moveTo(route.pts[0][0] * 10, route.pts[0][1] * 10);
+        for (let i = 1; i < n; ++i) {
+          const pt = route.pts[i];
+          c.lineTo(pt[0] * 10, pt[1] * 10);
+        }
+        if (route.pts[0][0] === route.pts[n-1][0] && route.pts[0][1] === route.pts[n-1][1]) {
+          c.closePath();
+        }
+        c.stroke();
+        c.fill();
       }
-      let index = 1;
-      c.strokeStyle = `#ff0000`;
-      c.beginPath();
-      c.moveTo(route.pts[0][0] * 10, route.pts[0][1] * 10);
-      for (let i = 1; i < n; ++i) {
-        const pt = route.pts[i];
-        c.lineTo(pt[0] * 10, pt[1] * 10);
-      }
-      if (route.pts[0][0] === route.pts[n-1][0] && route.pts[0][1] === route.pts[n-1][1]) {
-        c.closePath();
-      }
-      c.stroke();
+      //c.fill();
+      //c.stroke();
     }
 
     console.log('makeCanvas');
