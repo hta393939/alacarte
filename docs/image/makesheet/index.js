@@ -66,7 +66,17 @@ class Misc {
       const colorRoutes = contour.gatherByColor(routes);
       const canvas = this.makeCanvas(colorRoutes);
       document.body.appendChild(canvas);
+
+      const text = this.makeSVG(colorRoutes);
+      //this.download(new Blob([text]), `foo.svg`);
     }
+  }
+
+  download(blob, name) {
+    const a = document.createElement('a');
+    a.download = name;
+    a.href = URL.createObjectURL(blob);
+    a.click();
   }
 
   /**
@@ -332,6 +342,7 @@ class Misc {
     c.strokeStyle = `#ff0000`;
     for (const colorRoute of colorRoutes) {
       c.fillStyle = `#${colorRoute.dot.col.toString(16).padStart(6, '0')}`;
+      c.beginPath();
       for (const route of colorRoute.routes) {
         const n = route.pts.length;
         if (n <= 1) {
@@ -339,7 +350,6 @@ class Misc {
         }
         let index = 1;
 
-        c.beginPath();
         c.moveTo(route.pts[0][0] * 10, route.pts[0][1] * 10);
         for (let i = 1; i < n; ++i) {
           const pt = route.pts[i];
@@ -348,17 +358,94 @@ class Misc {
         if (route.pts[0][0] === route.pts[n-1][0] && route.pts[0][1] === route.pts[n-1][1]) {
           c.closePath();
         }
-        c.stroke();
-        c.fill();
+
       }
-      //c.fill();
-      //c.stroke();
+      c.fill();
+      c.stroke();
     }
 
     console.log('makeCanvas');
     return canvas;
   }
 
+  /**
+   * 
+   * @param {object[]} colorRoutes 
+   */
+  makeSVG(colorRoutes) {
+    const el = document.createElement('svg');
+    {
+      el.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      el.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+      // NOTE: B は大文字だが残ってくれない
+      el.setAttribute('viewBox', '20 20 90 90');
+    }
+
+    {
+      const defs = document.createElement('defs');
+      const viewg = document.createElement('g');
+      {
+        let count = 0;
+        for (const colorRoute of colorRoutes) {
+          const id = `id${count}`;
+
+          const g = document.createElement('g');
+          g.setAttribute('id', id);
+          g.setAttribute('fill', `#${colorRoute.dot.col.toString(16).padStart(6, '0')}`);
+
+          const pathel = document.createElement('path');
+
+          {
+            let ss = [];
+            for (const route of colorRoute.routes) {
+              const n = route.pts.length;
+              if (n < 2) {
+                continue;
+              }
+              ss.push('M', route.pts[0][0] * 10, route.pts[0][1] * 10, 'L');
+              let index = 1;
+              for (let i = 1; i < n; ++i) {
+                if (i === n - 1) {
+                  if (route.pts[0][0] === route.pts[i][0] && route.pts[0][1] === route.pts[i][1]) {
+                    ss.push('z');
+                    break;
+                  }
+                }
+                ss.push(route.pts[i][0] * 10, route.pts[i][1] * 10);
+              }
+            }
+            pathel.setAttribute('d', ss.join(' '));
+          }
+
+          g.appendChild(pathel);
+          defs.appendChild(g);
+
+          {
+            const use = document.createElement('use');
+            use.setAttribute('xlink:href', `#${id}`);
+            viewg.appendChild(use);
+          }
+
+          count += 1;
+        }
+      }
+      el.appendChild(defs);
+
+      el.appendChild(viewg);
+    }
+
+    let text = el.outerHTML;
+
+    for (const v of [
+      {src: 'viewbox', dst: 'viewBox'},
+      {src: '>', dst: '>\n'}
+    ]) {
+      text = text.replaceAll(v.src, v.dst);
+    }
+
+    console.log('makeSVG', text);
+    return text;
+  }
 
   setListener() {
     {
