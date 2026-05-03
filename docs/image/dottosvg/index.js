@@ -69,7 +69,7 @@ class Misc {
     {
       await this.copyImage();
 
-      this.actProcess(false);
+      this.actProcess();
     }
   }
 
@@ -82,9 +82,8 @@ class Misc {
 
   /**
    *
-   * @param {boolean} isDownload 
    */
-  async actProcess(isDownload) {
+  async actProcess() {
     const param = this.gatherCommonParam();
     console.log('actProcess', param);
 
@@ -95,6 +94,7 @@ class Misc {
       param.pwidth = srccanvas.width;
       param.pheight = srccanvas.height;
     }
+    const isDownload = param.isdownload;
     {
       /** @type {HTMLCanvasElement} */
       const canvas = document.getElementById('canvas');
@@ -274,7 +274,7 @@ class Misc {
         }
       }
     }
-    for (const k of ['limitarea']) {
+    for (const k of ['limitarea', 'isdownload']) {
       const el = document.getElementById(k);
       param[k] = el?.checked;
     }

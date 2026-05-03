@@ -12,9 +12,7 @@
       <div>
         <canvas id="srccanvas"></canvas>
         <canvas id="lookcanvas"></canvas>
-        <canvas id="maincanvas"></canvas>
         <canvas id="canvas"></canvas>
-        <canvas id="subcanvas"></canvas>
         <label class="pointer"><input class="pointer" type="checkbox" id="limitarea" />制限する</label>
         <input type="number" min="0" max="1024" value="0" id="offsetx" />
         <input type="number" min="0" max="1024" value="0" id="offsety" />
@@ -26,6 +24,7 @@
       </div>
       <div>
         <div id="actprocess" class="drop">ここにドロップする</div>
+        <label class="pointer"><input type="checkbox" class="pointer" id="isdownload" />ダウンロードもする</label>
         <button class="pointer" id="retry">再処理する</button>
         <img src="./mosaic.png" id="allcircle" />
       </div>
