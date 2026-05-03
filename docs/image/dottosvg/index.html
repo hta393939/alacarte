@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>dot to svg</title>
+    <link rel="stylesheet" href="./index.css" />
+
+  </head>
+  <body>
+
+    <div>
+      <div>
+        <div id="innerview"></div>
+        <div id="element"></div>
+      </div>
+      <div>
+        <canvas id="maincanvas"></canvas>
+        <canvas id="canvas"></canvas>
+        <canvas id="subcanvas"></canvas>
+        <input type="number" min="0" max="1024" value="0" id="offsetx" />
+        <input type="number" min="0" max="1024" value="0" id="offsety" />
+        <input type="number" min="1" max="1024" value="9" id="pwidth" />
+        <input type="number" min="1" max="1024" value="9" id="pheight" />       
+        <div>
+          <div id="processingview"></div>
+        </div>
+      </div>
+      <div>
+        <div id="actprocess" class="drop">ここにドロップする</div>
+        <img src="./mosaic.png" id="allcircle" />
+      </div>
+      <div>
+        <div id="resultelement"></div>
+      </div>
+
+    </div>
+
+    <hr />
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
