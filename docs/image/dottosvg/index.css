@@ -17,6 +17,10 @@
   font-weight: bold;
 }
 
+.pointer {
+  cursor: pointer;
+}
+
 #maincanvas, #canvas, #subcanvas {
   max-height: 256px;
 }

@@ -37,6 +37,30 @@ const _lerp = (a, b, t, is255) => {
 
 class Misc {
   constructor() {
+    this.name = 'foo';
+  }
+
+  /**
+   * 
+   * @param {File} file 
+   */
+  async loadToSrc(file) {
+    {
+      const re = /(?<base>.+)\.(?<ext>[^\.]+)/;
+      const m = re.exec(file.name);
+      this.name = m ? m.groups['base'] : file.name;
+      document.title = `${this.name} - dot to svg`;
+    }
+
+    const bmp = await window.createImageBitmap(file);
+    /** @type {HTMLCanvasElement} */
+    const canvas = document.getElementById('srccanvas');
+    canvas.width = bmp.width;
+    canvas.height = bmp.height;
+    const c = canvas.getContext('2d');
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    c.drawImage(bmp, 0, 0);
+    return canvas;
   }
 
   async initialize() {
@@ -44,28 +68,8 @@ class Misc {
 
     {
       await this.copyImage();
-      {
-        const cv0 = window.canvas;
-        /** @type {HTMLCanvasElement} */
-        const cv1 = document.createElement('canvas');
-        cv1.id = 'onewmargin';
-        cv1.width = 11;
-        cv1.height = 11;
-        const c = cv1.getContext('2d');
-        c.drawImage(cv0, 1, 1);
-        document.body.appendChild(cv1);
-      }
 
-      const contour = new Contour();
-      contour.init(window.onewmargin);
-      const routes = contour.search();
-      console.log('routes', routes);
-      const colorRoutes = contour.gatherByColor(routes);
-      const canvas = this.makeCanvas(colorRoutes);
-      document.body.appendChild(canvas);
-
-      const text = this.makeSVG(colorRoutes);
-      //this.download(new Blob([text]), `foo.svg`);
+      this.actProcess(false);
     }
   }
 
@@ -77,31 +81,41 @@ class Misc {
   }
 
   /**
-   * 
-   * @param {File} file 
+   *
+   * @param {boolean} isDownload 
    */
-  async actProcess(file, param) {
+  async actProcess(isDownload) {
+    const param = this.gatherCommonParam();
+    console.log('actProcess', param);
+
+    const srccanvas = document.getElementById('srccanvas');
+    if (!param.limitarea) { // 全体を使用する
+      param.offsetx = 0;
+      param.offsety = 0;
+      param.pwidth = srccanvas.width;
+      param.pheight = srccanvas.height;
+    }
     {
-      const bmp = await window.createImageBitmap(file);
-      const iw = bmp.width;
-      const ih = bmp.height;
       /** @type {HTMLCanvasElement} */
       const canvas = document.getElementById('canvas');
-      canvas.width = iw + 2;
-      canvas.height = ih + 2;
+      canvas.width = param.pwidth;
+      canvas.height = param.pheight;
       const c = canvas.getContext('2d');
-      c.drawImage(bmp, 1, 1);
+      c.clearRect(0, 0, canvas.width, canvas.height);
+      c.drawImage(srccanvas, param.offsetx, param.offsety);
 
       const contour = new Contour();
       contour.init(canvas);
       const routes = contour.search();
       console.log('routes', routes);
       const colorRoutes = contour.gatherByColor(routes);
-      const drawedCanvas = this.makeCanvas(colorRoutes);
+      const drawedCanvas = this.makeCanvas(colorRoutes, param);
       document.body.appendChild(drawedCanvas);
 
-      const text = this.makeSVG(colorRoutes);
-      this.download(new Blob([text]), `foo.svg`);
+      const text = this.makeSVG(colorRoutes, param);
+      if (isDownload) {
+        this.download(new Blob([text]), `${this.name}.svg`);
+      }
     }
   }
 
@@ -110,7 +124,7 @@ class Misc {
     const w = bmp.naturalWidth;
     const h = bmp.naturalHeight;
     /** @type {HTMLCanvasElement} */
-    const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById('srccanvas');
     canvas.width = w;
     canvas.height = h;
     const c = canvas.getContext('2d');
@@ -121,14 +135,16 @@ class Misc {
   /**
    * 
    * @param {Object[]} colorRoutes
-   * @param {HTMLCanvasElement} canvas 
    */
-  makeCanvas(colorRoutes) {
+  makeCanvas(colorRoutes, param) {
+    const rate = param.rate || 10;
+
     const canvas = document.createElement('canvas');
-    canvas.id = 'makecanvas';
-    canvas.width = 11 * 10;
-    canvas.height = 11 * 10;
+    canvas.width = param.pwidth * rate;
+    canvas.height = param.pheight * rate;
     const c = canvas.getContext('2d');
+    c.fillStyle = '#008080';
+    c.fillRect(0, 0, canvas.width, canvas.height);
     const w = canvas.width;
     const h = canvas.height;
     c.lineWidth = 2;
@@ -165,14 +181,18 @@ class Misc {
   /**
    * 
    * @param {object[]} colorRoutes 
+   * @param {object} param
+   * @param {number} [param.rate=10] 1ドット量
    */
-  makeSVG(colorRoutes) {
+  makeSVG(colorRoutes, param) {
+    const rate = param.rate || 10;
+
     const el = document.createElement('svg');
     {
       el.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       el.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
       // NOTE: B は大文字だが残ってくれない
-      el.setAttribute('viewBox', '20 20 90 90');
+      el.setAttribute('viewBox', `${1 * rate} ${1 * rate} ${param.pwidth * rate} ${param.pheight * rate}`);
     }
 
     {
@@ -196,7 +216,7 @@ class Misc {
               if (n < 2) {
                 continue;
               }
-              ss.push('M', route.pts[0][0] * 10, route.pts[0][1] * 10, 'L');
+              ss.push('M', route.pts[0][0] * rate, route.pts[0][1] * rate, 'L');
               let index = 1;
               for (let i = 1; i < n; ++i) {
                 if (i === n - 1) {
@@ -205,7 +225,7 @@ class Misc {
                     break;
                   }
                 }
-                ss.push(route.pts[i][0] * 10, route.pts[i][1] * 10);
+                ss.push(route.pts[i][0] * rate, route.pts[i][1] * rate);
               }
             }
             pathel.setAttribute('d', ss.join(' '));
@@ -254,6 +274,10 @@ class Misc {
         }
       }
     }
+    for (const k of ['limitarea']) {
+      const el = document.getElementById(k);
+      param[k] = el?.checked;
+    }
     return param;
   }
 
@@ -278,10 +302,11 @@ class Misc {
         ev.preventDefault();
         ev.dataTransfer.dropEffect = 'copy';
       });
-      el?.addEventListener('drop', ev => {
+      el?.addEventListener('drop', async ev => {
         ev.stopPropagation();
         ev.preventDefault();
-        this.actProcess(ev.dataTransfer.files[0]);
+        await this.loadToSrc(ev.dataTransfer.files[0]);
+        this.actProcess();
       });
     }
 
@@ -297,6 +322,13 @@ class Misc {
         const dirHandle = await this.openDir();
         this.dirHandle = dirHandle;
         await this.processDir(dirHandle);
+      });
+    }
+
+    {
+      const el = document.getElementById('retry');
+      el?.addEventListener('click', () => {
+        this.actProcess();
       });
     }
 
