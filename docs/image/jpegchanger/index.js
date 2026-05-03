@@ -427,13 +427,17 @@ class Misc {
   /**
    * 
    * @param {*} dirobj ディレクトリハンドルたち
-   * @param {*} param パラメータたち
+   * @param {object} param パラメータたち
    */
   async miniFiles(dirobj, param) {
     const divnum = param.divnum || 8;
     /** @type {FileSystemDirectoryHandle} */
     const dstDir = dirobj.imagesDir;
 
+    /**
+     * 2回目以降はimg elementを追加しない
+     */
+    let first = true;
     for await (const [k, v] of dirobj.srcDir.entries()) {
       if (v.kind !== 'file') {
         continue;
@@ -443,7 +447,7 @@ class Misc {
       const srcab = await f.arrayBuffer();
 
       // 分離して2or0を取得する
-      const info = await this.parseJpeg(srcab);
+      const info = await this.parseJpeg(srcab, first);
       const onejpeg = info.frames[(info.frames.length >= 3) ? 2 : 0].buffer;
 
       const off = await this.imageBufToOff(onejpeg, divnum, true);
@@ -455,6 +459,8 @@ class Misc {
       const ws = await dstFile.createWritable();
       await ws.write(dstblob);
       await ws.close();
+
+      first = false;
     }
   }
 
@@ -599,7 +605,7 @@ class Misc {
         const file = ev.dataTransfer.files[0];
         this.curfile = file;
         const ab = await file.arrayBuffer();
-        const info = await this.parseJpeg(ab);
+        const info = await this.parseJpeg(ab, true);
         this.curinfo = info;
         console.log('info', info);
         this.curname = file.name;
@@ -641,7 +647,7 @@ class Misc {
         const fhs = await window.showOpenFilePicker(opt);
         const f = await fhs[0].getFile();
         const ab = await f.arrayBuffer();
-        await this.parseJpeg(ab);
+        await this.parseJpeg(ab, true);
       });
     }
     { // 反映後のダウンロード
@@ -995,8 +1001,9 @@ class Misc {
   /**
    * jpeg パース
    * @param {ArrayBuffer} ab 
+   * @param {boolean} addElement 
    */
-  async parseJpeg(ab) {
+  async parseJpeg(ab, addElement = true) {
     const byteNum = ab.byteLength;
 
     let info = await this.parseOneJpeg(ab);
@@ -1042,10 +1049,12 @@ class Misc {
 
       one.buffer = sub;
 
-      const img = document.createElement('img');
-      img.classList.add('thumb');
-      img.src = URL.createObjectURL(new Blob([sub]));
-      document.body.appendChild(img);
+      if (addElement) {
+        const img = document.createElement('img');
+        img.classList.add('thumb');
+        img.src = URL.createObjectURL(new Blob([sub]));
+        document.body.appendChild(img);
+      }
 
       {
         const uuids = Object.keys(one.hexa);
