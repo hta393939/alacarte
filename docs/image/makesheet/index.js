@@ -438,6 +438,8 @@ class Misc {
 
     for (const v of [
       {src: 'viewbox', dst: 'viewBox'},
+      {src: '></use>', dst: ' />'},
+      {src: '></path>', dst: ' />'},
       {src: '>', dst: '>\n'}
     ]) {
       text = text.replaceAll(v.src, v.dst);
