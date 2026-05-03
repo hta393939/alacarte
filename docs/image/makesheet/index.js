@@ -44,32 +44,6 @@ class Misc {
 
     this.drawGradRB(window.maincanvas, true);
     this.drawGradRB(window.subcanvas, false);
-
-    {
-      await this.copyImage();
-      {
-        const cv0 = window.canvas;
-        /** @type {HTMLCanvasElement} */
-        const cv1 = document.createElement('canvas');
-        cv1.id = 'onewmargin';
-        cv1.width = 11;
-        cv1.height = 11;
-        const c = cv1.getContext('2d');
-        c.drawImage(cv0, 1, 1);
-        document.body.appendChild(cv1);
-      }
-
-      const contour = new Contour();
-      contour.init(window.onewmargin);
-      const routes = contour.search();
-      console.log('routes', routes);
-      const colorRoutes = contour.gatherByColor(routes);
-      const canvas = this.makeCanvas(colorRoutes);
-      document.body.appendChild(canvas);
-
-      const text = this.makeSVG(colorRoutes);
-      //this.download(new Blob([text]), `foo.svg`);
-    }
   }
 
   download(blob, name) {
@@ -366,87 +340,6 @@ class Misc {
 
     console.log('makeCanvas');
     return canvas;
-  }
-
-  /**
-   * 
-   * @param {object[]} colorRoutes 
-   */
-  makeSVG(colorRoutes) {
-    const el = document.createElement('svg');
-    {
-      el.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      el.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-      // NOTE: B は大文字だが残ってくれない
-      el.setAttribute('viewBox', '20 20 90 90');
-    }
-
-    {
-      const defs = document.createElement('defs');
-      const viewg = document.createElement('g');
-      {
-        let count = 0;
-        for (const colorRoute of colorRoutes) {
-          const id = `id${count}`;
-
-          const g = document.createElement('g');
-          g.setAttribute('id', id);
-          g.setAttribute('fill', `#${colorRoute.dot.col.toString(16).padStart(6, '0')}`);
-
-          const pathel = document.createElement('path');
-
-          {
-            let ss = [];
-            for (const route of colorRoute.routes) {
-              const n = route.pts.length;
-              if (n < 2) {
-                continue;
-              }
-              ss.push('M', route.pts[0][0] * 10, route.pts[0][1] * 10, 'L');
-              let index = 1;
-              for (let i = 1; i < n; ++i) {
-                if (i === n - 1) {
-                  if (route.pts[0][0] === route.pts[i][0] && route.pts[0][1] === route.pts[i][1]) {
-                    ss.push('z');
-                    break;
-                  }
-                }
-                ss.push(route.pts[i][0] * 10, route.pts[i][1] * 10);
-              }
-            }
-            pathel.setAttribute('d', ss.join(' '));
-          }
-
-          g.appendChild(pathel);
-          defs.appendChild(g);
-
-          {
-            const use = document.createElement('use');
-            use.setAttribute('xlink:href', `#${id}`);
-            viewg.appendChild(use);
-          }
-
-          count += 1;
-        }
-      }
-      el.appendChild(defs);
-
-      el.appendChild(viewg);
-    }
-
-    let text = el.outerHTML;
-
-    for (const v of [
-      {src: 'viewbox', dst: 'viewBox'},
-      {src: '></use>', dst: ' />'},
-      {src: '></path>', dst: ' />'},
-      {src: '>', dst: '>\n'}
-    ]) {
-      text = text.replaceAll(v.src, v.dst);
-    }
-
-    console.log('makeSVG', text);
-    return text;
   }
 
   setListener() {
