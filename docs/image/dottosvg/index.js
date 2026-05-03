@@ -106,6 +106,8 @@ class Misc {
 
       const contour = new Contour();
       contour.init(canvas);
+      param.cwidth = contour.width;
+      param.cheight = contour.height;
       const routes = contour.search();
       console.log('routes', routes);
       const colorRoutes = contour.gatherByColor(routes);
@@ -140,8 +142,8 @@ class Misc {
     const rate = param.rate || 10;
 
     const canvas = document.createElement('canvas');
-    canvas.width = param.pwidth * rate;
-    canvas.height = param.pheight * rate;
+    canvas.width = param.cwidth * rate;
+    canvas.height = param.cheight * rate;
     const c = canvas.getContext('2d');
     c.fillStyle = '#008080';
     c.fillRect(0, 0, canvas.width, canvas.height);
@@ -158,12 +160,10 @@ class Misc {
         if (n <= 1) {
           continue;
         }
-        let index = 1;
-
-        c.moveTo(route.pts[0][0] * 10, route.pts[0][1] * 10);
+        c.moveTo(route.pts[0][0] * rate, route.pts[0][1] * rate);
         for (let i = 1; i < n; ++i) {
           const pt = route.pts[i];
-          c.lineTo(pt[0] * 10, pt[1] * 10);
+          c.lineTo(pt[0] * rate, pt[1] * rate);
         }
         if (route.pts[0][0] === route.pts[n-1][0] && route.pts[0][1] === route.pts[n-1][1]) {
           c.closePath();

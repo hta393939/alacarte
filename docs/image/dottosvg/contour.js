@@ -76,50 +76,6 @@ export class Dot {
     return (this.col === b.col) && (this.a === b.a);
   }
 
-  /**
-   * 順番を考慮した向き有りエッジの始点と終点を返す
-   */
-  calcLP(edge, dir) {
-    let ret = [
-      [0, 0],
-      [0, 0],
-    ];
-    if (edge === Const.DIR_LEFT) { // ドットの左エッジ
-      if (dir === Const.DIR_DOWN) { // 上から下
-        ret = [[0, 0], [0, 1]];
-      } else { // 下から上
-        ret = [[0, 1], [0, 0]];
-      }
-    } else if (edge === Const.DIR_UP) { // ドットの上エッジ
-      if (dir === Const.DIR_RIGHT) { // 左から右
-        ret = [[0, 0], [1, 0]];
-      } else { // 右から左
-        ret = [[1, 0], [0, 0]];
-      }
-    } else { // 基本的に使用しない
-      console.warn('calcLP warn', edge, this);
-      if (edge === Const.DIR_RIGHT) {
-        if (dir === Const.DIR_DOWN) {
-          ret = [[1, 0], [1, 1]];
-        } else {
-          ret = [[1, 1], [1, 0]];
-        }
-      } else {
-        if (dir === Const.DIR_RIGHT) {
-          ret = [[0, 1], [1, 1]];
-        } else {
-          ret = [[1, 1], [0, 1]];
-        }
-      }
-    }
-
-    for (let i = 0; i < 2; ++i) {
-      ret[i][0] += this.x;
-      ret[i][1] += this.y;
-    }
-    return ret;
-  }
-
 }
 
 
@@ -218,13 +174,12 @@ export class Contour {
     this.width = w;
     this.height = h;
     /** @type {HTMLCanvasElement} */
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
+    const canvas = new OffscreenCanvas(w, h);
     const c = canvas.getContext('2d');
     c.drawImage(incanvas, 1, 1);
-    const img = c.getImageData(0, 0, w, h);
+    // 外側に1ピクセル取っておかないと逆向きのエッジが取れない
 
+    const img = c.getImageData(0, 0, w, h);
     for (let i = 0; i < h; ++i) {
       for (let j = 0; j < w; ++j) {
         let index = j + w * i;
@@ -335,23 +290,29 @@ export class Contour {
 {dx: x, dy: y - 1, index: Const.DIR_LEFT, }, // 上へ
 {dx: x, dy: y, index: Const.DIR_UP, }, // 右へ
 {dx: x - 1, dy: y, index: Const.DIR_RIGHT, }, // 下へ
-              ];
+            ];
+            cands = cands.filter(v => {
+              if (v.dx < 0 || v.dx >= w || v.dy < 0 || v.dy >= h) {
+                return false;
+              }
+              return true;
+            });
 
-              for (const cand of cands) {
+            for (const cand of cands) {
                 const arrow = this.dots[cand.dx + w * cand.dy].ns[cand.index];
                 if (arrow.enable && !arrow.passed) {
                   if (arrow.col === route.col && arrow.a === route.a) {
                     neigh = arrow;
                   }
                 }
-              }
+            }
 
-              // 見つからなかったら終了
-              if (!neigh) {
-                break;
-              }
-              neigh.passed = true;
-              route.pts.push([neigh.ex, neigh.ey]);
+            // 見つからなかったら終了
+            if (!neigh) {
+              break;
+            }
+            neigh.passed = true;
+            route.pts.push([neigh.ex, neigh.ey]);
           }
 
           route.pts = route.connectLines();
