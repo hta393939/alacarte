@@ -80,6 +80,16 @@ class Misc {
     a.click();
   }
 
+  async retryAll() {
+    for (let i = 0; i < 38; ++i) {
+      let mx = i % 6;
+      let my = Math.floor(i / 6);
+      window.offsetx.value = mx * 10;
+      window.offsety.value = my * 10;
+      await this.actProcess();
+    }
+  }
+
   /**
    *
    */
@@ -191,13 +201,28 @@ class Misc {
     {
       el.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       el.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-      // NOTE: B は大文字だが残ってくれない
-      el.setAttribute('viewBox', `${1 * rate} ${1 * rate} ${param.pwidth * rate} ${param.pheight * rate}`);
+      if (!param.iscustom) {
+        // NOTE: B は大文字だが残ってくれない
+        el.setAttribute('viewBox', `${1 * rate} ${1 * rate} ${param.pwidth * rate} ${param.pheight * rate}`);
+      } else {
+        el.setAttribute('viewBox', `${0 * rate} ${0 * rate} ${(param.pwidth + 2) * rate} ${(param.pheight + 2) * rate}`);
+      }
     }
 
     {
       const defs = document.createElement('defs');
       const viewg = document.createElement('g');
+      if (param.iscustom) {
+        const circle = document.createElement('circle');
+        circle.setAttribute('cx', 55);
+        circle.setAttribute('cy', 55);
+        circle.setAttribute('r', 50);
+        circle.setAttribute('fill', 'none');
+        circle.setAttribute('stroke', '#808080');
+        circle.setAttribute('stroke-width', 0.125);
+        viewg.appendChild(circle);
+      }
+
       {
         let count = 0;
         for (const colorRoute of colorRoutes) {
@@ -254,6 +279,7 @@ class Misc {
       {src: 'viewbox', dst: 'viewBox'},
       {src: '></use>', dst: ' />'},
       {src: '></path>', dst: ' />'},
+      {src: '></circle>', dst: ' />'},
       {src: '>', dst: '>\n'}
     ]) {
       text = text.replaceAll(v.src, v.dst);
@@ -274,7 +300,7 @@ class Misc {
         }
       }
     }
-    for (const k of ['limitarea', 'isdownload']) {
+    for (const k of ['limitarea', 'isdownload', 'iscustom']) {
       const el = document.getElementById(k);
       param[k] = el?.checked;
     }
@@ -329,6 +355,12 @@ class Misc {
       const el = document.getElementById('retry');
       el?.addEventListener('click', () => {
         this.actProcess();
+      });
+    }
+    {
+      const el = document.getElementById('retryall');
+      el?.addEventListener('click', () => {
+        this.retryAll();
       });
     }
 
