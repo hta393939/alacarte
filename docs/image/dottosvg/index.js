@@ -66,10 +66,12 @@ class Misc {
   async initialize() {
     this.setListener();
 
-    {
+    try {
       await this.copyImage();
 
       this.actProcess();
+    } catch (e) {
+      console.warn('loading', e);
     }
   }
 
