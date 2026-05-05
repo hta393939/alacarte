@@ -81,7 +81,8 @@ class Misc {
   }
 
   async retryAll() {
-    for (let i = 0; i < 38; ++i) {
+    console.log('retryAll');
+    for (let i = 30; i < 38; ++i) {
       let mx = i % 6;
       let my = Math.floor(i / 6);
       window.offsetx.value = mx * 10;
@@ -112,7 +113,9 @@ class Misc {
       canvas.height = param.pheight;
       const c = canvas.getContext('2d');
       c.clearRect(0, 0, canvas.width, canvas.height);
-      c.drawImage(srccanvas, param.offsetx, param.offsety);
+      c.drawImage(srccanvas,
+        param.offsetx, param.offsety, param.pwidth, param.pheight,
+        0, 0, param.pwidth, param.pheight);
 
       const contour = new Contour();
       contour.init(canvas);
@@ -218,7 +221,7 @@ class Misc {
         circle.setAttribute('cy', 55);
         circle.setAttribute('r', 50);
         circle.setAttribute('fill', 'none');
-        circle.setAttribute('stroke', '#808080');
+        circle.setAttribute('stroke', '#000000');
         circle.setAttribute('stroke-width', 0.125);
         viewg.appendChild(circle);
       }
