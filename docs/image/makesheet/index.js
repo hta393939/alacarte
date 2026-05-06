@@ -1,6 +1,4 @@
 
-import {Contour} from "./contour.js";
-
 /**
  * 
  * @param {number} r 
@@ -241,16 +239,22 @@ class Misc {
     const img = c.getImageData(0, 0, w, h);
       for (let i = 0; i < h; ++i) {
         for (let j = 0; j < w; ++j) {
+          let nx = j / w;
+          let ny = i / h;
           let r = (j / w) * 256;
           let g = 0;
           let b = (i / h) * 256;
           if (false) {
             g = ((h - 1 - i) / h) * 256;
             b = 0;
-          } else {
+          } else if (false) {
             r = 0;
             g = ((h - 1 - i) / h) * 256;
             b = ((w - 1 - j) / w) * 256;
+          } else {
+            r = nx * 256;
+            g = (1 - ny) * 256;
+            b = (1 - nx) * 256;
           }
 
           let offset = (j + w * i) * 4;

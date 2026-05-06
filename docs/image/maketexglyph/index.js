@@ -256,11 +256,18 @@ class Misc {
   }
 
   /**
-   * 
+   * MARK: キリル
    * @param {HTMLCanvasElement} canvas 
    */
   drawCyrl(canvas) {
-    const one = 32;
+    let one = 32;
+    let px = 22;
+
+    if (true) {
+      px = 10;
+      one = 8;
+    }
+
     const w = one * 16;
     const h = one * 16;
 
@@ -337,9 +344,15 @@ class Misc {
     //c.putImageData(img, 0, 0);
 
     if (true) {
+      c.font = `normal ${px}px ＭＳ ゴシック`;
+      //c.font = `normal 12px ＭＳ ゴシック`;
+      //c.font = `normal 16px ＭＳ ゴシック`;
       //c.font = `normal 20px ＭＳ ゴシック`;
-      c.font = `normal 22px ＭＳ 明朝`;
-      c.font = `normal 24px ＭＳ 明朝`;
+      //c.font = `normal 22px ＭＳ ゴシック`;
+
+      //c.font = `normal 22px ＭＳ 明朝`;
+      //c.font = `normal 20px ＭＳ 明朝`;
+      //c.font = `normal 24px ＭＳ 明朝`; // 
       c.textAlign = 'center';
       c.textBaseline = 'middle';
       c.fillStyle = 'rgb(51,51,255)';
@@ -351,7 +364,7 @@ class Misc {
       //c.rotate(Math.PI * 0.5);
       //c.fillText(`z`, one * 3 / 2, one * 4);
       //c.fillText(`a`, one * 3 / 2, one * 1);
-      c.fillText(`${String.fromCodePoint(code)}`, j * 32 + 16, i * 32 + 16);
+      c.fillText(`${String.fromCodePoint(code)}`, j * one + one / 2, i * one + one / 2);
       //c.fillText(`c`, one * 3 / 2, one * 3);
       c.resetTransform();
         }
