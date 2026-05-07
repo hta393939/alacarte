@@ -254,9 +254,10 @@ class Misc {
     }
 
     let format = true ? 'qr_code' : 'ean13';
-    el.textContent = `${format}`;
+    el.textContent = `out ${format}`;
     try {
       const reader = new window.BarcodeDetector(format);
+      el.textContent = `in ${format}`;
       /** @type {Blob|ImageBitmapSource} */
       let target = document.getElementById('video');
 
