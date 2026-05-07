@@ -3,6 +3,11 @@
   cursor: pointer;
 }
 
+.toright {
+  display: flex;
+  flex-direction: row;
+}
+
 @media (orientation: landscape) {
   .largebutton {
     width: 40vh;
@@ -11,6 +16,9 @@
     max-height: 40vh;
   }
   #subvideo {
+    max-height: 40vh;
+  }
+  #copied {
     max-height: 40vh;
   }
 }
@@ -23,6 +31,9 @@
     max-width: 80vw;
   }
   #subvideo {
+    max-width: 80vw;
+  }
+  #copied {
     max-width: 80vw;
   }
 }

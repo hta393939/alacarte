@@ -10,25 +10,32 @@
 
     <div>
       <div>
+
         <div id="innerview"></div>
         <div id="element"></div>
         <button class="largebutton pointer" id="startbutton">開始</button>
       </div>
       <div>
         <button class="largebutton pointer" id="enumbutton">列挙ボタン</button>
-        <button class="largebutton pointer" id="torchon">トーチオン</button>
-        <button class="largebutton pointer" id="torchoff">トーチオフ</button>
-        <button class="largebutton pointer" id="zoom10">10倍ズーム</button>
+        <button class="largebutton pointer" id="actscan">スキャン準備と開始</button>
+        <div id="scanview"></div>
         <input class="pointer" id="zoomnumber" type="range" min="1" max="10" value="1" />
         <span id="zoomnumberview"></span>
         <div id="devices"></div>
       </div>
 
-      <div>
-        <video id="video" controls muted></video>
-      </div>
-      <div>
-        <video id="subvideo" controls muted></video>
+      <div class="toright">
+        <div>
+          <video id="video" controls muted></video>
+        </div>
+        <div>
+          <video id="subvideo" controls muted></video>
+        </div>
+        <!--
+        <div>
+          <canvas id="copied"></canvas>
+        </div>
+      -->
       </div>
 
       <div>

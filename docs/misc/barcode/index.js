@@ -78,6 +78,10 @@ class Misc {
       if (!parent) {
         continue;
       }
+      if (dev.kind !== 'videoinput') {
+        continue;
+      }
+
       const el = document.createElement('button');
       el.textContent = `${dev.label}`;
       el.classList.add('pointer', 'largebutton');
@@ -193,21 +197,9 @@ class Misc {
     }
 
     {
-      const el = document.getElementById('torchon');
+      const el = document.getElementById('actscan');
       el?.addEventListener('click', () => {
-        this.setTorch(true);
-      });
-    }
-    {
-      const el = document.getElementById('torchoff');
-      el?.addEventListener('click', () => {
-        this.setTorch(false);
-      });
-    }
-    {
-      const el = document.getElementById('zoom10');
-      el?.addEventListener('click', () => {
-        this.setZoom(10);
+        this.readyReader();
       });
     }
 
@@ -249,25 +241,29 @@ class Misc {
 
   }
 
-  /**
-   * 
-   * @param {boolean} onoff 
-   */
-  async setTorch(onoff) {
-    try {
-      /** @type {MediaStreamVideoTrack} */
-      const track = this.track;
-      if (!track) {
-        return;
-      }
-      const opt = {
-        advanced: [{torch: onoff}]
-      };
-      await track.applyConstraints(opt);
-      this.log(`apply success`);
-    } catch (e) {
-      this.log(`apply,catch,${e.message}`);
+  async readyReader() {
+    const el = document.getElementById('scanview');
+
+    const Detector = window.BarcodeDetector;
+    if (!Detector) {
+      el.textContent = `No Detector exist`;
+      return;
     }
+    const formats = await Detector.getSupportedFormats();
+    for (const format of formats) {
+      this.log('sup', format);
+    }
+
+    let format = true ? 'qr_code' : 'ean13';
+    el.textContent = `${format}`;
+    const reader = new Detector(format);
+    /** @type {Blob|ImageBitmapSource} */
+    let target = document.getElementById('video');
+    const results = await reader.detect(target);
+    for (const result of results) {
+      this.log('result', JSON.stringify(result));
+    }
+    this.log('readyReader end');
   }
 
   /**
