@@ -244,22 +244,22 @@ class Misc {
   async readyReader() {
     const el = document.getElementById('scanview');
 
-    const Detector = window.BarcodeDetector;
-    if (!Detector) {
+    if (!window.BarcodeDetector) {
       el.textContent = `No Detector exist`;
       return;
     }
-    const formats = await Detector.getSupportedFormats();
+    const formats = await window.BarcodeDetector.getSupportedFormats();
     for (const format of formats) {
       this.log('sup', format);
     }
 
     let format = true ? 'qr_code' : 'ean13';
     el.textContent = `${format}`;
-    const reader = new Detector(format);
-    /** @type {Blob|ImageBitmapSource} */
-    let target = document.getElementById('video');
     try {
+      const reader = new window.BarcodeDetector(format);
+      /** @type {Blob|ImageBitmapSource} */
+      let target = document.getElementById('video');
+
       const results = await reader.detect(target);
       el.textContent = `${results.length}, ${format}`;
       for (const result of results) {
