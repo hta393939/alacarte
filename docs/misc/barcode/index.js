@@ -259,9 +259,14 @@ class Misc {
     const reader = new Detector(format);
     /** @type {Blob|ImageBitmapSource} */
     let target = document.getElementById('video');
-    const results = await reader.detect(target);
-    for (const result of results) {
-      this.log('result', JSON.stringify(result));
+    try {
+      const results = await reader.detect(target);
+      el.textContent = `${results.length}, ${format}`;
+      for (const result of results) {
+        this.log('result', JSON.stringify(result));
+      }
+    } catch (e) {
+      this.log('detect', e.message);
     }
     this.log('readyReader end');
   }
