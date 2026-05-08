@@ -45,3 +45,5 @@ cameraInfoBox.addEventListener('change', () => {
     cameraInfoBox.value = JSON.stringify(cameraInfoDefaults, null, 2);
   }
 });
+
+_readyCamera();
