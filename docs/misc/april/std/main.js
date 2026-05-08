@@ -17,7 +17,7 @@ const cameraInfoDefaults = window.cameraInfo = JSON.parse(cameraInfoBox.value);
 canvas.width = 480;
 canvas.height = 360;
 
-const _readyCamera = () => {
+const _readyCamera = async () => {
   const constraints = {
     audio: false,
     video: {
