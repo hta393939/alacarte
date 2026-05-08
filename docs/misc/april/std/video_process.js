@@ -4,7 +4,8 @@ var detections=[];
 
 async function init() {
   // WebWorkers use `postMessage` and therefore work with Comlink.
-  const Apriltag = Comlink.wrap(new Worker("apriltag.js"));
+  const source = `../${window._dir}/apriltag.js`;
+  const Apriltag = Comlink.wrap(new Worker(source));
 
   // must call this to init apriltag detector; argument is a callback for when the detector is ready
   window.apriltag = await new Apriltag(Comlink.proxy(() => {
