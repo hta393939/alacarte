@@ -2,10 +2,6 @@ import * as Comlink from "./comlink.mjs";
 
 var detections=[];
 
-window.onload = (event) => {
-  init();
-}
-
 async function init() {
   // WebWorkers use `postMessage` and therefore work with Comlink.
   const Apriltag = Comlink.wrap(new Worker("apriltag.js"));
@@ -21,7 +17,11 @@ async function init() {
     // start processing frames
     window.requestAnimationFrame(process_frame);
   }));
-}
+};
+
+window.onload = (event) => {
+  init();
+};
 
 async function process_frame() {
 
