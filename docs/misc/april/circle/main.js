@@ -33,6 +33,10 @@ const _readyCamera = async () => {
     video.srcObject = stream;
   } catch (e) {
     console.log('navigator.MediaDevices.getUserMedia error: ', e.message, e.name);
+    const el = document.getElementById('mark');
+    if (el) {
+      el.textContent = e.message;
+    }
   }
 };
 
