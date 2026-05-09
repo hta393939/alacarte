@@ -7,44 +7,23 @@
 
     <title>Apriltag Detector Example Canvas</title>
     <link rel="stylesheet" href="main.css">
-  <script type="javascript">
-window._dir = 'std';
-  </script>
 </head>
 
 <body>
 
 <div id="container">
-1
+2
     <video id="webcam_canvas" playsinline autoplay style="display:none"></video>
     <canvas id="out_canvas"></canvas>
     Put up an apriltag to see its detection.
 
     <p>Camera Parameters:<br/>
-     <textarea id="camera_info" rows="10" cols="100">
-       {
-            "camera_matrix": [
-                [
-                    939.3384407933022,
-                    0,
-                    640.347854307481
-                ],
-                [
-                    0,
-                    938.2560270381138,
-                    340.7192620859387
-                ],
-                [
-                    0,
-                    0,
-                    1
-                ]
-            ],
-            "img_size": [
-                1280,
-                720
-            ]
-        }
+     <textarea id="camera_info" rows="5" cols="100">
+       { "camera_matrix": [
+                [ 939.3, 0, 640.3 ],
+                [ 0, 938.2, 340.7 ],
+                [ 0, 0, 1 ]
+            ], "img_size": [ 1280, 720 ] }
      </textarea>
     </p>
 
