@@ -1,8 +1,32 @@
 import * as Comlink from "./comlink.mjs";
 
+class Asol {
+  constructor() {
+    this.R = [[], [], []];
+    this.t = [0.1, 0.2, 0.3];
+    this.e = 0.02;
+    this.uniquesol = false;
+  }
+}
+
+class Tag {
+  constructor() {
+    /** ID */
+    this.id = -1;
+    /** 4つ */
+    this.corners = [{x: 0, y: 0}, {x: 1, y: 0}];
+    /** 中心 */
+    this.center = {x: -1, y: -1};
+    this.pose = {R: [[], [], []],
+      asol: new Asol,
+      e: 0.02, size: 0.2, t: [0.1, 0.2, 0.3]};
+  }
+}
+
+
 var detections = [];
 
-const _marks = new Array(38);
+const _marks = new Int32Array(38);
 
 async function init() {
   // WebWorkers use `postMessage` and therefore work with Comlink.
@@ -55,7 +79,7 @@ async function process_frame() {
   ctx.putImageData(imageData, 0, 0);
 
   // draw previous detection
-  detections.forEach(det => {
+  detections.forEach(/** @param {Tag} det */(det) => {
     // draw tag borders
     ctx.beginPath();
       ctx.lineWidth = "5";
@@ -71,6 +95,10 @@ async function process_frame() {
       ctx.textAlign = "center";
       ctx.fillText(txt, det.center.x, det.center.y+5);
     ctx.stroke();
+
+    if (det.id < _marks.length) {
+      _marks[det.id] += 1;
+    }
   });
 
   // detect aprilTag in the grayscale image given by grayscalePixels
