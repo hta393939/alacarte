@@ -1,6 +1,8 @@
 import * as Comlink from "./comlink.mjs";
 
-var detections=[];
+var detections = [];
+
+const _marks = new Array(38);
 
 async function init() {
   // WebWorkers use `postMessage` and therefore work with Comlink.
@@ -78,6 +80,14 @@ async function process_frame() {
     if (!window._notfirst) {
       window._notfirst = true;
       console.log('detections', detections);
+    }
+  }
+
+  if (true) {
+    let s = _marks.join(',');
+    const el = document.getElementById('mark');
+    if (el) {
+      el.textContent = s;
     }
   }
 
