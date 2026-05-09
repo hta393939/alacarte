@@ -26,6 +26,7 @@ class Tag {
 
 var detections = [];
 
+let _count = 0;
 const _marks = new Int32Array(38);
 
 async function init() {
@@ -112,11 +113,19 @@ async function process_frame() {
   }
 
   if (true) {
-    let s = _marks.join(',');
+    let s = '';
+    for (let i = 0; i < _marks.length; ++i) {
+      s += `,${i}:${_marks[i]}`;
+    }
     const el = document.getElementById('mark');
     if (el) {
       el.textContent = s;
     }
+    _count += 1;
+    if (_count % (60 * 10) === 5) {
+      console.log(s);
+    }
+
   }
 
   window.requestAnimationFrame(process_frame);
