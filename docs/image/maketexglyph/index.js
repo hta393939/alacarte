@@ -74,8 +74,13 @@ class Misc {
           let cx = (j + 0.5) * one;
           let cy = (i + 0.5) * one + offsety;
           //let str = String.fromCodePoint(0x1f32d + count); // 食べ物
-          let str = String.fromCodePoint(0x1f400 + count);
-          c.fillText(str, cx, cy);
+          //let str = String.fromCodePoint(0x1f400 + count); // 動物
+          //let str = String.fromCodePoint(0x1f940 + count); // 後追加絵文字
+          let str = String.fromCodePoint(0x1f970 + count); // 後追加絵文字
+          //let str = String.fromCodePoint(0x1f9c0 + count); // 後追加絵文字
+          if (count !== 666) {
+            c.fillText(str, cx, cy);
+          }
           count += 1;
         }
       }
