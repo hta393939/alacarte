@@ -14,10 +14,11 @@ class Misc {
     scene.useRightHandedSystem = true;
 
     const camera = new BABYLON.ArcRotateCamera('camera',
-      0, 0, 10, new BABYLON.Vector3(0, 0, 0),
+      0, 0, 10, new BABYLON.Vector3(0, 0.5, 0),
       scene,
     );
-    camera.position = new BABYLON.Vector3(-2, 1, 0.5);
+    //camera.position = new BABYLON.Vector3(-2, 1, 5);
+    camera.position = new BABYLON.Vector3(0, 1, 2);
     camera.wheelDeltaPercentage = 0.01;
     camera.minZ = 0.01;
     camera.attachControl();
@@ -48,22 +49,26 @@ class Misc {
    */
   async load(scene) {
     console.log('load');
-    let url = './Zundamon_2025_VRM10A' + '.glb';
+    let url = './Zundamon_2025_VRM10A.vrm';
+    const res = await fetch(url);
+    const file = await res.blob();
+    file.name = 'placeholder.glb';
 
     const pluginOptions = {
-        fileName: 'placeholder.glb',
-        gltf: {
+      gltf: {
+        /*
           extensionOptions: {
             VRM: {
               enabled: true,
               option1: 'hello world',
               option2: 42,
             }
-          },
-          onParsed: (loaderData) => {
-            console.log('onParsed', loaderData);
-          }
+          }, */
+        /** @param {{bin: Object, json: Object}} loaderData */
+        onParsed: (loaderData) => {
+          console.log('onParsed', loaderData);
         }
+      }
     };
 
     /*
@@ -71,7 +76,7 @@ class Misc {
       pluginOptions,
     }); */
 
-    const result = await BABYLON.ImportMeshAsync(url, scene, {
+    const result = await BABYLON.ImportMeshAsync(file, scene, {
       pluginOptions,
     });
 

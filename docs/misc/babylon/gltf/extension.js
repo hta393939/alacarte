@@ -3,11 +3,13 @@
  * @see https://doc.babylonjs.com/typedoc/interfaces/BABYLON.GLTF2.IGLTFLoaderExtension
  */
 class FooExtension {
+  static name = 'VRMC_vrm';
+
   constructor(loader) {
     this.enabled = true;
     /** VRM0.0 */
-    this.name = 'VRM';
-    //this.name = 'VRMC_vrm';
+    //this.name = 'VRM';
+    this.name = FooExtension.name;
     //this.name = 'VRMC_springBone';
     //this.name = 'VRMC_node_constraint';
     //this.name = 'VRMC_materials_mtoon';
@@ -43,6 +45,8 @@ class FooExtension {
    */
   async loadSceneAsync(context, scene) {
     console.log('loadSceneAsync', context, scene);
+
+    // TODO: 標準ローダー呼び出しはどうするの??
     return;
   }
 
@@ -56,9 +60,10 @@ class FooExtension {
 
 }
 
-//BABYLON.GLTF2.GLTFLoader.RegisterExtension(FooExtension);
-BABYLON.GLTF2.registerGLTFExtension('VRM', false, async loader => {
+
+/*
+BABYLON.GLTF2.registerGLTFExtension(FooExtension.name, true, async loader => {
   console.log('factory');
   return new FooExtension(loader);
 });
-
+*/
