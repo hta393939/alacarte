@@ -39,6 +39,43 @@ class Misc {
       scene.render();
     });
 
+    this.load(scene);
+  }
+
+  /**
+   * 
+   * @param {BABYLON.Scene} scene 
+   */
+  async load(scene) {
+    console.log('load');
+    let url = './Zundamon_2025_VRM10A' + '.glb';
+
+    const pluginOptions = {
+        fileName: 'placeholder.glb',
+        gltf: {
+          extensionOptions: {
+            VRM: {
+              enabled: true,
+              option1: 'hello world',
+              option2: 42,
+            }
+          },
+          onParsed: (loaderData) => {
+            console.log('onParsed', loaderData);
+          }
+        }
+    };
+
+    /*
+    BABYLON.LoadSceneAsync(url, scene.engine, {
+      pluginOptions,
+    }); */
+
+    const result = await BABYLON.ImportMeshAsync(url, scene, {
+      pluginOptions,
+    });
+
+    console.log('ImportMeshAsync', result);
   }
 
 }
