@@ -838,4 +838,80 @@ export class CharBuilder extends PMX.Maker {
 
   }
 
+  /**
+   * シリンダー形状
+   * @param {object} param
+   * @param {()=>number} param.rfunc
+   * @param {number} param.hnum 垂直方向の点数
+   * @param {(index:number)=>number} param.hfunc
+   */
+  makeCyl2(param) {
+    const hdiv = param.hdiv || 8;
+    const vdiv = param.vdiv || 4;
+    const hhalf = param.hhalf || 1;
+    const index = param.index || 0;
+    /** @type {PMX.Bone} */
+    const bonea = param.bonea;
+    const boneb = param.boneb;
+
+    const vts = param.vertices;
+    const startIndex = vts.length;
+    const faces = param.faces;
+
+
+    const stepnum = 8;
+    const rsc = (1 / stepnum) * 0.5 * 0.5;
+    const offsetu = 0.5 + ((index % stepnum) * 2 + 1) * rsc;
+    const offsetv = (Math.floor(index / stepnum) * 2 + 1) * rsc;
+
+    for (let i = 0; i < param.hnum; ++i) { // 上から下か
+      const vang = i * Math.PI / vdiv;
+      let rr = param.rfunc(i);
+
+      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
+      for (let j = 0; j <= hdiv; ++j) {
+        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
+
+        const hang = (j % hdiv) * Math.PI * 2 / hdiv;
+
+        const cs = Math.cos(hang);
+        const sn = Math.sin(hang);
+
+        const v = new PMX.Vertex();
+
+        let x = -sn * rr;
+        let y = param.hfunc(j);
+        let z = cs * rr;
+
+        v.n = this.normalize([x, y, z]);
+        v.p = [
+          x * radius + bonea.p[0],
+          y * hhalf + bonea.p[1],
+          z * radius + bonea.p[2],
+        ];
+        v.uv = [
+          ratex * rsc + offsetu,
+          ratey * rsc + offsetv,
+        ];
+        v.deformType = PMX.Vertex.DEFORM_BDEF2;
+        v.joints = [bonea._index, boneb._index, 0, 0];
+        v.weights = [1, 0, 0, 0];
+
+        vts.push(v);
+      }
+    }
+
+    for (let i = 0; i < param.hnum - 1; ++i) {
+      for (let j = 0; j < hdiv; ++j) {
+        const v0 = (hdiv + 1) * i + j + startIndex;
+        const v1 = v0 + 1;
+        const v2 = v0 + (hdiv + 1);
+        const v3 = v2 + 1;
+        faces.push([v0, v1, v2]);
+        faces.push([v2, v1, v3]);
+      }
+    }
+
+  }
+
 }

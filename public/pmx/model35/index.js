@@ -372,6 +372,29 @@ class Misc {
       console.log('makerevcapsule offsets');
     });
 
+    // 前半リバース
+    window.idmakerevcapsule2?.addEventListener('click', () => {
+      const param = this.getCommonOptions();
+      let top = 'r';
+      const d = param.denom;
+      let num = 6 + param.fwrateadd + param.bwrateadd;
+      const numtext = _pad(num, 3);
+      let dtext = (d > 1) ? `d${Math.ceil(d).toFixed(0)}` : `${(1 / d).toFixed(0)}`;
+
+      Object.assign(param, {
+        nameEn: `${top}${numtext}_revcapsule_${param.belt}_${dtext}`,
+        texturePath: [
+          `tex/${top}${numtext}.png`,
+          `tex/${top}${numtext}spa.png`,
+        ],
+      });
+      const writer = new RevCapsule2();
+      writer.make(param);
+      const bufs = writer.makeBuffer();
+      this.download(new Blob(bufs), `${param.nameEn}.pmx`);
+      console.log('makerevcapsule2 offsets');
+    });
+
     window.idmakephycapsule?.addEventListener('click', () => {
       this.makePhyCapsule();
     });
