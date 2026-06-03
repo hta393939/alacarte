@@ -54,6 +54,7 @@ class Misc {
     const file = await res.blob();
     file.name = 'placeholder.glb';
 
+    let gltf = {};
     const pluginOptions = {
       gltf: {
         /*
@@ -67,6 +68,7 @@ class Misc {
         /** @param {{bin: Object, json: Object}} loaderData */
         onParsed: (loaderData) => {
           console.log('onParsed', loaderData);
+          gltf = loaderData;
         }
       }
     };
@@ -81,6 +83,32 @@ class Misc {
     });
 
     console.log('ImportMeshAsync', result);
+
+    const vrm1 = gltf.json.extensions['VRMC_vrm'];
+    { // ボーン
+      const boneName = 'leftUpperArm';
+      const hb = vrm1.humanoid.humanBones[boneName];
+      const bone = gltf.json.nodes[hb.node];
+      const node = bone._babylonTransformNode;
+      node.rotation = new BABYLON.Vector3(Math.PI * 60 / 180, 0, 0);
+    }
+    { // 表情
+      const rate = 1;
+      const emoName = 'happy';
+      const emo = vrm1.expressions.preset[emoName];
+      for (const mb of emo.morphTargetBinds) {
+        const node = gltf.json.nodes[mb.node];
+        for (const mesh of node._primitiveBabylonMeshes) {
+          const mtm = mesh.morphTargetManager;
+          if (!mtm) {
+            continue;
+          }
+          const target = mtm.getTarget(mb.index);
+          target.influence = mb.weight * rate;
+        }
+      }
+    }
+
   }
 
 }
