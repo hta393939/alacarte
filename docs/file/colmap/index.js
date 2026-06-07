@@ -19,7 +19,8 @@ class Misc {
     const buf = new Uint8Array(256);
     let len = 0;
     for (let i = 0; i < 256; ++i) {
-      const val = p.getUint8(this.c + i);
+      const val = p.getUint8(this.c);
+      this.c += 1;
       if (val === 0) {
         len = i;
         break;
@@ -54,64 +55,12 @@ class Misc {
     return `${this.prefix}${_pad(num, this.num)}.${this.ext}`;
   }
 
-  async view() {
-    const pads = navigator.getGamepads();
-    if (!pads) {
-      return;
-    }
-    let first = true;
-    for (let i = 0; i < pads.length; ++i) {
-      const pad = pads[i];
-      const el = document.getElementById(`padview${i}`);
-      if (!el) {
-        continue;
-      }
-      if (!pad) {
-        el.textContent = `null ${i}`;
-        continue;
-      }
-
-      if (first) {
-        if (this.nextDual) {
-          this.nextDual = false;
-          await this.dualVibe(pad, this.strong, this.weak);
-        }
-        if (this.nextTrigger) {
-          this.nextTrigger = false;
-          await this.triggerVibe(pad);
-        }
-        first = false;
-      }
-
-      let str = ``;
-      for (let j = 0; j < pad.buttons.length; ++j) {
-        str += `,${j}-${pad.buttons[j].value}`;
-      }
-      str += '<br />';
-      for (let j = 0; j < pad.axes.length; ++j) {
-        let val = pad.axes[j];
-        if (j !== 9) {
-          str += `,${val.toFixed(6)}`;
-        } else {
-          str += `,${(Math.round(val * 7) + 7) / 2}`;
-        }
-        if ((j % 3) === 2) {
-          str += '<br />';
-        }
-      }
-      str += `,${pad.id}`;
-      str += `,${pad.mapping}, actu${(pad.vibrationActuator !== null)}, ${pad.vibrationActuator?.effects}`;
-
-      el.innerHTML = str;
-    }
-  }
-
   update() {
     window.requestAnimationFrame(() => {
       this.update();
     });
 
-    this.view();
+
   }
 
 
@@ -263,19 +212,23 @@ class Misc {
     this.c = 0;
     ret.num = this.read64(p);
     for (let i = 0; i < ret.num; ++i) {
-      const image = {};
-      image.id = this.read64(p);
-      image.camera = this.read64(p);
+      const image = {f2ds: []};
+      image.id = this.reads32(p, 1)[0];
+      image.wxyz = this.readd(p, 4);
+      image.t = this.readd(p, 3);
+      image.cameraid = this.reads32(p, 1)[0];
+      image.name = this.rbinstr(p);
       image.num = this.read64(p);
       for (let j = 0; j < image.num; ++j) {
-        const bar = {};
-        bar.id = 0;
-        bar.pos = this.readd(p, 2); // x, y
+        const f2d = {};
+        f2d.pos = this.readd(p, 2); // x, y
+        f2d.id = this.read64(p);
+        //image.f2ds.push(f2d);
       }
 
       ret.images.push(image);
     }
-    console.log('onImages', this.c, ab.byteLength);
+    console.log('onImages', ret, this.c, ab.byteLength);
     return ret;
   }
 
