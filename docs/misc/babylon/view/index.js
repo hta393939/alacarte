@@ -53,7 +53,7 @@ class Misc {
   }
 
   addHandler() {
-    for (const k of ['dragstart', 'drop']) {
+    for (const k of ['dragover', 'drop']) {
       document.body.addEventListener(k, ev => {
         ev.preventDefault();
         ev.stopPropagation();
@@ -62,7 +62,7 @@ class Misc {
     }
 
     const el = document.querySelector('.drop');
-    el?.addEventListener('dragstart', ev => {
+    el?.addEventListener('dragover', ev => {
       ev.preventDefault();
       ev.stopPropagation();
       ev.dataTransfer.dropEffect = 'link';
