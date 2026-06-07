@@ -5,9 +5,11 @@ class Misc {
   initialize() {
     /** @type {HTMLCanvasElement} */
     const canvas = document.getElementById('maincanvas');
-    canvas.width = 320;
-    canvas.height = 180;
-    const engine = new BABYLON.Engine(canvas);
+    canvas.width = 512;
+    canvas.height = 288;
+    const engine = new BABYLON.Engine(canvas, true, {
+      preserveDrawingBuffer: true,
+    });
     this.engine = engine;
     const scene = new BABYLON.Scene(engine);
     this.scene = scene;
@@ -17,9 +19,10 @@ class Misc {
       0, 0, 10, new BABYLON.Vector3(0, 0.5, 0),
       scene,
     );
-    //camera.position = new BABYLON.Vector3(-2, 1, 5);
-    camera.position = new BABYLON.Vector3(0, 1, 2);
-    camera.wheelDeltaPercentage = 0.01;
+    camera.position = new BABYLON.Vector3(-2, 1, 5);
+    //camera.position = new BABYLON.Vector3(0, 1, 2);
+    camera.wheelPrecision = 20;
+    //camera.wheelDeltaPercentage = 0.01;
     camera.minZ = 0.01;
     camera.attachControl();
 
@@ -28,6 +31,10 @@ class Misc {
         new BABYLON.Vector3(-0.75, 1, 0.5),
         scene,
       );
+    }
+
+    {
+      const axes = new BABYLON.Debug.AxesViewer(scene, 5);
     }
 
     {

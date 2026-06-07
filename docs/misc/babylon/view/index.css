@@ -1,6 +1,8 @@
 
 .drop {
+  user-select: none;
   font-weight: bold;
   padding: 1em;
   text-align: center;
+  background-color: steelblue;
 }
