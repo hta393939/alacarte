@@ -80,6 +80,7 @@ class Misc {
    * @param {File} file 
    */
   async onDrop(file) {
+    console.log('onDrop', file.name);
     const result = await BABYLON.ImportMeshAsync(file, this.scene, {});
     console.log('onDrop', file.name);
   }

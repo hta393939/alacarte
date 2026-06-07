@@ -161,6 +161,18 @@ class Misc {
 
   }
 
+  gatherParam() {
+    const param = {};
+    for (const k of ['toply']) {
+      const el = document.getElementById(`${k}`);
+      if (!el) {
+        continue;
+      }
+      param[k] = el?.checked || false;
+    }
+    return param;
+  }
+
   /**
    * 
    * @param {File} file 
@@ -185,11 +197,24 @@ class Misc {
 
   /**
    * 
+   * @param {Blob} blob 
+   * @param {string} name 
+   */
+  download(blob, name) {
+    const el = document.createElement('a');
+    el.href = URL.createObjectURL(blob);
+    el.download = name;
+    el.click();
+  }
+
+  /**
+   * 
    * @param {File} file 
    * @param {*} obj 
    */
   async onBin(file, obj) {
     let result = {};
+    const param = this.gatherParam();
     switch (obj.fw) {
       case 'cameras':
         result = await this.onCameras(file);
@@ -198,7 +223,13 @@ class Misc {
         result = await this.onImages(file);
         break;
       case 'points3D':
-        result = await this.onPoints3D(file);
+        {
+          result = await this.onPoints3D(file);
+          if (param.toply) {
+            const blobs = await this.makePly(result);
+            this.download(new Blob(blobs), `poscol.ply`);
+          }
+        }
         break;
     }
     console.log('onBin', result);
@@ -222,7 +253,7 @@ class Misc {
   }
 
   /**
-   * 
+   * 未実装
    * @param {File} file 
    */
   async onImages(file) {
@@ -233,8 +264,18 @@ class Misc {
     ret.num = this.read64(p);
     for (let i = 0; i < ret.num; ++i) {
       const image = {};
+      image.id = this.read64(p);
+      image.camera = this.read64(p);
+      image.num = this.read64(p);
+      for (let j = 0; j < image.num; ++j) {
+        const bar = {};
+        bar.id = 0;
+        bar.pos = this.readd(p, 2); // x, y
+      }
+
       ret.images.push(image);
     }
+    console.log('onImages', this.c, ab.byteLength);
     return ret;
   }
 
@@ -254,11 +295,11 @@ class Misc {
       pt.pos = this.readd(p, 3); // x,y,z
       pt.col = this.readu8(p, 3); // r,g,b
       pt.error = this.readd(p, 1)[0]; // error
-      pt.trackNum = this.reads32(p)[0]; // track[]
+      pt.trackNum = this.read64(p); // track[]
       for (let j = 0; j < pt.trackNum; ++j) {
         const track = {};
-        track.id = this.reads32(p)[0];
-        track.index = this.reads32(p)[0];
+        track.id = this.reads32(p, 1)[0];
+        track.index = this.reads32(p, 1)[0];
         // pt.tracks.push(track);
       }
       ret.points.push(pt);
@@ -289,7 +330,7 @@ class Misc {
       bufs.push(lines.join('\n'));
     }
     // バイナリ部
-    const pbuf = new Uint8Array(param.num * 15);
+    const pbuf = new ArrayBuffer(param.num * 15);
     const p = new DataView(pbuf);
     let offset = 0;
     for (let i = 0; i < param.num; ++i) {
@@ -368,7 +409,6 @@ class Misc {
   /**
    * 32bitのみ採用する。一応 -1(s64) は読む
    * @param {DataView} p 
-   * @param {number} c 
    */
   read64(p) {
     let val = p.getUint32(this.c, true);
