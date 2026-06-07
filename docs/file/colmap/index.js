@@ -251,14 +251,14 @@ class Misc {
     for (let i = 0; i < ret.num; ++i) {
       const pt = {tracks: []};
       pt.id = this.read64(p);
-      pt.pos = this.readds(p, 3); // x,y,z
-      pt.col = this.readds(p, 3); // r,g,b
-      pt.error = this.readds(p, 1)[0]; // error
-      pt.trackNum = this.read64(p); // track[]
+      pt.pos = this.readd(p, 3); // x,y,z
+      pt.col = this.readu8(p, 3); // r,g,b
+      pt.error = this.readd(p, 1)[0]; // error
+      pt.trackNum = this.reads32(p)[0]; // track[]
       for (let j = 0; j < pt.trackNum; ++j) {
         const track = {};
-        track.id = this.read64(p);
-        track.index = this.read64(p);
+        track.id = this.reads32(p)[0];
+        track.index = this.reads32(p)[0];
         // pt.tracks.push(track);
       }
       ret.points.push(pt);
@@ -284,7 +284,7 @@ class Misc {
         `property uchar green`,
         `property uchar blue`,
         `end_header`,
-        
+        '',
       ];
       bufs.push(lines.join('\n'));
     }
@@ -312,6 +312,20 @@ class Misc {
    * @param {DataView} p 
    * @param {number} n 
    */
+  readu8(p, n) {
+    const ret = new Uint8Array(n);
+    for (let i = 0; i < n; ++i) {
+      ret[i] = p.getUint8(this.c);
+      this.c += 1;
+    }
+    return ret;
+  }
+
+  /**
+   * 
+   * @param {DataView} p 
+   * @param {number} n 
+   */
   reads32(p, n) {
     const ret = new Int32Array(n);
     for (let i = 0; i < n; ++i) {
@@ -327,7 +341,7 @@ class Misc {
    * @param {number} n 
    * @returns 
    */
-  readds(p, n) {
+  readd(p, n) {
     const ret = new Float64Array(n);
     for (let i = 0; i < n; ++i) {
       ret[i] = p.getFloat64(this.c, true);
@@ -342,7 +356,7 @@ class Misc {
    * @param {number} n 
    * @returns 
    */
-  readfs(p, n) {
+  readf(p, n) {
     const ret = new Float32Array(n);
     for (let i = 0; i < n; ++i) {
       ret[i] = p.getFloat32(this.c, true);
