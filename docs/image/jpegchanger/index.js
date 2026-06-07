@@ -481,12 +481,19 @@ class Misc {
     /** @type {FileSystemDirectoryHandle} */
     let dstSubDir = null;
 
+    /** @type {FileSystemDirectoryHandle} */
+    let depthDir = null;
+
     for await (const [k, v] of dirHandle.entries()) {
       if (v.kind === 'file') {
         continue;
       }
       if (k === 'org') {
         srcDir = v;
+        continue;
+      }
+      if (k === 'depth') {
+        depthDir = v;
         continue;
       }
       if (!k.startsWith('_')) {
@@ -511,6 +518,7 @@ class Misc {
       srcSubDir,
       dst: dstDir,
       imagesDir: dstSubDir,
+      depthDir,
     };
   }
 
@@ -629,6 +637,13 @@ class Misc {
         const dirHandle = await this.openDir();
         this.setContent('#rootview', dirHandle.name);
         this.root = dirHandle;
+      });
+    }
+
+    {
+      const el = document.getElementById('cutdepth');
+      el?.addEventListener('click', async () => {
+        this.cutDepth(this.root);
       });
     }
 
@@ -1228,6 +1243,66 @@ class Misc {
 
     console.log('ToOff', w, h);
     return off;
+  }
+
+  /**
+   * @param {FileSystemDirectoryHandle} dirHandle 
+   */
+  async cutDepth(dirHandle) {
+    console.log('cutDepth');
+    const param = this.gatherParam();
+
+    const result = await this.searchDir(dirHandle, param);
+    if (!result) {
+      console.warn('searchDir failure');
+      return;
+    }
+
+    await this.cutDepth2(result, param);
+    console.log('cutDepth');
+  }
+
+  /**
+   * 
+   * @param {*} dirobj ディレクトリハンドルたち
+   * @param {object} param パラメータたち
+   */
+  async cutDepth2(dirobj, param) {
+    const divnum = param.divnum || 8;
+    /** 出力先 @type {FileSystemDirectoryHandle} */
+    const dstDir = dirobj.depthDir;
+
+    /**
+     * 2回目以降はimg elementを追加しない
+     */
+    let first = true;
+    for await (const [k, v] of dirobj.srcDir.entries()) {
+      if (v.kind !== 'file') {
+        continue;
+      }
+      /** @type {File} */
+      const f = await v.getFile();
+      const srcab = await f.arrayBuffer();
+
+      // 分離して2or0を取得する
+      const info = await this.parseJpeg(srcab, first);
+      if (info.frames.length < 5) {
+        continue;
+      }
+      const onejpeg = info.frames[4].buffer;
+
+      const off = await this.imageBufToOff(onejpeg, divnum, true);
+
+      const dstblob = await off.convertToBlob({type: 'image/jpeg'});
+
+      const name = k.split('.')[0]; // 前方だけ
+      const dstFile = await dstDir.getFileHandle(`${name}.jpg`, {create: true});
+      const ws = await dstFile.createWritable();
+      await ws.write(dstblob);
+      await ws.close();
+
+      first = false;
+    }
   }
 
 }
