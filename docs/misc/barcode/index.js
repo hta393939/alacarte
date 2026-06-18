@@ -324,8 +324,9 @@ class Misc {
   makeView(canvas, one) {
     const c = canvas.getContext('2d');
     {
-      let sx = 0;
-      let sy = 0;
+      const pts = one.cornerPoints;
+      let sx = pts[0].x;
+      let sy = pts[0].y;
       c.fillStyle = '#ff0000';
       c.beginPath();
       c.ellipse(sx, sy, 4, 4, 0,
@@ -336,9 +337,9 @@ class Misc {
       c.beginPath();
       c.moveTo(sx, sy);
       c.strokeStyle = '#00aa00';
-      c.lineTo(0, 0);
-      c.lineTo(0, 0);
-      c.lineTo(0, 0);
+      for (let i = 1; i <= 3; ++i) {
+        c.lineTo(pts[i].x, pts[i].y);
+      }
       c.closePath();
       c.lineWidth = 4;
       c.stroke();
