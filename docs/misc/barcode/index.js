@@ -1,7 +1,27 @@
 
-const _pad = (v, n = 2) => {
-  return new String(v).padStart(n, '0');
-};
+/**
+ * @typedef Point2d
+ * @property {number} x
+ * @property {number} y
+ */
+
+/**
+ * @typedef BoundingBox
+ * @property {number} x
+ * @property {number} y
+ * @property {number} width
+ * @property {number} height
+ */
+
+/**
+ * 結果の一つ
+ * @typedef OneResult
+ * @property {BoundingBox} boundingBox
+ * @property {Point2d[]} cornerPoints 
+ * @property {string} format "qr_code"
+ * @property {string} rawValue URLなど
+ */
+
 
 class Misc {
   constructor() {
@@ -9,6 +29,10 @@ class Misc {
 
     /** @type {MediaStreamVideoTrack} */
     this.track = null;
+  }
+
+  _pad(v, n = 2) {
+    return new String(v).padStart(n, '0');
   }
 
   async initialize() {
@@ -42,8 +66,11 @@ class Misc {
     el.insertBefore(node, el.firstChild);
   }
 
+  /**
+   * 初回用
+   */
   async first() {
-    const opt = {audio: true, video: true};
+    const opt = {audio: false, video: true};
     const stream = await navigator.mediaDevices.getUserMedia(opt);
     for (const track of stream.getTracks()) {
       let text = `${track.kind},${track.label},${track.id}`;
@@ -148,7 +175,7 @@ class Misc {
   }
 
   makeFilename(num) {
-    return `${this.prefix}${_pad(num, this.num)}.${this.ext}`;
+    return `${this.prefix}${this._pad(num, this.num)}.${this.ext}`;
   }
 
   setListener() {
@@ -241,6 +268,10 @@ class Misc {
 
   }
 
+  /**
+   * リーダーを用意する
+   * @returns 
+   */
   async readyReader() {
     const el = document.getElementById('scanview');
 
@@ -259,20 +290,60 @@ class Misc {
       const opt = {
         formats: [format]
       };
+      /** @type {BarcodeDetector} */
       const reader = new window.BarcodeDetector(opt);
       el.textContent = `in ${format}`;
       /** @type {Blob|ImageBitmapSource} */
       let target = document.getElementById('video');
 
+      const canvas = document.createElement('canvas');
+      canvas.width = target.videoWidth;
+      canvas.height = target.videoHeight;
+      const c = canvas.getContext('2d');
+      c.drawImage(video, 0, 0);
+
+      /** @type {OneResult[]} */
       const results = await reader.detect(target);
       el.textContent = `${results.length}, ${format}`;
       for (const result of results) {
         this.log('result', JSON.stringify(result));
+
+        this.makeView(canvas, result);
       }
     } catch (e) {
       this.log('detect', e.message);
     }
     this.log('readyReader end');
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas
+   * @param {OneResult} one 
+   */
+  makeView(canvas, one) {
+    const c = canvas.getContext('2d');
+    {
+      let sx = 0;
+      let sy = 0;
+      c.fillStyle = '#ff0000';
+      c.beginPath();
+      c.ellipse(sx, sy, 4, 4, 0,
+        0, Math.PI * 2);
+      c.closePath();
+      c.fill();
+
+      c.beginPath();
+      c.moveTo(sx, sy);
+      c.strokeStyle = '#00aa00';
+      c.lineTo(0, 0);
+      c.lineTo(0, 0);
+      c.lineTo(0, 0);
+      c.closePath();
+      c.lineWidth = 4;
+      c.stroke();
+    }
+    document.body.appendChild(canvas);
   }
 
   /**
