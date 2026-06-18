@@ -334,6 +334,13 @@ class Misc {
       c.closePath();
       c.fill();
 
+      c.fillStyle = '#55aaaa';
+      c.beginPath();
+      c.ellipse(pts[1].x, pts[1].y, 8, 8, 0,
+        0, Math.PI * 2);
+      c.closePath();
+      c.fill();
+
       c.beginPath();
       c.moveTo(sx, sy);
       c.strokeStyle = '#00aa00';
