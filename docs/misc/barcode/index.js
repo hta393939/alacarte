@@ -404,12 +404,54 @@ class Misc {
     }
   }
 
-  update() {
+  /**
+   * リーダーを用意する
+   * @returns 
+   */
+  async detectInMain() {
+    const el = document.getElementById('scanview');
+
+    if (!window.BarcodeDetector) {
+      el.textContent = `No Detector exist`;
+      return;
+    }
+
+    try {
+      const opt = {
+        formats: ['qr_code']
+      };
+      /** @type {BarcodeDetector} */
+      const reader = new window.BarcodeDetector(opt);
+      /** @type {Blob|ImageBitmapSource} */
+      let target = document.getElementById('video');
+
+      /** @type {DetectedBarcode[]} */
+      const results = await reader.detect(target);
+      for (const result of results) {
+        //this.makeView(canvas, result);
+      }
+    } catch (e) {
+      this.log('detect', e.message);
+    }
+    this.log('detectInMain end');
+  }
+
+  async update() {
+    try {
+      const el = document.getElementById('enableloop');
+      if (el?.checked) {
+        await this.detectInMain();
+      }
+    } catch (e) {
+      // catch
+    }
+
     window.requestAnimationFrame(() => {
       this.update();
     });
 
 
+    // フレームレートのカウント
     const nowts = Date.now();
     this.times = this.times.filter(v => nowts - v < 2000);
     const n = this.times.length;
