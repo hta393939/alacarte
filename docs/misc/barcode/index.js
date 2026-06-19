@@ -15,7 +15,7 @@
 
 /**
  * 結果の一つ
- * @typedef OneResult
+ * @typedef DetectedBarcode
  * @property {BoundingBox} boundingBox
  * @property {Point2d[]} cornerPoints 
  * @property {string} format "qr_code"
@@ -29,6 +29,9 @@ class Misc {
 
     /** @type {MediaStreamVideoTrack} */
     this.track = null;
+
+    /** @type {number[]} */
+    this.times = [];
   }
 
   _pad(v, n = 2) {
@@ -50,6 +53,10 @@ class Misc {
       const sah = window.screen.availHeight;
       this.log(`dpr,i,dc,sc,sca,${dpr}, ${iw}x${ih}, ${dcw}x${dch}, ${sw}x${sh}, ${saw}x${sah}`);
     }
+
+    this.update();
+
+    this.initializeWorker();
   }
 
   async log(...args) {
@@ -64,6 +71,28 @@ class Misc {
     el.insertBefore(br, el.firstChild);
     const node = document.createTextNode(text);
     el.insertBefore(node, el.firstChild);
+  }
+
+  initializeWorker() {
+    const worker = new Worker('./worker.js');
+    this.worker = worker;
+
+    worker.addEventListener('message', ev => {
+      console.log('receive', ev.data);
+      switch (ev.data.type) {
+        case 'detectresult':
+          break;
+        case 'ready':
+          {
+            const err = ev.data.error;
+            if (err) {
+              this.log('worker Barcode error');
+              return;
+            }
+          }
+          break;
+      }
+    });
   }
 
   /**
@@ -302,7 +331,7 @@ class Misc {
       const c = canvas.getContext('2d');
       c.drawImage(video, 0, 0);
 
-      /** @type {OneResult[]} */
+      /** @type {DetectedBarcode[]} */
       const results = await reader.detect(target);
       el.textContent = `${results.length}, ${format}`;
       for (const result of results) {
@@ -319,7 +348,7 @@ class Misc {
   /**
    * 
    * @param {HTMLCanvasElement} canvas
-   * @param {OneResult} one 
+   * @param {DetectedBarcode} one 
    */
   makeView(canvas, one) {
     const c = canvas.getContext('2d');
@@ -373,6 +402,28 @@ class Misc {
     } catch (e) {
       this.log(`apply,catch,${e.message}`);
     }
+  }
+
+  update() {
+    window.requestAnimationFrame(() => {
+      this.update();
+    });
+
+
+    const nowts = Date.now();
+    this.times = this.times.filter(v => nowts - v < 2000);
+    const n = this.times.length;
+    let fps = 0;
+    if (n >= 1) {
+      fps = n / 2;
+    }
+    {
+      const el = document.getElementById('fpsview');
+      if (el) {
+        el.textContent = `${fps.toFixed(1)} fps`;
+      }
+    }
+    this.times.push(nowts);
   }
 
 }
