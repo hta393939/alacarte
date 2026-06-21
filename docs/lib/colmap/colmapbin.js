@@ -1,5 +1,7 @@
 
-
+/**
+ * colmap の一つのカメラ
+ */
 export class Cam {
   /** 0, 3個 f, cx, cy */
   static TYPE_SIMPLE_PINHOLE = 0;
@@ -16,6 +18,19 @@ export class Cam {
     this.height = 0;
     /** double */
     this.params = [0, 0, 0, 0];
+  }
+
+  get fx() {
+    return this.params[0];
+  }
+  get fy() {
+    return this.params[(this.type === Cam.TYPE_PINHOLE) ? 1 : 0];
+  }
+  get cx() {
+    return this.params[(this.type === Cam.TYPE_PINHOLE) ? 2 : 1];
+  }
+  get cy() {
+    return this.params[(this.type === Cam.TYPE_PINHOLE) ? 3 : 2];
   }
 }
 

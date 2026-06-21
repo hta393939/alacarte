@@ -1,5 +1,5 @@
 
-import { BinParser, Point } from "../../lib/colmap/colmapbin.js";
+import { BinParser, Point, Cam } from "../../lib/colmap/colmapbin.js";
 
 const _pad = (v, n = 2) => {
   return new String(v).padStart(n, '0');
@@ -695,11 +695,12 @@ class Misc {
   }
 
   /**
-   * colmap の姿勢、画像とパース後xml、
+   * colmap の姿勢、画像とパース後xml、を用いて
+   * points3D を増やす
    * @param {OffscreenCanvas|HTMLCanvasElement} canvas 色画像
    * @param {OffscreenCanvas|HTMLCanvasElement} depthCanvas 深さ画像
    * @param {any} depthInfo 深さの変換式のための情報
-   * @param {any} cameraInfo カメラのパラメーター
+   * @param {Cam} cameraInfo カメラのパラメーター
    * @param {any} pose colmap の姿勢 
    * @param {number} scale スケール倍率
    */
@@ -760,6 +761,7 @@ class Misc {
         const depth = _depth(ddata.data[doffset]) * scale; // 赤成分
 
         // カメラ座標系での座標
+        // TODO: cameraInfo が 色か深さ かで dx,dy ではなく px,py
         const inCam = [
           (dx - cameraInfo.cx) / cameraInfo.fx * depth,
           (dy - cameraInfo.cy) / cameraInfo.fy * depth,
