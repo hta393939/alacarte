@@ -613,6 +613,12 @@ class Misc {
         ev.stopPropagation();
         ev.preventDefault();
         const file = ev.dataTransfer.files[0];
+
+        this.oneActWithColmap(file);
+        return;
+
+        // TODO: ここ
+
         this.curfile = file;
         const ab = await file.arrayBuffer();
         const info = await this.parseJpeg(ab, true);
@@ -825,10 +831,10 @@ class Misc {
     const ab = await jpegFile.arrayBuffer();
     // パースする
     const gpixel = new GPixel();
-    const info = gpixel.parseJpeg(ab, false);
+    const info = await gpixel.parseJpeg(ab, false);
     console.log('info', info);
     if (info.frames.length >= 2) {
-      console.log('2個以上');
+      console.log('2個以上6個が多い');
     }
     // 画像とデプスとxmlからの情報
     const imageCanvas = null;
