@@ -1,5 +1,5 @@
 
-import { BinParser } from "../../lib/colmap/colmapbin.js";
+import { BinParser, Point } from "../../lib/colmap/colmapbin.js";
 
 const _pad = (v, n = 2) => {
   return new String(v).padStart(n, '0');
@@ -655,6 +655,13 @@ class Misc {
     }
 
     {
+      const el = document.getElementById('actwithcolmap');
+      el?.addEventListener('click', async () => {
+        await this.actWithColmap(this.root);
+      });
+    }
+
+    {
       const el = document.getElementById('openfile');
       el?.addEventListener('click', async () => {
         const opt = {};
@@ -685,6 +692,119 @@ class Misc {
       _update();
     }
 
+  }
+
+  /**
+   * colmap の姿勢、画像とパース後xml、
+   * @param {OffscreenCanvas|HTMLCanvasElement} canvas 色画像
+   * @param {OffscreenCanvas|HTMLCanvasElement} depthCanvas 深さ画像
+   * @param {any} depthInfo 深さの変換式のための情報
+   * @param {any} cameraInfo カメラのパラメーター
+   * @param {any} pose colmap の姿勢 
+   * @param {number} scale スケール倍率
+   */
+  async reconOne(canvas, depthCanvas, depthInfo,
+    cameraInfo, pose, scale) {
+    const ret = {points: []};
+
+    const pw = canvas.width;
+    const ph = canvas.height;
+    const dw = depthCanvas.width;
+    const dh = depthCanvas.height;
+    const div = 32;
+    const pbw = Math.ceil(pw / div);
+    const pbh = Math.ceil(ph / div);
+    const dbw = Math.ceil(dw / div);
+    const dbh = Math.ceil(dh / div);
+
+    const pc = canvas.getContext('2d');
+    const dc = depthCanvas.getContext('2d');
+
+    const pdata = pc.getImageData(0, 0, pw, ph);
+    const ddata = dc.getImageData(0, 0, dw, dh);
+
+    /**
+     * near, far から深さを算出
+     * @param {number} x 0-255 の値
+     * @returns 
+     */
+    const _depth = (x) => {
+      const t = x / 255; // [0.0, 1.0]
+      const rev = (1 / depthInfo.near) * (1 - t) + (1 / depthInfo.far) * t;
+      return 1 / rev;
+    };
+
+    let count = 0;
+    for (let by = 0; by < div; ++by) {
+      for (let bx = 0; bx < div; ++bx) {
+        let px = Math.floor((bx + 0.5) * pbw);
+        let py = Math.floor((by + 0.5) * pbh);
+        /** デプス画像でのX座標 */
+        let dx = Math.floor((bx + 0.5) * dbw);
+        /** デプス画像でのY座標 */
+        let dy = Math.floor((by + 0.5) * dbh);
+
+        const p3d = new Point();
+        p3d.id = count;
+        count += 1;
+        p3d.err = 0.125;
+        p3d.tracks = []; // 空
+
+        // 色 0-255
+        const poffset = (px + pw * py) * 4;
+        p3d.color = [
+          pdata[poffset], pdata[poffset + 1], pdata[poffset + 2],
+        ];
+        // デプス
+        const doffset = (dx + dw * dy) * 4;
+        const depth = _depth(ddata.data[doffset]) * scale; // 赤成分
+
+        // カメラ座標系での座標
+        const inCam = [
+          (dx - cameraInfo.cx) / cameraInfo.fx * depth,
+          (dy - cameraInfo.cy) / cameraInfo.fy * depth,
+          depth,
+        ];
+
+        // 全体座標系へ変換
+        // inCam から t を引いて，R^-1 を掛ける
+      }
+    }
+
+    return ret;
+  }
+
+  /**
+   * colmap の結果を使って
+   * 奥行きと姿勢から3次元点を追加する
+   * @param {FileSystemDirectoryHandle} root 
+   */
+  async actWithColmap(root) {
+    const param = this.gatherParam();
+
+    const ret = {
+      points: [],
+    };
+    for (let i = 0; i < 0; ++i) { // 画像ごと
+      // 取得方法はアルゴリズムによって
+      // 標準は均等分割
+      const pixelImage = 0;
+      const depthImage = 0;
+      const depthInfo = {};
+      const cameraInfo = {};
+      const pose = {};
+      const scale = 1;
+
+      const result = await this.reconOne(pixelImage,
+        depthImage,
+        depthInfo,
+        cameraInfo,
+        pose,
+        scale,
+      );
+      ret.points.push(...result.points);
+    }
+    return ret;
   }
 
   /**
