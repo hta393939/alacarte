@@ -1,6 +1,7 @@
 
-import { BinParser, Point, Cam } from "../../lib/colmap/colmapbin.js";
+import { BinParser, Point, Cam, BinExporter } from "../../lib/colmap/colmapbin.js";
 import {GPixel} from "../../lib/gpixel/gpixel.js";
+import {Vector3, Quaternion} from "../../lib/mathutil.js";
 
 const _pad = (v, n = 2) => {
   return new String(v).padStart(n, '0');
@@ -713,7 +714,7 @@ class Misc {
     const ph = canvas.height;
     const dw = depthCanvas.width;
     const dh = depthCanvas.height;
-    const div = 32;
+    const div = 16;
     const pbw = Math.ceil(pw / div);
     const pbh = Math.ceil(ph / div);
     const dbw = Math.ceil(dw / div);
@@ -769,8 +770,13 @@ class Misc {
           depth,
         ];
 
+        const vec = Vector3.fromArray(inCam)
+          .add(1, Vector3.fromArray([0, 0, 0]), -1);
         // 全体座標系へ変換
         // inCam から t を引いて，R^-1 を掛ける
+        const q = Quaternion.fromBottomW(0, 0, 0, 1).conjugate();
+        const world = q.rot(vec);
+        p3d.p = world.asArray();
       }
     }
 
@@ -808,6 +814,37 @@ class Misc {
       ret.points.push(...result.points);
     }
     return ret;
+  }
+
+  /**
+   * 
+   * @param {File} jpegFile 
+   */
+  async oneActWithColmap(jpegFile) {
+    console.log('oneActWithColmap', jpegFile.name);
+    const ab = await jpegFile.arrayBuffer();
+    // パースする
+    const gpixel = new GPixel();
+    const info = gpixel.parseJpeg(ab, false);
+    console.log('info', info);
+    if (info.frames.length >= 2) {
+      console.log('2個以上');
+    }
+    // 画像とデプスとxmlからの情報
+    const imageCanvas = null;
+    const depthCanvas = null;
+    const depthInfo = {};
+    const cameraInfo = {};
+    const pose = {t: [0, 0, 0], q: [0, 0, 0, 1]};
+
+    // points を作る
+    const result = await this.reconOne(
+      imageCanvas, depthCanvas, depthInfo, cameraInfo, pose, 1,
+    );
+    // 書き出す
+    const writer = new BinExporter();
+    const chunks = writer.makePoint(result.points, false);
+    this.download(new Blob(chunks), `points3D.bin`);
   }
 
   /**

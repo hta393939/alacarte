@@ -1,5 +1,7 @@
 
-
+/**
+ * 2次元
+ */
 export class Vector2 {
   constructor(x = 0, y = 0) {
     this._x = 0;
@@ -56,6 +58,9 @@ export class Vector2 {
 }
 
 
+/**
+ * 3次元
+ */
 export class Vector3 {
   constructor(x = 0, y = 0, z = 0) {
     this._x = x;
@@ -149,6 +154,9 @@ export class Vector3 {
 
 }
 
+/**
+ * クォータニオン
+ */
 export class Quaternion {
   constructor() {
     this._x = 0;
@@ -159,11 +167,11 @@ export class Quaternion {
 
   /**
    * 最初の引数が w
-   * @param {*} w 
-   * @param {*} x 
-   * @param {*} y 
-   * @param {*} z 
-   * @returns 
+   * @param {number} w 
+   * @param {number} x 
+   * @param {number} y 
+   * @param {number} z 
+   * @returns {Quaternion}
    */
   static fromTopW(w, x, y, z) {
     const ret = new Quaternion();
@@ -176,11 +184,11 @@ export class Quaternion {
 
   /**
    * 最後の引数が w
-   * @param {*} x 
-   * @param {*} y 
-   * @param {*} z 
-   * @param {*} w 
-   * @returns 
+   * @param {number} x 
+   * @param {number} y 
+   * @param {number} z 
+   * @param {number} w 
+   * @returns {Quaternion}
    */
   static fromBottomW(x, y, z, w) {
     const ret = new Quaternion();
@@ -228,7 +236,7 @@ export class Quaternion {
 
   /**
    * 配列の先頭が w
-   * @returns 
+   * @returns {number[]}
    */
   asArrayTopW() {
     return [this.w, this.x, this.y, this.z];
@@ -236,7 +244,7 @@ export class Quaternion {
 
   /**
    * 配列の最後が w
-   * @returns 
+   * @returns {number[]}
    */
   asArrayBottomW() {
     return [this.x, this.y, this.z, this.w];
@@ -264,7 +272,7 @@ export class Quaternion {
   }
 
   /**
-   * 
+   * v3.w がおそらく 0 の三次元の点として取り出す
    * @param {Vector3} v3 
    */
   static point(v3) {
@@ -272,10 +280,18 @@ export class Quaternion {
     return ret;
   }
 
+  /**
+   * 実部を取り出す
+   * @returns {Vector3}
+   */
   real() {
     return new Vector3(this.x, this.y, this.z);
   }
 
+  /**
+   * 共役
+   * @returns 
+   */
   conjugate() {
     const ret = new Quaternion();
     ret.x = -this.x;
@@ -286,7 +302,7 @@ export class Quaternion {
   }
 
   /**
-   * 
+   * v3 を回転する
    * @param {Vector3} v3 
    */
   rot(v3) {
@@ -306,12 +322,17 @@ export class MathUtil {
 
   }
 
+  /**
+   * 未実装
+   */
   static f1() {
 
   }
+  /**
+   * 未実装
+   */
   static f2() {
 
   }
 }
-
 
