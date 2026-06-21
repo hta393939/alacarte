@@ -54,6 +54,9 @@ export class Track {
   }
 }
 
+/**
+ * 3次元点。位置と色
+ */
 export class Point {
   constructor() {
     /** u64 */
