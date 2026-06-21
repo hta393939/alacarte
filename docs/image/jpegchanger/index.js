@@ -1,5 +1,6 @@
 
 import { BinParser, Point, Cam } from "../../lib/colmap/colmapbin.js";
+import {GPixel} from "../../lib/gpixel/gpixel.js";
 
 const _pad = (v, n = 2) => {
   return new String(v).padStart(n, '0');

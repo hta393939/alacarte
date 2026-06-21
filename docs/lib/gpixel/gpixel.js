@@ -1,5 +1,22 @@
 
 /**
+ * jpeg タグ1つ
+ */
+class Tag {
+  constructor() {
+    /** 全体での開始位置 @type {number} */
+    this.offset = 0;
+    /** @type {number} */
+    this.next = 0;
+    /** "APP0" など @type {string} */
+    this.name = '';
+    /** @type {Object<string, string>} */
+    this.hexa = {};
+  }
+}
+
+
+/**
  * 
  * @param {ArrayBuffer} ab 
  * @param {number} offset 
@@ -336,9 +353,10 @@ export class GPixel {
   }
 
   /**
-   * 
+   * 先に this.curinfo にパース結果が格納されていること
    * @param {ArrayBuffer} ab
    * @param {number} index 
+   * @returns {{bufs: ArrayBuffer[]}} 
    */
   async pickJpeg(ab, index) {
     const ret = { bufs: [] };
@@ -370,6 +388,9 @@ export class GPixel {
     return ret;
   }
 
+  /**
+   * 最後に id candimage の src に格納する
+   */
   async applyJpeg() {
     console.log('applyJpeg');
     // TODO: UIから収集する
@@ -382,11 +403,11 @@ export class GPixel {
   }
 
   /**
-   * 
+   * delayTime === 0 だと continue
    * @param {ArrayBuffer} inab 
    * @param {Object} info 
-   * @param {Frame[]} info.frames
-   * @returns 
+   * @param {Frame[]} info.frames パース後情報
+   * @returns {{ArrayBuffer[]}}
    */
   async changeJpeg(inab, info) {
 
@@ -440,9 +461,10 @@ export class GPixel {
   }
 
   /**
-   * 0x00 が見つかるまでを探す
+   * 0x00 が見つかるまでを探す。ただし32768バイトまで。
    * @param {DataView} p 
    * @param {number} inc 
+   * @returns {{num: number, text: string}} null含めたバイト数とテキスト
    */
   searchNullTerm(p, inc) {
     const buf = new Uint8Array(32768);
@@ -467,7 +489,7 @@ export class GPixel {
   /**
    * ファイルバイナリからタグパースする
    * @param {ArrayBuffer} ab 
-   * @returns {{tags:any[]}}
+   * @returns {{tags: Tag[]}}
    */
   async parseOneJpeg(ab) {
     let info = {
@@ -657,7 +679,7 @@ export class GPixel {
   /**
    * 
    * @param {string} text 
-   * @returns 
+   * @returns {Object<string, any>}
    */
   parseXML(text) {
     const el = document.createElement('div');
