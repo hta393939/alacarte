@@ -703,6 +703,74 @@ class Misc {
   }
 
   /**
+   * スケールを推測する。比率の平均
+   * @param {any[]} images 
+   */
+  async inferScale(images) {
+    const ret = {
+      farWide: [], // 50cm超過，デプスfar は2m超過
+      farNarrow: [],
+      nearWide: [],
+      nearNarrow: [], // 50cm未満, デプスfar は2m未満
+    };
+    for (const image of images) {
+      const fx = 1;
+      const fy = 1;
+      const cx = 1;
+      const cy = 1;
+      // 特徴点リストのうち，どれかを取り出す
+      // 例えば配列の真ん中付近など
+      // id から points3D を対応づけて取得する
+      {
+        // px, py から dx, dy へ変換
+        // dx, dy から depth を手に入れる
+        const depth = 1;
+        const fromdepth = [(px - cx) / fx * depth, (py - cy) / fy * depth, depth];
+        // ここではメートル単位
+      
+        // 3次元points3Dの位置から
+        // R, t で変換して incam で [x,y,z] が得られる
+        const frompt = [1, 1, 1];
+        // これを incam 内で比較すると scale が決まる
+
+        const scales = [
+          fromdepth[0] / frompt[0],
+          fromdepth[1] / frompt[1],
+          fromdepth[2] / frompt[2]];
+        const scale = (scales[0] + scales[1] + scales[2]) / 3;
+
+        if (depth >= 0.5) {
+          if (far > 2.0) {
+            ret.farWide.push(scale);
+          } else {
+            ret.nearWide.push(scale);
+          }
+        } else {
+          if (far > 2.0) {
+            ret.farNarrow.push(scale);
+          } else {
+            ret.nearNarrow.push(scale);
+          }
+        }
+
+      }
+    }
+
+    const _avg = (vs) => {
+      if (vs.length === 0) {
+        return 0;
+      }
+      return vs.reduce((p, c) => p + c, 0) / vs.length;
+    };
+    ret.farWideAvg = _avg(ret.farWide);
+    ret.farNarrowAvg = _avg(ret.farNarrow);
+    ret.nearWideAvg = _avg(ret.nearWide);
+    ret.nearNarrowAvg = _avg(ret.nearNarrow);
+    // 4つ比較してどうなるか
+    console.log('inferScale', ret);
+  }
+
+  /**
    * colmap の姿勢、画像とパース後xml、を用いて
    * points3D を増やす
    * @param {OffscreenCanvas|HTMLCanvasElement} canvas 色画像
@@ -837,15 +905,16 @@ class Misc {
       console.log('2個以上6個が多い');
     }
     // 画像とデプスとxmlからの情報
-    const imageCanvas = null;
-    const depthCanvas = null;
+    const imageCanvas = await this.imageBufToOff(ab, 1, false);
+    const depthCanvas = await this.imageBufToOff(ab, 1, false);
     const depthInfo = {};
     const cameraInfo = {};
     const pose = {t: [0, 0, 0], q: [0, 0, 0, 1]};
 
     // points を作る
+    const startIdOffset = 1;
     const result = await this.reconOne(
-      imageCanvas, depthCanvas, depthInfo, cameraInfo, pose, 1,
+      imageCanvas, depthCanvas, depthInfo, cameraInfo, pose, startIdOffset,
     );
     // 書き出す
     const writer = new BinExporter();
