@@ -905,8 +905,10 @@ class Misc {
       console.log('2個以上6個が多い');
     }
     // 画像とデプスとxmlからの情報
-    const imageCanvas = await this.imageBufToOff(ab, 1, false);
-    const depthCanvas = await this.imageBufToOff(ab, 1, false);
+    const imageCanvas = await this.imageBufToOff(
+      info.frames[2].buffer, 1, false);
+    const depthCanvas = await this.imageBufToOff(
+      info.frames[4].buffer, 1, false);
     const depthInfo = {};
     const cameraInfo = {};
     const pose = {t: [0, 0, 0], q: [0, 0, 0, 1]};

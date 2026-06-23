@@ -61,7 +61,8 @@ class Frame {
 }
 
 /**
- * jpeg ファイルの解析クラス
+ * jpeg ファイルの解析クラス。
+ * 原則パースを実行する
  */
 export class GPixel {
   constructor() {
@@ -474,7 +475,7 @@ export class GPixel {
   }
 
   /**
-   * jpeg パース
+   * jpeg パース。中で parseOneJpeg() を呼んでいる
    * @param {ArrayBuffer} ab 
    * @param {boolean} addElement 
    */
