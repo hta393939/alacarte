@@ -342,7 +342,8 @@ class Misc {
   }
 
   /**
-   * 二段下まで sparse/0/ を探してそこの \*.bin をパースする
+   * 二段下まで sparse/0/ を探してそこの \*.bin をパースする。
+   * 動作する
    * @param {FileSystemDirectoryHandle} dirHandle 
    */
   async parseBins(dirHandle) {
@@ -414,8 +415,8 @@ class Misc {
       case 'images.bin':
         ret.images = parser.parseImage(ab);
         break;
-      case 'points3d.bin':
-        ret.points3d = parser.parsePoint(ab);
+      case 'points3D.bin':
+        ret.points3D = parser.parsePoint(ab);
         break;
       default:
         console.log('ignore', k);
@@ -467,6 +468,44 @@ class Misc {
   }
 
   /**
+   * 
+   * @param {FileSystemDirectoryHandle} startDir 
+   * @param {string[]} names 
+   * @returns {FileSystemHandle|null}
+   */
+  async searchFile(startDir, names) {
+    if (names.length === 0) {
+      return null;
+    }
+    let ret = null;
+    for await (const [k, v] of startDir.entries()) {
+      if (v.name === names[0]) {
+        ret = v;
+        break;
+      }
+    }
+
+    if (names.length === 1) {
+      return ret;
+    }
+    const next = await this.searchFile(v, names.slice(1));
+    return next;
+  }
+
+  /**
+   * ハンドルを探す
+   * @param {FileSystemDirectoryHandle} startDir 
+   * @param {string} pathname /で区切ったパス名
+   * @returns 
+   */
+  async searchFilePath(startDir, pathname) {
+    let ret = null;
+    const ss = pathname.split('/').filter(s !== '');   
+    ret = await this.searchFile(startDir, ss);
+    return ret;
+  }
+
+  /**
    * 直下に dst/, _foo/, _foodb/ を含むフォルダを指定する。 
    * @param {FileSystemDirectoryHandle} dirHandle 
    * @param {*} param 
@@ -474,17 +513,19 @@ class Misc {
   async searchDir(dirHandle, param) {
     console.log('searchDir', dirHandle);
 
-    /** @type {FileSystemDirectoryHandle} */
+    /** 複数フレームを含む画像群を格納 @type {FileSystemDirectoryHandle} */
     let srcDir = null;
-    /** @type {FileSystemDirectoryHandle} */
+    /** _foo フォルダ @type {FileSystemDirectoryHandle} */
     let dstDir = null;
-    /** @type {FileSystemDirectoryHandle} */
+    /** _foodb フォルダ @type {FileSystemDirectoryHandle} */
     let srcSubDir = null;
-    /** @type {FileSystemDirectoryHandle} */
+    /** RGB画像だけ取り出した格納 @type {FileSystemDirectoryHandle} */
     let dstSubDir = null;
 
-    /** @type {FileSystemDirectoryHandle} */
+    /** depth画像群を含むフォルダ @type {FileSystemDirectoryHandle} */
     let depthDir = null;
+    /** @type {FileSystemDirectoryHandle} */
+    let colmapDir = null;
 
     for await (const [k, v] of dirHandle.entries()) {
       if (v.kind === 'file') {
@@ -510,8 +551,11 @@ class Misc {
       try { // images フォルダを作成する
         dstSubDir = await dstDir.getDirectoryHandle('images', {create: true});
       } catch (e) {
-        console.warn('create', e);
+        console.warn('create folder images', e);
       }
+
+      // 掘る
+      colmapDir = await this.searchFilePath(v, 'sparse/0');
     }
 
     console.log('searchDir end');
@@ -521,6 +565,7 @@ class Misc {
       dst: dstDir,
       imagesDir: dstSubDir,
       depthDir,
+      colmapDir,
     };
   }
 
@@ -1541,6 +1586,48 @@ class Misc {
       first = false;
     }
   }
+
+
+  /**
+   * ※parseBins() が正しく動いている。二重に書いてしまった;;
+   * @param {FileSystemDirectoryHandle} dirHandle 直下に _foodb などを含む
+   * @param {{srcDir: FileSystemDirectoryHandle}} dirobj ディレクトリハンドルたち
+   * @param {object} param パラメータたち
+   */
+  async preloadCurrentDir(dirHandle) {
+    console.log('preload current dir', dirHandle.name);
+
+    const dirs = await this.searchDir(dirHandle, {});
+
+    const infos = [];
+    for (const v of [
+      {name: 'cameras.bin', f: 'parseCamera'},
+      {name: 'images.bin', f: 'parseImage'},
+      {name: 'points3D.bin', f: 'parsePoint'},
+    ]) {
+      const handle = await this.searchFilePath(dirs.colmapDir, v.name);
+      const file = await handle.getFile();
+      const ab = await file.arrayBuffer();
+
+      const parser = new BinParser();
+      const result = parser[v.f](ab);
+      infos.push(result);
+    }
+
+    const ret = {
+      cameras: infos[0],
+      images: infos[1],
+      points3D: infos[2],
+    };
+
+    console.log('cam, img, pts',
+      ret.cameras.length,
+      ret.images.length,
+      ret.points3D.length,
+    );
+    return ret;
+  }
+
 
 }
 

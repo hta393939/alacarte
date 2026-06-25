@@ -6,7 +6,7 @@ export class Cam {
   /** 0, 3個 f, cx, cy */
   static TYPE_SIMPLE_PINHOLE = 0;
   /** 1, 4個 fx, fy, cx, cy */
-  static TYPE_PINHOLE = 0;
+  static TYPE_PINHOLE = 1;
   constructor() {
     /** i32 */
     this.id = 0;
@@ -263,6 +263,7 @@ export class BinParser {
 
       ret.points.push(pt);
     }
+    console.log('parsePoint', this.c, ab.byteLength);
     return ret;
   }
 
