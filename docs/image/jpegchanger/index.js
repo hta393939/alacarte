@@ -82,23 +82,34 @@ class Misc {
     this.curinfo = {};
     /** 変更後バイナリの素 */
     this.curbufs = [];
+
+    /**
+     * 現在の作業フォルダ配下の *.bin
+     */
+    this.curbins = {};
   }
 
   async initialize() {
     this.setListener();
   }
 
+  /**
+   * GUI から値を収集する
+   */
   gatherParam() {
     const obj = {};
+    // 文字列
     for (const k of ['source', 'destination']) {
       const el = document.getElementById(k);
       obj[k] = el.value;
     }
+    // チェックボックス
     for (const k of ['isdel']) {
       const el = document.getElementById(k);
       obj[k] = el?.checked;
     }
-    for (const k of ['divnum']) {
+    // 数値
+    for (const k of ['divnum', 'targetimageid']) {
       const el = document.getElementById(k);
       const val = Number.parseFloat(el?.value);
       if (Number.isFinite(val)) {
@@ -347,7 +358,7 @@ class Misc {
    * @param {FileSystemDirectoryHandle} dirHandle 
    */
   async parseBins(dirHandle) {
-    console.log('parseBins');
+    console.log('parseBins', dirHandle.name);
 
     let sparseDir = null;
 
@@ -703,7 +714,15 @@ class Misc {
     {
       const el = document.getElementById('parsebin');
       el?.addEventListener('click', async () => {
-        await this.parseBins(this.root);
+        this.curbins = await this.parseBins(this.root);
+      });
+    }
+
+    {
+      const el = document.getElementById('onewithcolmap');
+      el?.addEventListener('click', async () => {
+        // TODO: [ ] 作業フォルダのうち一つだけ
+        await this.oneActWithColmap(null);
       });
     }
 
@@ -1004,6 +1023,9 @@ class Misc {
     return ret;
   }
 
+  /**
+   * クローンした各エレメントから値を収集する。gif の名残か
+   */
   async gatherUI() {
     console.log('gatherUI');
     const qs = document.querySelectorAll('.oneframe');
