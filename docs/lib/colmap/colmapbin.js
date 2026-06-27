@@ -475,13 +475,13 @@ export class BinExporter extends BinParser {
     let offset = 0;
     for (let i = 0; i < num; ++i) {
       const pt = pts[i];
-      p.setFloat32(offset, pt.pos[0], true);
-      p.setFloat32(offset+4, pt.pos[1], true);
-      p.setFloat32(offset+8, pt.pos[2], true);
+      p.setFloat32(offset, pt.p[0], true);
+      p.setFloat32(offset+4, pt.p[1], true);
+      p.setFloat32(offset+8, pt.p[2], true);
       offset += 12;
-      p.setUint8(offset, pt.col[0]);
-      p.setUint8(offset+1, pt.col[1]);
-      p.setUint8(offset+2, pt.col[2]);
+      p.setUint8(offset, pt.color[0]);
+      p.setUint8(offset+1, pt.color[1]);
+      p.setUint8(offset+2, pt.color[2]);
       offset += 3;
     }
     bufs.push(pbuf);

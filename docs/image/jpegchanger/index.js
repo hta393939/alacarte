@@ -915,6 +915,8 @@ class Misc {
         const q = Quaternion.fromBottomW(...pose.tailW).conjugate();
         const world = q.rot(vec);
         p3d.p = world.asArray();
+
+        ret.points.push(p3d);
       }
     }
 
