@@ -424,7 +424,7 @@ class Misc {
         ret.cameras = parser.parseCamera(ab);
         break;
       case 'images.bin':
-        ret.images = parser.parseImage(ab);
+        ret.images = parser.parseImage(ab, true);
         break;
       case 'points3D.bin':
         ret.points3D = parser.parsePoint(ab);
@@ -729,6 +729,13 @@ class Misc {
     }
 
     {
+      const el = document.getElementById('inferscale');
+      el?.addEventListener('click', () => {
+        this.inferScale();
+      });
+    }
+
+    {
       const el = document.getElementById('openfile');
       el?.addEventListener('click', async () => {
         const opt = {};
@@ -765,10 +772,10 @@ class Misc {
   /**
    * this.curbins は必要とする
    * スケールを推測する。比率の平均
-   * @param {File[]} jpegFiles
-   * @param {ColmapImage[]} colmapimgs 
    */
   async inferScale() {
+    console.log('inferScale');
+
     const currentDirs = await this.searchDir(this.root);
 
     const bins = this.curbins;
@@ -782,10 +789,15 @@ class Misc {
 
     const re = /^(?<branch>.+)\.(?<ext>[^\.]+)$/;
 
-    const num = bins.images.length;
+    const num = bins.images.images.length;
     for (let i = 0; i < num; ++i) {
       /** @type {ColmapImage} */
-      const img = bins.images[i];
+      const img = bins.images.images[i];
+      const cam = bins.cameras.cameras.find(v => v.id === img.cameraid);
+      if (!cam) {
+        console.log('skip cam', img.name);
+        continue;
+      }
 
       // depth から欲しいので元ソース画像から取得する
       const m = re.exec(img.name);
@@ -828,19 +840,25 @@ class Misc {
       const pcx = imagingmodel.principalpointx;
       const pcy = imagingmodel.principalpointy;
 
+      const far = depthmap.far;
+      const near = depthmap.near;
+
       const dfx = pfx * dw / pw;
       const dfy = pfy * dh / ph;
       const dcx = pcx * dw / pw;
       const dcy = pcy * dh / ph;
 
-      const q = Quaternion.fromTopW(...colmapimg.wtop);
-      const t = Vector3.fromArray(colmapimg.t);
+      const q = Quaternion.fromTopW(...img.wtop);
+      const t = Vector3.fromArray(img.t);
 
       const dc = dcanvas.getContext('2d');
       const ddata = dc.getImageData(0, 0, dw, dh);
 
       /** @type {Point2D[]} */
       const pickups = [];
+      // TODO: 一旦全部とか
+      pickups.push(...img.point2ds);
+
       const pickNum = pickups.length;
 
       // 特徴点リストのうち，どれかを取り出す
@@ -853,21 +871,27 @@ class Misc {
         const colpy = p2d.p[1];
 
         // px, py から dx, dy へ変換 [ ] TODO 比率変換
-        const dx = colpx * 1 / 1;
-        const dy = colpy * 1 / 1;
+        const dx = Math.floor(colpx * dw / 1);
+        const dy = Math.floor(colpy * dh / 1);
         // dx, dy から depth を手に入れる
         const doffset = (dx + dw * dy) * 4;
         const depth = depthmap.focaltable[ddata.data[doffset] * 2];
-        const fromdepth = [(px - cx) / fx * depth, (py - cy) / fy * depth, depth];
+        const fromdepth = [(dx - dcx) / dfx * depth, (dy - dcy) / dfy * depth, depth];
         // ここではメートル単位
       
         // 3次元points3Dの位置から
         const id = p2d.id3d;
+        if (id < 0) {
+          continue; // -1 は対応点が無い
+        }
         // id から points から引く
         const pt = bins.points3D.points.find(v => v.id === id);
+        if (!pt) {
+          continue;
+        }
         const vec = Vector3.fromArray(pt.p);
         // R, t で変換して incam で [x,y,z] が得られる
-        const fromptv = q.rot(p3d).add(1, t, 1);
+        const fromptv = q.rot(vec).add(1, t, 1);
         const frompt = fromptv.asArray();
         // これを incam 内で比較すると scale が決まる
 
@@ -897,11 +921,11 @@ class Misc {
 
     const _avgvar = (vs) => {
       const _n = vs.length;
-      if (_n) {
+      if (_n === 0) {
         return [0, 0];
       }
       const onetwo = vs.reduce((p, c) => [p[0] + c[0], p[1] + c[1] ** 2], [0, 0]);
-      return [onetwo[0] / n, onetwo[1] / n];
+      return [onetwo[0] / _n, onetwo[1] / _n];
     };
     ret.farWideDist = _avgvar(ret.farWide);
     ret.farNarrowDist = _avgvar(ret.farNarrow);

@@ -209,11 +209,12 @@ export class BinParser {
   }
 
   /**
-   * 
+   * images.bin をパースする
    * @param {ArrayBuffer} ab 
+   * @param {boolean} use2d
    */
-  parseImage(ab) {
-    console.log('parseImage');
+  parseImage(ab, use2d = false) {
+    console.log('parseImage', use2d);
     const ret = { images: [] };
     const p = new DataView(ab);
     this.c = 0;
@@ -233,7 +234,7 @@ export class BinParser {
         p2.p = this.readds(p, 2);
         p2.id3d = this.readu64s(p, 1)[0];
 
-        if (false) {
+        if (use2d) {
           img.point2ds.push(p2);
         }
       }
