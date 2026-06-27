@@ -1,5 +1,5 @@
 
-import { BinParser, Point, Cam, BinExporter } from "../../lib/colmap/colmapbin.js";
+import { BinParser, ColmapImage, Point, Cam, BinExporter } from "../../lib/colmap/colmapbin.js";
 import {GPixel} from "../../lib/gpixel/gpixel.js";
 import {Vector3, Quaternion} from "../../lib/mathutil.js";
 
@@ -479,7 +479,7 @@ class Misc {
   }
 
   /**
-   * 
+   * 階層文字列配列を渡して先頭だけ探して再帰する
    * @param {FileSystemDirectoryHandle} startDir 
    * @param {string[]} names 
    * @returns {FileSystemHandle|null}
@@ -499,19 +499,20 @@ class Misc {
     if (names.length === 1) {
       return ret;
     }
-    const next = await this.searchFile(v, names.slice(1));
+    const next = await this.searchFile(ret, names.slice(1));
     return next;
   }
 
   /**
-   * ハンドルを探す
+   * ハンドルを探す。
+   * "./" は長さ0になるので自分自身にはならないので注意
    * @param {FileSystemDirectoryHandle} startDir 
    * @param {string} pathname /で区切ったパス名
    * @returns 
    */
-  async searchFilePath(startDir, pathname) {
+  async searchFileByPath(startDir, pathname) {
     let ret = null;
-    const ss = pathname.split('/').filter(s !== '');   
+    const ss = pathname.split('/').filter(s => s !== '' && s !== '.');  
     ret = await this.searchFile(startDir, ss);
     return ret;
   }
@@ -521,7 +522,7 @@ class Misc {
    * @param {FileSystemDirectoryHandle} dirHandle 
    * @param {*} param 
    */
-  async searchDir(dirHandle, param) {
+  async searchDir(dirHandle, /*param*/) {
     console.log('searchDir', dirHandle);
 
     /** 複数フレームを含む画像群を格納 @type {FileSystemDirectoryHandle} */
@@ -566,7 +567,7 @@ class Misc {
       }
 
       // 掘る
-      colmapDir = await this.searchFilePath(v, 'sparse/0');
+      colmapDir = await this.searchFileByPath(v, 'sparse/0');
     }
 
     console.log('searchDir end');
@@ -670,7 +671,7 @@ class Misc {
         ev.preventDefault();
         const file = ev.dataTransfer.files[0];
 
-        this.oneActWithColmap(file);
+        await this.oneActWithColmap(file);
         return;
 
         // TODO: ここ
@@ -721,8 +722,7 @@ class Misc {
     {
       const el = document.getElementById('onewithcolmap');
       el?.addEventListener('click', async () => {
-        // TODO: [ ] 作業フォルダのうち一つだけ
-        await this.oneActWithColmap(null);
+        await this.tempOne();
       });
     }
 
@@ -841,7 +841,7 @@ class Misc {
    * @param {OffscreenCanvas|HTMLCanvasElement} depthCanvas 深さ画像
    * @param {any} depthInfo 深さの変換式のための情報
    * @param {Cam} cameraInfo カメラのパラメーター
-   * @param {any} pose colmap の姿勢 
+   * @param {{tailW: number[], t: number[]}} pose colmap の姿勢 
    * @param {number} scale スケール倍率
    */
   async reconOne(canvas, depthCanvas, depthInfo,
@@ -909,15 +909,16 @@ class Misc {
         ];
 
         const vec = Vector3.fromArray(inCam)
-          .add(1, Vector3.fromArray([0, 0, 0]), -1);
+          .add(1, Vector3.fromArray(pose.t), -1);
         // 全体座標系へ変換
         // inCam から t を引いて，R^-1 を掛ける
-        const q = Quaternion.fromBottomW(0, 0, 0, 1).conjugate();
+        const q = Quaternion.fromBottomW(...pose.tailW).conjugate();
         const world = q.rot(vec);
         p3d.p = world.asArray();
       }
     }
 
+    ret.nextCount = count;
     return ret;
   }
 
@@ -955,19 +956,25 @@ class Misc {
   }
 
   /**
-   * 
+   * 1枚のjpegファイルから点の配列を得る
    * @param {File} jpegFile 
+   * @param {number[]} tailW  
+   * @param {number[]} t
    */
-  async oneActWithColmap(jpegFile) {
+  async oneActWithColmap(jpegFile, tailW, t, startIdOffset = 1) {
     console.log('oneActWithColmap', jpegFile.name);
     const ab = await jpegFile.arrayBuffer();
     // パースする
     const gpixel = new GPixel();
     const info = await gpixel.parseJpeg(ab, false);
     console.log('info', info);
-    if (info.frames.length >= 2) {
-      console.log('2個以上6個が多い');
+    if (info.frames.length < 6) {
+      console.log('6枚存在しない', info.frames.length);
+      return [];
     }
+
+    console.log('%cfrom one jpeg', 'color:#ff5555;', info);
+
     // 画像とデプスとxmlからの情報
     const imageCanvas = await this.imageBufToOff(
       info.frames[2].buffer, 1, false);
@@ -975,17 +982,57 @@ class Misc {
       info.frames[4].buffer, 1, false);
     const depthInfo = {};
     const cameraInfo = {};
-    const pose = {t: [0, 0, 0], q: [0, 0, 0, 1]};
+    const pose = {t, tailW};
 
     // points を作る
-    const startIdOffset = 1;
     const result = await this.reconOne(
-      imageCanvas, depthCanvas, depthInfo, cameraInfo, pose, startIdOffset,
+      imageCanvas, depthCanvas,
+      depthInfo, cameraInfo, pose, startIdOffset,
     );
-    // 書き出す
-    const writer = new BinExporter();
-    const chunks = writer.makePoint(result.points, false);
-    this.download(new Blob(chunks), `points3D.bin`);
+    return result;
+  }
+
+  /**
+   * 現時点の状態で1枚だけ処理をする
+   */
+  async tempOne() {
+    const currentDirs = await this.searchDir(this.root);
+
+    /** ここに格納していく @type {Point[]} */
+    const pts = [];
+    /** 1枚またはn枚決定する @type {ColmapImage[]} */
+    const imgs = [];
+    for (const img of this.curbins.images) {
+      imgs.push(img);
+      break; // 先頭の一枚
+    }
+
+    let startIdOffset = 1;
+    for (const img of imgs) {
+      const fh = await this.searchFileByPath(
+        currentDirs.imagesDir, img.name);
+      const file = await fh.getFile();
+
+      const tailW = [img.wtop[1], img.wtop[2], img.wtop[3], img.wtop[0]];
+      const result = await this.oneActWithColmap(file,
+        tailW, img.t, startIdOffset);
+      startIdOffset = result.nextCount;
+
+      pts.push(...result.points);
+    }
+
+    const exporter = new BinExporter();
+    if (false) { // points3D.bin 書き出す。書き出さない
+      const chunks = await exporter.makePoint(pts, false);
+      this.download(new Blob(chunks), `points3D.bin`);
+    }
+
+    { // .ply 書き出す
+
+      const chunks = await exporter.makePly(pts);
+      this.download(new Blob(chunks), `a.ply`);
+    }
+    console.log('tempOne');
   }
 
   /**

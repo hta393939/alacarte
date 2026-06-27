@@ -43,7 +43,10 @@ export class Point2D {
   }
 }
 
-export class Image {
+/**
+ * クラス名を変更した
+ */
+export class ColmapImage {
   constructor() {
     /** i32 */
     this.id = 0;
@@ -88,6 +91,11 @@ export class Point {
 }
 
 export class BinParser {
+  static CAM_NAME = 'cameras.bin';
+  static IMG_NAME = 'images.bin';
+  /** ファイル名 */
+  static PT_NAME = 'points3D.bin';
+
   constructor() {
     this.c = 0;
   }
@@ -212,7 +220,7 @@ export class BinParser {
     ret.num = this.readu64s(p, 1)[0];
     console.log('num', ret.num);
     for (let i = 0; i < ret.num; ++i) {
-      const img = new Image();
+      const img = new ColmapImage();
 
       img.id = this.read32s(p, 1)[0];
       img.wtop = this.readds(p, 4);
@@ -327,7 +335,7 @@ export class BinExporter extends BinParser {
   }
 
   /**
-   * 
+   * float64 配列
    * @param {DataView} p 
    * @param {number} c 
    * @param {number[]} vals 
@@ -342,10 +350,70 @@ export class BinExporter extends BinParser {
     return offset;  
   }
 
+
+  /**
+   * 未実装
+   * @param {Cam[]} cams 
+   */
+  makeCamera(cams) {
+    const chunks = [];
+
+    let num = cams.length;
+    {
+      const buf = new Uint32Array(2);
+      buf[0] = num;
+      chunks.push(buf);
+    }
+
+    for (let i = 0; i < num; ++i) {
+      const cam = cams[i];
+      const len = cam.params.length;
+      const ab = new ArrayBuffer(256 + len * 8);
+      const p = new DataView(ab);
+      let c = 0;
+      c += this.writeu64s(p, c, [cam.id]); // サイズ未確認
+      c += this.write32s(p, c, [cam.type]);
+      c += this.writeu64s(p, c, [cam.width]);
+      c += this.writeu64s(p, c, [cam.height]);
+      c += this.writeu64s(p, c, cam.params);
+
+      chunks.push(ab.slice(0, c));
+    }
+
+    return chunks;
+  }
+
+  /**
+   * 未実装
+   * @param {ColmapImage[]} imgs 
+   * @param {boolean} use2d 
+   */
+  makeImage(imgs, use2d = false) {
+    const chunks = [];
+
+    let num = imgs.length;
+    {
+      const buf = new Uint32Array(2);
+      buf[0] = num;
+      chunks.push(buf);
+    }
+
+    for (let i = 0; i < num; ++i) {
+      const img = imgs[i];
+      const len = use2d ? img.point2ds.length : 0;
+      const ab = new ArrayBuffer(0 + len * 0);
+      let c = 0;
+
+      chunks.push(ab);
+    }
+
+    return chunks;
+  }
+
   /**
    * points3D.bin バイナリを作成する
    * @param {Point[]} pts 
-   * @returns {object[]}
+   * @returns {object[]} チャンク配列
    */
   makePoint(pts, usetrack = false) {
     const chunks = [];
@@ -372,9 +440,52 @@ export class BinExporter extends BinParser {
         const track = pt.tracks[j];
         c += this.write32s(p, c, [track.imageid, track.index]);
       }
-      chunks.push(buf.slice(0, c));
+      chunks.push(ab.slice(0, c));
     }
     return chunks;
+  }
+
+  /**
+   * points3D から .ply を作成する
+   * @param {Point[]} pts 
+   * @returns {any[]} チャンク配列
+   */
+  async makePly(pts) {
+    const bufs = [];
+    const num = pts.length;
+    {
+      const lines = [
+        `ply`,
+        `format binary_little_endian 1.0`,
+        `element vertex ${num}`,
+        `property float x`,
+        `property float y`,
+        `property float z`,
+        `property uchar red`,
+        `property uchar green`,
+        `property uchar blue`,
+        `end_header`,
+        '',
+      ];
+      bufs.push(lines.join('\n'));
+    }
+    // バイナリ部
+    const pbuf = new ArrayBuffer(num * 15);
+    const p = new DataView(pbuf);
+    let offset = 0;
+    for (let i = 0; i < num; ++i) {
+      const pt = pts[i];
+      p.setFloat32(offset, pt.pos[0], true);
+      p.setFloat32(offset+4, pt.pos[1], true);
+      p.setFloat32(offset+8, pt.pos[2], true);
+      offset += 12;
+      p.setUint8(offset, pt.col[0]);
+      p.setUint8(offset+1, pt.col[1]);
+      p.setUint8(offset+2, pt.col[2]);
+      offset += 3;
+    }
+    bufs.push(pbuf);
+    return bufs;
   }
 
 }
