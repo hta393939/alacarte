@@ -256,10 +256,10 @@ export class Quaternion {
    * @returns 
    */
   mul(b) {
-    const rea = this.w;
-    const reb = b.w;
-    const ima = this.clone3();
-    const imb = b.clone3();
+    const rea = this.re();
+    const reb = b.re();
+    const ima = this.im();
+    const imb = b.im();
     const c1 = ima.cross(imb);
     const c2 = c1.add(1, ima, reb);
     const c3 = c2.add(1, imb, rea);
@@ -281,11 +281,18 @@ export class Quaternion {
   }
 
   /**
-   * 実部を取り出す
+   * 虚部を取り出す。新しいインスタンス
    * @returns {Vector3}
    */
-  real() {
+  im() {
     return new Vector3(this.x, this.y, this.z);
+  }
+  /**
+   * 実部を取り出す。新しい値
+   * @returns {number}
+   */
+  re() {
+    return this.w;
   }
 
   /**
@@ -310,7 +317,7 @@ export class Quaternion {
     const pt = Quaternion.point(v3);
     const c1 = this.mul(pt);
     const c2 = c1.mul(conj);
-    return c2.real();
+    return c2.im();
   }
 
 }

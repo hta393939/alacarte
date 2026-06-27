@@ -998,13 +998,19 @@ class Misc {
   async tempOne() {
     const currentDirs = await this.searchDir(this.root);
 
+    const re = /^(?<branch>.+)\.(?<ext>[^\.]+)$/;
+
     /** ここに格納していく @type {Point[]} */
     const pts = [];
-
     let startIdOffset = 1;
     for (const img of this.curbins.images.images) {
+      const m = re.exec(img.name);
+      if (!m) {
+        continue;
+      }
+      const name = `${m.groups['branch']}.PORTRAIT.${m.groups['ext']}`;
       const fh = await this.searchFileByPath(
-        currentDirs.imagesDir, img.name);
+        currentDirs.srcDir, name);
       const file = await fh.getFile();
 
       const tailW = [img.wtop[1], img.wtop[2], img.wtop[3], img.wtop[0]];
