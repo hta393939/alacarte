@@ -352,7 +352,7 @@ export class BinExporter extends BinParser {
 
 
   /**
-   * 未実装
+   * 未確認
    * @param {Cam[]} cams 
    */
   makeCamera(cams) {
@@ -368,13 +368,11 @@ export class BinExporter extends BinParser {
     for (let i = 0; i < num; ++i) {
       const cam = cams[i];
       const len = cam.params.length;
-      const ab = new ArrayBuffer(256 + len * 8);
+      const ab = new ArrayBuffer(24 + len * 8);
       const p = new DataView(ab);
       let c = 0;
-      c += this.writeu64s(p, c, [cam.id]); // サイズ未確認
-      c += this.write32s(p, c, [cam.type]);
-      c += this.writeu64s(p, c, [cam.width]);
-      c += this.writeu64s(p, c, [cam.height]);
+      c += this.write32s(p, c, [cam.id, cam.type]);
+      c += this.writeu64s(p, c, [cam.width, cam.height]);
       c += this.writeu64s(p, c, cam.params);
 
       chunks.push(ab.slice(0, c));

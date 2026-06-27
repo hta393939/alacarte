@@ -1,5 +1,5 @@
 
-import { BinParser, ColmapImage, Point, Cam, BinExporter } from "../../lib/colmap/colmapbin.js";
+import { BinParser, ColmapImage, Point, Cam, BinExporter, Point2D } from "../../lib/colmap/colmapbin.js";
 import {GPixel} from "../../lib/gpixel/gpixel.js";
 import {Vector3, Quaternion} from "../../lib/mathutil.js";
 
@@ -671,16 +671,11 @@ class Misc {
         ev.preventDefault();
         const file = ev.dataTransfer.files[0];
 
-        await this.oneActWithColmap(file);
-        return;
-
-        // TODO: ここ
-
         this.curfile = file;
         const ab = await file.arrayBuffer();
         const info = await this.parseJpeg(ab, true);
         this.curinfo = info;
-        console.log('info', info);
+        console.log('ドロップ処理時 info', info);
         this.curname = file.name;
         document.title = `${this.curname} - jpegchanger`;
       });
@@ -751,6 +746,7 @@ class Misc {
       });
     }
 
+    // 数値
     for (const k of ['startcount', 'addcount', 'outcount', 'divnum']) {
       const el = document.getElementById(k);
       const _update = () => {
@@ -767,40 +763,119 @@ class Misc {
   }
 
   /**
+   * this.curbins は必要とする
    * スケールを推測する。比率の平均
-   * @param {any[]} images 
+   * @param {File[]} jpegFiles
+   * @param {ColmapImage[]} colmapimgs 
    */
-  async inferScale(images) {
+  async inferScale() {
+    const currentDirs = await this.searchDir(this.root);
+
+    const bins = this.curbins;
+
     const ret = {
       farWide: [], // 50cm超過，デプスfar は2m超過
       farNarrow: [],
       nearWide: [],
       nearNarrow: [], // 50cm未満, デプスfar は2m未満
     };
-    for (const image of images) {
-      const fx = 1;
-      const fy = 1;
-      const cx = 1;
-      const cy = 1;
+
+    const re = /^(?<branch>.+)\.(?<ext>[^\.]+)$/;
+
+    const num = bins.images.length;
+    for (let i = 0; i < num; ++i) {
+      /** @type {ColmapImage} */
+      const img = bins.images[i];
+
+      // depth から欲しいので元ソース画像から取得する
+      const m = re.exec(img.name);
+      if (!m) {
+        console.log('skip', img.name);
+        continue;
+      }
+      const name = `${m.groups['branch']}.PORTRAIT.${m.groups['ext']}`;
+      const fh = await this.searchFileByPath(currentDirs.srcDir, name);
+      if (!fh) {
+        console.log('skip file', name);
+        continue;
+      }
+      const file = await fh.getFile();
+      const ab = await file.arrayBuffer();
+      const gpixel = new GPixel();
+      const info = await gpixel.parseJpeg(ab, false);
+      console.log('inferScale info', info);
+      if (info.frames.length < 6) {
+        console.log('skip frames 6未満');
+        continue;
+      }
+
+      const depthmap = info.frames[0].parsed.depthmap;
+      const imagingmodel = info.frames[0].parsed.imagingmodel;
+
+      const pbuf = info.frames[2].buffer;
+      const dbuf = info.frames[4].buffer;
+
+      const pcanvas = await this.imageBufToOff(pbuf, 1, false);
+      const dcanvas = await this.imageBufToOff(dbuf, 1, false);
+
+      const pw = pcanvas.width;
+      const ph = pcanvas.height;
+      const dw = dcanvas.width;
+      const dh = dcanvas.height;
+
+      const pfx = imagingmodel.focallengthx;
+      const pfy = imagingmodel.focallengthy;
+      const pcx = imagingmodel.principalpointx;
+      const pcy = imagingmodel.principalpointy;
+
+      const dfx = pfx * dw / pw;
+      const dfy = pfy * dh / ph;
+      const dcx = pcx * dw / pw;
+      const dcy = pcy * dh / ph;
+
+      const q = Quaternion.fromTopW(...colmapimg.wtop);
+      const t = Vector3.fromArray(colmapimg.t);
+
+      const dc = dcanvas.getContext('2d');
+      const ddata = dc.getImageData(0, 0, dw, dh);
+
+      /** @type {Point2D[]} */
+      const pickups = [];
+      const pickNum = pickups.length;
+
       // 特徴点リストのうち，どれかを取り出す
       // 例えば配列の真ん中付近など
       // id から points3D を対応づけて取得する
-      {
-        // px, py から dx, dy へ変換
+      for (let j = 0; j < pickNum; ++j) {
+        const p2d = pickups[j];
+
+        const colpx = p2d.p[0];
+        const colpy = p2d.p[1];
+
+        // px, py から dx, dy へ変換 [ ] TODO 比率変換
+        const dx = colpx * 1 / 1;
+        const dy = colpy * 1 / 1;
         // dx, dy から depth を手に入れる
-        const depth = 1;
+        const doffset = (dx + dw * dy) * 4;
+        const depth = depthmap.focaltable[ddata.data[doffset] * 2];
         const fromdepth = [(px - cx) / fx * depth, (py - cy) / fy * depth, depth];
         // ここではメートル単位
       
         // 3次元points3Dの位置から
+        const id = p2d.id3d;
+        // id から points から引く
+        const pt = bins.points3D.points.find(v => v.id === id);
+        const vec = Vector3.fromArray(pt.p);
         // R, t で変換して incam で [x,y,z] が得られる
-        const frompt = [1, 1, 1];
+        const fromptv = q.rot(p3d).add(1, t, 1);
+        const frompt = fromptv.asArray();
         // これを incam 内で比較すると scale が決まる
 
         const scales = [
           fromdepth[0] / frompt[0],
           fromdepth[1] / frompt[1],
           fromdepth[2] / frompt[2]];
+        // 3線分の平均
         const scale = (scales[0] + scales[1] + scales[2]) / 3;
 
         if (depth >= 0.5) {
@@ -820,16 +895,18 @@ class Misc {
       }
     }
 
-    const _avg = (vs) => {
-      if (vs.length === 0) {
-        return 0;
+    const _avgvar = (vs) => {
+      const _n = vs.length;
+      if (_n) {
+        return [0, 0];
       }
-      return vs.reduce((p, c) => p + c, 0) / vs.length;
+      const onetwo = vs.reduce((p, c) => [p[0] + c[0], p[1] + c[1] ** 2], [0, 0]);
+      return [onetwo[0] / n, onetwo[1] / n];
     };
-    ret.farWideAvg = _avg(ret.farWide);
-    ret.farNarrowAvg = _avg(ret.farNarrow);
-    ret.nearWideAvg = _avg(ret.nearWide);
-    ret.nearNarrowAvg = _avg(ret.nearNarrow);
+    ret.farWideDist = _avgvar(ret.farWide);
+    ret.farNarrowDist = _avgvar(ret.farNarrow);
+    ret.nearWideDist = _avgvar(ret.nearWide);
+    ret.nearNarrowDist = _avgvar(ret.nearNarrow);
     // 4つ比較してどうなるか
     console.log('inferScale', ret);
   }
@@ -851,6 +928,7 @@ class Misc {
 
     const pw = canvas.width;
     const ph = canvas.height;
+    /** デプス画像として渡された canvas のピクセル幅 */
     const dw = depthCanvas.width;
     const dh = depthCanvas.height;
     const div = 16;
@@ -879,16 +957,24 @@ class Misc {
     };
 
     // TODO: imagingmodel が 色か深さ かで dx,dy ではなく px,py
-    //const w = imagingmodel.imagewidth;
-    //const h = imagingmodel.imageheight;
+    const w = imagingmodel.imagewidth;
+    const h = imagingmodel.imageheight;
     const fx = imagingmodel.focallengthx;
     const fy = imagingmodel.focallengthy;
     const cx = imagingmodel.principalpointx;
     const cy = imagingmodel.principalpointy;
-    console.log('reconOne sizes',
-      fx, fy, cx, cy,
-      pw, ph, dw, dh,
-      imagingmodel.imagewidth, imagingmodel.imageheight);
+
+    const depthfx = fx * dw / w;
+    const depthfy = fy * dh / h;
+    const depthcx = cx * dw / w;
+    const depthcy = cy * dh / h;
+
+    if (true) {
+      console.log('reconOne sizes',
+        fx, fy, cx, cy,
+        'rgb', pw, ph, 'depth', dw, dh,
+        'imagingmodel image', w, h);
+    }
 
     let count = 0;
     for (let by = 0; by < div; ++by) {
@@ -917,8 +1003,8 @@ class Misc {
 
         // カメラ座標系での座標
         const inCam = [
-          (dx - cx) / fx * depth,
-          (dy - cy) / fy * depth,
+          (dx - depthcx) / depthfx * depth,
+          (dy - depthcy) / depthfy * depth,
           depth,
         ];
 
@@ -1019,6 +1105,7 @@ class Misc {
     /** ここに格納していく @type {Point[]} */
     const pts = [];
     let startIdOffset = 1;
+    let count = 0;
     for (const img of this.curbins.images.images) {
       const m = re.exec(img.name);
       if (!m) {
@@ -1043,7 +1130,11 @@ class Misc {
 
       startIdOffset = result.nextCount;
       pts.push(...result.points);
-      //break;
+
+      count += 1;
+      if (count >= 5) {
+        break;
+      }
     }
 
     const exporter = new BinExporter();
@@ -1053,46 +1144,10 @@ class Misc {
     }
 
     { // .ply 書き出す
-
       const chunks = await exporter.makePly(pts);
-      this.download(new Blob(chunks), `a.ply`);
+      this.download(new Blob(chunks), `${this.root.name}.ply`);
     }
     console.log('tempOne');
-  }
-
-  /**
-   * 
-   * @param {ArrayBuffer} ab
-   * @param {number} index 
-   */
-  async pickJpeg(ab, index) {
-    const ret = { bufs: [] };
-    {
-      const clone = _clone(ab, 0, this.curinfo.headend);
-      ret.bufs.push(clone.buffer);
-    }
-    for (const frame of this.curinfo.frames) {
-      if (!frame.isFrame) {
-        // NOTE: または animation 無しを作成する
-        continue;
-      }
-
-      if (frame.index !== index) {
-        continue;
-      }
-
-      // graphic control block を書き出さない
-      const clone = _clone(ab,
-        frame.offset, frame.end - frame.offset,
-      );
-      ret.bufs.push(clone.buffer);
-    }
-    {
-      const b8 = new Uint8Array(1);
-      b8[0] = 0x3b;
-      ret.bufs.push(b8.buffer);
-    }
-    return ret;
   }
 
   /**
@@ -1152,7 +1207,7 @@ class Misc {
               return;
             }
             const ab = await this.curfile.arrayBuffer();
-            const result = await this.pickJpeg(ab, frame.index);
+            throw new Error(`not implemented, ${k}`);
             const img = document.getElementById('baseimage');
             img.src = URL.createObjectURL(new Blob(result.bufs));
           });
