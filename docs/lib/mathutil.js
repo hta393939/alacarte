@@ -116,7 +116,7 @@ export class Vector3 {
   }
 
   /**
-   * 
+   * 外積
    * @param {Vector3} b 
    * @returns 
    */
@@ -272,12 +272,11 @@ export class Quaternion {
   }
 
   /**
-   * v3.w がおそらく 0 の三次元の点として取り出す
+   * v3.w がおそらく 0 になってるはずの三次元の点として取り出す
    * @param {Vector3} v3 
    */
   static point(v3) {
-    const ret = new Quaternion(v3.x, v3.y, v3.z);
-    return ret;
+    return Quaternion.fromBottomW(v3.x, v3.y, v3.z, 0);
   }
 
   /**
