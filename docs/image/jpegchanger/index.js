@@ -1027,18 +1027,23 @@ class Misc {
       const name = `${m.groups['branch']}.PORTRAIT.${m.groups['ext']}`;
       const fh = await this.searchFileByPath(
         currentDirs.srcDir, name);
+      if (!fh) {
+        console.log('search skip', name);
+        continue;
+      }
       const file = await fh.getFile();
 
       const tailW = [img.wtop[1], img.wtop[2], img.wtop[3], img.wtop[0]];
       const result = await this.oneActWithColmap(file,
         tailW, img.t, startIdOffset);
       if (!result) {
+        console.log('skip', name);
         continue;
       }
 
       startIdOffset = result.nextCount;
       pts.push(...result.points);
-      break;
+      //break;
     }
 
     const exporter = new BinExporter();
