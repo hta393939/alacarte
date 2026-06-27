@@ -839,13 +839,14 @@ class Misc {
    * points3D を増やす
    * @param {OffscreenCanvas|HTMLCanvasElement} canvas 色画像
    * @param {OffscreenCanvas|HTMLCanvasElement} depthCanvas 深さ画像
-   * @param {any} depthInfo 深さの変換式のための情報
-   * @param {Cam} cameraInfo カメラのパラメーター
+   * @param {any} depthmap 深さの変換式のための情報
+   * @param {any} imagingmodel カメラのパラメーター
    * @param {{tailW: number[], t: number[]}} pose colmap の姿勢 
    * @param {number} scale スケール倍率
    */
-  async reconOne(canvas, depthCanvas, depthInfo,
-    cameraInfo, pose, scale) {
+  async reconOne(canvas, depthCanvas,
+    depthmap,
+    imagingmodel, pose, scale) {
     const ret = {points: []};
 
     const pw = canvas.width;
@@ -867,23 +868,37 @@ class Misc {
     /**
      * near, far から深さを算出
      * @param {number} x 0-255 の値
-     * @returns 
+     * @returns {number} 深さ
      */
     const _depth = (x) => {
-      const t = x / 255; // [0.0, 1.0]
-      const rev = (1 / depthInfo.near) * (1 - t) + (1 / depthInfo.far) * t;
-      return 1 / rev;
+      return depthmap.focaltable[x * 2]; // [depth, focal] が 256 個並んでいる
+
+      //const t = x / 255; // [0.0, 1.0]
+      //const rev = (1 / depthmap.near) * (1 - t) + (1 / depthmap.far) * t;
+      //return 1 / rev;
     };
+
+    // TODO: imagingmodel が 色か深さ かで dx,dy ではなく px,py
+    //const w = imagingmodel.imagewidth;
+    //const h = imagingmodel.imageheight;
+    const fx = imagingmodel.focallengthx;
+    const fy = imagingmodel.focallengthy;
+    const cx = imagingmodel.principalpointx;
+    const cy = imagingmodel.principalpointy;
+    console.log('reconOne sizes',
+      fx, fy, cx, cy,
+      pw, ph, dw, dh,
+      imagingmodel.imagewidth, imagingmodel.imageheight);
 
     let count = 0;
     for (let by = 0; by < div; ++by) {
       for (let bx = 0; bx < div; ++bx) {
-        let px = Math.floor((bx + 0.5) * pbw / div);
-        let py = Math.floor((by + 0.5) * pbh / div);
+        let px = Math.floor((bx + 0.5) * pbw);
+        let py = Math.floor((by + 0.5) * pbh);
         /** デプス画像でのX座標 */
-        let dx = Math.floor((bx + 0.5) * dbw / div);
+        let dx = Math.floor((bx + 0.5) * dbw);
         /** デプス画像でのY座標 */
-        let dy = Math.floor((by + 0.5) * dbh / div);
+        let dy = Math.floor((by + 0.5) * dbh);
 
         const p3d = new Point();
         p3d.id = count;
@@ -894,17 +909,16 @@ class Misc {
         // 色 0-255
         const poffset = (px + pw * py) * 4;
         p3d.color = [
-          pdata[poffset], pdata[poffset + 1], pdata[poffset + 2],
+          pdata.data[poffset], pdata.data[poffset + 1], pdata.data[poffset + 2],
         ];
         // デプス
         const doffset = (dx + dw * dy) * 4;
         const depth = _depth(ddata.data[doffset]) * scale; // 赤成分
 
         // カメラ座標系での座標
-        // TODO: cameraInfo が 色か深さ かで dx,dy ではなく px,py
         const inCam = [
-          (dx - cameraInfo.cx) / cameraInfo.fx * depth,
-          (dy - cameraInfo.cy) / cameraInfo.fy * depth,
+          (dx - cx) / fx * depth,
+          (dy - cy) / fy * depth,
           depth,
         ];
 
@@ -982,14 +996,14 @@ class Misc {
       info.frames[2].buffer, 1, false);
     const depthCanvas = await this.imageBufToOff(
       info.frames[4].buffer, 1, false);
-    const depthInfo = {};
-    const cameraInfo = {};
+    const depthmap = info.frames[0].parsed.depthmap;
+    const imagingmodel = info.frames[0].parsed.imagingmodel;
     const pose = {t, tailW};
 
     // points を作る
     const result = await this.reconOne(
       imageCanvas, depthCanvas,
-      depthInfo, cameraInfo, pose, startIdOffset,
+      depthmap, imagingmodel, pose, startIdOffset,
     );
     return result;
   }
