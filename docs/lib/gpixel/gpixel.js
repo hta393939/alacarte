@@ -66,29 +66,6 @@ class Frame {
  */
 export class GPixel {
   constructor() {
-    this.src = '';
-    this.dst = '';
-    this.startcount = 0;
-    this.addcount = 1;
-    /**
-     * 出力数
-     */
-    this.outcount = 1;
-    this.maxcount = -1;
-
-    /** @type {FileSystemDirectoryHandle} フォルダ選択で開く */
-    this.root = null;
-
-    this.srcdh = null;
-    this.dstdh = null;
-
-    /** ドロップしたファイル名 */
-    this.curname = '';
-    /** @type {File} */
-    this.curfile = null;
-    this.curinfo = {};
-    /** 変更後バイナリの素 */
-    this.curbufs = [];
   }
 
   /**
@@ -110,90 +87,6 @@ export class GPixel {
     console.log('processDir end');
   }
 
-  /**
-   * 二段下まで sparse/0/ を探してそこの \*.bin をパースする
-   * @param {FileSystemDirectoryHandle} dirHandle 
-   */
-  async parseBins(dirHandle) {
-    console.log('parseBins');
-
-    let sparseDir = null;
-
-    for await (const [k, v] of dirHandle.entries()) {
-      if (v.kind === 'file') {
-        continue;
-      }
-      if (k === 'sparse') {
-        sparseDir = v;
-        break;
-      }
-
-      for await (const [k2, v2] of v.entries()) {
-        if (v2.kind === 'file') {
-          continue;
-        }
-        if (k2 === 'sparse') {
-          sparseDir = v2;
-          break;
-        }
-      }
-
-      if (sparseDir) {
-        break;
-      }
-    }
-
-    if (!sparseDir) {
-      return null;
-    }
-
-    let zeroDir = null;
-
-    for await (const [k, v] of sparseDir.entries()) {
-      if (v.kind === 'file') {
-        continue;
-      }
-      if (k === '0') {
-        zeroDir = v;
-        break;        
-      }
-    }
-
-    if (!zeroDir) {
-      return null;
-    }
-
-    const ret = {
-      zeroDir,
-    };
-    const parser = new BinParser();
-
-    for await (const [k, v] of zeroDir.entries()) {
-      if (v.kind !== 'file') {
-        continue;
-      }
-
-      const f = await v.getFile();
-      const ab = await f.arrayBuffer();
-
-      switch (k) {
-      case 'cameras.bin':
-        ret.cameras = parser.parseCamera(ab);
-        break;
-      case 'images.bin':
-        ret.images = parser.parseImage(ab);
-        break;
-      case 'points3d.bin':
-        ret.points3d = parser.parsePoint(ab);
-        break;
-      default:
-        console.log('ignore', k);
-        break;
-      }
-    }
-
-    return ret;
-  }
 
   /**
    * 
@@ -235,123 +128,6 @@ export class GPixel {
     }
   }
 
-  /**
-   * 直下に dst/, _foo/, _foodb/ を含むフォルダを指定する。 
-   * @param {FileSystemDirectoryHandle} dirHandle 
-   * @param {*} param 
-   */
-  async searchDir(dirHandle, param) {
-    console.log('searchDir', dirHandle);
-
-    /** @type {FileSystemDirectoryHandle} */
-    let srcDir = null;
-    /** @type {FileSystemDirectoryHandle} */
-    let dstDir = null;
-    /** @type {FileSystemDirectoryHandle} */
-    let srcSubDir = null;
-    /** @type {FileSystemDirectoryHandle} */
-    let dstSubDir = null;
-
-    /** @type {FileSystemDirectoryHandle} */
-    let depthDir = null;
-
-    for await (const [k, v] of dirHandle.entries()) {
-      if (v.kind === 'file') {
-        continue;
-      }
-      if (k === 'org') {
-        srcDir = v;
-        continue;
-      }
-      if (k === 'depth') {
-        depthDir = v;
-        continue;
-      }
-      if (!k.startsWith('_')) {
-        continue;
-      }
-      if (k.endsWith('db')) {
-        srcSubDir = v;
-        continue;
-      }
-
-      dstDir = v;
-      try { // images フォルダを作成する
-        dstSubDir = await dstDir.getDirectoryHandle('images', {create: true});
-      } catch (e) {
-        console.warn('create', e);
-      }
-    }
-
-    console.log('searchDir end');
-    return {
-      srcDir,
-      srcSubDir,
-      dst: dstDir,
-      imagesDir: dstSubDir,
-      depthDir,
-    };
-  }
-
-  /**
-   * 未使用
-   */
-  async analyzeDir(param) {
-    console.log('analyzeDir called', param);
-    /** @type {FileSystemDirectoryHandle} */
-    const root = this.root;
-
-    const re = /(?<prefix>\D*)(?<num>\d+)\.(?<ext>[^.]*)$/;
-    for await (const h of root.values()) {
-      if (h.kind === 'directory') {
-        if (h.name === param.source) {
-          this.srcdh = h;
-        }
-        if (h.name === param.destination) {
-          this.dstdh = h;
-        }
-        continue;
-      }
-    }
-
-
-    for await (const h of this.srcdh.values()) {
-      if (h.kind === 'directory') {
-        continue;
-      }
-      // file
-      // 存在するファイルを取得する
-      const m = re.exec(h.name);
-      // 名前数値.拡張子 に分解する
-      if (!m) {
-        continue;
-      }
-      // 見つかった
-      this.prefix = m.groups['prefix'];
-      this.num = m.groups['num'].length;
-      this.ext = m.groups['ext'];
-      this.maxcount = Math.max(this.maxcount, 0);
-      const curcount = Number.parseInt(m.groups['num']);
-
-      // startcount, addcount, outcount
-      const index = (curcount - this.startcount) / this.addcount;
-      if (index !== Math.floor(index)) {
-        continue;
-      }
-      /** @type {File} */
-      const file = await h.getFile();
-      const buf = await file.arrayBuffer();
-
-      let dstfilename = this.makeFilename(index);
-      const dstfh = await this.dstdh.getFileHandle(dstfilename, { create: true });
-      const writer = await dstfh.createWritable();
-      await writer.write(buf);
-      await writer.close();
-      console.log('', curcount, index);
-    }
-
-    return ret;
-  }
 
   /**
    * 0x00 が見つかるまでを探す。ただし32768バイトまで。
@@ -425,7 +201,7 @@ export class GPixel {
       };
       info.tags.push(obj);
 
-      console.log('', c - 2, (c - 2).toString(16), next.toString(16), obj.name);
+      console.log('parseOneJpeg', c - 2, (c - 2).toString(16), next.toString(16), obj.name);
 
       switch (next) {
       case 0xe1:
@@ -513,7 +289,7 @@ export class GPixel {
       }
     }
 
-    console.log('frames', frames);
+    console.log('parseJpeg frames', frames);
 
 
     for (let i = 0; i < frames.length; ++i) {
@@ -537,27 +313,23 @@ export class GPixel {
         if (uuids.length >= 1) {
           for (const uuid of uuids) {
             const hexa = one.hexa[uuid];
-            if (hexa.includes("Adobe XMP Core 5.1.0-jc003")) {
-              console.log('jc003', hexa);
+            if (hexa.includes("XMP Core 5.")) {
+            //if (hexa.includes("Adobe XMP Core 5.1.0-jc003")) { // 以前はこれだった
+              console.log('XMP Core 5', uuid);
 
               const result = this.parseXML(hexa);
+              one.parsed = result;
+              /*
               const obj = result?.depthmap;
               if (obj) {
-                window.nearfarview.textContent = `${obj.near} ${obj.far}`;
-
-                if (Array.isArray(obj.focaltable)) {
+                if (obj.focaltable) {
                   this.dumpFocalTable(obj.focaltable,
                     obj.near, obj.far,
                   );
                 }
-              }
-
-              const imaging = result?.imagingmodel;
-              if (imaging) {
-                window.focalview.textContent = `${imaging.focallengthx} ${imaging.focallengthy}`;
-                window.whview.textContent = `${imaging.imagewidth} ${imaging.imageheight}`;
-              }
+              } */
             }
+
           }
         }
       }
@@ -640,7 +412,7 @@ export class GPixel {
       }
     }
 
-    console.log('ret', ret);
+    console.log('parseXML', ret);
     return ret;
   }
 

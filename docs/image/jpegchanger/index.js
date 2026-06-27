@@ -878,12 +878,12 @@ class Misc {
     let count = 0;
     for (let by = 0; by < div; ++by) {
       for (let bx = 0; bx < div; ++bx) {
-        let px = Math.floor((bx + 0.5) * pbw);
-        let py = Math.floor((by + 0.5) * pbh);
+        let px = Math.floor((bx + 0.5) * pbw / div);
+        let py = Math.floor((by + 0.5) * pbh / div);
         /** デプス画像でのX座標 */
-        let dx = Math.floor((bx + 0.5) * dbw);
+        let dx = Math.floor((bx + 0.5) * dbw / div);
         /** デプス画像でのY座標 */
-        let dy = Math.floor((by + 0.5) * dbh);
+        let dy = Math.floor((by + 0.5) * dbh / div);
 
         const p3d = new Point();
         p3d.id = count;
