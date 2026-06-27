@@ -970,7 +970,7 @@ class Misc {
     console.log('info', info);
     if (info.frames.length < 6) {
       console.log('6枚存在しない', info.frames.length);
-      return [];
+      return null;
     }
 
     console.log('%cfrom one jpeg', 'color:#ff5555;', info);
@@ -1000,15 +1000,9 @@ class Misc {
 
     /** ここに格納していく @type {Point[]} */
     const pts = [];
-    /** 1枚またはn枚決定する @type {ColmapImage[]} */
-    const imgs = [];
-    for (const img of this.curbins.images) {
-      imgs.push(img);
-      break; // 先頭の一枚
-    }
 
     let startIdOffset = 1;
-    for (const img of imgs) {
+    for (const img of this.curbins.images.images) {
       const fh = await this.searchFileByPath(
         currentDirs.imagesDir, img.name);
       const file = await fh.getFile();
@@ -1016,9 +1010,13 @@ class Misc {
       const tailW = [img.wtop[1], img.wtop[2], img.wtop[3], img.wtop[0]];
       const result = await this.oneActWithColmap(file,
         tailW, img.t, startIdOffset);
-      startIdOffset = result.nextCount;
+      if (!result) {
+        continue;
+      }
 
+      startIdOffset = result.nextCount;
       pts.push(...result.points);
+      break;
     }
 
     const exporter = new BinExporter();
@@ -1701,4 +1699,5 @@ class Misc {
 }
 
 const misc = new Misc();
+globalThis.misc = misc;
 misc.initialize();
