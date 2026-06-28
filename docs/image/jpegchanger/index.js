@@ -1023,6 +1023,7 @@ class Misc {
     let count = 0;
     for (let by = 0; by < div; ++by) {
       for (let bx = 0; bx < div; ++bx) {
+        /** RGB non-blur での座標 */
         let px = Math.floor((bx + 0.5) * pbw);
         let py = Math.floor((by + 0.5) * pbh);
         /** デプス画像でのX座標 */
@@ -1047,8 +1048,8 @@ class Misc {
 
         // カメラ座標系での座標
         const inCam = [
-          (dx - depthcx) / depthfx * depth,
-          (dy - depthcy) / depthfy * depth,
+          depth * (dx - depthcx) / depthfx,
+          depth * (dy - depthcy) / depthfy,
           depth,
         ];
 
@@ -1181,7 +1182,7 @@ class Misc {
 
       count += 1;
       if (count >= 5) {
-        break;
+        //break;
       }
     }
 
