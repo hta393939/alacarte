@@ -59,6 +59,9 @@ class Frame {
 }
 
 class Misc {
+  /** 手元のサンプル用 */
+  static DEFAULT_SCALE = 1 / 0.066;
+
   constructor() {
     this.src = '';
     this.dst = '';
@@ -1007,7 +1010,7 @@ class Misc {
 
     if (true) {
       console.log('reconOne sizes',
-        fx, fy, cx, cy,
+        mainfx, mainfy, maincx, maincy,
         'rgb', pw, ph, 'depth', dw, dh,
         'imagingmodel image', mainw, mainh);
     }
@@ -1067,6 +1070,8 @@ class Misc {
    * @param {FileSystemDirectoryHandle} root 
    */
   async actWithColmap(root) {
+    console.log('actWithColmap 実装していない');
+
     const param = this.gatherParam();
 
     const ret = {
@@ -1127,7 +1132,7 @@ class Misc {
     const result = await this.reconOne(
       imageCanvas, depthCanvas,
       depthmap, imagingmodel,
-      pose, 0.066,
+      pose, Misc.DEFAULT_SCALE,
     );
     return result;
   }
