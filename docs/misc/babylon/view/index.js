@@ -1,3 +1,5 @@
+import {BinParser, ColmapImage} from "../../../lib/colmap/colmapbin.js";
+import {Quaternion, Vector3} from "../../../lib/mathutil.js";
 
 
 class Misc {
@@ -111,8 +113,12 @@ class Misc {
    */
   async onDrop(file) {
     console.log('onDrop', file.name);
-    const pluginOptions = {
+    if (file.name === 'images.bin') {
+      this.onImages(file);
+      return;
+    }
 
+    const pluginOptions = {
     };
     const result = await BABYLON.ImportMeshAsync(file, this.scene, pluginOptions);
     if (file.name.endsWith('.ply')) {
@@ -136,6 +142,49 @@ class Misc {
     }
 
     console.log('onDrop', file.name);
+  }
+
+  /**
+   * images.bin を受け取った場合の追加処理
+   * @param {File} file 
+   */
+  async onImages(file) {
+    console.log('onImages');
+
+    const ab = await file.arrayBuffer();
+    const parser = new BinParser();
+    const images = parser.parseImage(ab, false);
+    const num = images.images.length;
+    const scene = this.scene;
+    for (let i = 0; i < num; ++i) {
+      /** @type {ColmapImage} */
+      const img = images.images[i];
+      {
+        const node = new BABYLON.TransformNode(`${i}`, scene);
+        {
+          const cyl = BABYLON.MeshBuilder.CreateCylinder(`cyl${i}`, {
+            height: 0.02,
+            diameterTop: 0,
+            diameterBottom: 0.02,
+          }, scene);
+          cyl.parent = node;
+        }
+        {
+          const sph = BABYLON.MeshBuilder.CreateSphere(`sph${i}`, {
+            diameter: 0.02,
+            radius: 0.02,
+          }, scene);
+          sph.position = new BABYLON.Vector3(0, 0, 0.1); // カメラ目線延長先
+          sph.parent = node;
+        }
+
+        const vec = new Vector3(0, 0, 0).add(1, new Vector3(...img.t), -1);
+        const conj = Quaternion.fromTopW(...img.wtop).conjugate();
+        const origin = conj.rot(vec);
+        node.position = origin;
+        node.rotationQuaternion = conj;
+      }
+    }
   }
 
   /**
