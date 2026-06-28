@@ -50,6 +50,10 @@ class Misc {
 
     //this.load(scene);
 
+    {
+      BABYLON.Inspector.Show(scene, {});
+    }
+
     this.addHandler();
   }
 
