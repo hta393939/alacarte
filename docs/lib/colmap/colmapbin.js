@@ -83,7 +83,7 @@ export class Point {
     this.p = [0, 0, 0];
     /** u8 */
     this.color = [255, 255, 255];
-    /** double */
+    /** double @type {number} */
     this.err = 0.5;
     /** @type {Track[]} 個数はu64 */
     this.tracks = [];

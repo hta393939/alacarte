@@ -24,6 +24,7 @@ class Misc {
     camera.wheelPrecision = 20;
     //camera.wheelDeltaPercentage = 0.01;
     camera.minZ = 0.01;
+    camera.upVector = new BABYLON.Vector3(0, -1, 0);
     camera.attachControl();
 
     {

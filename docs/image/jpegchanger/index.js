@@ -896,7 +896,7 @@ class Misc {
         if (id < 0) {
           continue; // -1 は対応点が無い
         }
-        // id から points から引く
+        /** id から points から引く @type {Point} */
         const pt = bins.points3D.points.find(v => v.id === id);
         if (!pt) {
           continue;
@@ -913,6 +913,10 @@ class Misc {
           fromdepth[2] / frompt[2]];
         // 3線分の平均
         const scale = (scales[0] + scales[1] + scales[2]) / 3;
+
+        // scale が10倍ぐらい違う3D点の方がむしろエラーが小さい
+        // 0.06-0.07は1.0未満ぐらい0.7で推移していて一番多い
+        //console.log('err', pt.err, scale);
 
         if (depth >= 0.5) {
           if (far > 2.0) {
@@ -970,7 +974,8 @@ class Misc {
     /** デプス画像として渡された canvas のピクセル幅 */
     const dw = depthCanvas.width;
     const dh = depthCanvas.height;
-    const div = 16;
+    //const div = 16;
+    const div = 32;
     const pbw = Math.ceil(pw / div);
     const pbh = Math.ceil(ph / div);
     const dbw = Math.ceil(dw / div);
