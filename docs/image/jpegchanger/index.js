@@ -793,6 +793,7 @@ class Misc {
     for (let i = 0; i < num; ++i) {
       /** @type {ColmapImage} */
       const img = bins.images.images[i];
+      /** colmap のカメラ @type {Cam} */
       const cam = bins.cameras.cameras.find(v => v.id === img.cameraid);
       if (!cam) {
         console.log('skip cam', img.name);
@@ -830,23 +831,27 @@ class Misc {
       const pcanvas = await this.imageBufToOff(pbuf, 1, false);
       const dcanvas = await this.imageBufToOff(dbuf, 1, false);
 
+      /** non-blur 画像のピクセル幅 */
       const pw = pcanvas.width;
       const ph = pcanvas.height;
       const dw = dcanvas.width;
       const dh = dcanvas.height;
 
-      const pfx = imagingmodel.focallengthx;
-      const pfy = imagingmodel.focallengthy;
-      const pcx = imagingmodel.principalpointx;
-      const pcy = imagingmodel.principalpointy;
+      /** メイン画像のパラメーター */
+      const mainw = imagingmodel.imagewidth;
+      const mainh = imagingmodel.imageheight;
+      const mainfx = imagingmodel.focallengthx;
+      const mainfy = imagingmodel.focallengthy;
+      const maincx = imagingmodel.principalpointx;
+      const maincy = imagingmodel.principalpointy;
 
       const far = depthmap.far;
       const near = depthmap.near;
 
-      const dfx = pfx * dw / pw;
-      const dfy = pfy * dh / ph;
-      const dcx = pcx * dw / pw;
-      const dcy = pcy * dh / ph;
+      const dfx = mainfx * dw / mainw;
+      const dfy = mainfy * dh / mainh;
+      const dcx = maincx * dw / mainw;
+      const dcy = maincy * dh / mainh;
 
       const q = Quaternion.fromTopW(...img.wtop);
       const t = Vector3.fromArray(img.t);
@@ -867,16 +872,20 @@ class Misc {
       for (let j = 0; j < pickNum; ++j) {
         const p2d = pickups[j];
 
-        const colpx = p2d.p[0];
-        const colpy = p2d.p[1];
+        const colmappx = p2d.p[0];
+        const colmappy = p2d.p[1];
 
-        // px, py から dx, dy へ変換 [ ] TODO 比率変換
-        const dx = Math.floor(colpx * dw / 1);
-        const dy = Math.floor(colpy * dh / 1);
+        // 比率変換
+        const dx = Math.floor(colmappx * dw / cam.width);
+        const dy = Math.floor(colmappy * dh / cam.height);
         // dx, dy から depth を手に入れる
         const doffset = (dx + dw * dy) * 4;
         const depth = depthmap.focaltable[ddata.data[doffset] * 2];
-        const fromdepth = [(dx - dcx) / dfx * depth, (dy - dcy) / dfy * depth, depth];
+        const fromdepth = [
+          (dx - dcx) / dfx * depth,
+          (dy - dcy) / dfy * depth,
+          depth
+        ];
         // ここではメートル単位
       
         // 3次元points3Dの位置から
@@ -920,12 +929,15 @@ class Misc {
     }
 
     const _avgvar = (vs) => {
+      const ret = {avg: 0, var: 0};
       const _n = vs.length;
       if (_n === 0) {
-        return [0, 0];
+        return ret;
       }
-      const onetwo = vs.reduce((p, c) => [p[0] + c[0], p[1] + c[1] ** 2], [0, 0]);
-      return [onetwo[0] / _n, onetwo[1] / _n];
+      const onetwo = vs.reduce((p, c) => [p[0] + c, p[1] + c ** 2], [0, 0]);
+      ret.avg = onetwo[0] / _n;
+      ret.var = onetwo[1] / _n - ret.avg ** 2; 
+      return ret;
     };
     ret.farWideDist = _avgvar(ret.farWide);
     ret.farNarrowDist = _avgvar(ret.farNarrow);
@@ -987,7 +999,7 @@ class Misc {
     const fy = imagingmodel.focallengthy;
     const cx = imagingmodel.principalpointx;
     const cy = imagingmodel.principalpointy;
-
+    /** メインの focal から比率変換した depth の focal */
     const depthfx = fx * dw / w;
     const depthfy = fy * dh / h;
     const depthcx = cx * dw / w;
