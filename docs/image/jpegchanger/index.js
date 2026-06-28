@@ -88,8 +88,13 @@ class Misc {
 
     /**
      * 現在の作業フォルダ配下の *.bin
+     * @type {{images: {images: ColmapImage[]}}}
      */
-    this.curbins = {};
+    this.curbins = {
+      images: {
+        images: []
+      }
+    };
   }
 
   async initialize() {
@@ -1151,6 +1156,8 @@ class Misc {
 
     const re = /^(?<branch>.+)\.(?<ext>[^\.]+)$/;
 
+    const exporter = new BinExporter();
+
     /** ここに格納していく @type {Point[]} */
     const pts = [];
     let startIdOffset = 1;
@@ -1160,7 +1167,8 @@ class Misc {
       if (!m) {
         continue;
       }
-      const name = `${m.groups['branch']}.PORTRAIT.${m.groups['ext']}`;
+      const branch = m.groups['branch'];
+      const name = `${branch}.PORTRAIT.${m.groups['ext']}`;
       const fh = await this.searchFileByPath(
         currentDirs.srcDir, name);
       if (!fh) {
@@ -1184,9 +1192,16 @@ class Misc {
       if (count >= 5) {
         //break;
       }
+
+      if (true) { // .ply 書き出す
+        const chunks = await exporter.makePly(pts);
+        this.download(new Blob(chunks), `${this.root.name}_${img.id}_${branch}.ply`);
+        pts.splice(0);
+      }
+
     }
 
-    const exporter = new BinExporter();
+
     if (false) { // points3D.bin 書き出す。書き出さない
       const chunks = await exporter.makePoint(pts, false);
       this.download(new Blob(chunks), `points3D.bin`);

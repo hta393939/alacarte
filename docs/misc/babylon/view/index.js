@@ -116,8 +116,9 @@ class Misc {
     };
     const result = await BABYLON.ImportMeshAsync(file, this.scene, pluginOptions);
     if (file.name.endsWith('.ply')) {
-      if (true) {
-        const mesh = result.meshes?.[0];
+      const mesh = result.meshes?.[0];
+      if (mesh) {
+        mesh.name = file.name;
         const mtl = mesh.material;
         console.log('mesh, mtl', mesh, mtl);
         if (!mtl) {

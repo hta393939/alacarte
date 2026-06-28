@@ -48,7 +48,7 @@ export class Point2D {
  */
 export class ColmapImage {
   constructor() {
-    /** i32 */
+    /** i32, イメージID */
     this.id = 0;
     /** double world to camera */
     this.wtop = [1, 0, 0, 0];
@@ -56,6 +56,7 @@ export class ColmapImage {
     this.t = [0, 0, 0];
     /** i32 */
     this.cameraid = 0;
+    /** 拡張子を含むファイル名 */
     this.name = '';
 
     /** @type {Point2D[]} u64で個数 */
