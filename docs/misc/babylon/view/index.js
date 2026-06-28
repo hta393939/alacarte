@@ -76,12 +76,32 @@ class Misc {
   }
 
   /**
-   * 
+   * 共通にロードする
    * @param {File} file 
    */
   async onDrop(file) {
     console.log('onDrop', file.name);
-    const result = await BABYLON.ImportMeshAsync(file, this.scene, {});
+    const pluginOptions = {
+
+    };
+    const result = await BABYLON.ImportMeshAsync(file, this.scene, pluginOptions);
+    if (file.name.endsWith('.ply')) {
+      if (true) {
+        const mesh = result.meshes?.[0];
+        const mtl = mesh.material;
+        console.log('mesh, mtl', mesh, mtl);
+        if (!mtl) {
+          const material = new BABYLON.MeshStandardMaterial('mtl1', this.scene);
+          mesh.material = material;
+        }
+        const el = document.getElementById('pointsize');
+        const size = Number.parseFloat(el?.value);
+        if (Number.isFinite(size)) {
+          mesh.material.pointSize = size;
+        }
+      }
+    }
+
     console.log('onDrop', file.name);
   }
 
