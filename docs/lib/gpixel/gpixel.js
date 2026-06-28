@@ -372,7 +372,7 @@ export class GPixel {
           console.log('attr value', attr.value);
           if (attr.name === 'gcamera:hdrplusmakernote') {
             const _buf = Uint8Array.fromBase64(attr.value);
-            console.log('_buf', _buf); // 46781バイトもある
+            console.log('_buf', attr.name, _buf); // 46781バイトもある
           }
         }
       }
@@ -417,7 +417,7 @@ export class GPixel {
   }
 
   /**
-   * 
+   * table からの参照と near と far の逆数の補間との比較 
    * @param {number[]} table 
    * @param {number} near 
    * @param {number} far 
@@ -429,20 +429,6 @@ export class GPixel {
       const invd = (1 / near) * (1 - rate) + (1 / far) * rate;
       console.log('focaltable', i, distance, 1 / invd, table[i * 2 + 1]);
     }
-  }
-
-  /**
-   * @param {number} x 0.0-1.0
-   */
-  qtoreal8(x, near, far) {
-    if (x <= 0) {
-      return near;
-    }
-    if (x >= 1) {
-      return far;
-    }
-    let val = far * near / (far - x * (far - near));
-    return val;
   }
 
   /**
@@ -477,6 +463,9 @@ export class GPixel {
     console.log('ToOff', w, h);
     return off;
   }
+
+
+
 
   /**
    * @param {FileSystemDirectoryHandle} dirHandle 
