@@ -993,23 +993,23 @@ class Misc {
     };
 
     // TODO: imagingmodel が 色か深さ かで dx,dy ではなく px,py
-    const w = imagingmodel.imagewidth;
-    const h = imagingmodel.imageheight;
-    const fx = imagingmodel.focallengthx;
-    const fy = imagingmodel.focallengthy;
-    const cx = imagingmodel.principalpointx;
-    const cy = imagingmodel.principalpointy;
+    const mainw = imagingmodel.imagewidth;
+    const mainh = imagingmodel.imageheight;
+    const mainfx = imagingmodel.focallengthx;
+    const mainfy = imagingmodel.focallengthy;
+    const maincx = imagingmodel.principalpointx;
+    const maincy = imagingmodel.principalpointy;
     /** メインの focal から比率変換した depth の focal */
-    const depthfx = fx * dw / w;
-    const depthfy = fy * dh / h;
-    const depthcx = cx * dw / w;
-    const depthcy = cy * dh / h;
+    const depthfx = mainfx * dw / mainw;
+    const depthfy = mainfy * dh / mainh;
+    const depthcx = maincx * dw / mainw;
+    const depthcy = maincy * dh / mainh;
 
     if (true) {
       console.log('reconOne sizes',
         fx, fy, cx, cy,
         'rgb', pw, ph, 'depth', dw, dh,
-        'imagingmodel image', w, h);
+        'imagingmodel image', mainw, mainh);
     }
 
     let count = 0;
@@ -1061,6 +1061,7 @@ class Misc {
   }
 
   /**
+   * 不使用
    * colmap の結果を使って
    * 奥行きと姿勢から3次元点を追加する
    * @param {FileSystemDirectoryHandle} root 
@@ -1125,7 +1126,8 @@ class Misc {
     // points を作る
     const result = await this.reconOne(
       imageCanvas, depthCanvas,
-      depthmap, imagingmodel, pose, startIdOffset,
+      depthmap, imagingmodel,
+      pose, 0.066,
     );
     return result;
   }
