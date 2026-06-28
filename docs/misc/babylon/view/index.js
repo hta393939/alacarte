@@ -1,8 +1,30 @@
 
 
 class Misc {
+  constructor() {
+    this.param = {
+      pointsize: 4,
+    };
+  }
 
   initialize() {
+    const search = new URLSearchParams(location.search);
+    const param = {};
+    for (const k of ['pointsize']) {
+      if (!search.has(k)) {
+        continue;
+      }
+      let val = search.get(k);
+      try {
+        val = Number.parseFloat(val);
+        param[k] = val;
+      } catch (e) {
+
+      }
+    }
+    this.param = param;
+
+
     /** @type {HTMLCanvasElement} */
     const canvas = document.getElementById('maincanvas');
     canvas.width = 512;
@@ -58,15 +80,18 @@ class Misc {
   }
 
   addHandler() {
+
+    /*
     for (const k of ['dragover', 'drop']) {
       document.body.addEventListener(k, ev => {
         ev.preventDefault();
         ev.stopPropagation();
         ev.dataTransfer.dropEffect = 'none';
       });
-    }
+    } */
 
-    const el = document.querySelector('.drop');
+    //const el = document.querySelector('.drop');
+    const el = document.body;
     el?.addEventListener('dragover', ev => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -99,8 +124,10 @@ class Misc {
           const material = new BABYLON.MeshStandardMaterial('mtl1', this.scene);
           mesh.material = material;
         }
-        const el = document.getElementById('pointsize');
-        const size = Number.parseFloat(el?.value);
+        //const el = document.getElementById('pointsize');
+        //const size = Number.parseFloat(el?.value);
+
+        const size = this.param.pointsize;
         if (Number.isFinite(size)) {
           mesh.material.pointSize = size;
         }

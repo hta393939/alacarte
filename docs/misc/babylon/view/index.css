@@ -7,6 +7,11 @@
   background-color: steelblue;
 }
 
+.tobottom {
+  display: flex;
+  flex-direction: column;
+}
+
 .num4 {
   width: 4em;
 }
