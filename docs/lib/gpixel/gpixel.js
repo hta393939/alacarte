@@ -195,13 +195,16 @@ export class GPixel {
       }
       const obj = {
         offset: c - 2,
-        next,
+        next, // この次ではなく、これ
         name: names[next],
         hexa: {},
       };
       info.tags.push(obj);
 
-      console.log('parseOneJpeg', c - 2, (c - 2).toString(16), next.toString(16), obj.name);
+      console.log('parseOneJpeg',
+        c - 2, `0x${(c - 2).toString(16)}`,
+        next.toString(16), obj.name,
+      );
 
       switch (next) {
       case 0xe1:
@@ -209,7 +212,7 @@ export class GPixel {
       case 0xeb:
         {
           // タグは含まずこのサイズフィールドは含む長さ
-          let num = p.getUint16(c, false);
+          let num = p.getUint16(c, false); // Big Endian
           c += 2;
           obj.num = num;
 
