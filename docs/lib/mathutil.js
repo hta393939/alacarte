@@ -111,6 +111,11 @@ export class Vector3 {
     return Vector3.fromArray(this.asArray());
   }
 
+  /**
+   * 
+   * @param {Vector3} b 
+   * @returns 
+   */
   dot(b) {
     return this.x * b.x + this.y * b.y + this.z * b.z;
   }
@@ -132,6 +137,10 @@ export class Vector3 {
     return Math.sqrt(this.dot(this));
   }
 
+  /**
+   * 非破壊で新しいインスタンスで正規化ベクトルを返す
+   * @returns 
+   */
   normal() {
     const len = this.length();
     const k = (len > 0) ? 1 / len : 1;
@@ -150,6 +159,15 @@ export class Vector3 {
     ret.y = this.y * ka + b.y * kb;
     ret.z = this.z * ka + b.z * kb;
     return ret;
+  }
+
+  /**
+   * 2つのベクトルを先に正規化して内積を計算する
+   * @param {Vector3} b 
+   * @returns {number}
+   */
+  normaldot(b) {
+    return this.normal().dot(b.normal());
   }
 
 }

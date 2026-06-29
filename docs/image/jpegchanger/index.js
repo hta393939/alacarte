@@ -112,7 +112,7 @@ class Misc {
       obj[k] = el.value;
     }
     // チェックボックス
-    for (const k of ['isdel']) {
+    for (const k of ['isdel', 'eachply', 'addtopoints3d']) {
       const el = document.getElementById(k);
       obj[k] = el?.checked;
     }
@@ -735,13 +735,6 @@ class Misc {
     }
 
     {
-      const el = document.getElementById('actwithcolmap');
-      el?.addEventListener('click', async () => {
-        await this.actWithColmap(this.root);
-      });
-    }
-
-    {
       const el = document.getElementById('inferscale');
       el?.addEventListener('click', () => {
         this.inferScale();
@@ -776,8 +769,8 @@ class Misc {
             continue;
           }
           const nextTag = info.tags[i + 1];
-          // APP1 タグから2バイト進める
-          const subab = ab.slice(tag.offset + 2, nextTag.offset);
+          // APP1 タグからタグとサイズフィールドの4バイト進める
+          const subab = ab.slice(tag.offset + 4, nextTag.offset);
           const subinfo = await gpixel.parseJpeg(subab, true);
           console.log('subinfo', subinfo);
           break;
@@ -1123,42 +1116,6 @@ class Misc {
   }
 
   /**
-   * 不使用
-   * colmap の結果を使って
-   * 奥行きと姿勢から3次元点を追加する
-   * @param {FileSystemDirectoryHandle} root 
-   */
-  async actWithColmap(root) {
-    console.log('actWithColmap 実装していない');
-
-    const param = this.gatherParam();
-
-    const ret = {
-      points: [],
-    };
-    for (let i = 0; i < 0; ++i) { // 画像ごと
-      // 取得方法はアルゴリズムによって
-      // 標準は均等分割
-      const pixelImage = 0;
-      const depthImage = 0;
-      const depthInfo = {};
-      const cameraInfo = {};
-      const pose = {};
-      const scale = 1;
-
-      const result = await this.reconOne(pixelImage,
-        depthImage,
-        depthInfo,
-        cameraInfo,
-        pose,
-        scale,
-      );
-      ret.points.push(...result.points);
-    }
-    return ret;
-  }
-
-  /**
    * 1枚のjpegファイルから点の配列を得る
    * @param {File} jpegFile 
    * @param {number[]} tailW  
@@ -1201,6 +1158,7 @@ class Misc {
    * 現時点の状態で1枚だけ処理をする
    */
   async tempOne() {
+    const param = this.gatherParam();
     const currentDirs = await this.searchDir(this.root);
 
     const re = /^(?<branch>.+)\.(?<ext>[^\.]+)$/;
@@ -1208,8 +1166,13 @@ class Misc {
     const exporter = new BinExporter();
 
     /** ここに格納していく @type {Point[]} */
-    const pts = [];
-    let startIdOffset = 1;
+    const pts = (param.addtopoints3d ? this.curbins?.points3D?.points : []) || [];
+    let startIdOffset = 0;
+    for (const p3d of pts) { // 最大を調べる
+      startIdOffset = Math.max(startIdOffset, p3d.id);
+    }
+    startIdOffset += 1; // 最大の次から
+
     let count = 0;
     for (const img of this.curbins.images.images) {
       const m = re.exec(img.name);
@@ -1242,7 +1205,7 @@ class Misc {
         //break;
       }
 
-      if (true) { // .ply 書き出す
+      if (param.eachply) { // .ply 書き出す
         const chunks = await exporter.makePly(pts);
         this.download(new Blob(chunks), `${this.root.name}_${img.id}_${branch}.ply`);
         pts.splice(0);
@@ -1251,12 +1214,12 @@ class Misc {
     }
 
 
-    if (false) { // points3D.bin 書き出す。書き出さない
+    if (param.addtopoints3d) { // points3D.bin 書き出す。書き出さない
       const chunks = await exporter.makePoint(pts, false);
       this.download(new Blob(chunks), `points3D.bin`);
     }
 
-    { // .ply 書き出す
+    if (!param.eachply) { // .ply 書き出す
       const chunks = await exporter.makePly(pts);
       this.download(new Blob(chunks), `${this.root.name}.ply`);
     }
