@@ -912,25 +912,27 @@ class Misc {
         const frompt = fromptv.asArray();
         // これを incam 内で比較すると scale が決まる
 
-        const scales = [
-          fromdepth[0] / frompt[0],
-          fromdepth[1] / frompt[1],
-          fromdepth[2] / frompt[2]];
-        // 3線分の平均
-        const scale = (scales[0] + scales[1] + scales[2]) / 3;
+        const lenD = Vector3.fromArray(fromdepth).length();
+        const lenPt = Vector3.fromArray(frompt).length();
+        const scale = lenD / lenPt;
+        const delta = 0.002;
+        if (lenD < delta || lenPt < delta) {
+          console.log('too small', lenD, lenPt, scale);
+          continue; // 小さすぎるものは除外
+        }
 
         // scale が10倍ぐらい違う3D点の方がむしろエラーが小さい
         // 0.06-0.07は1.0未満ぐらい0.7で推移していて一番多い
         //console.log('err', pt.err, scale);
 
-        if (depth >= 0.5) {
-          if (far > 2.0) {
+        if (depth >= 0.4) {
+          if (far > 1.0) {
             ret.farWide.push(scale);
           } else {
             ret.nearWide.push(scale);
           }
         } else {
-          if (far > 2.0) {
+          if (far > 1.0) {
             ret.farNarrow.push(scale);
           } else {
             ret.nearNarrow.push(scale);
