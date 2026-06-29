@@ -60,8 +60,8 @@ class Frame {
 
 class Misc {
   /** 手元のサンプル用 */
-  //static DEFAULT_SCALE = 1 / 0.044;
-  static DEFAULT_SCALE = 0.044;
+  //static DEFAULT_SCALE = 1 / 0.0434;
+  static DEFAULT_SCALE = 0.0434;
 
   constructor() {
     this.src = '';
@@ -790,10 +790,10 @@ class Misc {
     const bins = this.curbins;
 
     const ret = {
-      farWide: [], // 50cm超過，デプスfar は2m超過
-      farNarrow: [],
+      farWide: [], // レンジ広
+      farNarrow: [], // レンジ狭い
       nearWide: [],
-      nearNarrow: [], // 50cm未満, デプスfar は2m未満
+      nearNarrow: [],
     };
 
     const re = /^(?<branch>.+)\.(?<ext>[^\.]+)$/;
@@ -954,10 +954,17 @@ class Misc {
       ret.var = onetwo[1] / _n - ret.avg ** 2; 
       return ret;
     };
-    ret.farWideDist = _avgvar(ret.farWide);
-    ret.farNarrowDist = _avgvar(ret.farNarrow);
-    ret.nearWideDist = _avgvar(ret.nearWide);
-    ret.nearNarrowDist = _avgvar(ret.nearNarrow);
+    const _logstat = (vs) => {
+      // ログで平均を取る
+      const result = _avgvar(vs.map(v => Math.log(v)));
+      result.result = Math.exp(result.avg);
+      return result;
+    };
+
+    ret.farWideDist = _logstat(ret.farWide);
+    ret.farNarrowDist = _logstat(ret.farNarrow);
+    ret.nearWideDist = _logstat(ret.nearWide);
+    ret.nearNarrowDist = _logstat(ret.nearNarrow);
     // 4つ比較してどうなるか
     console.log('inferScale', ret);
   }
@@ -1052,7 +1059,8 @@ class Misc {
         ];
         // デプス
         const doffset = (dx + dw * dy) * 4;
-        const depth = _depth(ddata.data[doffset]); // 赤成分
+        // 平行移動を含まない各inCamでのスケール
+        const depth = scale * _depth(ddata.data[doffset]); // 赤成分
 
         // カメラ座標系での座標
         const inCam = [
@@ -1067,8 +1075,7 @@ class Misc {
         // inCam から t を引いて，R^-1 を掛ける
         const q = Quaternion.fromBottomW(...pose.tailW).conjugate();
         const world = q.rot(vec);
-        // scale 倍は最後に
-        p3d.p = world.add(scale, new Vector3(), 0).asArray();
+        p3d.p = world.asArray();
 
         ret.points.push(p3d);
       }

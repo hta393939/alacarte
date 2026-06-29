@@ -99,11 +99,13 @@ class Misc {
       ev.stopPropagation();
       ev.dataTransfer.dropEffect = 'link';
     });
-    el?.addEventListener('drop', ev => {
+    el?.addEventListener('drop', async ev => {
       ev.preventDefault();
       ev.stopPropagation();
       ev.dataTransfer.dropEffect = 'link';
-      this.onDrop(ev.dataTransfer.files[0]);
+      for (const file of ev.dataTransfer.files) {
+        await this.onDrop(file);
+      }
     });
   }
 
@@ -172,7 +174,7 @@ class Misc {
           cyl.position = new BABYLON.Vector3(0, -height * 0.5, 0);
           cyl.parent = node;
         }
-        if (true) {
+        if (false) {
           const sph = BABYLON.MeshBuilder.CreateSphere(`sph${i}`, {
             diameter: radius,
             radius: radius,
