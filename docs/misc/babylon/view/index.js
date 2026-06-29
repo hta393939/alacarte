@@ -161,21 +161,35 @@ class Misc {
       const img = images.images[i];
       {
         const node = new BABYLON.TransformNode(`${i}`, scene);
+        const height = 0.4;
+        const radius = 0.2;
         {
           const cyl = BABYLON.MeshBuilder.CreateCylinder(`cyl${i}`, {
-            height: 0.02,
-            diameterTop: 0,
-            diameterBottom: 0.02,
+            height,
+            diameterTop: radius,
+            diameterBottom: 0,
           }, scene);
+          cyl.position = new BABYLON.Vector3(0, -height * 0.5, 0);
           cyl.parent = node;
         }
-        {
+        if (true) {
           const sph = BABYLON.MeshBuilder.CreateSphere(`sph${i}`, {
-            diameter: 0.02,
-            radius: 0.02,
+            diameter: radius,
+            radius: radius,
           }, scene);
-          sph.position = new BABYLON.Vector3(0, 0, 0.1); // カメラ目線延長先
+          sph.position = new BABYLON.Vector3(0, 0, 1); // カメラ目線延長先
           sph.parent = node;
+        }
+        if (true) {
+          const points = [
+            new BABYLON.Vector3(0, 0, 0),
+            new BABYLON.Vector3(0, 0, 5),
+          ];
+          const line = BABYLON.MeshBuilder.CreateLines(`line${i}`, {
+            points,
+          }, scene);
+          line.color = new BABYLON.Color3(1, 0, 0);
+          line.parent = node;
         }
 
         const vec = new Vector3(0, 0, 0).add(1, new Vector3(...img.t), -1);

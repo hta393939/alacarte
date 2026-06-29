@@ -60,7 +60,8 @@ class Frame {
 
 class Misc {
   /** 手元のサンプル用 */
-  static DEFAULT_SCALE = 1 / 0.066;
+  //static DEFAULT_SCALE = 1 / 0.044;
+  static DEFAULT_SCALE = 0.044;
 
   constructor() {
     this.src = '';
