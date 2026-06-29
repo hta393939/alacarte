@@ -759,13 +759,30 @@ class Misc {
         const gpixel = new GPixel();
         const info = await gpixel.parseJpeg(ab, true);
         console.log('info', info);
+
+        /*
         for (let i = 0; i < info.frames.length; ++i) {
           const frame = info.frames[i];
           for (const k in frame.hexa) {
             // NOTE: ダウンロード無効
             //this.download(new Blob([frame.hexa[k]]), `jpeg${i}.xml`);
           }
+        } */
+
+        const tagNum = info.tags.length;
+        for (let i = 0; i < tagNum; ++i) {
+          const tag = info.tags[i];
+          if (tag.name !== 'APP1') {
+            continue;
+          }
+          const nextTag = info.tags[i + 1];
+          // APP1 タグから2バイト進める
+          const subab = ab.slice(tag.offset + 2, nextTag.offset);
+          const subinfo = await gpixel.parseJpeg(subab, true);
+          console.log('subinfo', subinfo);
+          break;
         }
+
       });
     }
     { // 反映後のダウンロード

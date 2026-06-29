@@ -306,6 +306,9 @@ export class GPixel {
 
       if (addElement) {
         const img = document.createElement('img');
+        img.addEventListener('load', ev => {
+          console.log(`addElement`, i, ev, img.naturalWidth, img.naturalHeight);
+        });
         img.classList.add('thumb');
         img.src = URL.createObjectURL(new Blob([sub]));
         document.body.appendChild(img);
