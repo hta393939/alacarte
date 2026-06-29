@@ -60,8 +60,7 @@ class Frame {
 
 class Misc {
   /** 手元のサンプル用 */
-  //static DEFAULT_SCALE = 1 / 0.0434;
-  static DEFAULT_SCALE = 0.0434;
+  static DEFAULT_SCALE = 1 / 0.0434;
 
   constructor() {
     this.src = '';
@@ -118,7 +117,9 @@ class Misc {
       obj[k] = el?.checked;
     }
     // 数値
-    for (const k of ['divnum', 'targetimageid']) {
+    for (const k of ['divnum', 'targetimageid',
+      'scale',
+    ]) {
       const el = document.getElementById(k);
       const val = Number.parseFloat(el?.value);
       if (Number.isFinite(val)) {
@@ -966,6 +967,13 @@ class Misc {
     ret.nearWideDist = _logstat(ret.nearWide);
     ret.nearNarrowDist = _logstat(ret.nearNarrow);
     // 4つ比較してどうなるか
+    {
+      const el = document.getElementById('scale');
+      if (el) {
+        el.value = ret.nearNarrowDist.result;
+      }
+    }
+
     console.log('inferScale', ret);
   }
 
@@ -1128,6 +1136,7 @@ class Misc {
    * @param {number[]} t
    */
   async oneActWithColmap(jpegFile, tailW, t, startIdOffset = 1) {
+    const param = this.gatherParam();
     console.log('oneActWithColmap', jpegFile.name);
     const ab = await jpegFile.arrayBuffer();
     // パースする
@@ -1154,7 +1163,7 @@ class Misc {
     const result = await this.reconOne(
       imageCanvas, depthCanvas,
       depthmap, imagingmodel,
-      pose, Misc.DEFAULT_SCALE,
+      pose, param.scale,
     );
     return result;
   }
