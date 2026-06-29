@@ -60,7 +60,7 @@ class Frame {
 
 class Misc {
   /** 手元のサンプル用 */
-  static DEFAULT_SCALE = 1 / 0.0434;
+  static DEFAULT_SCALE = 0.0434;
 
   constructor() {
     this.src = '';
@@ -1090,7 +1090,7 @@ class Misc {
         // デプス
         const doffset = (dx + dw * dy) * 4;
         // 平行移動を含まない各inCamでのスケール
-        const depth = scale * _depth(ddata.data[doffset]); // 赤成分
+        const depth = 1 / scale * _depth(ddata.data[doffset]); // 赤成分
 
         // カメラ座標系での座標
         const inCam = [
@@ -1155,7 +1155,9 @@ class Misc {
   }
 
   /**
-   * 現時点の状態で1枚だけ処理をする
+   * 現時点の状態で処理をする。
+   * もしかしたら画像ごとにスケール算出した方が
+   * いい結果になるかもしれないが今は全体算出を使用する。
    */
   async tempOne() {
     const param = this.gatherParam();
