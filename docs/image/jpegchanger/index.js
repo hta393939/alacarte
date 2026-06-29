@@ -757,7 +757,15 @@ class Misc {
         const f = await fhs[0].getFile();
         const ab = await f.arrayBuffer();
         const gpixel = new GPixel();
-        await gpixel.parseJpeg(ab, true);
+        const info = await gpixel.parseJpeg(ab, true);
+        console.log('info', info);
+        for (let i = 0; i < info.frames.length; ++i) {
+          const frame = info.frames[i];
+          for (const k in frame.hexa) {
+            // NOTE: ダウンロード無効
+            //this.download(new Blob([frame.hexa[k]]), `jpeg${i}.xml`);
+          }
+        }
       });
     }
     { // 反映後のダウンロード

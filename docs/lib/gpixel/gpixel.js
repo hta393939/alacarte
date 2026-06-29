@@ -360,31 +360,35 @@ export class GPixel {
     ];
 
     /**
-     * 
+     * 再帰で属性をダンプする
      * @param {Node} _n 
      */
-    const _f = (_n) => {
+    const _f = (_n, _dst) => {
       console.log('node', _n.tagName, _n.nodeType);
       //if (_n.tagName === 'RDF:DESCRIPTION') {
       if (true) {
         for (const attr of _n.attributes) {
           console.log('attr name', attr.name, attr.localName);
           console.log('attr value', attr.value);
-          if (attr.name === 'gcamera:hdrplusmakernote') {
+          if (attr.name === 'GCamera:HdrPlusMakernote'.toLowerCase()
+            || attr.name === 'GCamera:PortraitNote'.toLowerCase()
+          ) {
             const _buf = Uint8Array.fromBase64(attr.value);
-            console.log('_buf', attr.name, _buf); // 46781バイトもある
+            console.log('_buf', attr.name, _buf); // Hdr は 46781バイトもある
+            _dst[attr.name] = _buf;
+            // 72, 68, 82, 80 は HDRP で全部これで開始している
           }
         }
       }
 
       for (const _n2 of _n.children) {
-        _f(_n2);
+        _f(_n2, _dst);
       }
     };
-    _f(el);
+    const ret = {buffers: {}};
+    _f(el, ret.buffers);
 
 
-    const ret = {};
     for (const sub of ['depthmap', 'imagingmodel', 'gcamera']) {
       const obj = {};
       ret[sub] = obj;
