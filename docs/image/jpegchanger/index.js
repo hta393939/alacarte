@@ -1051,7 +1051,7 @@ class Misc {
         ];
         // デプス
         const doffset = (dx + dw * dy) * 4;
-        const depth = _depth(ddata.data[doffset]) * scale; // 赤成分
+        const depth = _depth(ddata.data[doffset]); // 赤成分
 
         // カメラ座標系での座標
         const inCam = [
@@ -1066,7 +1066,8 @@ class Misc {
         // inCam から t を引いて，R^-1 を掛ける
         const q = Quaternion.fromBottomW(...pose.tailW).conjugate();
         const world = q.rot(vec);
-        p3d.p = world.asArray();
+        // scale 倍は最後に
+        p3d.p = world.add(scale, new Vector3(), 0).asArray();
 
         ret.points.push(p3d);
       }
