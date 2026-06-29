@@ -458,6 +458,8 @@ class Misc {
     /** @type {FileSystemDirectoryHandle} */
     const dstDir = dirobj.imagesDir;
 
+    const gpixel = new GPixel();
+
     /**
      * 2回目以降はimg elementを追加しない
      */
@@ -471,7 +473,7 @@ class Misc {
       const srcab = await f.arrayBuffer();
 
       // 分離して2or0を取得する
-      const info = await this.parseJpeg(srcab, first);
+      const info = await gpixel.parseJpeg(srcab, first);
       const onejpeg = info.frames[(info.frames.length >= 3) ? 2 : 0].buffer;
 
       const off = await this.imageBufToOff(onejpeg, divnum, true);
@@ -683,7 +685,8 @@ class Misc {
 
         this.curfile = file;
         const ab = await file.arrayBuffer();
-        const info = await this.parseJpeg(ab, true);
+        const gpixel = new GPixel();
+        const info = await gpixel.parseJpeg(ab, true);
         this.curinfo = info;
         console.log('ドロップ処理時 info', info);
         this.curname = file.name;
@@ -753,7 +756,8 @@ class Misc {
         const fhs = await window.showOpenFilePicker(opt);
         const f = await fhs[0].getFile();
         const ab = await f.arrayBuffer();
-        await this.parseJpeg(ab, true);
+        const gpixel = new GPixel();
+        await gpixel.parseJpeg(ab, true);
       });
     }
     { // 反映後のダウンロード
@@ -1534,6 +1538,8 @@ class Misc {
    * @param {boolean} addElement 
    */
   async parseJpeg(ab, addElement = true) {
+    console.log('index.js の parseJpeg');
+
     const byteNum = ab.byteLength;
 
     let info = await this.parseOneJpeg(ab);
@@ -1787,6 +1793,8 @@ class Misc {
     /** 出力先 @type {FileSystemDirectoryHandle} */
     const dstDir = dirobj.depthDir;
 
+    const gpixel = new GPixel();
+
     /**
      * 2回目以降はimg elementを追加しない
      */
@@ -1800,7 +1808,7 @@ class Misc {
       const srcab = await f.arrayBuffer();
 
       // 分離して2or0を取得する
-      const info = await this.parseJpeg(srcab, first);
+      const info = await gpixel.parseJpeg(srcab, first);
       if (info.frames.length < 5) {
         continue;
       }
