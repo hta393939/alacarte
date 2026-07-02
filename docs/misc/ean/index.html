@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>qrean barcode rtc</title>
+    <link rel="stylesheet" href="./index.css" />
+    <!-- docs only -->
+  </head>
+  <body>
+
+    <div>
+      <div>
+
+        <div id="innerview"></div>
+        <div id="element"></div>
+        <button class="largebutton pointer" id="startbutton">開始</button>
+      </div>
+      <div>
+        <button class="largebutton pointer" id="enumbutton">列挙ボタン</button>
+        <button class="largebutton pointer" id="actscan">スキャン準備と開始</button>
+        5678<div id="scanview"></div>
+        <input class="pointer" id="zoomnumber" type="range" min="1" max="10" value="1" />
+        <span id="zoomnumberview"></span>
+        <div id="devices"></div>
+      </div>
+
+      <div class="toright">
+        <div>
+          <div id="fpsview"></div>
+          <video id="video" autoplay controls muted></video>
+          <label class="pointer"><input type="checkbox" class="pointer" id="enableloop" />ループ</label>
+        </div>
+        <div>
+          <video id="subvideo" controls muted></video>
+        </div>
+        <!--
+        <div>
+          <canvas id="copied"></canvas>
+        </div>
+      -->
+      </div>
+
+      <div>
+        <div id="console"></div>
+      </div>
+
+    </div>
+
+    <script src="../../third_party/libqrean/Qrean.js"></script>
+    <script src="./index.js"></script>
+  </body>
+</html>
+
