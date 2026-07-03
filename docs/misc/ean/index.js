@@ -314,23 +314,20 @@ class Misc {
    */
   async readyReader() {
     const el = document.getElementById('scanview');
-
-    let format = 'n/a';
-    el.textContent = `out ${format}`;
     try {
-      el.textContent = `in ${format}`;
-      /** @type {Blob|ImageBitmapSource} */
-      let target = document.getElementById('video');
+      /** @type {HTMLVideoElement} */
+      const video = document.getElementById('video');
 
       const canvas = document.createElement('canvas');
-      canvas.width = target.videoWidth;
-      canvas.height = target.videoHeight;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       const c = canvas.getContext('2d');
       c.drawImage(video, 0, 0);
+      const imgdata = c.getImageData(0, 0, canvas.width, canvas.height);
 
       /** @type {detected: Detected[]} */
-      const result = await Qrean.detect(target, {});
-      el.textContent = `${result.detected.length}, ${format}`;
+      const result = await Qrean.detect(imgdata, {});
+      el.textContent = `${result.detected.length}`;
       for (const detected of result.detected) {
         this.log('result', JSON.stringify(detected));
 
