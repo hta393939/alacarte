@@ -4,13 +4,17 @@ class Barcode {
   }
 
   async initialize() {
-    const module = await import('../../third_party/libqrean/Qrean.js');
-    if (!module) {
-      return;
-    }
+    try {
+      const module = await import('../../third_party/libqrean/Qrean.js');
+      if (!module) {
+        return;
+      }
 
-    globalThis.Qrean = module.Qrean;
-    globalThis.postMessage({type: 'ready'});
+      globalThis.Qrean = module.Qrean;
+      globalThis.postMessage({type: 'ready'});
+    } catch (e) {
+      console.warn('%cinitialize', 'color:green;', e.message);
+    }
   }
 
   /**

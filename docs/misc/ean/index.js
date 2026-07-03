@@ -64,7 +64,7 @@ class Misc {
         globalThis.Qrean = module.Qrean;
         console.log('import', module, globalThis.Qrean);
 
-        this.makeQr();
+        this.makeQr('12345');
       }
     }
   }
@@ -314,23 +314,9 @@ class Misc {
   async readyReader() {
     const el = document.getElementById('scanview');
 
-    if (!window.BarcodeDetector) {
-      el.textContent = `No Detector exist`;
-      return;
-    }
-    const formats = await window.BarcodeDetector.getSupportedFormats();
-    for (const format of formats) {
-      this.log('sup', format);
-    }
-
-    let format = true ? 'qr_code' : 'ean13';
+    let format = 'n/a';
     el.textContent = `out ${format}`;
     try {
-      const opt = {
-        formats: [format]
-      };
-      /** @type {BarcodeDetector} */
-      const reader = new window.BarcodeDetector(opt);
       el.textContent = `in ${format}`;
       /** @type {Blob|ImageBitmapSource} */
       let target = document.getElementById('video');
@@ -341,11 +327,11 @@ class Misc {
       const c = canvas.getContext('2d');
       c.drawImage(video, 0, 0);
 
-      /** @type {DetectedBarcode[]} */
-      const results = await reader.detect(target);
-      el.textContent = `${results.length}, ${format}`;
-      for (const result of results) {
-        this.log('result', JSON.stringify(result));
+      /** @type {detected: Detected[]} */
+      const result = await Qrean.detect(target, {});
+      el.textContent = `${result.detected.length}, ${format}`;
+      for (const detected of result.detected) {
+        this.log('result', JSON.stringify(detected));
 
         this.makeView(canvas, result);
       }
@@ -421,24 +407,24 @@ class Misc {
   async detectInMain() {
     const el = document.getElementById('scanview');
 
-    if (!window.BarcodeDetector) {
-      el.textContent = `No Detector exist`;
-      return;
-    }
-
     try {
-      const opt = {
-        formats: ['qr_code']
-      };
-      /** @type {BarcodeDetector} */
-      const reader = new window.BarcodeDetector(opt);
-      /** @type {Blob|ImageBitmapSource} */
-      let target = document.getElementById('video');
+      const video = document.getElementById('video');
+      const w = video.width;
+      const h = video.height;
+      const canvas = new OffscreenCanvas(w, h);
+      const c = canvas.getContext('2d');
+      c.drawImage(video, 0, 0);
+      const imgdata = c.getImageData(0, 0, w, h);
 
-      /** @type {DetectedBarcode[]} */
-      const results = await reader.detect(target);
-      for (const result of results) {
+      const opts = {
+      
+      };
+      /** @type {{detected: Detected[], digitized: Image}} */
+      const result = await Qrean.detect(imgdata, opt);
+
+      for (const detected of result.detected) {
         //this.makeView(canvas, result);
+        console.log('detected', detected);
       }
     } catch (e) {
       this.log('detect', e.message);
@@ -491,8 +477,11 @@ class Misc {
     return canvas;
   }
 
-  async makeQr() {
-    let text = '12345';
+  /**
+   * 
+   * @param {string} text 
+   */
+  async makeQr(text) {
     const opts = {
       //codeType: Qrean.CODE_TYPES.mQR,
       codeType: Qrean.CODE_TYPE_MQR,
@@ -510,4 +499,5 @@ class Misc {
 }
 
 const misc = new Misc();
+globalThis.misc = misc;
 misc.initialize();
