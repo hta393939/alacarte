@@ -59,15 +59,7 @@ class Misc {
 
     this.initializeWorker();
 
-    {
-      const module = await import('../../third_party/libqrean/Qrean.js');
-      if (module) {
-        globalThis.Qrean = module.Qrean;
-        console.log('import', module, globalThis.Qrean);
-
-        this.makeQr('12345');
-      }
-    }
+    this.makeQr('9999');
   }
 
   async log(...args) {
@@ -219,6 +211,14 @@ class Misc {
   }
 
   setListener() {
+    {
+      const el = document.getElementById('encode');
+      el?.addEventListener('click', () => {
+        const textel = document.getElementById('enctext');
+        this.makeQr(textel.value);
+      });
+    }
+
     {
       const el = document.body;
       el?.addEventListener('dragover', ev => {
