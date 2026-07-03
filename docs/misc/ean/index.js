@@ -22,6 +22,7 @@
  * @property {string} rawValue URLなど
  */
 
+import { Qrean } from '../../third_party/libqrean/Qrean.js';
 
 class Misc {
   constructor() {
