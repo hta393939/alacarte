@@ -84,6 +84,8 @@ class Misc {
       console.log('receive', ev.data);
       switch (ev.data.type) {
         case 'detectresult':
+          // [ ] TODO: 結果を見る
+
           break;
         case 'ready':
           {
@@ -309,20 +311,30 @@ class Misc {
   }
 
   /**
+   * ビデオからコンテキストを返す
+   */
+  makeContext() {
+    /** @type {HTMLVideoElement} */
+    const video = document.getElementById('video');
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const c = canvas.getContext('2d');
+    c.drawImage(video, 0, 0);
+    return c;
+  }
+
+  /**
    * リーダーを用意する
    * @returns 
    */
   async readyReader() {
     const el = document.getElementById('scanview');
     try {
-      /** @type {HTMLVideoElement} */
-      const video = document.getElementById('video');
-
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const c = canvas.getContext('2d');
-      c.drawImage(video, 0, 0);
+      const c = this.makeContext();
+      const canvas = c.canvas;
       const imgdata = c.getImageData(0, 0, canvas.width, canvas.height);
 
       /** @type {detected: Detected[]} */
@@ -331,8 +343,10 @@ class Misc {
       for (const detected of result.detected) {
         this.log('result', JSON.stringify(detected));
 
-        this.makeView(canvas, result);
+        this.makeView(canvas, detected);
       }
+      document.body.appendChild(canvas);
+
     } catch (e) {
       this.log('detect', e.message);
     }
@@ -340,14 +354,14 @@ class Misc {
   }
 
   /**
-   * 
+   * 追加はしない
    * @param {HTMLCanvasElement} canvas
-   * @param {DetectedBarcode} one 
+   * @param {Detected} one 
    */
   makeView(canvas, one) {
     const c = canvas.getContext('2d');
     {
-      const pts = one.cornerPoints;
+      const pts = one.points;
       let sx = pts[0].x;
       let sy = pts[0].y;
       c.fillStyle = '#ff0000';
@@ -374,7 +388,7 @@ class Misc {
       c.lineWidth = 4;
       c.stroke();
     }
-    document.body.appendChild(canvas);
+
   }
 
   /**

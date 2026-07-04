@@ -18,11 +18,15 @@ class Barcode {
   }
 
   /**
-   * ImageBitmap, OffscreenCanvas でもよい
+   * width, data を持っていること
    */
   async detect(data) {
-    const results = await Qrean.decode(data.image);
-    globalThis.postMessage({type: 'detectresult', results});
+    try {
+      const result = await Qrean.decode(data.image, {});
+      globalThis.postMessage({type: 'detectresult', result});
+    } catch (e) {
+      globalThis.postMessage({type: 'detectresult', result: null});
+    }
   }
 
   onMessage(ev) {
