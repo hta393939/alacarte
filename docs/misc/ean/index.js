@@ -22,6 +22,7 @@
  * @property {string} rawValue URLなど
  */
 
+/// <reference path="../../third_party/libqrean/Qrean.d.ts" />
 import { Qrean } from '../../third_party/libqrean/Qrean.js';
 
 class Misc {
@@ -64,7 +65,7 @@ class Misc {
     {
       const el = document.getElementById('innerview');
       if (el) {
-        el.textContent = `2026-07-04T13:30`;
+        el.textContent = `2026-07-04T18:49`;
       }
     }
   }
@@ -360,8 +361,8 @@ class Misc {
     const c = canvas.getContext('2d');
     {
       const pts = one.points;
-      let sx = pts[0].x;
-      let sy = pts[0].y;
+      let sx = pts[0][0];
+      let sy = pts[0][1];
       c.fillStyle = '#ff0000';
       c.beginPath();
       c.ellipse(sx, sy, 4, 4, 0,
@@ -371,7 +372,7 @@ class Misc {
 
       c.fillStyle = '#55aaaa';
       c.beginPath();
-      c.ellipse(pts[1].x, pts[1].y, 8, 8, 0,
+      c.ellipse(pts[1][0], pts[1][1], 8, 8, 0,
         0, Math.PI * 2);
       c.closePath();
       c.fill();
@@ -380,7 +381,7 @@ class Misc {
       c.moveTo(sx, sy);
       c.strokeStyle = '#00aa00';
       for (let i = 1; i <= 3; ++i) {
-        c.lineTo(pts[i].x, pts[i].y);
+        c.lineTo(pts[i][0], pts[i][1]);
       }
       c.closePath();
       c.lineWidth = 4;
@@ -418,16 +419,12 @@ class Misc {
     const el = document.getElementById('scanview');
 
     try {
-      const video = document.getElementById('video');
-      const w = video.width;
-      const h = video.height;
-      const canvas = new OffscreenCanvas(w, h);
-      const c = canvas.getContext('2d');
-      c.drawImage(video, 0, 0);
-      const imgdata = c.getImageData(0, 0, w, h);
+      const ctx = this.makeContext();
+      const canvas = ctx.canvas;
+      const imgdata = ctx.getImageData(0, 0, w, h);
 
       const opts = {
-      
+        //gamma: 2.2,
       };
       /** @type {{detected: Detected[], digitized: Image}} */
       const result = await Qrean.detect(imgdata, opt);
@@ -439,7 +436,7 @@ class Misc {
     } catch (e) {
       this.log('detect', e.message);
     }
-    this.log('detectInMain end');
+    //this.log('detectInMain end');
   }
 
   async update() {
@@ -492,10 +489,13 @@ class Misc {
    * @param {string} text 
    */
   async makeQr(text) {
+    // keyof ってオブジェクトのキーの方だったか
     const opts = {
       //codeType: Qrean.CODE_TYPES.mQR,
       codeType: Qrean.CODE_TYPE_MQR,
-      qrErrorLevel: Qrean.QR_ERRORLEVELS.L,
+
+      qrErrorLevel: Qrean.QR_ERRORLEVEL_L,
+      //qrErrorLevel: Qrean.QR_ERRORLEVELS.L,
     };
     const img = await Qrean.encode(text, opts);
     if (img) {
