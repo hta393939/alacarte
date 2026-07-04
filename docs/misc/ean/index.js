@@ -60,6 +60,13 @@ class Misc {
     this.initializeWorker();
 
     this.makeQr('9999');
+
+    {
+      const el = document.getElementById('innerview');
+      if (el) {
+        el.textContent = `2026-07-04-01`;
+      }
+    }
   }
 
   async log(...args) {
