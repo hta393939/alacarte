@@ -64,7 +64,7 @@ class Misc {
     {
       const el = document.getElementById('innerview');
       if (el) {
-        el.textContent = `2026-07-04-01`;
+        el.textContent = `2026-07-04T13:30`;
       }
     }
   }
@@ -164,6 +164,10 @@ class Misc {
           opt.video.width = {exact: 1024};
           opt.video.height = {exact: 1024};
         }
+        if (true) {
+          opt.video.width = {exact: 640};
+          opt.video.height = {exact: 480};
+        }
 
         const stream = await navigator.mediaDevices.getUserMedia(opt);
         let str = `getUserMedia succ,${dev.label}`;
@@ -175,11 +179,7 @@ class Misc {
           } catch (e) {
             this.log(`${e.message}`);
           }
-          try {
 
-          } catch (e) {
-
-          }
           //if (dev.label.includes('back') || dev.label.startsWith('Android')) {
           if (true) {
             this.track = track;
@@ -189,15 +189,6 @@ class Misc {
             const subvideo = document.getElementById('subvideo');
             if (video && !video.srcObject) {
               video.srcObject = stream;
-
-              video.addEventListener('click', async () => {
-                const vt = stream.getVideoTracks()[0];
-                const ic = new ImageCapture(vt);
-                const photoOpt = {};
-                const blob = await ic.takePhoto(photoOpt);
-                this.download(blob, `photo.jpg`);
-              });
-
             } else {
               subvideo.srcObject = stream;
             }
