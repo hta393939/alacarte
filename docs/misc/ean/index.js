@@ -65,7 +65,7 @@ class Misc {
     {
       const el = document.getElementById('innerview');
       if (el) {
-        el.textContent = `2026-07-04T18:49`;
+        el.textContent = `2026-07-05T20:00`;
       }
     }
   }
@@ -494,8 +494,8 @@ class Misc {
       //codeType: Qrean.CODE_TYPES.mQR,
       codeType: Qrean.CODE_TYPE_MQR,
 
-      qrErrorLevel: Qrean.QR_ERRORLEVEL_L,
-      //qrErrorLevel: Qrean.QR_ERRORLEVELS.L,
+      //qrErrorLevel: Qrean.QR_ERRORLEVEL_L,
+      qrErrorLevel: Qrean.QR_ERRORLEVEL_H,
     };
     const img = await Qrean.encode(text, opts);
     if (img) {
