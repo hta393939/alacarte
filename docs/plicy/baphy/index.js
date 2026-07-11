@@ -20,6 +20,7 @@ class Misc {
     await this.initGl(window.maincanvas);
     await this.readyObject(this.scene);
     await this.initPhy();
+    await this.readyRigid(this.scene);
   }
 
   async log(...args) {
@@ -200,6 +201,38 @@ class Misc {
       new BABYLON.Vector3(0, -9.81, 0),
       plugin,
     );
+  }
+
+  async readyRigid(scene) {
+    {
+      const m = BABYLON.MeshBuilder.CreateBox(
+        'floor1',
+        {width: 10, height: 0.2, depth: 10},
+        scene);
+      m.position.y = -0.25;
+      const pa = new BABYLON.PhysicsAggregate(
+        m,
+        BABYLON.PhysicsShapeType.BOX,
+        { mass: 0, restitution: 1, friction: 0.8 },  // mass:0 = 静的
+        scene,  
+      );
+
+    }
+    for (let i = 0; i < 3; ++i) {
+      const m = BABYLON.MeshBuilder.CreateBox(
+        `box${i}`,
+        {width: 0.1, height: 0.2, depth: 0.08},
+        scene,
+      );
+      m.position = new BABYLON.Vector3(i - 1, 3, 0);
+      const pa = new BABYLON.PhysicsAggregate(
+        m,
+        BABYLON.PhysicsShapeType.BOX,
+        { mass: 2.0, restitution: 0.2, friction: 0.8 },  // mass:0 = 静的
+        scene,  
+      );
+
+    }
   }
 
 }
