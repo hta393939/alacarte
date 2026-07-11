@@ -18,8 +18,8 @@ class Misc {
     this.setListener();
 
     await this.initGl(window.maincanvas);
+    await this.readyObject(this.scene);
     await this.initPhy();
-
   }
 
   async log(...args) {
@@ -156,6 +156,29 @@ class Misc {
       }
 
       // TODO: 取得
+    }
+  }
+
+  async readyObject(scene) {
+    {
+      const gui3D = BABYLON.GUI.AdvancedDynamicTexture
+        .CreateFullscreenUI(
+          'UI', true, scene,
+        );
+
+      const but = new BABYLON.GUI.Button3D('but1');
+      but.position = new BABYLON.Vector3(2, 2, 0);
+      but.scaling = new BABYLON.Vector3(1, 0.2, 0.2);
+
+      const tb = new BABYLON.GUI.TextBlock();
+      but.content = tb;
+
+      gui3D.addControl(but);
+
+      but.onPointerClickObservable.add(() => {
+        console.log('click');
+        tb.text = `${new Date().toISOString()}`;
+      });
     }
   }
 
