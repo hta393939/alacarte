@@ -2,8 +2,12 @@
 class Misc {
   constructor() {
     this.consoles = [];
-    /** カーソル */
-    this.c = 0;
+    /** 論理幅 */
+    this.logicW = 960;
+    /**
+     * 論理高さ
+     */
+    this.logicH = 540;
   }
 
   _pad(v, n = 2) {
@@ -13,7 +17,9 @@ class Misc {
   async initialize() {
     this.setListener();
 
-    this.update();
+    await this.initGl(window.maincanvas);
+    await this.initPhy();
+
   }
 
   async log(...args) {
@@ -29,15 +35,6 @@ class Misc {
     const node = document.createTextNode(text);
     el.insertBefore(node, el.firstChild);
   }
-
-  update() {
-    window.requestAnimationFrame(() => {
-      this.update();
-    });
-
-
-  }
-
 
   setListener() {
     {
@@ -95,6 +92,82 @@ class Misc {
       param[k] = el?.checked || false;
     }
     return param;
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  initGl(canvas) {
+    canvas.width = this.logicW;
+    canvas.height = this.logicH;
+
+    const engine = new BABYLON.Engine(canvas);
+    this.engine = engine;
+    const scene = new BABYLON.Scene(engine);
+    this.scene = scene;
+
+    scene.useRightHandedSystem = true;
+    {
+      const camera = new BABYLON.ArcRotateCamera('camera1',
+        0, 0, 10, new BABYLON.Vector3(0, 0, 0),
+        scene,
+      );
+      this.camera = camera;
+      camera.position = new BABYLON.Vector3(0.5, 0.5, 5);
+      camera.wheelPrecision = 20;
+      camera.attachControl();
+    }
+
+    {
+      const light = new BABYLON.HemisphericLight(
+        'hlight',
+        new BABYLON.Vector3(0.75, 0.5, 1),
+        scene,
+      );
+    }
+
+    {
+      const axes = new BABYLON.Debug.AxesViewer(
+        scene,
+        5,
+      );
+    }
+
+    {
+      const m = BABYLON.MeshBuilder.CreateBox(
+        'box1',
+      {width: 0.4, height: 0.6, depth: 0.2},
+      scene);
+    }
+
+    engine.runRenderLoop(() => {
+      this.analyzePads();
+
+      scene.render(this.camera);
+    });
+  }
+
+  analyzePads() {
+    const pads = navigator.getGamepads();
+    for (const pad of pads) {
+      if (!pad) {
+        continue;
+      }
+
+      // TODO: 取得
+    }
+  }
+
+  async initPhy() {
+    const instance = await HavokPhysics({
+      locateFile: file => file.endsWidth('.wasm'),
+    });
+    const plugin = new BABYLON.HavokPlugin(true, instance);
+    this.scene.enablePhysics(
+      new BABYLON.Vector3(0, -9.81, 0),
+      plugin,
+    );
   }
 
 }
