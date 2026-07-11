@@ -8,6 +8,9 @@ class Misc {
      * 論理高さ
      */
     this.logicH = 540;
+
+    this.ts = [];
+    this.textLabels = [];
   }
 
   _pad(v, n = 2) {
@@ -145,6 +148,20 @@ class Misc {
     }
 
     engine.runRenderLoop(() => {
+      {
+        const now = Date.now();
+        this.ts = this.ts.filter(t => (now - t) < 2000);
+        const n = this.ts.length;
+        const fps = (n >= 1) ? (n / 2) : 0;
+        this.ts.push(now);
+
+        const tl = this.textLabels[0];
+        if (tl) {
+          tl.text = `${fps.toFixed(1)}`;
+        }
+      }
+
+
       this.analyzePads();
 
       scene.render(this.camera);
@@ -167,16 +184,17 @@ class Misc {
     {
       const panel = new BABYLON.GUI.StackPanel3D();
       manager.addControl(panel);
+      panel.position = new BABYLON.Vector3(0, 0.5, 1);
 
       for (let i = 0; i < 3; ++i) {
         const but = new BABYLON.GUI.Button3D(`but${i}`);
         but.position = new BABYLON.Vector3(i - 1, 2, 0);
-        but.scaling = new BABYLON.Vector3(1, 0.2, 0.2);
+        but.scaling = new BABYLON.Vector3(1, 0.4, 0.2);
 
         const tb = new BABYLON.GUI.TextBlock();
         tb.text = `${i}`;
         tb.color = 'red';
-        tb.fontSize = 40;
+        tb.fontSize = (i === 0) ? 100 : 40;
         tb.resizeToFit = true;
         but.content = tb;
 
@@ -187,6 +205,8 @@ class Misc {
           console.log(`click`, i);
           tb.text = `${new Date().toISOString()}`;
         });
+
+        this.textLabels.push(tb);
       }
 
     }
@@ -218,6 +238,7 @@ class Misc {
       );
 
     }
+    const rigids = [];
     for (let i = 0; i < 3; ++i) {
       const m = BABYLON.MeshBuilder.CreateBox(
         `box${i}`,
@@ -231,8 +252,38 @@ class Misc {
         { mass: 2.0, restitution: 0.2, friction: 0.8 },  // mass:0 = 静的
         scene,  
       );
-
+      rigids.push(pa);
     }
+
+    {
+      /*
+// 【例1】Ball & Socket（球関節：自由に回転）
+const ballJoint = new BABYLON.PhysicsConstraint(
+    BABYLON.PhysicsConstraintType.BALL_AND_SOCKET,
+    boxAggregate.body,      // Main Body
+    sphereAggregate.body,   // Connected Body
+    scene
+);
+
+// 接続位置（ローカル座標）
+ballJoint.setAnchorInMain(new BABYLON.Vector3(0.5, 0.5, 0));   // boxの右上あたり
+ballJoint.setAnchorInConnected(new BABYLON.Vector3(0, -0.6, 0)); // sphereの下側
+
+// 【例2】Hinge（蝶番：1軸回転）
+const hingeJoint = new BABYLON.PhysicsConstraint(
+    BABYLON.PhysicsConstraintType.HINGE,
+    boxAggregate.body,
+    sphereAggregate.body,
+    scene
+);
+
+hingeJoint.setAnchorInMain(new BABYLON.Vector3(0.5, 0, 0));
+hingeJoint.setAnchorInConnected(new BABYLON.Vector3(-0.6, 0, 0));
+hingeJoint.setAxisInMain(new BABYLON.Vector3(0, 0, 1));     // Z軸回転
+hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
+*/
+    }
+
   }
 
 }
