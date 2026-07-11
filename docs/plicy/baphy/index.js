@@ -102,7 +102,9 @@ class Misc {
     canvas.width = this.logicW;
     canvas.height = this.logicH;
 
-    const engine = new BABYLON.Engine(canvas);
+    const engine = new BABYLON.Engine(canvas, {
+      preserveDrawingBuffer: true,
+    });
     this.engine = engine;
     const scene = new BABYLON.Scene(engine);
     this.scene = scene;
@@ -160,31 +162,38 @@ class Misc {
   }
 
   async readyObject(scene) {
+    const manager = new BABYLON.GUI.GUI3DManager(scene);
     {
-      const gui3D = BABYLON.GUI.AdvancedDynamicTexture
-        .CreateFullscreenUI(
-          'UI', true, scene,
-        );
+      const panel = new BABYLON.GUI.StackPanel3D();
+      manager.addControl(panel);
 
-      const but = new BABYLON.GUI.Button3D('but1');
-      but.position = new BABYLON.Vector3(2, 2, 0);
-      but.scaling = new BABYLON.Vector3(1, 0.2, 0.2);
+      for (let i = 0; i < 3; ++i) {
+        const but = new BABYLON.GUI.Button3D(`but${i}`);
+        but.position = new BABYLON.Vector3(i - 1, 2, 0);
+        but.scaling = new BABYLON.Vector3(1, 0.2, 0.2);
 
-      const tb = new BABYLON.GUI.TextBlock();
-      but.content = tb;
+        const tb = new BABYLON.GUI.TextBlock();
+        tb.text = `${i}`;
+        tb.color = 'red';
+        tb.fontSize = 40;
+        tb.resizeToFit = true;
+        but.content = tb;
 
-      gui3D.addControl(but);
+        console.log('but', but);
+        panel.addControl(but);
 
-      but.onPointerClickObservable.add(() => {
-        console.log('click');
-        tb.text = `${new Date().toISOString()}`;
-      });
+        but.onPointerClickObservable.add(() => {
+          console.log(`click`, i);
+          tb.text = `${new Date().toISOString()}`;
+        });
+      }
+
     }
   }
 
   async initPhy() {
     const instance = await HavokPhysics({
-      locateFile: file => file.endsWidth('.wasm'),
+      locateFile: file => `./havok/${file}`,
     });
     const plugin = new BABYLON.HavokPlugin(true, instance);
     this.scene.enablePhysics(
