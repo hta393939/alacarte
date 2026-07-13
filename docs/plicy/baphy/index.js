@@ -204,6 +204,10 @@ class Misc {
         but.onPointerClickObservable.add(() => {
           console.log(`click`, i);
           tb.text = `${new Date().toISOString()}`;
+
+          if (i === 2) {
+            this.addEights(this.scene);
+          }
         });
 
         this.textLabels.push(tb);
@@ -284,6 +288,102 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
 */
     }
 
+    {
+      /*
+// 【例1】Ball & Socket（球関節：自由に回転）
+      const ballJoint = new BABYLON.PhysicsConstraint(
+    BABYLON.PhysicsConstraintType.BALL_AND_SOCKET,
+    boxAggregate.body,      // Main Body
+    sphereAggregate.body,   // Connected Body
+    scene
+      );
+
+      // 接続位置（ローカル座標）
+      ballJoint.setAnchorInMain(new BABYLON.Vector3(0.5, 0.5, 0));   // boxの右上あたり
+      ballJoint.setAnchorInConnected(new BABYLON.Vector3(0, -0.6, 0)); // sphereの下側
+
+// 【例2】Hinge（蝶番：1軸回転）
+      const hingeJoint = new BABYLON.PhysicsConstraint(
+    BABYLON.PhysicsConstraintType.HINGE,
+    boxAggregate.body,
+    sphereAggregate.body,
+    scene
+      );
+
+      hingeJoint.setAnchorInMain(new BABYLON.Vector3(0.5, 0, 0));
+      hingeJoint.setAnchorInConnected(new BABYLON.Vector3(-0.6, 0, 0));
+      hingeJoint.setAxisInMain(new BABYLON.Vector3(0, 0, 1));     // Z軸回転
+      hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
+*/
+    }
+
+
+  }
+
+  addEights(scene) {
+    for (let i = 0; i < 5; ++i) {
+      const result = this.makeEight(scene);
+      result.mesh.position = new BABYLON.Vector3(i - 2, 1 + Math.random(), 0);
+    }
+    for (let i = 0; i < 5; ++i) {
+      const result = this.makeEight(scene);
+      result.mesh.position = new BABYLON.Vector3(i - 2, 1 + Math.random(), -1);
+      const mtl = new BABYLON.StandardMaterial(`${i}i1`, scene);
+      mtl.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+      result.mesh.material = mtl;
+    }
+  }
+
+  makeEight(scene) {
+    const scale = 0.2;
+    const vd = new BABYLON.VertexData();
+    const n = 6;
+    const ps = new Float32Array(n * 3);
+    const ns = new Float32Array(n * 3);
+    const fis = new Uint16Array(8 * 3);
+    for (let i = 0; i < 6; ++i) {
+      const pos = [
+        [0, 1, 0],
+        [1, 0, 0],
+        [0, 0, 1],
+        [-1, 0, 0],
+        [0, 0, -1],
+        [0, -1, 0],
+      ];
+      const p = pos[i];
+      ns[i * 3] = p[0];
+      ns[i * 3 + 1] = p[1];
+      ns[i * 3 + 2] = p[2];
+      ps[i * 3] = p[0] * scale;
+      ps[i * 3 + 1] = p[1] * scale;
+      ps[i * 3 + 2] = p[2] * scale;
+    }
+    for (let i = 0; i < 24; ++i) {
+      fis[i] = [
+        0, 1, 2,
+        0, 2, 3,
+        0, 3, 4,
+        0, 4, 1,
+        5, 2, 1,
+        5, 3, 2,
+        5, 4, 3,
+        5, 1, 4,
+      ][i];
+    }
+    vd.positions = ps;
+    vd.normals = ns;
+    vd.indices = fis;
+    const m = new BABYLON.Mesh(`${Math.random()}`, scene);
+    vd.applyToMesh(m);
+
+    const pa = new BABYLON.PhysicsAggregate(
+      m,
+      BABYLON.PhysicsShapeType.CONVEX_HULL,
+      {mass: 2},
+      scene,
+    );
+
+    return {mesh: m};
   }
 
 }
