@@ -24,6 +24,8 @@ class Misc {
     await this.readyObject(this.scene);
     await this.initPhy();
     await this.readyRigid(this.scene);
+
+    await this.makeArm(this.scene);
   }
 
   async log(...args) {
@@ -384,6 +386,43 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
     );
 
     return {mesh: m};
+  }
+
+  makeArm(scene) {
+    const parts = [
+      {p:[0, 0.1, 0], s:[0.1, 0.4, 0.1]},
+      {p:[0, 0.3, 0], s:[0.1, 0.4, 0.1]},
+      {p:[0, 0.5, 0], s:[0.1, 0.4 ,0.1]},
+      {p:[0, 0.7, 0], s:[0.1, 0.4, 0.1]},
+      {p:[0, 0.7, 0.4], s:[0.1, 0.4, 0.1]},
+      {p:[-0.2, 0.5, 0.4], s:[0.2, 0.4, 0.4]},
+      {p:[ 0.2, 0.5, 0.4], s:[0.2, 0.4, 0.4]},
+    ];
+    const arms = [];
+    for (let i = 0; i < parts.length; ++i) {
+      const part = parts[i];
+      const m = BABYLON.MeshBuilder.CreateBox(`${i}b`,
+        {width: part.s[0], height: part.s[1], depth: part.s[2]},
+        scene,
+      );
+      m.position = BABYLON.Vector3.FromArray(part.p);
+      const pa = new BABYLON.PhysicsAggregate(
+        m,
+        BABYLON.PhysicsShapeType.BOX,
+        {mass: 0},
+        scene,
+      );
+      // 親登録．ヒンジかノード親か
+      let index = i - 1;
+      if (i !== 0) {
+        if (i === 6) {
+          index = 4;
+        }
+        arms[index].mesh.addChild(m);
+      }
+
+      arms.push({mesh: m, pa,});
+    }
   }
 
 }
