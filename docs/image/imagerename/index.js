@@ -1,8 +1,6 @@
 
 class Misc {
   constructor() {
-    this.src = '';
-    this.dst = '';
     this.startcount = 0;
     this.addcount = 1;
     /**
@@ -13,8 +11,6 @@ class Misc {
 
     /** @type {FileSystemDirectoryHandle} */
     this.root = null;
-    this.srcdh = null;
-    this.dstdh = null;
   }
 
   async initialize() {
@@ -25,6 +21,10 @@ class Misc {
     return new String(v).padStart(n, '0');
   }
 
+  /**
+   * パラメーター
+   * @returns {any}
+   */
   gatherParam() {
     const obj = {};
     for (const k of ['source', 'destination']) {
@@ -34,6 +34,12 @@ class Misc {
     for (const k of ['isdel']) {
       const el = document.getElementById(k);
       obj[k] = el?.checked;
+    }
+    for (const k of ['startcount',
+      'addcount', 'outcount',
+    ]) {
+      const el = document.getElementById(k);
+      obj[k] = Number.parseFloat(el?.value);
     }
     return obj;
   }
@@ -344,20 +350,11 @@ class Misc {
     const root = this.root;
 
     const re = /(?<prefix>\D*)(?<num>\d+)\.(?<ext>[^.]*)$/;
-    for await (const h of root.values()) {
-      if (h.kind === 'directory') {
-        if (h.name === param.source) {
-          this.srcdh = h;
-        }
-        if (h.name === param.destination) {
-          this.dstdh = h;
-        }
-        continue;
-      }
-    }
 
+    const srcdh = await this.searchHandle(root, param.source);
+    const dstdh = await this.searchHandle(root, param.destination);
 
-    for await (const h of this.srcdh.values()) {
+    for await (const h of srcdh.values()) {
       if (h.kind === 'directory') {
         continue;
       }
@@ -385,7 +382,7 @@ class Misc {
       const buf = await file.arrayBuffer();
 
       let dstfilename = this.makeFilename(index);
-      const dstfh = await this.dstdh.getFileHandle(dstfilename, { create: true });
+      const dstfh = await dstdh.getFileHandle(dstfilename, { create: true });
       const writer = await dstfh.createWritable();
       await writer.write(buf);
       await writer.close();
