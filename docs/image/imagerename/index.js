@@ -1,8 +1,4 @@
 
-const _pad = (v, n = 2) => {
-  return new String(v).padStart(n, '0');
-};
-
 class Misc {
   constructor() {
     this.src = '';
@@ -23,6 +19,10 @@ class Misc {
 
   async initialize() {
     this.setListener();
+  }
+
+  pad(v, n = 2) {
+    return new String(v).padStart(n, '0');
   }
 
   gatherParam() {
@@ -332,7 +332,7 @@ class Misc {
   }
 
   makeFilename(num) {
-    return `${this.prefix}${_pad(num, this.num)}.${this.ext}`;
+    return `${this.prefix}${this.pad(num, this.num)}.${this.ext}`;
   }
 
   /**
@@ -429,9 +429,19 @@ class Misc {
         const dirHandle = await this.openDir();
         this.setContent('#rootview', dirHandle.name);
         this.root = dirHandle;
-        await this.processDir(dirHandle);
+
+
+        //await this.processDir(dirHandle);
       });
     }
+
+    {
+      const el = document.getElementById('skipnumber');
+      el?.addEventListener('click', async () => {
+        this.renumber();
+      });
+    }
+
     { // リトライ
       const el = document.getElementById('retry');
       el?.addEventListener('click', async () => {
@@ -460,6 +470,140 @@ class Misc {
       _update();
     }
 
+  }
+
+  /**
+   * 
+   * @param {FileSystemDirectoryHandle} cur 
+   * @param {string[]} strs 
+   */
+  async searchHandleByPath(cur, strs) {
+    if (strs.length === 0) {
+      return null;
+    }
+    const name = strs[0];
+    let result = null;
+    for await (const [key, val] of cur.entries()) {
+      if (key !== name) {
+        continue;
+      }
+      result = val;
+      break;
+    }
+    if (!result) {
+      return null;
+    }
+
+    if (strs.length === 1) {
+      return result;
+    }
+    result = await this.searchHandleByPath(result, strs.slice(1));
+    return result;
+  }
+
+  /**
+   * 
+   * @param {FileSystemDirectoryHandle} handle 
+   * @param {string} pathstr 
+   * @returns {FileSystemHandle|null}
+   */
+  async searchHandle(handle, pathstr) {
+    const ss = pathstr.split('/').filter(v => v !== '' && v !== '.');
+    const result = await this.searchHandleByPath(handle, ss);
+    return result;
+  }
+
+  /**
+   * ハンドルから ArrayBuffer を得る
+   * @param {FileSystemFileHandle} handle
+   */
+  async loadFile(handle) {
+    const file = await handle.getFile();
+    const ab = await file.arrayBuffer();
+    return ab;
+  }
+
+  /**
+   * 指定フォルダにファイルを書き出す
+   * @param {FileSystemDirectoryHandle} dir 
+   * @param {string} name
+   * @param {ArrayBuffer} buf
+   */
+  async writeFile(dir, name, buf) {
+    const fh = await dir.getFileHandle(name, {create: true});
+    const ws = await fh.createWritable({
+      //keepExistingData: true,
+    });
+    //await ws.seek(256);
+    await ws.write(buf);
+    await ws.close();
+  }
+
+  /**
+   * 選択から src フォルダを列挙して
+   * dst フォルダに書き出す
+   */
+  async renumber() {
+    const param = this.gatherParam();
+
+    const srcDir = await this.searchHandle(this.root, param.source);
+    const dstDir = await this.searchHandle(this.root, param.destination);
+    /**
+     * @type {FileSystemFileHandle}
+     */
+    let srcOne = null;
+    for await (const [key, val] of srcDir.entries()) {
+      if (val.kind !== 'file') {
+        continue;
+      }
+      srcOne = val;
+      break;
+    }
+    // src の名前検知
+    const re = /^(?<base>\D+)(?<number>\d+)\.(?<ext>[^\.]+)$/;
+    const m = re.exec(srcOne.name);
+    if (!m) {
+      console.log('no match');
+      return;
+    }
+    const base = m.groups['base'];
+    const numstr = m.groups['number'];
+    const ext = m.groups['ext'];
+    // src の数の桁
+    const digitNum = numstr.length;
+
+    const mapNum = {};
+    // ベース150
+    for (let i = 0; i < 150; ++i) {
+      const index = i * 2;
+      mapNum[`${index}`] = {type: 5};
+    }
+    // デンス30
+    const denses = JSON.parse(denses);
+    for (const dense of denses) {
+      for (let i = 0; i < 30; ++i) {
+        const index = dense + i;
+        mapNum[`${index}`] = {type: 3};
+      }
+    }
+
+    const nums = Object.keys(mapNum).map(v => Number.parseFloat(v)).sort((a, b) => a - b);
+    nums.splice(150);
+
+    let count = 0;
+    for (const num of nums) {
+      const srcName = `${base}${this.pad(num, digitNum)}.${ext}`;
+      const srcFH = await srcDir.getFileHandle(srcName);
+      const buf = await this.loadFile(srcFH);
+
+      const dstName = `${base}${this.pad(count, digitNum)}.${ext}`;
+      // 書き出す
+      await this.writeFile(dstDir, dstName, buf);
+
+      count += 1;
+    }
+
+    console.log('renumber');
   }
 
 }
