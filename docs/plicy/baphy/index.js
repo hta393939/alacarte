@@ -23,7 +23,8 @@ class Misc {
     await this.initPhy();
     await this.readyRigid(this.scene);
 
-    await this.makeBoneArm(this.scene);
+    const arm = await this.makeBoneArm(this.scene);
+    this.arm = arm;
   }
 
   async log(...args) {
@@ -184,6 +185,28 @@ class Misc {
     {
       const result = this.analyzePads();
       this.applyMove(result);
+    }
+
+    {
+      const now = Date.now();
+      const val = (now % 10000) / 10000;
+      const rot = new BABYLON.Vector3(val * Math.PI * 2, 0, 0);
+      const arm = this.arm;
+      if (Array.isArray(arm)) {
+        for (const node of arm) {
+          const axis = node.axis;
+          if (axis) {
+            const q = BABYLON.Quaternion.RotationAxis(
+              BABYLON.Vector3.FromArray(axis),
+              val * Math.PI * 2,
+            );
+            node.node.rotationQuaternion = q;
+          }
+          const dir = node.dir;
+          const dirv = BABYLON.Vector3.FromArray(dir);
+          //node.node.position.addInPlace(dirv);
+        }
+      }
     }
   }
 
@@ -500,7 +523,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
     const armDia = 0.04;
     const jointDia = 0.04;
     const parts = [
-      {p: [0, 0, 0], parent: -1,
+      {p: [0, 0, 0], parent: -1, axis: null,
         ms: [{type: 'cyl', s:[armDia * 2, 0.1, armDia * 2], deg:[0,0,0], p:[0,0.05,0]}]
       }, // ベース #0
       {p: [0, 0.1, 0], parent: 0, axis: [0, 1, 0],
@@ -530,10 +553,10 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       {p: [0, 0.1, 0.4], parent: 5, axis: [0, 1, 0],
         ms: [{type: 'box', s:[0.2, 0.02, 0.05], p: [0,0,0], deg:[0,0,0]}],
       }, // ねじり #6
-      {p: [-0.1, 0.1, 0.4], 
+      {p: [-0.1, 0.1, 0.4], dir: [1, 0, 0],
         ms: [{type: 'cyl', s:[0.01, 0.1, 0.01], p: [0,-0.05,0], deg:[0,0,0]}],
         parent: 6}, // #7
-      {p: [ 0.1, 0.1, 0.4],
+      {p: [ 0.1, 0.1, 0.4], dir: [-1, 0, 0],
         ms: [{type: 'cyl', s:[0.01, 0.1, 0.01], p: [0,-0.05,0], deg:[0,0,0]}],
         parent: 6}, // #8
     ];
@@ -578,6 +601,8 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
           {mass: 0},
           scene,
         );
+        // NOTE: これか...
+        pa.body.disablePrestep = true;
       }
 
       // 親登録．ヒンジかノード親か
@@ -589,7 +614,8 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       }
       tn.position = vec;
 
-      arms.push({node: tn});
+      arms.push({node: tn, axis: part.axis,
+        dir: part.dir || [0,0,0]});
     }
     return arms;
   }
