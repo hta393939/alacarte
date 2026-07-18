@@ -565,6 +565,19 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       const part = parts[i];
       const tn = new BABYLON.TransformNode(this.oid(), scene);
 
+      // 親登録．ヒンジかノード親か
+      let vec = BABYLON.Vector3.FromArray(part.p);
+      let index = part.parent;
+      if (index >= 0) {
+        tn.parent = arms[index].node;
+        vec.subtractInPlace(tn.parent.absolutePosition);
+      }
+      tn.position = vec;
+
+      arms.push({node: tn, axis: part.axis,
+        dir: part.dir || [0,0,0]});
+
+
       for (const info of part.ms) {
         let m = null;
         let shapeType = '';
@@ -591,31 +604,20 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         m.rotation = BABYLON.Vector3.FromArray(info.deg.map(deg => deg * Math.PI / 180));
         m.position = BABYLON.Vector3.FromArray(info.p);
         m.parent = tn;
-        //m.position = BABYLON.Vector3.FromArray(info.p);
 
         this.sg.addShadowCaster(m);
 
         const pa = new BABYLON.PhysicsAggregate(
           m,
           shapeType,
-          {mass: 0},
+          {mass: 2.0}, // NOTE: 重さを 2.0 にすると??
           scene,
         );
         // NOTE: これか...
         pa.body.disablePrestep = true;
       }
 
-      // 親登録．ヒンジかノード親か
-      let vec = BABYLON.Vector3.FromArray(part.p);
-      let index = part.parent;
-      if (index >= 0) {
-        tn.parent = arms[index].node;
-        vec.subtractInPlace(tn.parent.absolutePosition);
-      }
-      tn.position = vec;
 
-      arms.push({node: tn, axis: part.axis,
-        dir: part.dir || [0,0,0]});
     }
     return arms;
   }
