@@ -153,6 +153,12 @@ class Misc {
         5,
       );
     }
+    {
+      BABYLON.Inspector.Show(
+        scene, {overlay:true}
+      );
+    }
+
 
     engine.runRenderLoop(() => {
       this.prerender();
@@ -259,11 +265,12 @@ class Misc {
         {width: 10, height: 0.2, depth: 10},
         scene);
       m.receiveShadows = true;
-      m.position.y = -0.1;
+      m.position = new BABYLON.Vector3(0, -0.1, 0);
       const pa = new BABYLON.PhysicsAggregate(
         m,
         BABYLON.PhysicsShapeType.BOX,
-        { mass: 0, restitution: 1, friction: 0.8 },  // mass:0 = 静的
+        // mass 0 で動かない
+        { mass: 0, restitution: 1, friction: 0.8 },
         scene,  
       );
 
@@ -494,28 +501,34 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
     const jointDia = 0.04;
     const parts = [
       {p: [0, 0, 0], parent: -1,
-        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,0], p:[0,0,0]}]
+        ms: [{type: 'cyl', s:[armDia * 2, 0.1, armDia * 2], deg:[0,0,0], p:[0,0.05,0]}]
       }, // ベース #0
       {p: [0, 0.1, 0], parent: 0, axis: [0, 1, 0],
-        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,90], p:[0,0,0]}]
+        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,0], p:[0,0.05,0]}]
       }, // #1
       {p: [0, 0.2, 0], axis: [1, 0, 0],
-        ms: [{type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[90,0,0]}],
-        ms: [{type: 'cyl', s:[armDia, 0.04, armDia], p: [0,0,0.1], deg:[0,0,90]}],
+        ms: [
+          {type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[0,0,90]},
+          {type: 'cyl', s:[armDia, 0.2, armDia], p: [0,0, 0.1], deg:[90,0,0]}
+        ],
         parent: 1}, // #2
       {p: [0, 0.2, 0.2], parent: 2, axis: [1, 0, 0],
-        ms: [{type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[90,0,0]}],
-        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], p: [0,0,0.05], deg:[0,0,90]}],
+        ms: [
+          {type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[0,0,90]},
+          {type: 'cyl', s:[armDia, 0.1, armDia], p: [0,0,0.05], deg:[90,0,0]}
+        ],
       }, // #3
       {p: [0, 0.2, 0.3], axis: [0, 0, 1],
         ms: [{type: 'cyl', s:[armDia, 0.1, armDia], p: [0,0,0.05], deg:[90,0,0]}], 
         parent: 3}, // #4
       {p: [0, 0.2, 0.4], parent: 4, axis: [1, 0, 0],
-        ms: [{type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[0,0,0]}],
-        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], p: [0,-0.05,0], deg:[0,0,0]}],
+        ms: [
+          {type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[0,0,90]},
+          {type: 'cyl', s:[armDia, 0.1, armDia], p: [0,-0.05,0], deg:[0,0,0]}
+        ],
       }, // #5
       {p: [0, 0.1, 0.4], parent: 5, axis: [0, 1, 0],
-        ms: [{type: 'box', s:[0.4, 0.04, 0.1], p: [0,0,0], deg:[0,0,0]}],
+        ms: [{type: 'box', s:[0.2, 0.02, 0.05], p: [0,0,0], deg:[0,0,0]}],
       }, // ねじり #6
       {p: [-0.1, 0.1, 0.4], 
         ms: [{type: 'cyl', s:[0.01, 0.1, 0.01], p: [0,-0.05,0], deg:[0,0,0]}],
@@ -553,9 +566,9 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         m.material = mtl;
 
         m.rotation = BABYLON.Vector3.FromArray(info.deg.map(deg => deg * Math.PI / 180));
-        //m.position = BABYLON.Vector3.FromArray(info.p);
-        m.parent = tn;
         m.position = BABYLON.Vector3.FromArray(info.p);
+        m.parent = tn;
+        //m.position = BABYLON.Vector3.FromArray(info.p);
 
         this.sg.addShadowCaster(m);
 
@@ -568,10 +581,13 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       }
 
       // 親登録．ヒンジかノード親か
+      let vec = BABYLON.Vector3.FromArray(part.p);
       let index = part.parent;
       if (index >= 0) {
         tn.parent = arms[index].node;
+        vec.subtractInPlace(tn.parent.absolutePosition);
       }
+      tn.position = vec;
 
       arms.push({node: tn});
     }
