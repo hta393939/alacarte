@@ -11,10 +11,8 @@ class Misc {
 
     this.ts = [];
     this.textLabels = [];
-  }
 
-  _pad(v, n = 2) {
-    return new String(v).padStart(n, '0');
+    this.count = 0;
   }
 
   async initialize() {
@@ -25,7 +23,7 @@ class Misc {
     await this.initPhy();
     await this.readyRigid(this.scene);
 
-    await this.makeArm(this.scene);
+    await this.makeBoneArm(this.scene);
   }
 
   async log(...args) {
@@ -122,63 +120,88 @@ class Misc {
         scene,
       );
       this.camera = camera;
-      camera.position = new BABYLON.Vector3(0.5, 0.5, 5);
-      camera.wheelPrecision = 20;
+      camera.position = new BABYLON.Vector3(0.5, 0.5, 2);
+      camera.wheelPrecision = 20 * 2;
+      camera.maxZ = 100;
+      camera.minZ = 0.02;
       camera.attachControl();
     }
 
-    {
+    if (true) {
       const light = new BABYLON.HemisphericLight(
         'hlight',
         new BABYLON.Vector3(0.75, 0.5, 1),
         scene,
       );
+      light.intensity = 0.125;
     }
 
-    {
+    { // @see https://doc.babylonjs.com/typedoc/classes/BABYLON.PointLight
+      const light = new BABYLON.PointLight(
+        'plight',
+        new BABYLON.Vector3(0, 2, 0.5), // position
+        scene,
+      );
+      light.intensity = 0.5;
+      const sg = new BABYLON.ShadowGenerator(1024, light);
+      this.sg = sg;
+    }
+
+    if (false) {
       const axes = new BABYLON.Debug.AxesViewer(
         scene,
         5,
       );
     }
 
-    {
-      const m = BABYLON.MeshBuilder.CreateBox(
-        'box1',
-      {width: 0.4, height: 0.6, depth: 0.2},
-      scene);
-    }
-
     engine.runRenderLoop(() => {
-      {
-        const now = Date.now();
-        this.ts = this.ts.filter(t => (now - t) < 2000);
-        const n = this.ts.length;
-        const fps = (n >= 1) ? (n / 2) : 0;
-        this.ts.push(now);
-
-        const tl = this.textLabels[0];
-        if (tl) {
-          tl.text = `${fps.toFixed(1)}`;
-        }
-      }
-
-
-      this.analyzePads();
+      this.prerender();
 
       scene.render(this.camera);
     });
   }
 
+  prerender() {
+    { // 簡易フレームレートの計算
+      const now = Date.now();
+      this.ts = this.ts.filter(t => (now - t) < 2000);
+      const n = this.ts.length;
+      const fps = (n >= 1) ? (n / 2) : 0;
+      this.ts.push(now);
+
+      const tl = this.textLabels[0];
+      if (tl) {
+        tl.text = `${fps.toFixed(1)}`;
+      }
+    }
+
+    {
+      const result = this.analyzePads();
+      this.applyMove(result);
+    }
+  }
+
+  applyMove(param) {
+    if (!param.pad) {
+      return;
+    }
+
+    // TODO: 関節などに適用する
+
+  }
+
   analyzePads() {
+    const ret = {pad: null};
+
     const pads = navigator.getGamepads();
     for (const pad of pads) {
       if (!pad) {
         continue;
       }
-
-      // TODO: 取得
+      ret.pad = pad;
+      break;
     }
+    return ret;
   }
 
   async readyObject(scene) {
@@ -235,7 +258,8 @@ class Misc {
         'floor1',
         {width: 10, height: 0.2, depth: 10},
         scene);
-      m.position.y = -0.25;
+      m.receiveShadows = true;
+      m.position.y = -0.1;
       const pa = new BABYLON.PhysicsAggregate(
         m,
         BABYLON.PhysicsShapeType.BOX,
@@ -251,6 +275,7 @@ class Misc {
         {width: 0.1, height: 0.2, depth: 0.08},
         scene,
       );
+      this.sg.addShadowCaster(m);
       m.position = new BABYLON.Vector3(i - 1, 3, 0);
       const pa = new BABYLON.PhysicsAggregate(
         m,
@@ -322,6 +347,10 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
 
   }
 
+  /**
+   * 10個の八面体を追加する
+   * @param {*} scene 
+   */
   addEights(scene) {
     for (let i = 0; i < 5; ++i) {
       const result = this.makeEight(scene);
@@ -336,8 +365,13 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
     }
   }
 
+  /**
+   * 1つの八面体を作成する
+   * @param {*} scene 
+   * @returns 
+   */
   makeEight(scene) {
-    const scale = 0.2;
+    const scale = 0.08;
     const vd = new BABYLON.VertexData();
     const n = 6;
     const ps = new Float32Array(n * 3);
@@ -377,6 +411,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
     vd.indices = fis;
     const m = new BABYLON.Mesh(`${Math.random()}`, scene);
     vd.applyToMesh(m);
+    this.sg.addShadowCaster(m);
 
     const pa = new BABYLON.PhysicsAggregate(
       m,
@@ -388,19 +423,42 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
     return {mesh: m};
   }
 
+  oid() {
+    this.count += 1;
+    return `o${this.count}`;
+  }
+
+  /**
+   * ランダムカラー
+   */
+  rc() {
+    return new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+  }
+
+  /**
+   * 実装してない
+   * 旋回、仰角、仰角、ねじり、仰角、ねじり、はさむ
+   * むしろモデルファイル作るか???
+   * @param {*} scene 
+   */
   makeArm(scene) {
     const parts = [
-      {p:[0, 0.1, 0], s:[0.1, 0.4, 0.1]},
-      {p:[0, 0.3, 0], s:[0.1, 0.4, 0.1]},
-      {p:[0, 0.5, 0], s:[0.1, 0.4 ,0.1]},
-      {p:[0, 0.7, 0], s:[0.1, 0.4, 0.1]},
-      {p:[0, 0.7, 0.4], s:[0.1, 0.4, 0.1]},
-      {p:[-0.2, 0.5, 0.4], s:[0.2, 0.4, 0.4]},
-      {p:[ 0.2, 0.5, 0.4], s:[0.2, 0.4, 0.4]},
+      {p: [0, 0.1, 0], s: [0.1, 0.4, 0.1], parent: -1}, // ベース
+      {p: [0, 0.3, 0], s: [0.1, 0.4, 0.1], parent: 0}, // 
+      {p: [0, 0.5, 0], s: [0.1, 0.4 ,0.1], parent: 1},
+      {p: [0, 0.7, 0], s: [0.1, 0.4, 0.1], parent: 2},
+      {p: [0, 0.7, 0.4], s: [0.1, 0.4, 0.1], parent: 3},
+      {p: [0, 0.7, 0.4], s: [0.1, 0.4, 0.1], parent: 4},
+      {p: [0, 0.7, 0.4], s: [0.1, 0.4, 0.1], parent: 5},
+      {p: [-0.2, 0.5, 0.4], s: [0.2, 0.4, 0.4], parent: 6},
+      {p: [ 0.2, 0.5, 0.4], s: [0.2, 0.4, 0.4], parent: 6},
     ];
     const arms = [];
     for (let i = 0; i < parts.length; ++i) {
       const part = parts[i];
+      const tn = new BABYLON.TransformNode(`${i}tn`, scene);
+
+
       const m = BABYLON.MeshBuilder.CreateBox(`${i}b`,
         {width: part.s[0], height: part.s[1], depth: part.s[2]},
         scene,
@@ -423,6 +481,134 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
 
       arms.push({mesh: m, pa,});
     }
+  }
+
+  /**
+   * 旋回、仰角、仰角、ねじり、仰角、ねじり、はさむ
+   * これはボーンでやるタイプ
+   * @param {*} scene 
+   */
+  makeBoneArm(scene) {
+    console.log('makeBoneArm');
+    const armDia = 0.04;
+    const jointDia = 0.04;
+    const parts = [
+      {p: [0, 0, 0], parent: -1,
+        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,0], p:[0,0,0]}]
+      }, // ベース #0
+      {p: [0, 0.1, 0], parent: 0, axis: [0, 1, 0],
+        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,90], p:[0,0,0]}]
+      }, // #1
+      {p: [0, 0.2, 0], axis: [1, 0, 0],
+        ms: [{type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[90,0,0]}],
+        ms: [{type: 'cyl', s:[armDia, 0.04, armDia], p: [0,0,0.1], deg:[0,0,90]}],
+        parent: 1}, // #2
+      {p: [0, 0.2, 0.2], parent: 2, axis: [1, 0, 0],
+        ms: [{type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[90,0,0]}],
+        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], p: [0,0,0.05], deg:[0,0,90]}],
+      }, // #3
+      {p: [0, 0.2, 0.3], axis: [0, 0, 1],
+        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], p: [0,0,0.05], deg:[90,0,0]}], 
+        parent: 3}, // #4
+      {p: [0, 0.2, 0.4], parent: 4, axis: [1, 0, 0],
+        ms: [{type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[0,0,0]}],
+        ms: [{type: 'cyl', s:[armDia, 0.1, armDia], p: [0,-0.05,0], deg:[0,0,0]}],
+      }, // #5
+      {p: [0, 0.1, 0.4], parent: 5, axis: [0, 1, 0],
+        ms: [{type: 'box', s:[0.4, 0.04, 0.1], p: [0,0,0], deg:[0,0,0]}],
+      }, // ねじり #6
+      {p: [-0.1, 0.1, 0.4], 
+        ms: [{type: 'cyl', s:[0.01, 0.1, 0.01], p: [0,-0.05,0], deg:[0,0,0]}],
+        parent: 6}, // #7
+      {p: [ 0.1, 0.1, 0.4],
+        ms: [{type: 'cyl', s:[0.01, 0.1, 0.01], p: [0,-0.05,0], deg:[0,0,0]}],
+        parent: 6}, // #8
+    ];
+    const arms = [];
+    for (let i = 0; i < parts.length; ++i) {
+      const part = parts[i];
+      const tn = new BABYLON.TransformNode(this.oid(), scene);
+
+      for (const info of part.ms) {
+        let m = null;
+        let shapeType = '';
+        switch (info.type) {
+          case 'cyl':
+            shapeType = BABYLON.PhysicsShapeType.CYLINDER;
+            m = BABYLON.MeshBuilder.CreateCylinder(this.oid(),
+              {diameterTop: info.s[0],
+                height: info.s[1],
+                diameterBottom: info.s[2]},
+              scene);
+            break;
+          case 'box':
+            shapeType = BABYLON.PhysicsShapeType.BOX;
+            m = BABYLON.MeshBuilder.CreateBox(this.oid(),
+              {width: info.s[0], height: info.s[1], depth: info.s[2]},
+              scene);
+            break;
+        }
+        const mtl = new BABYLON.StandardMaterial(this.oid(), scene);
+        mtl.diffuseColor = this.rc();
+        m.material = mtl;
+
+        m.rotation = BABYLON.Vector3.FromArray(info.deg.map(deg => deg * Math.PI / 180));
+        //m.position = BABYLON.Vector3.FromArray(info.p);
+        m.parent = tn;
+        m.position = BABYLON.Vector3.FromArray(info.p);
+
+        this.sg.addShadowCaster(m);
+
+        const pa = new BABYLON.PhysicsAggregate(
+          m,
+          shapeType,
+          {mass: 0},
+          scene,
+        );
+      }
+
+      // 親登録．ヒンジかノード親か
+      let index = part.parent;
+      if (index >= 0) {
+        tn.parent = arms[index].node;
+      }
+
+      arms.push({node: tn});
+    }
+    return arms;
+  }
+
+  /**
+   * 実装してない
+   * @param {number[]} srcpos 
+   * @param {number[]} dstpos 
+   */
+  calcToPosition(srcpos, dstpos) {
+    const ret = {
+
+    };
+    // 角度の決定
+    // IK ライブラリに任せた方がいいのでは
+    // 相対回転量を決定
+
+    return ret;
+  }
+
+  /**
+   * 実装してない
+   * @param {number[]} srcp 
+   * @param {number[]} dstp 
+   */
+  calByPosition(srcp, dstp) {
+    // 分割
+    for (let i = 0; i <= 16; ++i) {
+      const t = i / 16;
+      const p = [0,1,2].map(j => srcp[j] * (1 - t) + dstp[j] + t);
+      const result = this.calcToPosition(srcp, p);
+    }
+
+    // いける最大を使用する
+    return {};
   }
 
 }
