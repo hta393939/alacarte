@@ -13,6 +13,8 @@ class Misc {
     this.textLabels = [];
 
     this.count = 0;
+
+    this.objAmb = new BABYLON.Color3(0.25, 0.25, 0.25);
   }
 
   async initialize() {
@@ -137,7 +139,7 @@ class Misc {
       light.intensity = 0.125;
     }
     { // NOTE: 環境光ベース
-      scene.ambientColor = new BABYLON.Color3(0.25, 0.25, 0.25);
+      scene.ambientColor = new BABYLON.Color3(1, 1, 1);
     }
 
     { // @see https://doc.babylonjs.com/typedoc/classes/BABYLON.PointLight
@@ -209,6 +211,21 @@ class Misc {
           const dirv = BABYLON.Vector3.FromArray(dir);
           //node.node.position.addInPlace(dirv);
         }
+
+        for (const node of arm) {
+          /**
+           * @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.TransformNode
+           */
+          const tn = node.node;
+          const pos = tn.absolutePosition;
+          const rot = tn.absoluteRotationQuaternion;
+          const aggs = node.aggs;
+          for (const agg of aggs) {
+            agg.body.position = pos;
+            agg.body.rotationQuaternion = rot;
+          }
+        }
+
       }
     }
   }
@@ -312,7 +329,7 @@ class Misc {
         this.oid(),
         scene,
       );
-      mtl.ambientColor = new BABYLON.Color3(1, 1, 1);
+      mtl.ambientColor = this.objAmb;
       m.material = mtl;
 
       this.sg.addShadowCaster(m);
@@ -463,9 +480,9 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
     return {mesh: m};
   }
 
-  oid() {
+  oid(top = 'o') {
     this.count += 1;
-    return `o${this.count}`;
+    return `${top}${this.count}`;
   }
 
   /**
@@ -584,8 +601,10 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       }
       tn.position = vec;
 
-      arms.push({node: tn, axis: part.axis,
-        dir: part.dir || [0,0,0]});
+      const arm = {node: tn, axis: part.axis,
+        aggs: [],
+        dir: part.dir || [0,0,0]};
+      arms.push(arm);
 
 
       for (const info of part.ms) {
@@ -609,7 +628,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         }
         const mtl = new BABYLON.StandardMaterial(this.oid(), scene);
         mtl.diffuseColor = this.rc();
-        mtl.ambientColor = new BABYLON.Color3(1, 1, 1);
+        mtl.ambientColor = this.objAmb;
         m.material = mtl;
 
         m.rotation = BABYLON.Vector3.FromArray(info.deg.map(deg => deg * Math.PI / 180));
@@ -621,12 +640,15 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         const pa = new BABYLON.PhysicsAggregate(
           m,
           shapeType,
-          {mass: 0.0}, // NOTE: 重さを 2.0 にすると??
+          {mass: 2.0}, // NOTE: 重さを 2.0 にすると??
           scene,
         );
-        //pa.body.setMotionType(BABYLON.PhysicsMotionType.ANIMATED);
+        // NOTE: 動く動かない??
+        pa.body.setMotionType(BABYLON.PhysicsMotionType.ANIMATED);
         // NOTE: これか...
         //pa.body.disablePrestep = true;
+
+        arm.aggs.push(pa);
       }
 
 
