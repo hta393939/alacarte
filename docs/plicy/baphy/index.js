@@ -1,5 +1,10 @@
 
 class Misc {
+  static STATUS_TITLE = 'title';
+  static STATUS_PRECOUNT = 'precount';
+  static STATUS_INGAME = 'ingame';
+  static STATUS_TIMEUP = 'timeup';
+
   constructor() {
     this.consoles = [];
     /** 論理幅 */
@@ -12,6 +17,9 @@ class Misc {
     this.ts = [];
     this.textLabels = [];
 
+    this.status = Misc.STATUS_TITLE;
+
+    this.prePadIndex = -1;
     this.count = 0;
 
     this.objAmb = new BABYLON.Color3(0.25, 0.25, 0.25);
@@ -190,6 +198,10 @@ class Misc {
     {
       const result = this.analyzePads();
       this.applyMove(result);
+      const tl = this.textLabels[1];
+      if (tl) { // 0 を許す
+        tl.text = `${result?.index ?? -1}(${this.prePadIndex})`;
+      }
     }
 
     {
@@ -205,52 +217,72 @@ class Misc {
               BABYLON.Vector3.FromArray(axis),
               val * Math.PI * 2,
             );
-            node.node.rotationQuaternion = q;
+            //node.node.rotationQuaternion = q;
           }
           const dir = node.dir;
           const dirv = BABYLON.Vector3.FromArray(dir);
           //node.node.position.addInPlace(dirv);
         }
 
-        for (const node of arm) {
-          /**
-           * @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.TransformNode
-           */
-          const tn = node.node;
-          const pos = tn.absolutePosition;
-          const rot = tn.absoluteRotationQuaternion;
-          const aggs = node.aggs;
-          for (const agg of aggs) {
-            agg.body.position = pos;
-            agg.body.rotationQuaternion = rot;
-          }
-        }
+        /**
+         * @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.TransformNode
+         */
 
       }
     }
   }
 
-  applyMove(param) {
-    if (!param.pad) {
+  applyMove(pad) {
+    if (!pad) {
       return;
     }
 
-    // TODO: 関節などに適用する
+    { // TODO: 関節などに適用する
+    }
+    {
+
+    }
+    {
+
+    }
+    {
+
+    }
 
   }
 
+  /**
+   * 
+   */
   analyzePads() {
-    const ret = {pad: null};
+    const standards = [];
+    const others = [];
 
     const pads = navigator.getGamepads();
-    for (const pad of pads) {
+    for (let i = 0; i < pads.length; ++i) {
+      const pad = pads[i];
       if (!pad) {
         continue;
       }
-      ret.pad = pad;
-      break;
+      if (pad.mapping === 'standard') {
+        standards.push(pad);
+      } else {
+        others.push(pad);
+      }
     }
-    return ret;
+    // 'standard' 優先
+    const targets = (standards.length >= 1) ? standards : others;
+    // その後はインデックス優先
+    let index = targets.findIndex(pad => pad.index === this.prePadIndex);
+    if (index < 0) {
+      index = 0;
+    }
+    /** @type {Gamepad} */
+    const curPad = targets[index];
+    if (curPad) { // 有効情報の場合のみ更新する
+      this.prePadIndex = curPad.index;
+    }
+    return curPad;
   }
 
   async readyObject(scene) {
@@ -317,6 +349,7 @@ class Misc {
         scene,  
       );
 
+      this.floorpa = pa;
     }
     const rigids = [];
     for (let i = 0; i < 3; ++i) {
@@ -341,6 +374,15 @@ class Misc {
         scene,  
       );
       rigids.push(pa);
+    }
+
+    {
+      const ct = new BABYLON.LockConstraint(
+        new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(0.5, 0, 0),
+        new BABYLON.Vector3(0, 1, 0), new BABYLON.Vector3(0, 1, 0),
+        scene,
+      );
+      rigids[0].body.addConstraint(rigids[1].body, ct);
     }
 
     {
@@ -545,49 +587,50 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
    * これはボーンでやるタイプ
    * @param {*} scene 
    */
-  makeBoneArm(scene) {
+  makeBoneArmKeep(scene) {
     console.log('makeBoneArm');
     const armDia = 0.04;
     const jointDia = 0.04;
     const parts = [
-      {p: [0, 0, 0], parent: -1, axis: null,
+      {p: [0, 0, 0], dir: [0,0,0], parent: -1, axis: [0, 1, 0],
         ms: [{type: 'cyl', s:[armDia * 2, 0.1, armDia * 2], deg:[0,0,0], p:[0,0.05,0]}]
       }, // ベース #0
-      {p: [0, 0.1, 0], parent: 0, axis: [0, 1, 0],
+      {p: [0, 0.1, 0], dir: [0,0,0], parent: 0, axis: [0, 1, 0],
         ms: [{type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,0], p:[0,0.05,0]}]
       }, // #1
-      {p: [0, 0.2, 0], axis: [1, 0, 0],
+      {p: [0, 0.2, 0], dir: [0,0,0], axis: [1, 0, 0],
         ms: [
           {type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[0,0,90]},
           {type: 'cyl', s:[armDia, 0.2, armDia], p: [0,0, 0.1], deg:[90,0,0]}
         ],
         parent: 1}, // #2
-      {p: [0, 0.2, 0.2], parent: 2, axis: [1, 0, 0],
+      {p: [0, 0.2, 0.2], dir: [0,0,0], parent: 2, axis: [1, 0, 0],
         ms: [
           {type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[0,0,90]},
           {type: 'cyl', s:[armDia, 0.1, armDia], p: [0,0,0.05], deg:[90,0,0]}
         ],
       }, // #3
-      {p: [0, 0.2, 0.3], axis: [0, 0, 1],
+      {p: [0, 0.2, 0.3], dir: [0,0,0], axis: [0, 0, 1],
         ms: [{type: 'cyl', s:[armDia, 0.1, armDia], p: [0,0,0.05], deg:[90,0,0]}], 
         parent: 3}, // #4
-      {p: [0, 0.2, 0.4], parent: 4, axis: [1, 0, 0],
+      {p: [0, 0.2, 0.4], dir: [0,0,0], parent: 4, axis: [1, 0, 0],
         ms: [
           {type: 'cyl', s:[jointDia, 0.04, jointDia], p: [0,0,0], deg:[0,0,90]},
           {type: 'cyl', s:[armDia, 0.1, armDia], p: [0,-0.05,0], deg:[0,0,0]}
         ],
       }, // #5
-      {p: [0, 0.1, 0.4], parent: 5, axis: [0, 1, 0],
+      {p: [0, 0.1, 0.4], dir: [0,0,0], parent: 5, axis: [0, 1, 0],
         ms: [{type: 'box', s:[0.2, 0.02, 0.05], p: [0,0,0], deg:[0,0,0]}],
       }, // ねじり #6
-      {p: [-0.1, 0.1, 0.4], dir: [1, 0, 0],
+      {p: [-0.1, 0.1, 0.4], dir: [1, 0, 0], axis: [0, 1, 0],
         ms: [{type: 'cyl', s:[0.01, 0.1, 0.01], p: [0,-0.05,0], deg:[0,0,0]}],
         parent: 6}, // #7
-      {p: [ 0.1, 0.1, 0.4], dir: [-1, 0, 0],
+      {p: [ 0.1, 0.1, 0.4], dir: [-1, 0, 0], axis: [0, 1, 0],
         ms: [{type: 'cyl', s:[0.01, 0.1, 0.01], p: [0,-0.05,0], deg:[0,0,0]}],
         parent: 6}, // #8
     ];
     const arms = [];
+    let nextParent = this.floorpa;
     for (let i = 0; i < parts.length; ++i) {
       const part = parts[i];
       const tn = new BABYLON.TransformNode(this.oid(), scene);
@@ -596,18 +639,26 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       let vec = BABYLON.Vector3.FromArray(part.p);
       let index = part.parent;
       if (index >= 0) {
-        tn.parent = arms[index].node;
-        vec.subtractInPlace(tn.parent.absolutePosition);
+        // NOTE: ボーンツリーを構成する場合
+        //tn.parent = arms[index].node;
+        //vec.subtractInPlace(tn.parent.absolutePosition);
       }
       tn.position = vec;
 
-      const arm = {node: tn, axis: part.axis,
+      let axisVec = part.axis ? BABYLON.Vector3.FromArray(part.axis) : null;
+      if (axisVec?.length === 0) {
+        axisVec = null;
+      }
+
+      const arm = {node: tn,
+        axis: part.axis,
         aggs: [],
         dir: part.dir || [0,0,0]};
       arms.push(arm);
 
+      for (let j = 0; j < part.ms.length; ++j) {
+        const info = part.ms[j];
 
-      for (const info of part.ms) {
         let m = null;
         let shapeType = '';
         switch (info.type) {
@@ -625,6 +676,15 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
               {width: info.s[0], height: info.s[1], depth: info.s[2]},
               scene);
             break;
+          case 'cap':
+            shapeType = BABYLON.PhysicsShapeType.CAPSULE;
+            m = BABYLON.MeshBuilder.CreateCapsule(
+              this.oid(),
+              {radium: info.s[0],
+                height: info.s[1],},
+              scene,
+            );
+            break;
         }
         const mtl = new BABYLON.StandardMaterial(this.oid(), scene);
         mtl.diffuseColor = this.rc();
@@ -632,8 +692,8 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         m.material = mtl;
 
         m.rotation = BABYLON.Vector3.FromArray(info.deg.map(deg => deg * Math.PI / 180));
-        m.position = BABYLON.Vector3.FromArray(info.p);
-        m.parent = tn;
+        let diffv = BABYLON.Vector3.FromArray(info.p);
+        m.position = vec.clone().add(diffv);
 
         this.sg.addShadowCaster(m);
 
@@ -643,14 +703,258 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
           {mass: 2.0}, // NOTE: 重さを 2.0 にすると??
           scene,
         );
-        // NOTE: 動く動かない??
-        pa.body.setMotionType(BABYLON.PhysicsMotionType.ANIMATED);
-        // NOTE: これか...
-        //pa.body.disablePrestep = true;
 
         arm.aggs.push(pa);
+
+        // @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.PhysicsConstraint
+        if (nextParent) { // コンストレイント
+          let ct = null;
+          if (j === 0 && axisVec) {
+            const limits = [
+              { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: 0, maxLimit: 0 },
+              { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: 0, maxLimit: 0 },
+              { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Z, minLimit: 0, maxLimit: 0 },
+            ];
+            if (axisVec.x !== 0) {
+              limits.push(
+                // 回転も大部分ロック（1軸だけ自由）
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: -Math.PI, maxLimit: Math.PI },
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0},
+              );
+            } else if (axisVec.y !== 0) {
+              limits.push(
+                // 制限無し
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y},
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0},
+              );
+            } else if (axisVec.z !== 0) {
+              limits.push(
+                // 回転も大部分ロック（1軸だけ自由）
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
+                // ANGULAR_Z がヒンジの回転軸（自由 or 制限付き）
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: -Math.PI, maxLimit: Math.PI }, // 例: ±180度
+              );
+            }
+
+            ct = new BABYLON.Physics6DoFConstraint(
+              {
+                pivotA: new BABYLON.Vector3(0, 0, 0),
+                pivotB: diffv,
+              },
+              limits,
+              scene,
+            );
+          } else {
+            ct = new BABYLON.LockConstraint(
+              new BABYLON.Vector3(0, 0, 0), diffv,
+              new BABYLON.Vector3(0, 1, 0), new BABYLON.Vector3(0, 1, 0),
+              scene,
+            );
+          }
+          //pa.body.addConstraint(nextParent.body, ct);
+          nextParent.body.addConstraint(pa.body, ct);
+        }
+        if (j === 0) {
+          nextParent = pa;
+        }
       }
 
+    }
+    return arms;
+  }
+
+  /**
+   * 旋回、仰角、仰角、ねじり、仰角、ねじり、はさむ
+   * これはボーンでやるタイプ
+   * @param {*} scene 
+   */
+  makeBoneArm(scene) {
+    console.log('makeBoneArm', 'constraint でやる');
+    const armDia = 0.04;
+    const jointDia = 0.04;
+    /** 剛体パーツ */
+    const parts = [
+      { // #0 ベース
+        p: [0, 0.5, 0], dir: [0,0,0], parent: -1, axis: [0, 1, 0],
+        type: 'cyl', s:[armDia * 2, 0.1, armDia * 2], deg:[0,0,0],
+      },
+      { // #1 回転
+        p: [0, 0.15, 0], dir: [0,0,0], parent: 0, axis: [0, 1, 0],
+        type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,0],
+      },
+      { // #2 仰角
+        p: [0, 0.2, 0], dir: [0,0,0], axis: [1, 0, 0], parent: 1,
+        type: 'cyl', s:[jointDia, 0.04, jointDia], deg:[0,0,90],
+      },
+      { // #3 腕
+        p: [0, 0.2, 0.1], dir: [0,0,0], axis: [0, 0, 0], parent: 2,
+        type: 'cyl', s:[armDia, 0.2, armDia], deg:[90,0,0],
+      },
+      { // #4 仰角
+        p: [0, 0.2, 0.2], dir: [0,0,0], parent: 2, axis: [1, 0, 0],
+        type: 'cyl', s:[jointDia, 0.04, jointDia], deg:[0,0,90],
+      },
+      { // #5 腕
+        p: [0, 0.2, 0.2], dir: [0,0,0], parent: 4, axis: [1, 0, 0],
+        type: 'cyl', s:[armDia, 0.1, armDia], deg:[90,0,0],
+      },
+      { // #6 ねじり
+        p: [0, 0.2, 0.3], dir: [0,0,0], parent: 5, axis: [0, 0, 1],
+        type: 'cyl', s:[armDia, 0.1, armDia], deg:[90,0,0], 
+      },
+      { // #7 仰角
+        p: [0, 0.2, 0.4], dir: [0,0,0], parent: 5, axis: [1, 0, 0],
+        type: 'cyl', s:[jointDia, 0.04, jointDia], deg:[0,0,90],
+      },
+      { // #8 腕
+        p: [0, 0.2, 0.4], dir: [0,0,0], parent: 7, axis: [1, 0, 0],
+        type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,0],
+      },
+      { // #9 ハサミ
+        p: [0, 0.1, 0.4], dir: [0,0,0], parent: 7, axis: [0, 1, 0],
+        type: 'box', s:[0.2, 0.02, 0.05], deg:[0,0,0],
+      },
+      { // #10 X-
+        p: [-0.1, 0.1, 0.4], dir: [1, 0, 0], parent: 9, axis: [0, 0, 0],
+        type: 'cyl', s:[0.01, 0.1, 0.01], deg:[0,0,0],
+      },
+      { // #11 X+
+        p: [ 0.1, 0.1, 0.4], dir: [-1, 0, 0], parent: 9, axis: [0, 0, 0],
+        type: 'cyl', s:[0.01, 0.1, 0.01], deg:[0,0,0],
+      },
+    ];
+    const arms = [];
+    let nextParent = this.floorpa;
+    for (let i = 0; i < parts.length; ++i) {
+      const part = parts[i];
+
+      /**
+       * 位置 in モデル
+       */
+      let vec = BABYLON.Vector3.FromArray(part.p);
+      let index = part.parent;
+      if (index >= 0) {
+        //tn.parent = arms[index].node;
+        //vec.subtractInPlace(tn.parent.absolutePosition);
+      }
+
+      let axisVec = part.axis ? BABYLON.Vector3.FromArray(part.axis) : null;
+      if (axisVec?.length === 0) {
+        axisVec = null;
+      }
+
+      const arm = {
+        axis: part.axis,
+        agg: null,
+        dir: part.dir || [0,0,0]};
+      arms.push(arm);
+
+      {
+        const info = part;
+
+        let m = null;
+        let shapeType = '';
+        switch (info.type) {
+          case 'cyl':
+            shapeType = BABYLON.PhysicsShapeType.CYLINDER;
+            m = BABYLON.MeshBuilder.CreateCylinder(this.oid(),
+              {diameterTop: info.s[0],
+                height: info.s[1],
+                diameterBottom: info.s[2]},
+              scene);
+            break;
+          case 'box':
+            shapeType = BABYLON.PhysicsShapeType.BOX;
+            m = BABYLON.MeshBuilder.CreateBox(this.oid(),
+              {width: info.s[0], height: info.s[1], depth: info.s[2]},
+              scene);
+            break;
+          case 'cap':
+            shapeType = BABYLON.PhysicsShapeType.CAPSULE;
+            m = BABYLON.MeshBuilder.CreateCapsule(
+              this.oid(),
+              {radium: info.s[0],
+                height: info.s[1],},
+              scene,
+            );
+            break;
+        }
+        const mtl = new BABYLON.StandardMaterial(this.oid(), scene);
+        mtl.diffuseColor = this.oid('c');
+        mtl.ambientColor = this.objAmb;
+        m.material = mtl;
+
+        m.rotation = BABYLON.Vector3.FromArray(info.deg.map(deg => deg * Math.PI / 180));
+        let diffv = BABYLON.Vector3.FromArray(info.p);
+        m.position = vec.clone().add(diffv);
+
+        this.sg.addShadowCaster(m);
+
+        const pa = new BABYLON.PhysicsAggregate(
+          m,
+          shapeType,
+          {mass: 2.0}, // NOTE: 重さを 2.0 にすると??
+          scene,
+        );
+
+        arm.agg = pa;
+
+        // @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.PhysicsConstraint
+        if (nextParent) { // コンストレイント
+          let ct = null;
+          if (axisVec) {
+            const limits = [
+              { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: 0, maxLimit: 0 },
+              { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: 0, maxLimit: 0 },
+              { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Z, minLimit: 0, maxLimit: 0 },
+            ];
+            if (axisVec.x !== 0) {
+              limits.push(
+                // 回転も大部分ロック（1軸だけ自由）
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: -Math.PI, maxLimit: Math.PI },
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0},
+              );
+            } else if (axisVec.y !== 0) {
+              limits.push(
+                // 制限無し
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y},
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0},
+              );
+            } else if (axisVec.z !== 0) {
+              limits.push(
+                // 回転も大部分ロック（1軸だけ自由）
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
+                // ANGULAR_Z がヒンジの回転軸（自由 or 制限付き）
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: -Math.PI, maxLimit: Math.PI }, // 例: ±180度
+              );
+            }
+
+            ct = new BABYLON.Physics6DoFConstraint(
+              {
+                pivotA: new BABYLON.Vector3(0, 0, 0),
+                pivotB: diffv,
+              },
+              limits,
+              scene,
+            );
+          } else {
+            ct = new BABYLON.LockConstraint(
+              new BABYLON.Vector3(0, 0, 0), diffv,
+              new BABYLON.Vector3(0, 1, 0), new BABYLON.Vector3(0, 1, 0),
+              scene,
+            );
+          }
+          //pa.body.addConstraint(nextParent.body, ct);
+          nextParent.body.addConstraint(pa.body, ct);
+        }
+        nextParent = pa;
+      }
 
     }
     return arms;
