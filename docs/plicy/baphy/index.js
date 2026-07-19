@@ -136,6 +136,9 @@ class Misc {
       );
       light.intensity = 0.125;
     }
+    { // NOTE: 環境光ベース
+      scene.ambientColor = new BABYLON.Color3(0.25, 0.25, 0.25);
+    }
 
     { // @see https://doc.babylonjs.com/typedoc/classes/BABYLON.PointLight
       const light = new BABYLON.PointLight(
@@ -305,6 +308,13 @@ class Misc {
         {width: 0.1, height: 0.2, depth: 0.08},
         scene,
       );
+      const mtl = new BABYLON.StandardMaterial(
+        this.oid(),
+        scene,
+      );
+      mtl.ambientColor = new BABYLON.Color3(1, 1, 1);
+      m.material = mtl;
+
       this.sg.addShadowCaster(m);
       m.position = new BABYLON.Vector3(i - 1, 3, 0);
       const pa = new BABYLON.PhysicsAggregate(
@@ -599,6 +609,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         }
         const mtl = new BABYLON.StandardMaterial(this.oid(), scene);
         mtl.diffuseColor = this.rc();
+        mtl.ambientColor = new BABYLON.Color3(1, 1, 1);
         m.material = mtl;
 
         m.rotation = BABYLON.Vector3.FromArray(info.deg.map(deg => deg * Math.PI / 180));
@@ -610,11 +621,12 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         const pa = new BABYLON.PhysicsAggregate(
           m,
           shapeType,
-          {mass: 2.0}, // NOTE: 重さを 2.0 にすると??
+          {mass: 0.0}, // NOTE: 重さを 2.0 にすると??
           scene,
         );
+        //pa.body.setMotionType(BABYLON.PhysicsMotionType.ANIMATED);
         // NOTE: これか...
-        pa.body.disablePrestep = true;
+        //pa.body.disablePrestep = true;
       }
 
 
