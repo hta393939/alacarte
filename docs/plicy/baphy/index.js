@@ -347,7 +347,7 @@ class Misc {
         m,
         BABYLON.PhysicsShapeType.BOX,
         // mass 0 で動かない
-        { mass: 0, restitution: 1, friction: 0.8 },
+        { mass: 0, restitution: 0.1, friction: 0.8 },
         scene,  
       );
 
@@ -355,13 +355,13 @@ class Misc {
     }
     const rigids = [];
     for (let i = 0; i < 3; ++i) {
-      const m = BABYLON.MeshBuilder.CreateBox(
+      const m = BABYLON.MeshBuilder.CreateCapsule(
         `box${i}`,
-        {width: 0.1, height: 0.2, depth: 0.08},
+        {radius: 0.05, height: 0.2},
         scene,
       );
       const mtl = new BABYLON.StandardMaterial(
-        this.oid(),
+        this.oid('m'),
         scene,
       );
       mtl.ambientColor = this.objAmb;
@@ -369,23 +369,31 @@ class Misc {
 
       this.sg.addShadowCaster(m);
       m.position = new BABYLON.Vector3(i - 1, 3, 0);
+      // 回転は入ったがどっちだ??
+      //m.rotation = new BABYLON.Vector3(Math.PI * 0.5, 0, 0);
+
       const pa = new BABYLON.PhysicsAggregate(
         m,
-        BABYLON.PhysicsShapeType.BOX,
-        { mass: 2.0, restitution: 0.2, friction: 0.8 },  // mass:0 = 静的
+        BABYLON.PhysicsShapeType.CAPSULE,
+        { mass: 2.0, restitution: 0.1, friction: 0.8 },  // mass:0 = 静的
         scene,  
       );
       rigids.push(pa);
     }
 
-    {
+    { // 距離が0.5
       const ct = new BABYLON.LockConstraint(
         new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(0.5, 0, 0),
-        new BABYLON.Vector3(0, 1, 0), new BABYLON.Vector3(0, 1, 0),
+        new BABYLON.Vector3(0, 1, 0), new BABYLON.Vector3(1, 0, 0),
         scene,
       );
       rigids[0].body.addConstraint(rigids[1].body, ct);
     }
+
+    {
+
+    }
+
 
     {
       /*
@@ -694,6 +702,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         m.material = mtl;
 
         m.rotation = BABYLON.Vector3.FromArray(info.deg.map(deg => deg * Math.PI / 180));
+
         let diffv = BABYLON.Vector3.FromArray(info.p);
         m.position = vec.clone().add(diffv);
 
@@ -839,6 +848,16 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       let parent = (part.parent < 0) ? this.floorpa : arms[part.parent].agg;
       const diffv = vec.clone().subtract(parent.transformNode.absolutePosition);
 
+      const erot = BABYLON.Vector3.FromArray(
+        part.deg.map(deg => deg * Math.PI / 180));
+      const q = BABYLON.Quaternion.FromEulerAngles(
+        erot.x, erot.y, erot.z,
+      );
+      const parentq = parent.transformNode.absoluteRotationQuaternion;
+      // @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.Quaternion
+      const diffq = parentq.conjugate().multiply(q);
+
+
       let axisVec = part.axis ? BABYLON.Vector3.FromArray(part.axis) : null;
       if (axisVec?.length === 0) {
         axisVec = null;
@@ -888,8 +907,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         mtl.ambientColor = this.objAmb;
         m.material = mtl;
 
-        m.rotation = BABYLON.Vector3.FromArray(
-          info.deg.map(deg => deg * Math.PI / 180));
+        //m.rotation = erot;
         m.position = vec;
 
         this.sg.addShadowCaster(m);
@@ -909,7 +927,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
           if (!axisVec && !dirVec) {
             ct = new BABYLON.LockConstraint(
               new BABYLON.Vector3(0, 0, 0), diffv,
-              new BABYLON.Vector3(0, 1, 0), new BABYLON.Vector3(0, 1, 0),
+              new BABYLON.Vector3(0, 1, 0), diffq.toEulerAngles(),
               scene,
             );
           } else if (dirVec) {
