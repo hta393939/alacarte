@@ -804,7 +804,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         type: 'cyl', s:[armDia, 0.1, armDia], deg:[90,0,0],
       },
       { // #6 ねじり
-        p: [0, 0.2, 0.3], dir: [0,0,0], parent: 5, axis: [0, 0, 1],
+        p: [0, 0.2, 0.35], dir: [0,0,0], parent: 5, axis: [0, 0, 1],
         type: 'cyl', s:[armDia, 0.1, armDia], deg:[90,0,0], 
       },
       { // #7 仰角
@@ -812,7 +812,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         type: 'cyl', s:[jointDia, 0.04, jointDia], deg:[0,0,90],
       },
       { // #8 腕
-        p: [0, 0.2, 0.4], dir: [0,0,0], parent: 7, axis: [0, 0, 0],
+        p: [0, 0.15, 0.4], dir: [0,0,0], parent: 7, axis: [0, 0, 0],
         type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,0],
       },
       { // #9 ハサミ
@@ -820,11 +820,11 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         type: 'box', s:[0.2, 0.02, 0.05], deg:[0,0,0],
       },
       { // #10 X-
-        p: [-0.1, 0.1, 0.4], dir: [1, 0, 0], parent: 9, axis: [0, 0, 0],
+        p: [-0.1, 0.05, 0.4], dir: [1, 0, 0], parent: 9, axis: [0, 0, 0],
         type: 'cyl', s:[0.01, 0.1, 0.01], deg:[0,0,0],
       },
       { // #11 X+
-        p: [ 0.1, 0.1, 0.4], dir: [-1, 0, 0], parent: 9, axis: [0, 0, 0],
+        p: [ 0.1, 0.05, 0.4], dir: [-1, 0, 0], parent: 9, axis: [0, 0, 0],
         type: 'cyl', s:[0.01, 0.1, 0.01], deg:[0,0,0],
       },
     ];
@@ -888,7 +888,8 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         mtl.ambientColor = this.objAmb;
         m.material = mtl;
 
-        m.rotation = BABYLON.Vector3.FromArray(info.deg.map(deg => deg * Math.PI / 180));
+        m.rotation = BABYLON.Vector3.FromArray(
+          info.deg.map(deg => deg * Math.PI / 180));
         m.position = vec;
 
         this.sg.addShadowCaster(m);
@@ -920,24 +921,21 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
             ];
             if (dirVec.x !== 0) {
               limits.push(
-                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: -Math.PI, maxLimit: Math.PI },
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0},
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: -0.05, maxLimit: 0.05 },
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Z, minLimit: 0, maxLimit: 0},
               );
             } else if (dirVec.y !== 0) {
               limits.push(
-                // 制限無し
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: 0, maxLimit: 0 },
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y},
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0},
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: -0.1, maxLimit: 0.1},
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Z, minLimit: 0, maxLimit: 0},
               );
             } else if (dirVec.z !== 0) {
               limits.push(
-                // 回転も大部分ロック（1軸だけ自由）
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: 0, maxLimit: 0 },
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
-                // ANGULAR_Z がヒンジの回転軸（自由 or 制限付き）
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: -Math.PI, maxLimit: Math.PI }, // 例: ±180度
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: 0, maxLimit: 0 },
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Z, minLimit: -0.1, maxLimit: 0.1 },
               );
             }
 
