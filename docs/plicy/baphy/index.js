@@ -21,6 +21,8 @@ class Misc {
 
     this.prePadIndex = -1;
     this.count = 0;
+    /** autoRot は実験用 */
+    this.autoRot = true;
 
     this.objAmb = new BABYLON.Color3(0.25, 0.25, 0.25);
   }
@@ -36,48 +38,82 @@ class Misc {
     const arm = await this.makeBoneArm(this.scene);
     this.arm = arm;
     {
+      const nearFarIndex = 1;
       for (let i = 0; i < arm.length; ++i) {
         const one = arm[i];
         one._padFunc = () => {};
         switch (i) {
           case 1:
             one._padFunc = (pad) => {
-              one._add(0);
+              const a = pad.axes[0];
+              one._add(a);
+              const q = BABYLON.Quaternion.RotationAxis(
+                new BABYLON.Vector3(0, 1, 0),
+                one.curVal * Math.PI / 180,
+              );
+              one.node.rotationQuaternion = q;
             };
             break;
           case 2:
             one._padFunc = (pad) => {
-              one._add(0);
+              const a = pad.axes[nearFarIndex];
+              one._add(a * 0.5);
+              const q = BABYLON.Quaternion.RotationAxis(
+                new BABYLON.Vector3(1, 0, 0),
+                one.curVal * Math.PI / 180,
+              );
+              one.node.rotationQuaternion = q;
             };
             break;
-          case 4:
+          case 4: // 仰角
+            one._padFunc = (pad) => {
+              const a = pad.axes[nearFarIndex];
+              one._add(-a);
+              const q = BABYLON.Quaternion.RotationAxis(
+                new BABYLON.Vector3(1, 0, 0),
+                one.curVal * Math.PI / 180,
+              );
+              one.node.rotationQuaternion = q;
+            };
+            break;
+          case 6: // ねじり
             one._padFunc = (pad) => {
               one._add(0);
             };
             break;
-          case 6:
+          case 7: // 仰角
             one._padFunc = (pad) => {
-              one._add(0);
+              const a = pad.axes[nearFarIndex];
+              one._add(a * 0.5);
+              const q = BABYLON.Quaternion.RotationAxis(
+                new BABYLON.Vector3(1, 0, 0),
+                one.curVal * Math.PI / 180,
+              );
+              one.node.rotationQuaternion = q;
             };
             break;
-          case 7:
-            one._padFunc = (pad) => {
-              one._add(0);
-            };
-            break;
-          case 9:
+
+          case 9: // ねじり
             one._padFunc = (pad) => {
               one._add(0);
             };
             break;
           case 10:
+            one.curVal = -0.1;
             one._padFunc = (pad) => {
-              one._add(0);
+              const but = pad.buttons[7].value;
+              one._set(-0.1 + but * 0.1);
+              const p = new BABYLON.Vector3(one.curVal, -0.05, 0);
+              one.node.position = p;
             };
             break;
           case 11:
+            one.curVal = 0.1;
             one._padFunc = (pad) => {
-              one._add(0);
+              const but = pad.buttons[7].value;
+              one._set(0.1 - but * 0.1);
+              const p = new BABYLON.Vector3(one.curVal, -0.05, 0);
+              one.node.position = p;
             };
             break;
         }
@@ -248,7 +284,7 @@ class Misc {
       this.applyMove(result);
       const tl = this.textLabels[1];
       if (tl) { // 0 を許す
-        tl.text = `${result?.index ?? -1}(${this.prePadIndex})`;
+        tl.text = `${result?.index ?? -1}(${this.prePadIndex}) ${this.autoRot}`;
       }
     }
 
@@ -295,26 +331,28 @@ class Misc {
       const rot = new BABYLON.Vector3(val * Math.PI * 2, 0, 0);
       const arm = this.arm;
       if (Array.isArray(arm)) {
-        for (const one of arm) { // ボーン変更
-          const tn = one.node;
-          const axisVec = one.axisVec;
-          const dirVec = one.dirVec;
-          if (!tn || (!axisVec && !dirVec)) {
-            continue;
-          }
-          if (axisVec) {
-            tn.rotation = rot;
-            /*
-            tn.rotation = BABYLON.Quaternion.FromEulerAngles(
-              val * Math.PI * 2, 0, 0,
-            );
-            */
-          }
+        if (this.autoRot) {
+          for (const one of arm) { // ボーン変更
+            const tn = one.node;
+            const axisVec = one.axisVec;
+            const dirVec = one.dirVec;
+            if (!tn || (!axisVec && !dirVec)) {
+              continue;
+            }
+            if (axisVec) {
+              tn.rotation = rot;
+              /*
+              tn.rotation = BABYLON.Quaternion.FromEulerAngles(
+                val * Math.PI * 2, 0, 0,
+              );
+              */
+            }
 
-          if (dirVec) {
-            tn.position = new BABYLON.Vector3(val * 0.01, 0.05, 0);
-          }
+            if (dirVec) {
+              tn.position = new BABYLON.Vector3(val * 0.01, 0.05, 0);
+            }
 
+          }
         }
 
         for (const one of arm) { // 反映
@@ -343,7 +381,7 @@ class Misc {
       return;
     }
 
-    for (const one of (this.arm || [])) { // TODO: 関節などに適用する
+    for (const one of (this.arm || [])) {
       one._padFunc(pad);
     }
 
@@ -409,6 +447,9 @@ class Misc {
           console.log(`click`, i);
           tb.text = `${new Date().toISOString()}`;
 
+          if (i === 1) {
+            this.autoRot = !this.autoRot;
+          }
           if (i === 2) {
             this.addEights(this.scene);
           }
@@ -693,11 +734,11 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       },
       { // #10 X-
         p: [-0.1, 0.05, 0.4], dir: [1, 0, 0], parent: 9, axis: [0, 0, 0],
-        type: 'cyl', s:[0.01, 0.1 - 0.02, 0.01], deg:[0,0],
+        type: 'cyl', s:[0.01, 0.1 - 0.02, 0.01], deg:[-0.1, 0], // 0からの移動
       },
       { // #11 X+
         p: [ 0.1, 0.05, 0.4], dir: [-1, 0, 0], parent: 9, axis: [0, 0, 0],
-        type: 'cyl', s:[0.01, 0.1 - 0.02, 0.01], deg:[0,0],
+        type: 'cyl', s:[0.01, 0.1 - 0.02, 0.01], deg:[0, 0.1], // 0から移動
       },
     ];
     const arms = [];
@@ -731,11 +772,15 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       const arm = part;
       Object.assign(arm, {
         curVal: 0,
-        _clip: () => {
+        _clip: () => { // deg を使う
           arm.curVal = Math.max(arm.deg[0], Math.min(arm.deg[1], arm.curVal));
         },
-        _add: (diff) => {
-          arm.curVal += diff;
+        _set: (_val) => {
+          arm.curVal = _val;
+          arm._clip();
+        },
+        _add: (_diff) => {
+          arm.curVal += _diff;
           arm._clip();
         },
         node: tn,
