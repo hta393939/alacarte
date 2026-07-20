@@ -35,6 +35,54 @@ class Misc {
 
     const arm = await this.makeBoneArm(this.scene);
     this.arm = arm;
+    {
+      for (let i = 0; i < arm.length; ++i) {
+        const one = arm[i];
+        one._padFunc = () => {};
+        switch (i) {
+          case 1:
+            one._padFunc = (pad) => {
+              one._add(0);
+            };
+            break;
+          case 2:
+            one._padFunc = (pad) => {
+              one._add(0);
+            };
+            break;
+          case 4:
+            one._padFunc = (pad) => {
+              one._add(0);
+            };
+            break;
+          case 6:
+            one._padFunc = (pad) => {
+              one._add(0);
+            };
+            break;
+          case 7:
+            one._padFunc = (pad) => {
+              one._add(0);
+            };
+            break;
+          case 9:
+            one._padFunc = (pad) => {
+              one._add(0);
+            };
+            break;
+          case 10:
+            one._padFunc = (pad) => {
+              one._add(0);
+            };
+            break;
+          case 11:
+            one._padFunc = (pad) => {
+              one._add(0);
+            };
+            break;
+        }
+      }
+    }
   }
 
   async log(...args) {
@@ -247,12 +295,12 @@ class Misc {
       const rot = new BABYLON.Vector3(val * Math.PI * 2, 0, 0);
       const arm = this.arm;
       if (Array.isArray(arm)) {
-        for (const one of arm) {
+        for (const one of arm) { // ボーン変更
           const tn = one.node;
           const axisVec = one.axisVec;
           const dirVec = one.dirVec;
           if (!tn || (!axisVec && !dirVec)) {
-            //continue;
+            continue;
           }
           if (axisVec) {
             tn.rotation = rot;
@@ -264,12 +312,12 @@ class Misc {
           }
 
           if (dirVec) {
-            tn.position = new BABYLON.Vector3(val * 0.01, 0, 0);
+            tn.position = new BABYLON.Vector3(val * 0.01, 0.05, 0);
           }
 
         }
 
-        for (const one of arm) {
+        for (const one of arm) { // 反映
           const tn = one.node;
           const body = one.agg?.body;
           if (!body) {
@@ -280,14 +328,11 @@ class Misc {
             tn.absolutePosition,
             tn.absoluteRotationQuaternion,
           );
-          //body.position = tn.absolutePosition;
-          //body.rotationQuaternion = tn.absoluteRotationQuaternion;
         }
 
         /**
          * @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.TransformNode
          */
-
       }
     }
 
@@ -298,16 +343,8 @@ class Misc {
       return;
     }
 
-    { // TODO: 関節などに適用する
-    }
-    {
-
-    }
-    {
-
-    }
-    {
-
+    for (const one of (this.arm || [])) { // TODO: 関節などに適用する
+      one._padFunc(pad);
     }
 
   }
@@ -539,7 +576,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
    * @returns 
    */
   makeEight(scene) {
-    const scale = 0.08;
+    const scale = 0.04;
     const vd = new BABYLON.VertexData();
     const n = 6;
     const ps = new Float32Array(n * 3);
@@ -692,10 +729,20 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       }
 
       const arm = part;
-      arm.node = tn;
-      arm.agg = null;
-      arm.axisVec = axisVec;
-      arm.dirVec = dirVec;
+      Object.assign(arm, {
+        curVal: 0,
+        _clip: () => {
+          arm.curVal = Math.max(arm.deg[0], Math.min(arm.deg[1], arm.curVal));
+        },
+        _add: (diff) => {
+          arm.curVal += diff;
+          arm._clip();
+        },
+        node: tn,
+        agg: null,
+        axisVec,
+        dirVec,
+      });
       arms.push(arm);
 
       {
@@ -736,7 +783,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
 
         this.sg.addShadowCaster(m);
 
-        if (false) {
+        if (false) { // ボーン側可視
           const viewm = m.clone();
           viewm.position = diffv;
           this.sg.addShadowCaster(viewm);
@@ -747,9 +794,17 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         const pa = new BABYLON.PhysicsAggregate(
           m,
           shapeType,
-          {mass: 2.0}, // NOTE: 重さを 2.0 にすると??
+          {mass: 2.0,
+            // box はこれ
+            //extents: BABYLON.Vector3.FromArray(part.s).multiplyByFloats(2, 2, 2),
+            extents: BABYLON.Vector3.FromArray(part.s)
+              .add(new BABYLON.Vector3(0.03, 0.03, 0.03))
+          },
           scene,
         );
+        // cyl はこれで良さそう
+        pa?.shape?._pluginData?.setMargin?.(0);
+
         pa.body.setMotionType(BABYLON.PhysicsMotionType.ANIMATED);
 
         // NOTE: こっちは動く
