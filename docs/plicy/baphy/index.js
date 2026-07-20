@@ -786,6 +786,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
     console.log('makeBoneArm', 'constraint でやる');
     const armDia = 0.04;
     const jointDia = 0.04;
+    const jointWidth = 0.04;
     /** 剛体パーツ */
     const parts = [
       { // #0 ベース
@@ -798,27 +799,27 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       },
       { // #2 仰角
         p: [0, 0.2, 0], dir: [0,0,0], axis: [1, 0, 0], parent: 1,
-        type: 'cyl', s:[jointDia, 0.04, jointDia], deg:[0,0,90],
+        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,0,0],
       },
       { // #3 腕
         p: [0, 0.2, 0.1], dir: [0,0,0], axis: [0, 0, 0], parent: 2,
-        type: 'cyl', s:[armDia, 0.2, armDia], deg:[90,0,0],
+        type: 'box', s:[armDia, armDia, 0.2], deg:[0,0,0],
       },
       { // #4 仰角
         p: [0, 0.2, 0.2], dir: [0,0,0], parent: 2, axis: [1, 0, 0],
-        type: 'cyl', s:[jointDia, 0.04, jointDia], deg:[0,0,90],
+        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,0,0],
       },
       { // #5 腕
         p: [0, 0.2, 0.2], dir: [0,0,0], parent: 4, axis: [0, 0, 0],
-        type: 'cyl', s:[armDia, 0.1, armDia], deg:[90,0,0],
+        type: 'box', s:[armDia, armDia, 0.1], deg:[0,0,0],
       },
       { // #6 ねじり
         p: [0, 0.2, 0.35], dir: [0,0,0], parent: 5, axis: [0, 0, 1],
-        type: 'cyl', s:[armDia, 0.1, armDia], deg:[90,0,0], 
+        type: 'box', s:[armDia, armDia, 0.1], deg:[0,0,0], 
       },
       { // #7 仰角
         p: [0, 0.2, 0.4], dir: [0,0,0], parent: 5, axis: [1, 0, 0],
-        type: 'cyl', s:[jointDia, 0.04, jointDia], deg:[0,0,90],
+        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,0,0],
       },
       { // #8 腕
         p: [0, 0.15, 0.4], dir: [0,0,0], parent: 7, axis: [0, 0, 0],
@@ -853,10 +854,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       const q = BABYLON.Quaternion.FromEulerAngles(
         erot.x, erot.y, erot.z,
       );
-      const parentq = parent.transformNode.absoluteRotationQuaternion;
       // @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.Quaternion
-      const diffq = parentq.conjugate().multiply(q);
-
 
       let axisVec = part.axis ? BABYLON.Vector3.FromArray(part.axis) : null;
       if (axisVec?.length === 0) {
@@ -873,31 +871,31 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       arms.push(arm);
 
       {
-        const info = part;
+        //const info = part;
 
         let m = null;
         let shapeType = '';
-        switch (info.type) {
+        switch (part.type) {
           case 'cyl':
             shapeType = BABYLON.PhysicsShapeType.CYLINDER;
             m = BABYLON.MeshBuilder.CreateCylinder(this.oid(),
-              {diameterTop: info.s[0],
-                height: info.s[1],
-                diameterBottom: info.s[2]},
+              {diameterTop: part.s[0],
+                height: part.s[1],
+                diameterBottom: part.s[2]},
               scene);
             break;
           case 'box':
             shapeType = BABYLON.PhysicsShapeType.BOX;
             m = BABYLON.MeshBuilder.CreateBox(this.oid(),
-              {width: info.s[0], height: info.s[1], depth: info.s[2]},
+              {width: part.s[0], height: part.s[1], depth: part.s[2]},
               scene);
             break;
           case 'cap':
             shapeType = BABYLON.PhysicsShapeType.CAPSULE;
             m = BABYLON.MeshBuilder.CreateCapsule(
               this.oid(),
-              {radium: info.s[0],
-                height: info.s[1],},
+              {radium: part.s[0],
+                height: part.s[1],},
               scene,
             );
             break;
@@ -907,7 +905,6 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
         mtl.ambientColor = this.objAmb;
         m.material = mtl;
 
-        //m.rotation = erot;
         m.position = vec;
 
         this.sg.addShadowCaster(m);
@@ -923,15 +920,16 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
 
         // @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.PhysicsConstraint
         { // コンストレイント
+          const upv = BABYLON.Vector3.Up();
           let ct = null;
           if (!axisVec && !dirVec) {
             ct = new BABYLON.LockConstraint(
-              new BABYLON.Vector3(0, 0, 0), diffv,
-              new BABYLON.Vector3(0, 1, 0), diffq.toEulerAngles(),
+              diffv, new BABYLON.Vector3(0, 0, 0),
+              upv, upv,
               scene,
             );
           } else if (dirVec) {
-
+            // ハサミ
             const limits = [
               { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: 0, maxLimit: 0 },
               { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
@@ -958,15 +956,14 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
             }
 
             ct = new BABYLON.Physics6DoFConstraint(
-              {
-                pivotA: new BABYLON.Vector3(0, 0, 0),
-                pivotB: diffv,
-              },
+              { pivotA: diffv,
+                pivotB: new BABYLON.Vector3(0, 0, 0), },
               limits,
               scene,
             );
 
           } else {
+            // 仰角かねじり
             const limits = [
               { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: 0, maxLimit: 0 },
               { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: 0, maxLimit: 0 },
@@ -997,15 +994,12 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
             }
 
             ct = new BABYLON.Physics6DoFConstraint(
-              {
-                pivotA: new BABYLON.Vector3(0, 0, 0),
-                pivotB: diffv,
-              },
+              { pivotA: diffv,
+                pivotB: new BABYLON.Vector3(0, 0, 0), },
               limits,
               scene,
             );
           }
-          //pa.body.addConstraint(nextParent.body, ct);
           parent.body.addConstraint(pa.body, ct);
         }
 
