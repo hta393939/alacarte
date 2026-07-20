@@ -791,51 +791,51 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
     const parts = [
       { // #0 ベース
         p: [0, 0.05, 0], dir: [0,0,0], parent: -1, axis: [0, 0, 0],
-        type: 'cyl', s:[armDia * 2, 0.1, armDia * 2], deg:[0,0,0],
+        type: 'cyl', s:[armDia * 2, 0.1, armDia * 2], deg:[0,0],
       },
       { // #1 回転
         p: [0, 0.15, 0], dir: [0,0,0], parent: 0, axis: [0, 1, 0],
-        type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,0],
+        type: 'cyl', s:[armDia, 0.1, armDia], deg:[-180,180],
       },
       { // #2 仰角
         p: [0, 0.2, 0], dir: [0,0,0], axis: [1, 0, 0], parent: 1,
-        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,0,0],
+        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,90],
       },
       { // #3 腕
         p: [0, 0.2, 0.1], dir: [0,0,0], axis: [0, 0, 0], parent: 2,
-        type: 'box', s:[armDia, armDia, 0.2], deg:[0,0,0],
+        type: 'box', s:[armDia, armDia, 0.2 - jointDia], deg:[0,0],
       },
       { // #4 仰角
         p: [0, 0.2, 0.2], dir: [0,0,0], parent: 2, axis: [1, 0, 0],
-        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,0,0],
+        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,90],
       },
       { // #5 腕
-        p: [0, 0.2, 0.2], dir: [0,0,0], parent: 4, axis: [0, 0, 0],
-        type: 'box', s:[armDia, armDia, 0.1], deg:[0,0,0],
+        p: [0, 0.2, 0.25], dir: [0,0,0], parent: 4, axis: [0, 0, 0],
+        type: 'box', s:[armDia, armDia, 0.1 - jointDia], deg:[0,0],
       },
       { // #6 ねじり
         p: [0, 0.2, 0.35], dir: [0,0,0], parent: 5, axis: [0, 0, 1],
-        type: 'box', s:[armDia, armDia, 0.1], deg:[0,0,0], 
+        type: 'box', s:[armDia, armDia, 0.1], deg:[0,90], 
       },
       { // #7 仰角
         p: [0, 0.2, 0.4], dir: [0,0,0], parent: 5, axis: [1, 0, 0],
-        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,0,0],
+        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,90],
       },
       { // #8 腕
         p: [0, 0.15, 0.4], dir: [0,0,0], parent: 7, axis: [0, 0, 0],
-        type: 'cyl', s:[armDia, 0.1, armDia], deg:[0,0,0],
+        type: 'cyl', s:[armDia, 0.1 - jointDia, armDia], deg:[0,0],
       },
       { // #9 ハサミ
         p: [0, 0.1, 0.4], dir: [0,0,0], parent: 7, axis: [0, 1, 0],
-        type: 'box', s:[0.2, 0.02, 0.05], deg:[0,0,0],
+        type: 'box', s:[0.2, 0.02, 0.05], deg:[-180,180],
       },
       { // #10 X-
         p: [-0.1, 0.05, 0.4], dir: [1, 0, 0], parent: 9, axis: [0, 0, 0],
-        type: 'cyl', s:[0.01, 0.1, 0.01], deg:[0,0,0],
+        type: 'cyl', s:[0.01, 0.1 - 0.02, 0.01], deg:[0,0],
       },
       { // #11 X+
         p: [ 0.1, 0.05, 0.4], dir: [-1, 0, 0], parent: 9, axis: [0, 0, 0],
-        type: 'cyl', s:[0.01, 0.1, 0.01], deg:[0,0,0],
+        type: 'cyl', s:[0.01, 0.1 - 0.02, 0.01], deg:[0,0],
       },
     ];
     const arms = [];
@@ -849,19 +849,14 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       let parent = (part.parent < 0) ? this.floorpa : arms[part.parent].agg;
       const diffv = vec.clone().subtract(parent.transformNode.absolutePosition);
 
-      const erot = BABYLON.Vector3.FromArray(
-        part.deg.map(deg => deg * Math.PI / 180));
-      const q = BABYLON.Quaternion.FromEulerAngles(
-        erot.x, erot.y, erot.z,
-      );
       // @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.Quaternion
 
       let axisVec = part.axis ? BABYLON.Vector3.FromArray(part.axis) : null;
-      if (axisVec?.length === 0) {
+      if (axisVec?.length() === 0) {
         axisVec = null;
       }
       let dirVec = part.dir ? BABYLON.Vector3.FromArray(part.dir) : null;
-      if (dirVec?.length === 0) {
+      if (dirVec?.length() === 0) {
         dirVec = null;
       }
 
@@ -871,8 +866,6 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       arms.push(arm);
 
       {
-        //const info = part;
-
         let m = null;
         let shapeType = '';
         switch (part.type) {
@@ -936,25 +929,28 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
               { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0 },
             ];
             if (dirVec.x !== 0) {
+              const minx = (dirVec.x < 0) ? 0 : -0.05;
+              const maxx = (dirVec.x < 0) ? 0.05 : 0;
               limits.push(
-                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: -0.05, maxLimit: 0.05 },
+                { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: minx, maxLimit: maxx},
                 { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: 0, maxLimit: 0 },
                 { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Z, minLimit: 0, maxLimit: 0},
               );
             } else if (dirVec.y !== 0) {
+              // 不使用
               limits.push(
                 { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: 0, maxLimit: 0 },
                 { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: -0.1, maxLimit: 0.1},
                 { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Z, minLimit: 0, maxLimit: 0},
               );
             } else if (dirVec.z !== 0) {
+              // 不要
               limits.push(
                 { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: 0, maxLimit: 0 },
                 { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: 0, maxLimit: 0 },
                 { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Z, minLimit: -0.1, maxLimit: 0.1 },
               );
             }
-
             ct = new BABYLON.Physics6DoFConstraint(
               { pivotA: diffv,
                 pivotB: new BABYLON.Vector3(0, 0, 0), },
@@ -963,7 +959,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
             );
 
           } else {
-            // 仰角かねじり
+            // 仰角かねじり 5つ
             const limits = [
               { axis: BABYLON.PhysicsConstraintAxis.LINEAR_X, minLimit: 0, maxLimit: 0 },
               { axis: BABYLON.PhysicsConstraintAxis.LINEAR_Y, minLimit: 0, maxLimit: 0 },
@@ -972,30 +968,31 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
             if (axisVec.x !== 0) {
               limits.push(
                 // 回転も大部分ロック（1軸だけ自由）
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: -Math.PI, maxLimit: Math.PI },
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: part.deg[0], maxLimit: part.deg[1] },
                 { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
                 { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0},
               );
             } else if (axisVec.y !== 0) {
               limits.push(
-                // 制限無し
                 { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: 0, maxLimit: 0 },
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y},
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: part.deg[0], maxLimit: part.deg[1]},
                 { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: 0, maxLimit: 0},
               );
+              console.log('axisVec.y');
             } else if (axisVec.z !== 0) {
               limits.push(
-                // 回転も大部分ロック（1軸だけ自由）
                 { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_X, minLimit: 0, maxLimit: 0 },
                 { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Y, minLimit: 0, maxLimit: 0 },
-                // ANGULAR_Z がヒンジの回転軸（自由 or 制限付き）
-                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: -Math.PI, maxLimit: Math.PI }, // 例: ±180度
+                { axis: BABYLON.PhysicsConstraintAxis.ANGULAR_Z, minLimit: part.deg[0], maxLimit: part.deg[1]},
               );
             }
-
             ct = new BABYLON.Physics6DoFConstraint(
               { pivotA: diffv,
-                pivotB: new BABYLON.Vector3(0, 0, 0), },
+                pivotB: new BABYLON.Vector3(0, 0, 0),
+                axisA: new BABYLON.Vector3(1, 0, 0),
+                axisB: new BABYLON.Vector3(1, 0, 0),
+                perpAxisA: upv, perpAxisB: upv,
+              },
               limits,
               scene,
             );
