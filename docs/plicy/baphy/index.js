@@ -39,6 +39,8 @@ class Misc {
     this.arm = arm;
     {
       const nearFarIndex = 1;
+      const upDownIndex = 3;
+      const downIndex = 5;
       for (let i = 0; i < arm.length; ++i) {
         const one = arm[i];
         one._padFunc = () => {};
@@ -58,6 +60,13 @@ class Misc {
             one._padFunc = (pad) => {
               const a = pad.axes[nearFarIndex];
               one._add(a * 0.5);
+
+              const uda = pad.axes[upDownIndex];
+              one._add(uda * 0.5);
+
+              const but = pad.buttons[downIndex].value;
+              one._add(but * 0.5);
+
               const q = BABYLON.Quaternion.RotationAxis(
                 new BABYLON.Vector3(1, 0, 0),
                 one.curVal * Math.PI / 180,
@@ -69,6 +78,7 @@ class Misc {
             one._padFunc = (pad) => {
               const a = pad.axes[nearFarIndex];
               one._add(-a);
+
               const q = BABYLON.Quaternion.RotationAxis(
                 new BABYLON.Vector3(1, 0, 0),
                 one.curVal * Math.PI / 180,
@@ -85,6 +95,9 @@ class Misc {
             one._padFunc = (pad) => {
               const a = pad.axes[nearFarIndex];
               one._add(a * 0.5);
+              const but = pad.buttons[downIndex].value;
+              one._add(but * 0.5);
+
               const q = BABYLON.Quaternion.RotationAxis(
                 new BABYLON.Vector3(1, 0, 0),
                 one.curVal * Math.PI / 180,
@@ -98,11 +111,11 @@ class Misc {
               one._add(0);
             };
             break;
-          case 10:
+          case 10: // ハサミ
             one.curVal = -0.1;
             one._padFunc = (pad) => {
               const but = pad.buttons[7].value;
-              one._set(-0.1 + but * 0.1);
+              one._set(-0.1 + but * 0.06);
               const p = new BABYLON.Vector3(one.curVal, -0.05, 0);
               one.node.position = p;
             };
@@ -111,7 +124,7 @@ class Misc {
             one.curVal = 0.1;
             one._padFunc = (pad) => {
               const but = pad.buttons[7].value;
-              one._set(0.1 - but * 0.1);
+              one._set(0.1 - but * 0.06);
               const p = new BABYLON.Vector3(one.curVal, -0.05, 0);
               one.node.position = p;
             };
@@ -734,12 +747,38 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       },
       { // #10 X-
         p: [-0.1, 0.05, 0.4], dir: [1, 0, 0], parent: 9, axis: [0, 0, 0],
-        type: 'cyl', s:[0.01, 0.1 - 0.02, 0.01], deg:[-0.1, 0], // 0からの移動
+        type: 'box', s:[0.01, 0.1 - 0.02, 0.05], deg:[-0.1, 0], // 0からの移動
       },
       { // #11 X+
         p: [ 0.1, 0.05, 0.4], dir: [-1, 0, 0], parent: 9, axis: [0, 0, 0],
-        type: 'cyl', s:[0.01, 0.1 - 0.02, 0.01], deg:[0, 0.1], // 0から移動
+        type: 'box', s:[0.01, 0.1 - 0.02, 0.05], deg:[0, 0.1], // 0から移動
       },
+      { // #12 X-
+        p: [-0.1 + 0.02, 0.01, 0.4], dir: [0, 0, 0], parent: 10, axis: [0, 0, 0],
+        type: 'box', s:[0.04, 0.02, 0.04], deg:[0, 0],
+      },
+      { // #13 X+
+        p: [ 0.1 - 0.02, 0.01, 0.4], dir: [0, 0, 0], parent: 11, axis: [0, 0, 0],
+        type: 'box', s:[0.04, 0.02, 0.04], deg:[0, 0],
+      },
+
+      { // #14 X-
+        p: [-0.1 + 0.02, 0.01, 0.4 - 0.02], dir: [0, 0, 0], parent: 10, axis: [0, 0, 0],
+        type: 'box', s:[0.04, 0.02, 0.02], deg:[0, 0],
+      },
+      { // #15 X+
+        p: [ 0.1 - 0.02, 0.01, 0.4 - 0.02], dir: [0, 0, 0], parent: 11, axis: [0, 0, 0],
+        type: 'box', s:[0.04, 0.02, 0.02], deg:[0, 0],
+      },
+      { // #16 X-
+        p: [-0.1 + 0.02, 0.01, 0.4 + 0.02], dir: [0, 0, 0], parent: 10, axis: [0, 0, 0],
+        type: 'box', s:[0.04, 0.02, 0.02], deg:[0, 0],
+      },
+      { // #17 X+
+        p: [ 0.1 - 0.02, 0.01, 0.4 + 0.02], dir: [0, 0, 0], parent: 11, axis: [0, 0, 0],
+        type: 'box', s:[0.04, 0.02, 0.02], deg:[0, 0],
+      },
+
     ];
     const arms = [];
     for (let i = 0; i < parts.length; ++i) {
