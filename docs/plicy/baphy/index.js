@@ -204,7 +204,7 @@ class Misc {
       }
     }
 
-    {
+    if (false) { // Constraint の場合
       const now = Date.now();
       const val = (now % 10000) / 10000;
       const rot = new BABYLON.Vector3(val * Math.PI * 2, 0, 0);
@@ -240,6 +240,57 @@ class Misc {
 
       }
     }
+
+    if (true) { // ボーン の場合
+      const now = Date.now();
+      const val = (now % 10000) / 10000;
+      const rot = new BABYLON.Vector3(val * Math.PI * 2, 0, 0);
+      const arm = this.arm;
+      if (Array.isArray(arm)) {
+        for (const one of arm) {
+          const tn = one.node;
+          const axisVec = one.axisVec;
+          const dirVec = one.dirVec;
+          if (!tn || (!axisVec && !dirVec)) {
+            //continue;
+          }
+          if (axisVec) {
+            tn.rotation = rot;
+            /*
+            tn.rotation = BABYLON.Quaternion.FromEulerAngles(
+              val * Math.PI * 2, 0, 0,
+            );
+            */
+          }
+
+          if (dirVec) {
+            tn.position = new BABYLON.Vector3(val * 0.01, 0, 0);
+          }
+
+        }
+
+        for (const one of arm) {
+          const tn = one.node;
+          const body = one.agg?.body;
+          if (!body) {
+            continue;
+          }
+          // @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.PhysicsBody
+          body.setTargetTransform(
+            tn.absolutePosition,
+            tn.absoluteRotationQuaternion,
+          );
+          //body.position = tn.absolutePosition;
+          //body.rotationQuaternion = tn.absoluteRotationQuaternion;
+        }
+
+        /**
+         * @see https://doc.babylonjs.com/typedoc/classes/_babylonjs_core.TransformNode
+         */
+
+      }
+    }
+
   }
 
   applyMove(pad) {
@@ -553,54 +604,6 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
   }
 
   /**
-   * 実装してない
-   * 旋回、仰角、仰角、ねじり、仰角、ねじり、はさむ
-   * むしろモデルファイル作るか???
-   * @param {*} scene 
-   */
-  makeArm(scene) {
-    const parts = [
-      {p: [0, 0.1, 0], s: [0.1, 0.4, 0.1], parent: -1}, // ベース
-      {p: [0, 0.3, 0], s: [0.1, 0.4, 0.1], parent: 0}, // 
-      {p: [0, 0.5, 0], s: [0.1, 0.4 ,0.1], parent: 1},
-      {p: [0, 0.7, 0], s: [0.1, 0.4, 0.1], parent: 2},
-      {p: [0, 0.7, 0.4], s: [0.1, 0.4, 0.1], parent: 3},
-      {p: [0, 0.7, 0.4], s: [0.1, 0.4, 0.1], parent: 4},
-      {p: [0, 0.7, 0.4], s: [0.1, 0.4, 0.1], parent: 5},
-      {p: [-0.2, 0.5, 0.4], s: [0.2, 0.4, 0.4], parent: 6},
-      {p: [ 0.2, 0.5, 0.4], s: [0.2, 0.4, 0.4], parent: 6},
-    ];
-    const arms = [];
-    for (let i = 0; i < parts.length; ++i) {
-      const part = parts[i];
-      const tn = new BABYLON.TransformNode(`${i}tn`, scene);
-
-
-      const m = BABYLON.MeshBuilder.CreateBox(`${i}b`,
-        {width: part.s[0], height: part.s[1], depth: part.s[2]},
-        scene,
-      );
-      m.position = BABYLON.Vector3.FromArray(part.p);
-      const pa = new BABYLON.PhysicsAggregate(
-        m,
-        BABYLON.PhysicsShapeType.BOX,
-        {mass: 0},
-        scene,
-      );
-      // 親登録．ヒンジかノード親か
-      let index = i - 1;
-      if (i !== 0) {
-        if (i === 6) {
-          index = 4;
-        }
-        arms[index].mesh.addChild(m);
-      }
-
-      arms.push({mesh: m, pa,});
-    }
-  }
-
-  /**
    * 旋回、仰角、仰角、ねじり、仰角、ねじり、はさむ
    * これはボーンでやるタイプ
    * @param {*} scene 
@@ -670,7 +673,7 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       let diffv = BABYLON.Vector3.Zero();
       let index = part.parent;
       if (index >= 0) {
-        // NOTE: ボーンツリーを構成する場合
+        // ボーンツリーを構成する
         tn.parent = arms[index].node;
       } else {
         tn.parent = this.floorpa.transformNode;
@@ -679,20 +682,23 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
       tn.position = diffv;
 
       let axisVec = part.axis ? BABYLON.Vector3.FromArray(part.axis) : null;
-      if (axisVec?.length === 0) {
+      if (axisVec?.length() === 0) {
         axisVec = null;
       }
 
-      const arm = {
-        node: tn,
-        axis: part.axis,
-        aggs: [],
-        dir: part.dir || [0,0,0]};
+      let dirVec = part.dir ? BABYLON.Vector3.FromArray(part.dir) : null;
+      if (dirVec?.length() === 0) {
+        dirVec = null;
+      }
+
+      const arm = part;
+      arm.node = tn;
+      arm.agg = null;
+      arm.axisVec = axisVec;
+      arm.dirVec = dirVec;
       arms.push(arm);
 
       {
-        const info = part;
-
         let m = null;
         let shapeType = '';
         switch (part.type) {
@@ -721,24 +727,37 @@ hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
             break;
         }
         const mtl = new BABYLON.StandardMaterial(this.oid(), scene);
+        mtl.alpha = 0.5;
         mtl.diffuseColor = this.rc();
         mtl.ambientColor = this.objAmb;
         m.material = mtl;
 
-        m.parent = tn;
+        m.position = vec;
 
         this.sg.addShadowCaster(m);
 
-        /*
+        if (false) {
+          const viewm = m.clone();
+          viewm.position = diffv;
+          this.sg.addShadowCaster(viewm);
+          viewm.parent = tn;
+        }
+
+        // NOTE: Aggregate は元々剛体がメッシュを動かすもの
         const pa = new BABYLON.PhysicsAggregate(
           m,
           shapeType,
           {mass: 2.0}, // NOTE: 重さを 2.0 にすると??
           scene,
         );
+        pa.body.setMotionType(BABYLON.PhysicsMotionType.ANIMATED);
 
-        arm.aggs.push(pa);
-        */
+        // NOTE: こっちは動く
+        pa.body.setPrestepType(BABYLON.PhysicsPrestepType.TELEPORT);   // 瞬間移動（テレポート）
+        // NOTE: 位置だと動かないかも
+        //pa.body.setPrestepType(BABYLON.PhysicsPrestepType.ACTION);     // 速度で追従（摩擦などで影響を受ける）
+
+        arm.agg = pa;
       }
 
     }
