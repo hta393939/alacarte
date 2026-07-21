@@ -540,69 +540,77 @@ class Misc {
       rigids[0].body.addConstraint(rigids[1].body, ct);
     }
 
-    {
 
-    }
-
-
-    {
-      /*
-// 【例1】Ball & Socket（球関節：自由に回転）
-const ballJoint = new BABYLON.PhysicsConstraint(
-    BABYLON.PhysicsConstraintType.BALL_AND_SOCKET,
-    boxAggregate.body,      // Main Body
-    sphereAggregate.body,   // Connected Body
-    scene
-);
-
-// 接続位置（ローカル座標）
-ballJoint.setAnchorInMain(new BABYLON.Vector3(0.5, 0.5, 0));   // boxの右上あたり
-ballJoint.setAnchorInConnected(new BABYLON.Vector3(0, -0.6, 0)); // sphereの下側
-
-// 【例2】Hinge（蝶番：1軸回転）
-const hingeJoint = new BABYLON.PhysicsConstraint(
-    BABYLON.PhysicsConstraintType.HINGE,
-    boxAggregate.body,
-    sphereAggregate.body,
-    scene
-);
-
-hingeJoint.setAnchorInMain(new BABYLON.Vector3(0.5, 0, 0));
-hingeJoint.setAnchorInConnected(new BABYLON.Vector3(-0.6, 0, 0));
-hingeJoint.setAxisInMain(new BABYLON.Vector3(0, 0, 1));     // Z軸回転
-hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
-*/
-    }
-
-    {
-      /*
-// 【例1】Ball & Socket（球関節：自由に回転）
-      const ballJoint = new BABYLON.PhysicsConstraint(
-    BABYLON.PhysicsConstraintType.BALL_AND_SOCKET,
-    boxAggregate.body,      // Main Body
-    sphereAggregate.body,   // Connected Body
-    scene
+    for (let i = 0; i < 10; ++i) { // カプセル
+      const m = BABYLON.MeshBuilder.CreateCapsule(
+        `c${i}`,
+        {radius: 0.01, height: 0.03},
+        scene,
       );
-
-      // 接続位置（ローカル座標）
-      ballJoint.setAnchorInMain(new BABYLON.Vector3(0.5, 0.5, 0));   // boxの右上あたり
-      ballJoint.setAnchorInConnected(new BABYLON.Vector3(0, -0.6, 0)); // sphereの下側
-
-// 【例2】Hinge（蝶番：1軸回転）
-      const hingeJoint = new BABYLON.PhysicsConstraint(
-    BABYLON.PhysicsConstraintType.HINGE,
-    boxAggregate.body,
-    sphereAggregate.body,
-    scene
+      m.position = new BABYLON.Vector3(0.04 * i, 0.015, 0.04 * i);
+      const mtl = new BABYLON.StandardMaterial(`c${i}`, scene);
+      mtl.diffuseColor = this.rc();
+      m.material = mtl;
+      const pa = new BABYLON.PhysicsAggregate(
+        m, BABYLON.PhysicsShapeType.CAPSULE,
+        {mass: 0.2,
+          damping: 0.8,
+        }, scene,
       );
-
-      hingeJoint.setAnchorInMain(new BABYLON.Vector3(0.5, 0, 0));
-      hingeJoint.setAnchorInConnected(new BABYLON.Vector3(-0.6, 0, 0));
-      hingeJoint.setAxisInMain(new BABYLON.Vector3(0, 0, 1));     // Z軸回転
-      hingeJoint.setAxisInConnected(new BABYLON.Vector3(0, 0, 1));
-*/
     }
 
+    for (let i = 0; i < 10; ++i) { // シリンダー
+      const m = BABYLON.MeshBuilder.CreateCylinder(
+        `cyl${i}`,
+        {diameterTop: 0.02, height: 0.02, diameterBottom: 0.02},
+        scene,
+      );
+      m.position = new BABYLON.Vector3(i * 0.04, 0.01, Math.random() * 0.1);
+      const mtl = new BABYLON.StandardMaterial(`cyl${i}`, scene);
+      mtl.diffuseColor = this.rc();
+      m.material = mtl;
+      const pa = new BABYLON.PhysicsAggregate(
+        m, BABYLON.PhysicsShapeType.CYLINDER,
+        {mass: 0.2}, scene,
+      );
+    }
+
+    for (let i = 0; i < 10; ++i) { // 球
+      const m = BABYLON.MeshBuilder.CreateSphere(
+        `sph${i}`,
+        {diameter: 0.04},
+        scene,
+      );
+      m.position = new BABYLON.Vector3(Math.random() * 0.04, 0.02, i * 0.04);
+      const mtl = new BABYLON.StandardMaterial(`sph${i}`, scene);
+      mtl.diffuseColor = this.rc();
+      m.material = mtl;
+      const pa = new BABYLON.PhysicsAggregate(
+        m, BABYLON.PhysicsShapeType.SPHERE,
+        {mass: 0.2,
+          damping: 1,
+        }, scene,
+      );
+    }
+
+    for (let i = 0; i < 10; ++i) { // 箱
+      const m = BABYLON.MeshBuilder.CreateBox(
+        `box${i}`,
+        {width: 0.04, height: 0.04, depth: 0.04},
+        scene,
+      );
+      m.position = new BABYLON.Vector3(i * 0.04, 0.02, 0);
+      const mtl = new BABYLON.StandardMaterial(`box${i}`, scene);
+      mtl.diffuseColor = this.rc();
+      m.material = mtl;
+      const pa = new BABYLON.PhysicsAggregate(
+        m, BABYLON.PhysicsShapeType.BOX,
+        { mass: 0.2,
+          extents: BABYLON.Vector3.FromArray([0.1, 0.1, 0.1])
+              .add(new BABYLON.Vector3(0.03, 0.03, 0.03))
+        }, scene,
+      );
+    }
 
   }
 
