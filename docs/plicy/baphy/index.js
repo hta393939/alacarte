@@ -14,6 +14,9 @@ class Misc {
      */
     this.logicH = 540;
 
+    /** IKもどき算出時の1本のアーム長 */
+    this.ikArmLen = 0.2;
+
     this.ts = [];
     this.textLabels = [];
 
@@ -398,6 +401,40 @@ class Misc {
       one._padFunc(pad);
     }
 
+    const target = [0, 0];
+    for (const rate of [1, 0.5, 0.25, 0]) {
+      // IK もどき予定
+      const len = this.ikArmLen;
+      // 回転させて Z, Y にする必要がある
+      //this.arms[1].curVal * Math.PI / 180;
+      const hang = 0;
+      //this.arms[2].node.absolutePosition;
+      //this.arms[4].node.absolutePosition;
+      const ov = new BABYLON.Vector3(0, 0, 0);
+      const cv = new BABYLON.Vector3(0, 0, 0);
+      const ocv = cv.subtract(ov);
+
+      const revq = BABYLON.Quaternion
+        .RotationAxis(BABYLON.Vector3.Up(),
+        -hang);
+      const rotated = ocv.applyRotationQuaternion(revq);
+
+      const cpos = [rotated.z, rotated.y];
+      cpos[0] += target[0] * rate;
+      cpos[1] += target[1] * rate;
+      const result = this.calcToPosition(cpos, len);
+
+      // odeg, cdeg, bdeg を反映
+
+      let isOver = false;
+      if (isOver) {
+        continue;
+      }
+      // TODO: 新しい角度を反映する。
+
+      break;
+    }
+
   }
 
   /**
@@ -712,6 +749,8 @@ class Misc {
     const armDia = 0.04;
     const jointDia = 0.04;
     const jointWidth = 0.04;
+    const ikArmLen = this.ikArmLen;
+    const gripZ = ikArmLen * 2;
     const parts = [
       { // #0 ベース
         p: [0, 0.05, 0], dir: [0,0,0], parent: -1, axis: [0, 0, 0],
@@ -726,64 +765,64 @@ class Misc {
         type: 'box', s:[jointWidth, jointDia, jointDia], deg:[-135,0],
       },
       { // #3 腕
-        p: [0, 0.2, 0.1], dir: [0,0,0], axis: [0, 0, 0], parent: 2,
-        type: 'box', s:[armDia, armDia, 0.2 - jointDia], deg:[0,0],
+        p: [0, 0.2, ikArmLen * 0.5], dir: [0,0,0], axis: [0, 0, 0], parent: 2,
+        type: 'box', s:[armDia, armDia, ikArmLen - jointDia], deg:[0,0],
       },
       { // #4 仰角
-        p: [0, 0.2, 0.2], dir: [0,0,0], parent: 2, axis: [1, 0, 0],
+        p: [0, 0.2, ikArmLen], dir: [0,0,0], parent: 2, axis: [1, 0, 0],
         type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,135],
       },
       { // #5 腕
         p: [0, 0.2, 0.25], dir: [0,0,0], parent: 4, axis: [0, 0, 0],
-        type: 'box', s:[armDia, armDia, 0.1 - jointDia], deg:[0,0],
+        type: 'box', s:[armDia, armDia, ikArmLen * 0.5 - jointDia], deg:[0,0],
       },
       { // #6 ねじり
         p: [0, 0.2, 0.35], dir: [0,0,0], parent: 5, axis: [0, 0, 1],
-        type: 'box', s:[armDia, armDia, 0.1 - jointDia], deg:[0,0], 
+        type: 'box', s:[armDia, armDia, ikArmLen * 0.5 - jointDia], deg:[0,0], 
       },
       { // #7 仰角
-        p: [0, 0.2, 0.4], dir: [0,0,0], parent: 5, axis: [1, 0, 0],
+        p: [0, 0.2, gripZ], dir: [0,0,0], parent: 5, axis: [1, 0, 0],
         type: 'box', s:[jointWidth, jointDia, jointDia], deg:[-180,0],
       },
       { // #8 腕
-        p: [0, 0.15, 0.4], dir: [0,0,0], parent: 7, axis: [0, 0, 0],
+        p: [0, 0.15, gripZ], dir: [0,0,0], parent: 7, axis: [0, 0, 0],
         type: 'cyl', s:[armDia, 0.1 - jointDia, armDia], deg:[0,0],
       },
       { // #9 ハサミ
-        p: [0, 0.1, 0.4], dir: [0,0,0], parent: 7, axis: [0, 1, 0],
+        p: [0, 0.1, gripZ], dir: [0,0,0], parent: 7, axis: [0, 1, 0],
         type: 'box', s:[0.2, 0.02, 0.05], deg:[-180,180],
       },
       { // #10 X-
-        p: [-0.1, 0.05, 0.4], dir: [1, 0, 0], parent: 9, axis: [0, 0, 0],
+        p: [-0.1, 0.05, gripZ], dir: [1, 0, 0], parent: 9, axis: [0, 0, 0],
         type: 'box', s:[0.01, 0.1 - 0.02, 0.05], deg:[-0.1, 0], // 0からの移動
       },
       { // #11 X+
-        p: [ 0.1, 0.05, 0.4], dir: [-1, 0, 0], parent: 9, axis: [0, 0, 0],
+        p: [ 0.1, 0.05, gripZ], dir: [-1, 0, 0], parent: 9, axis: [0, 0, 0],
         type: 'box', s:[0.01, 0.1 - 0.02, 0.05], deg:[0, 0.1], // 0から移動
       },
       { // #12 X-
-        p: [-0.1 + 0.02, 0.01, 0.4], dir: [0, 0, 0], parent: 10, axis: [0, 0, 0],
+        p: [-0.1 + 0.02, 0.01, gripZ], dir: [0, 0, 0], parent: 10, axis: [0, 0, 0],
         type: 'box', s:[0.04, 0.02, 0.04], deg:[0, 0],
       },
       { // #13 X+
-        p: [ 0.1 - 0.02, 0.01, 0.4], dir: [0, 0, 0], parent: 11, axis: [0, 0, 0],
+        p: [ 0.1 - 0.02, 0.01, gripZ], dir: [0, 0, 0], parent: 11, axis: [0, 0, 0],
         type: 'box', s:[0.04, 0.02, 0.04], deg:[0, 0],
       },
 
       { // #14 X-
-        p: [-0.1 + 0.02, 0.01, 0.4 - 0.02], dir: [0, 0, 0], parent: 10, axis: [0, 0, 0],
+        p: [-0.1 + 0.02, 0.01, gripZ - 0.02], dir: [0, 0, 0], parent: 10, axis: [0, 0, 0],
         type: 'box', s:[0.04, 0.02, 0.02], deg:[0, 0],
       },
       { // #15 X+
-        p: [ 0.1 - 0.02, 0.01, 0.4 - 0.02], dir: [0, 0, 0], parent: 11, axis: [0, 0, 0],
+        p: [ 0.1 - 0.02, 0.01, gripZ - 0.02], dir: [0, 0, 0], parent: 11, axis: [0, 0, 0],
         type: 'box', s:[0.04, 0.02, 0.02], deg:[0, 0],
       },
       { // #16 X-
-        p: [-0.1 + 0.02, 0.01, 0.4 + 0.02], dir: [0, 0, 0], parent: 10, axis: [0, 0, 0],
+        p: [-0.1 + 0.02, 0.01, gripZ + 0.02], dir: [0, 0, 0], parent: 10, axis: [0, 0, 0],
         type: 'box', s:[0.04, 0.02, 0.02], deg:[0, 0],
       },
       { // #17 X+
-        p: [ 0.1 - 0.02, 0.01, 0.4 + 0.02], dir: [0, 0, 0], parent: 11, axis: [0, 0, 0],
+        p: [ 0.1 - 0.02, 0.01, gripZ + 0.02], dir: [0, 0, 0], parent: 11, axis: [0, 0, 0],
         type: 'box', s:[0.04, 0.02, 0.02], deg:[0, 0],
       },
 
@@ -1161,18 +1200,40 @@ class Misc {
   }
 
   /**
-   * 実装してない
-   * @param {number[]} srcpos 
-   * @param {number[]} dstpos 
+   * 根本を引いた後の座標を使用する
+   * @param {number[]} cpos アーム先。C_z, C_y
+   * @param {number} len 共通な腕の長さ
    */
-  calcToPosition(srcpos, dstpos) {
-    const ret = {
+  calcToPosition(cpos, len) {
+    const ret = {};
 
+    const oclen = Math.sqrt(cpos[0] ** 2 + cpos[1] ** 2);
+
+    /** OC の上げ角度(符号つき) */
+    const gamma = Math.atan(cpos[1] / cpos[0]);
+
+    /** 近アームの追加上げ角度 */
+    const theta = Math.acos(oclen / len * 0.5);
+
+    const ang = gamma + theta;
+    /** B_z, B_y */
+    const bpos = [l * Math.cos(ang), l * Math.sin(ang)];
+
+    /** 水平から上げた角度 */
+    const beta = (cpos[0] - bpos[0]) / l;
+
+    ret = {
+      oang: Math.PI + gamma + theta,
+      bang: theta * 2,
+      cang: beta + Math.PI * 0.5, // 真下に向かせたいときに使用する
     };
-    // 角度の決定
-    // IK ライブラリに任せた方がいいのでは
-    // 相対回転量を決定
-
+    Object.assign(ret,
+      {
+        odeg: ret.oang * 180 / Math.PI,
+        bdeg: ret.bang * 180 / Math.PI,
+        cdeg: ret.cang * 180 / Math.PI,
+      }
+    );
     return ret;
   }
 

@@ -13,6 +13,14 @@ body {
   padding: 0;
 }
 
+.selnoborder {
+  outline: none !important;
+  border: none !important;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-focus-ring-color: transparent;
+}
+
+
 .pointer {
   cursor: pointer;
 }
