@@ -5,6 +5,9 @@ class Misc {
   static STATUS_INGAME = 'ingame';
   static STATUS_TIMEUP = 'timeup';
 
+  static CURVE_LINEAR = 'linear';
+  static CURVE_THR = 'thr';
+
   constructor() {
     this.consoles = [];
     /** 論理幅 */
@@ -13,6 +16,13 @@ class Misc {
      * 論理高さ
      */
     this.logicH = 540;
+
+    this.curveMode = Misc.CURVE_THR;
+
+    /**
+     * 閾値で0.0に丸める場合
+     */
+    this.curveThr = 0.2;
 
     /** IKもどき算出時の1本のアーム長 */
     this.ikArmLen = 0.2;
@@ -25,7 +35,7 @@ class Misc {
     this.prePadIndex = -1;
     this.count = 0;
     /** autoRot は実験用 */
-    this.autoRot = true;
+    this.autoRot = false;
 
     this.objAmb = new BABYLON.Color3(0.25, 0.25, 0.25);
   }
@@ -44,6 +54,12 @@ class Misc {
       const nearFarIndex = 1;
       const upDownIndex = 3;
       const downIndex = 5;
+      {
+        this.arm[2]._set(-45);
+        this.arm[4]._set(90);
+        this.arm[7]._set(-45);
+      }
+
       for (let i = 0; i < arm.length; ++i) {
         const one = arm[i];
         one._padFunc = () => {};
@@ -61,6 +77,7 @@ class Misc {
             break;
           case 2:
             one._padFunc = (pad) => {
+              /*
               const a = pad.axes[nearFarIndex];
               one._add(a * 0.5);
 
@@ -74,11 +91,11 @@ class Misc {
                 new BABYLON.Vector3(1, 0, 0),
                 one.curVal * Math.PI / 180,
               );
-              one.node.rotationQuaternion = q;
+              one.node.rotationQuaternion = q; */
             };
             break;
           case 4: // 仰角
-            one._padFunc = (pad) => {
+            one._padFunc = (pad) => { /*
               const a = pad.axes[nearFarIndex];
               one._add(-a);
 
@@ -86,16 +103,16 @@ class Misc {
                 new BABYLON.Vector3(1, 0, 0),
                 one.curVal * Math.PI / 180,
               );
-              one.node.rotationQuaternion = q;
+              one.node.rotationQuaternion = q; */
             };
             break;
           case 6: // ねじり
             one._padFunc = (pad) => {
-              one._add(0);
+              //one._add(0);
             };
             break;
           case 7: // 仰角
-            one._padFunc = (pad) => {
+            one._padFunc = (pad) => { /*
               const a = pad.axes[nearFarIndex];
               one._add(a * 0.5);
               const but = pad.buttons[downIndex].value;
@@ -105,13 +122,13 @@ class Misc {
                 new BABYLON.Vector3(1, 0, 0),
                 one.curVal * Math.PI / 180,
               );
-              one.node.rotationQuaternion = q;
+              one.node.rotationQuaternion = q; */
             };
             break;
 
           case 9: // ねじり
             one._padFunc = (pad) => {
-              one._add(0);
+              //one._add(0);
             };
             break;
           case 10: // ハサミ
@@ -392,26 +409,54 @@ class Misc {
 
   }
 
+  /**
+   * 許容角度を超えていたら true を返す
+   * @param {{}[]} cands 
+   * @returns {boolean}
+   */
+  checkOver(cands) {
+    for (const cand of cands) {
+      const deg = cand.deg;
+      if (Number.isNaN(deg)) {
+        return true;
+      }
+
+      const one = this.arm[cand.index];
+      if (deg < one.deg[0] || deg > one.deg[1]) {
+        return true;
+      }      
+    }
+    return false;    
+  }
+
   applyMove(pad) {
     if (!pad) {
       return;
     }
+    if (!this.arm) {
+      return;
+    }
 
-    for (const one of (this.arm || [])) {
+    for (const one of this.arm) {
       one._padFunc(pad);
     }
 
-    const target = [0, 0];
-    for (const rate of [1, 0.5, 0.25, 0]) {
-      // IK もどき予定
+    const ikRate = 0.008;
+    /** 半径方向，高さ方向 */
+    const target = [
+      this.axisCurve( pad.axes[1]) * ikRate,
+      this.axisCurve(-pad.axes[3]) * ikRate,
+    ];
+    for (const rate of [1]) {
+    //for (const rate of [1, 0.5, 0.25, 0]) {
+      // IK もどき
       const len = this.ikArmLen;
       // 回転させて Z, Y にする必要がある
-      //this.arms[1].curVal * Math.PI / 180;
-      const hang = 0;
-      //this.arms[2].node.absolutePosition;
-      //this.arms[4].node.absolutePosition;
-      const ov = new BABYLON.Vector3(0, 0, 0);
-      const cv = new BABYLON.Vector3(0, 0, 0);
+      const hang = this.arm[1].curVal * Math.PI / 180;
+      /** 根本 */
+      const ov = this.arm[2].node.absolutePosition;
+      /** 先 */
+      const cv = this.arm[7].node.absolutePosition;
       const ocv = cv.subtract(ov);
 
       const revq = BABYLON.Quaternion
@@ -424,13 +469,31 @@ class Misc {
       cpos[1] += target[1] * rate;
       const result = this.calcToPosition(cpos, len);
 
-      // odeg, cdeg, bdeg を反映
-
-      let isOver = false;
+      const cands = [
+        {index: 2, deg: result.odeg},
+        {index: 4, deg: result.bdeg},
+        {index: 7, deg: result.cdeg},
+      ];
+      let isOver = this.checkOver(cands);
       if (isOver) {
         continue;
       }
-      // TODO: 新しい角度を反映する。
+      // 新しい角度を反映する。
+      for (const cand of cands) {
+        const one = this.arm[cand.index];
+        one._set(cand.deg);
+        const q = BABYLON.Quaternion.RotationAxis(
+          new BABYLON.Vector3(1, 0, 0),
+          one.curVal * Math.PI / 180,
+        );
+        one.node.rotationQuaternion = q;
+      }
+
+      {
+        let s = `${result.odeg.toFixed(1)}, ${result.bdeg.toFixed(1)}, ${result.cdeg.toFixed(1)}`;
+        const tl = this.textLabels[2];
+        tl.text = s;
+      }
 
       break;
     }
@@ -469,6 +532,20 @@ class Misc {
       this.prePadIndex = curPad.index;
     }
     return curPad;
+  }
+
+  /**
+   * トリガーには適用しない
+   * @param {*} x 
+   * @returns 
+   */
+  axisCurve(x) {
+    switch (this.curveMode) {
+      case 'linear':
+        return x;
+      case 'thr':
+        return (Math.abs(x) <= this.curThr) ? 0 : x;
+    }
   }
 
   async readyObject(scene) {
@@ -760,7 +837,7 @@ class Misc {
         p: [0, 0.15, 0], dir: [0,0,0], parent: 0, axis: [0, 1, 0],
         type: 'cyl', s:[armDia, 0.1, armDia], deg:[-180,180],
       },
-      { // #2 仰角
+      { // #2 仰角 IK
         p: [0, 0.2, 0], dir: [0,0,0], axis: [1, 0, 0], parent: 1,
         type: 'box', s:[jointWidth, jointDia, jointDia], deg:[-135,0],
       },
@@ -768,7 +845,7 @@ class Misc {
         p: [0, 0.2, ikArmLen * 0.5], dir: [0,0,0], axis: [0, 0, 0], parent: 2,
         type: 'box', s:[armDia, armDia, ikArmLen - jointDia], deg:[0,0],
       },
-      { // #4 仰角
+      { // #4 仰角 IK
         p: [0, 0.2, ikArmLen], dir: [0,0,0], parent: 2, axis: [1, 0, 0],
         type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,135],
       },
@@ -780,7 +857,7 @@ class Misc {
         p: [0, 0.2, 0.35], dir: [0,0,0], parent: 5, axis: [0, 0, 1],
         type: 'box', s:[armDia, armDia, ikArmLen * 0.5 - jointDia], deg:[0,0], 
       },
-      { // #7 仰角
+      { // #7 仰角 IK
         p: [0, 0.2, gripZ], dir: [0,0,0], parent: 5, axis: [1, 0, 0],
         type: 'box', s:[jointWidth, jointDia, jointDia], deg:[-180,0],
       },
@@ -862,10 +939,16 @@ class Misc {
           arm.curVal = Math.max(arm.deg[0], Math.min(arm.deg[1], arm.curVal));
         },
         _set: (_val) => {
+          if (Number.isNaN(_val)) {
+            return;
+          }
           arm.curVal = _val;
           arm._clip();
         },
         _add: (_diff) => {
+          if (Number.isNaN(_diff)) {
+            return;
+          }
           arm.curVal += _diff;
           arm._clip();
         },
@@ -1205,8 +1288,7 @@ class Misc {
    * @param {number} len 共通な腕の長さ
    */
   calcToPosition(cpos, len) {
-    const ret = {};
-
+    /** OC の長さ */
     const oclen = Math.sqrt(cpos[0] ** 2 + cpos[1] ** 2);
 
     /** OC の上げ角度(符号つき) */
@@ -1217,15 +1299,18 @@ class Misc {
 
     const ang = gamma + theta;
     /** B_z, B_y */
-    const bpos = [l * Math.cos(ang), l * Math.sin(ang)];
+    const bpos = [
+      len * Math.cos(ang),
+      len * Math.sin(ang),
+    ];
 
     /** 水平から上げた角度 */
-    const beta = (cpos[0] - bpos[0]) / l;
+    const beta = Math.acos((cpos[0] - bpos[0]) / len);
 
-    ret = {
-      oang: Math.PI + gamma + theta,
+    const ret = {
+      oang: - gamma - theta,
       bang: theta * 2,
-      cang: beta + Math.PI * 0.5, // 真下に向かせたいときに使用する
+      cang: - beta, // 真下に向かせたいときに使用する
     };
     Object.assign(ret,
       {
@@ -1235,23 +1320,6 @@ class Misc {
       }
     );
     return ret;
-  }
-
-  /**
-   * 実装してない
-   * @param {number[]} srcp 
-   * @param {number[]} dstp 
-   */
-  calByPosition(srcp, dstp) {
-    // 分割
-    for (let i = 0; i <= 16; ++i) {
-      const t = i / 16;
-      const p = [0,1,2].map(j => srcp[j] * (1 - t) + dstp[j] + t);
-      const result = this.calcToPosition(srcp, p);
-    }
-
-    // いける最大を使用する
-    return {};
   }
 
 }
