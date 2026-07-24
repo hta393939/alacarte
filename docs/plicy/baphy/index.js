@@ -25,7 +25,8 @@ class Misc {
     this.curveThr = 0.2;
 
     /** IKもどき算出時の1本のアーム長 */
-    this.ikArmLen = 0.2;
+    //this.ikArmLen = 0.3;
+    this.ikArmLen = 0.4;
 
     this.ts = [];
     this.textLabels = [];
