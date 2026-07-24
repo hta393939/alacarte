@@ -536,7 +536,7 @@ class Misc {
 
   /**
    * トリガーには適用しない
-   * @param {*} x 
+   * @param {number} x 
    * @returns 
    */
   axisCurve(x) {
@@ -544,7 +544,7 @@ class Misc {
       case 'linear':
         return x;
       case 'thr':
-        return (Math.abs(x) <= this.curThr) ? 0 : x;
+        return (Math.abs(x) <= this.curveThr) ? 0 : x;
     }
   }
 
@@ -555,10 +555,10 @@ class Misc {
       manager.addControl(panel);
       panel.position = new BABYLON.Vector3(0, 0.5, 1);
 
-      for (let i = 0; i < 3; ++i) {
+      for (let i = 0; i < 4; ++i) {
         const but = new BABYLON.GUI.Button3D(`but${i}`);
-        but.position = new BABYLON.Vector3(i - 1, 2, 0);
-        but.scaling = new BABYLON.Vector3(1, 0.4, 0.2);
+        but.position = new BABYLON.Vector3((i - 1) * 0.8, 2, 0);
+        but.scaling = new BABYLON.Vector3(0.8, 0.3, 0.2);
 
         const tb = new BABYLON.GUI.TextBlock();
         tb.text = `${i}`;
@@ -850,11 +850,11 @@ class Misc {
         type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,135],
       },
       { // #5 腕
-        p: [0, 0.2, 0.25], dir: [0,0,0], parent: 4, axis: [0, 0, 0],
+        p: [0, 0.2, ikArmLen * (1 + 1/4)], dir: [0,0,0], parent: 4, axis: [0, 0, 0],
         type: 'box', s:[armDia, armDia, ikArmLen * 0.5 - jointDia], deg:[0,0],
       },
       { // #6 ねじり
-        p: [0, 0.2, 0.35], dir: [0,0,0], parent: 5, axis: [0, 0, 1],
+        p: [0, 0.2, ikArmLen * (1 + 1/4 + 1/2)], dir: [0,0,0], parent: 5, axis: [0, 0, 1],
         type: 'box', s:[armDia, armDia, ikArmLen * 0.5 - jointDia], deg:[0,0], 
       },
       { // #7 仰角 IK
