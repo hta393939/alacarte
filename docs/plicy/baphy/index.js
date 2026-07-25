@@ -29,6 +29,8 @@ class Misc {
     /** IKもどき算出時の1本のアーム長 */
     //this.ikArmLen = 0.3;
     this.ikArmLen = 0.4;
+    /** メニュー開いているかどうか */
+    this.isOpenMenu = false;
 
     this.ts = [];
     this.textLabels = [];
@@ -36,7 +38,8 @@ class Misc {
     this.status = Misc.STATUS_TITLE;
 
     this.prePadIndex = -1;
-    this.count = 0;
+    /** babylonjs の ID 用カウント */
+    this.idcount = 0;
     /** autoRot は実験用 */
     this.autoRot = false;
 
@@ -567,6 +570,10 @@ class Misc {
 
   }
 
+  /**
+   * X軸を回す部分のみ直接反映
+   * @param {{}[]} cands 
+   */
   applyXDegs(cands) {
     for (const cand of cands) {
       const one = this.arm[cand.index];
@@ -624,6 +631,88 @@ class Misc {
         return x;
       case 'thr':
         return (Math.abs(x) <= this.curveThr) ? 0 : x;
+    }
+  }
+
+  /**
+   * PRECOUNT から INGAME への時間チェック
+   */
+  checkPrecount() {
+    if (this.isOpenMenu) {
+      return;
+    }
+    const now = Date.now();
+  }
+
+  /**
+   * INGAME から TIMEUP への時間チェック
+   */
+  checkTimeup() {
+    if (this.isOpenMenu) {
+      return;
+    }
+    const now = Date.now();
+  }
+
+  /**
+   * TITLE で最新スコア表示を兼ねるか。
+   * TITLE で 決定 すると PRECOUNT へ。これのみ。
+   * PRECOUNT から時間経過で INGAME へ。またはキャンセルで TITLE へ。
+   * INGAME から時間経過で TIMEUP へ。またはキャンセルで TITLE へ。
+   * メニューで時間一時停止。
+   * TIMEUP から時間経過で TITLE へ。 またはキャンセルで TITLE へ。
+   * @param {string} next 
+   */
+  setStatus(next) {
+    switch (this.status) {
+      case Misc.STATUS_TITLE:
+        switch (next) {
+          case Misc.STATUS_TITLE:
+            return;
+          case Misc.STATUS_PRECOUNT:
+            break;
+          case Misc.STATUS_INGAME:
+            break;
+          case Misc.STATUS_TIMEUP:
+            break;
+        }
+        break;
+      case Misc.STATUS_PRECOUNT:
+        switch (next) {
+          case Misc.STATUS_TITLE:
+            break;
+          case Misc.STATUS_PRECOUNT:
+            return;
+          case Misc.STATUS_INGAME:
+            break;
+          case Misc.STATUS_TIMEUP:
+            break;
+        }
+        break;
+      case Misc.STATUS_INGAME:
+        switch (next) {
+          case Misc.STATUS_PRECOUNT:
+            break;
+          case Misc.STATUS_PRECOUNT:
+            break;
+          case Misc.STATUS_INGAME:
+            return;
+          case Misc.STATUS_TIMEUP:
+            break;
+        }
+        break;
+      case Misc.STATUS_TIMEUP:
+        switch (next) {
+          case Misc.STATUS_TITLE:
+            break;
+          case Misc.STATUS_PRECOUNT:
+            break;
+          case Misc.STATUS_INGAME:
+            break;
+          case Misc.STATUS_TIMEUP:
+            return;
+        }
+        break;
     }
   }
 
@@ -921,8 +1010,8 @@ class Misc {
   }
 
   oid(top = 'o') {
-    this.count += 1;
-    return `${top}${this.count}`;
+    this.idcount += 1;
+    return `${top}${this.idcount}`;
   }
 
   /**
