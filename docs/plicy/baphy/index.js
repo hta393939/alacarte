@@ -23,6 +23,8 @@ class Misc {
      * 閾値で0.0に丸める場合
      */
     this.curveThr = 0.2;
+    /** 根本基準の潜り制限 */
+    this.digThr = -0.04;
 
     /** IKもどき算出時の1本のアーム長 */
     //this.ikArmLen = 0.3;
@@ -55,11 +57,11 @@ class Misc {
       const nearFarIndex = 1;
       const upDownIndex = 3;
       const downIndex = 5;
-      {
-        this.arm[2]._set(-45);
-        this.arm[4]._set(90);
-        this.arm[7]._set(-45);
-      }
+      this.applyXDegs([
+        {index: 2, deg: -85},
+        {index: 4, deg: 115},
+        {index: 7, deg: -30},
+      ]);
 
       for (let i = 0; i < arm.length; ++i) {
         const one = arm[i];
@@ -253,7 +255,7 @@ class Misc {
       camera.position = new BABYLON.Vector3(0.5, 0.5, 2);
       camera.wheelPrecision = 20 * 2;
       camera.maxZ = 100;
-      camera.minZ = 0.02;
+      camera.minZ = 0.002;
       camera.attachControl();
     }
 
@@ -297,10 +299,12 @@ class Misc {
       tex.hasAlpha = true;
       const plane = BABYLON.MeshBuilder.CreatePlane(
         this.oid('plane'),
-        {width: 2, height: 2},
+        {width: 0.02, height: 0.02},
         scene,
       );
       plane.rotation = new BABYLON.Vector3(0, 0, 0);
+      plane.position = new BABYLON.Vector3(0, 0.006, -0.02);
+      plane.parent = this.camera;
       const material = new BABYLON.StandardMaterial(
         this.oid('plane'),
         scene,
@@ -536,7 +540,7 @@ class Misc {
       cpos[0] += target[0] * rate;
       cpos[1] += target[1] * rate;
       const result = this.calcToPosition(cpos, len);
-      if (result.cpos[1] < -0.2) { // TODO: 潜り制限
+      if (result.cpos[1] < this.digThr) { // 潜り制限
         continue;
       }
 
@@ -550,15 +554,7 @@ class Misc {
         continue;
       }
       // 新しい角度を反映する。
-      for (const cand of cands) {
-        const one = this.arm[cand.index];
-        one._set(cand.deg);
-        const q = BABYLON.Quaternion.RotationAxis(
-          new BABYLON.Vector3(1, 0, 0),
-          one.curVal * Math.PI / 180,
-        );
-        one.node.rotationQuaternion = q;
-      }
+      this.applyXDegs(cands);
 
       {
         let s = `${result.odeg.toFixed(1)}, ${result.bdeg.toFixed(1)}, ${result.cdeg.toFixed(1)}`;
@@ -569,6 +565,18 @@ class Misc {
       break;
     }
 
+  }
+
+  applyXDegs(cands) {
+    for (const cand of cands) {
+      const one = this.arm[cand.index];
+      one._set(cand.deg);
+      const q = BABYLON.Quaternion.RotationAxis(
+        new BABYLON.Vector3(1, 0, 0),
+        one.curVal * Math.PI / 180,
+      );
+      one.node.rotationQuaternion = q;
+    }
   }
 
   /**
@@ -632,10 +640,24 @@ class Misc {
         {name: 'robotitle3.png'},
       ]) {
         const tex = new BABYLON.Texture(`./res/${v.name}`);
+        tex.hasAlpha = true;
         const plane = BABYLON.MeshBuilder.CreatePlane(
           this.oid(`p`),
+          {width: 0.008, height: 0.008},
+          scene,
         );
+        plane.position = new BABYLON.Vector3(0, 0, -0.01);
+        const material = new BABYLON.StandardMaterial(
+          this.oid('p'),
+          scene,
+        );
+        material.sideOrientation = BABYLON.CounterClockWiseSideOrientation;
+        material.diffuseTexture = tex;
+        material.emissiveTexture = tex;
+        plane.material = material;
         plane.parent = this.camera;
+
+        plane.isVisible = false;
       }
     }
 
