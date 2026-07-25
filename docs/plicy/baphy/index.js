@@ -243,6 +243,7 @@ class Misc {
     this.scene = scene;
 
     scene.useRightHandedSystem = true;
+    scene.useOrderIndependentTransparency = true;
     {
       const camera = new BABYLON.ArcRotateCamera('camera1',
         0, 0, 10, new BABYLON.Vector3(0, 0, 0),
@@ -304,7 +305,8 @@ class Misc {
         this.oid('plane'),
         scene,
       );
-      material.backFaceCulling = false;
+      //material.backFaceCulling = false;
+      material.sideOrientation = BABYLON.Material.CounterClockWiseSideOrientation;
 
       // 両方セットする手法がある
       material.emissiveTexture = tex;
@@ -318,10 +320,11 @@ class Misc {
     {
       const deviceSourceManager = new BABYLON.DeviceSourceManager(engine);
       this.dsm = deviceSourceManager;
-      const InputNum = {
-        Z: 'Z'.codePointAt(0),
-        X: 'X'.codePointAt(0),
-        C: 'C'.codePointAt(0),
+      const InputNum = {};
+      const alphabets = 'ZXCAWDS';
+      for (let i = 0; i < alphabets.length; ++i) {
+        const chr = alphabets.slice(i, i + 1);
+        InputNum[chr] = chr.codePointAt(0);
       };
       scene.onBeforeRenderObservable.add(() => {
         const kb = deviceSourceManager.getDeviceSource(BABYLON.DeviceType.Keyboard);
