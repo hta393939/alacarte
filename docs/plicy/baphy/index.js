@@ -913,9 +913,10 @@ class Misc {
     }
 
     for (let i = 0; i < 10; ++i) { // 箱
+      const size = 0.04;
       const m = BABYLON.MeshBuilder.CreateBox(
         `box${i}`,
-        {width: 0.04, height: 0.04, depth: 0.04},
+        {width: size, height: size, depth: size},
         scene,
       );
       m.position = new BABYLON.Vector3(i * 0.04, 0.02, 0);
@@ -925,7 +926,7 @@ class Misc {
       const pa = new BABYLON.PhysicsAggregate(
         m, BABYLON.PhysicsShapeType.BOX,
         { mass: 0.2,
-          extents: BABYLON.Vector3.FromArray([0.1, 0.1, 0.1])
+          extents: BABYLON.Vector3.FromArray([size, size, size])
               .add(new BABYLON.Vector3(0.03, 0.03, 0.03))
         }, scene,
       );
@@ -1044,7 +1045,8 @@ class Misc {
       },
       { // #2 仰角 IK
         p: [0, 0.2, 0], dir: [0,0,0], axis: [1, 0, 0], parent: 1,
-        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[-135,0],
+        type: 'box', s:[jointWidth, jointDia, jointDia],
+        deg: [-150, 0], // NOTE: 許容範囲
       },
       { // #3 腕
         p: [0, 0.2, ikArmLen * 0.5], dir: [0,0,0], axis: [0, 0, 0], parent: 2,
@@ -1052,7 +1054,8 @@ class Misc {
       },
       { // #4 仰角 IK
         p: [0, 0.2, ikArmLen], dir: [0,0,0], parent: 2, axis: [1, 0, 0],
-        type: 'box', s:[jointWidth, jointDia, jointDia], deg:[0,135],
+        type: 'box', s:[jointWidth, jointDia, jointDia],
+        deg: [0, 150], // NOTE: 許容範囲
       },
       { // #5 腕
         p: [0, 0.2, ikArmLen * (1 + 1/4)], dir: [0,0,0], parent: 4, axis: [0, 0, 0],
