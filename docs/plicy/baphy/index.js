@@ -291,6 +291,70 @@ class Misc {
       );
     }
 
+    {
+      const tex = new BABYLON.Texture('./res/robotitle1.png');
+      tex.hasAlpha = true;
+      const plane = BABYLON.MeshBuilder.CreatePlane(
+        this.oid('plane'),
+        {width: 2, height: 2},
+        scene,
+      );
+      plane.rotation = new BABYLON.Vector3(0, 0, 0);
+      const material = new BABYLON.StandardMaterial(
+        this.oid('plane'),
+        scene,
+      );
+      material.backFaceCulling = false;
+
+      // 両方セットする手法がある
+      material.emissiveTexture = tex;
+      material.diffuseTexture = tex;
+
+      //material.disableLighting = true;
+      //material.transparent = true;
+      plane.material = material;
+    }
+
+    {
+      const deviceSourceManager = new BABYLON.DeviceSourceManager(engine);
+      this.dsm = deviceSourceManager;
+      const InputNum = {
+        Z: 'Z'.codePointAt(0),
+        X: 'X'.codePointAt(0),
+        C: 'C'.codePointAt(0),
+      };
+      scene.onBeforeRenderObservable.add(() => {
+        const kb = deviceSourceManager.getDeviceSource(BABYLON.DeviceType.Keyboard);
+        if (kb) {
+          {
+            const result = kb.getInput(InputNum.Z);
+            if (result === 1) {
+              console.log('z down');
+            }
+          }
+          {
+            const result = kb.getInput(InputNum.X);
+            if (result === 1) {
+              console.log('x down');
+            }
+          }
+        }
+      });
+    }
+
+    /*
+    scene.onKeyboardObservable.add((kbInfo) => {
+      const code = kbInfo.event.code;
+      this.log('onkey', code, kbInfo);
+      switch (kbInfo.type) {
+        case BABYLON.KeyboardEventTypes.KEYUP:
+
+          break;
+        case BABYLON.KeyboardEventTypes.KEYDOWN:
+          break;
+      }
+    }); */
+
 
     engine.runRenderLoop(() => {
       this.prerender();
@@ -469,6 +533,9 @@ class Misc {
       cpos[0] += target[0] * rate;
       cpos[1] += target[1] * rate;
       const result = this.calcToPosition(cpos, len);
+      if (result.cpos[1] < -0.2) { // TODO: 潜り制限
+        continue;
+      }
 
       const cands = [
         {index: 2, deg: result.odeg},
@@ -549,8 +616,26 @@ class Misc {
     }
   }
 
+  /**
+   * GUI ソースなど
+   * @param {*} scene 
+   */
   async readyObject(scene) {
     const manager = new BABYLON.GUI.GUI3DManager(scene);
+
+    { // 表示用
+      for (const v of [
+        {name: 'robotitle2.png'},
+        {name: 'robotitle3.png'},
+      ]) {
+        const tex = new BABYLON.Texture(`./res/${v.name}`);
+        const plane = BABYLON.MeshBuilder.CreatePlane(
+          this.oid(`p`),
+        );
+        plane.parent = this.camera;
+      }
+    }
+
     {
       const panel = new BABYLON.GUI.StackPanel3D();
       manager.addControl(panel);
@@ -589,6 +674,7 @@ class Misc {
     }
   }
 
+  /** 物理演算の初期化開始 */
   async initPhy() {
     const instance = await HavokPhysics({
       locateFile: file => `./havok/${file}`,
@@ -600,6 +686,10 @@ class Misc {
     );
   }
 
+  /**
+   * 一旦剛体ばらまく
+   * @param {*} scene 
+   */
   async readyRigid(scene) {
     {
       const m = BABYLON.MeshBuilder.CreateBox(
@@ -1305,19 +1395,24 @@ class Misc {
       len * Math.sin(ang),
     ];
 
-    /** 水平から上げた角度 */
-    const beta = Math.acos((cpos[0] - bpos[0]) / len);
+    /** 水平から上げた角度。符号つき */
+    const beta = Math.atan2(cpos[1] - bpos[1], cpos[0] - bpos[0]);
 
     const ret = {
       oang: - gamma - theta,
       bang: theta * 2,
-      cang: - beta, // 真下に向かせたいときに使用する
+      cang: beta, // 真下に向かせたいときに使用する
     };
     Object.assign(ret,
       {
         odeg: ret.oang * 180 / Math.PI,
         bdeg: ret.bang * 180 / Math.PI,
         cdeg: ret.cang * 180 / Math.PI,
+        // 反映後
+        cpos: [
+          bpos[0] + len * Math.cos(beta),
+          bpos[1] + len * Math.sin(beta),
+        ],
       }
     );
     return ret;
