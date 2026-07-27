@@ -11,11 +11,11 @@ class Misc {
   constructor() {
     this.consoles = [];
     /** 論理幅 */
-    this.logicW = 960;
+    this.logicW = 512;
     /**
      * 論理高さ
      */
-    this.logicH = 540;
+    this.logicH = 512;
 
     this.curveMode = Misc.CURVE_THR;
 
@@ -242,6 +242,7 @@ class Misc {
 
     const engine = new BABYLON.Engine(canvas, {
       preserveDrawingBuffer: true,
+      //antialias: true,
     });
     this.engine = engine;
     const scene = new BABYLON.Scene(engine);
@@ -299,10 +300,11 @@ class Misc {
 
     {
       const tex = new BABYLON.Texture('./res/robotitle1.png');
+      //const tex = new BABYLON.Texture('./res/title1.png');
       tex.hasAlpha = true;
       const plane = BABYLON.MeshBuilder.CreatePlane(
         this.oid('plane'),
-        {width: 0.02, height: 0.02},
+        {width: 0.016, height: 0.016},
         scene,
       );
       plane.rotation = new BABYLON.Vector3(0, 0, 0);
