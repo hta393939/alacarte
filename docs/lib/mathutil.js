@@ -326,8 +326,9 @@ export class Quaternion {
   }
 
   /**
-   * v3 を回転する
+   * v3 を回転した新しいインスタンスを返す
    * @param {Vector3} v3 
+   * @returns {Vector3}
    */
   rot(v3) {
     const conj = this.conjugate();
@@ -335,6 +336,38 @@ export class Quaternion {
     const c1 = this.mul(pt);
     const c2 = c1.mul(conj);
     return c2.im();
+  }
+
+  /** 基底ベクトルをこのクォータニオンで掛けた基底たち */
+  _asBasis() {
+    const xb = new Vector3(1, 0, 0);
+    const yb = new Vector3(0, 1, 0);
+    const zb = new Vector3(0, 0, 1);
+    const xb2 = this.rot(xb).normal();
+    const yb2 = this.rot(yb).normal();
+    const zb2 = this.rot(zb).normal();
+    return {xb: xb2, yb: yb2, zb: zb2};
+  }
+
+  /**
+   * この回転のZ基底ベクトルをzvへ回転する一番近い回転後回転を返す
+   * @param {Vector3} zv 
+   */
+  _rotByZ(zv) {
+    const basis = this._asBasis();
+    const normaled = zv.normal();
+    const dot = normaled.dot(basis.zb);
+    if (dot === 0) { // 追加の回転は無し
+      return this.clone();
+    }
+
+    const ang = Math.acos(dot) * 0.5;
+    const sn = Math.sin(ang);
+    const cross = basis.zb.cross(normaled).normal();
+    const q = Quaternion.fromBottomW(cross.x * sn, cross.y * sn, cross.z * sn,
+      Math.cos(ang)
+    );
+    return q.mul(this);
   }
 
 }
