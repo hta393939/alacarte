@@ -1,7 +1,4 @@
 
-const _pad = (v, n = 2) => {
-  return new String(v).padStart(n, '0');
-};
 
 class Misc {
   constructor() {
@@ -9,23 +6,27 @@ class Misc {
     this.dst = '';
     this.startcount = 0;
     this.addcount = 1;
-/**
- * 出力数
- */
+    /**
+     * 出力数
+     */
     this.outcount = 1;
     this.maxcount = -1;
     this.srcdh = null;
     this.dstdh = null;
   }
 
+  pad(v, n = 2) {
+    return new String(v).padStart(n, '0');
+  }
+
   async initialize() {
     this.setListener();
   }
 
-/**
- * 
- * @param {FileSystemDirectoryHandle} dirHandle 
- */
+  /**
+   * 
+   * @param {FileSystemDirectoryHandle} dirHandle 
+   */
   async processDir(dirHandle) {
     this.root = dirHandle;
     this.addcount = Number.parseFloat(document.getElementById('idaddcount')?.value || 1);
@@ -42,6 +43,16 @@ class Misc {
     this.skipSelect();
   }
 
+  /** 実装していない */
+  skipSelect() {
+
+  }
+
+  /**
+   * 使用しない
+   * @param {*} file 
+   * @returns 
+   */
   async analyzeText(file) {
     const text = await file.text();
     const lines = text.split('\n');
@@ -73,17 +84,17 @@ class Misc {
   }
 
   makeFilename(num) {
-    return `${this.prefix}${_pad(num, this.num)}.${this.ext}`;
+    return `${this.prefix}${this.pad(num, this.num)}.${this.ext}`;
   }
 
-/**
- * 
- */
+  /**
+   * 
+   */
   async analyzeDir() {
     console.log('analyzeDir called');
-/**
- * @type {FileSystemDirectoryHandle}
- */
+    /**
+     * @type {FileSystemDirectoryHandle}
+     */
     const root = this.root;
 
     const re = /(?<prefix>\D*)(?<num>\d+)\.(?<ext>[^.]*)$/;
@@ -105,14 +116,14 @@ class Misc {
       if (h.kind === 'directory') {
         continue;
       }
-// file
-// 存在するファイルを取得する
+      // file
+      // 存在するファイルを取得する
       const m = re.exec(h.name);
-// 名前数値.拡張子 に分解する
+      // 名前数値.拡張子 に分解する
       if (!m) {
         continue;
       }
-// 見つかった
+      // 見つかった
       this.prefix = m.groups['prefix'];
       this.num = m.groups['num'].length;
       this.ext = m.groups['ext'];
@@ -124,9 +135,9 @@ class Misc {
       if (index !== Math.floor(index)) {
         continue;
       }
-/**
- * @type {File}
- */
+      /**
+       * @type {File}
+       */
       const file = await h.getFile();
       const buf = await file.arrayBuffer();
 
