@@ -31,7 +31,7 @@ class Misc {
       const el = document.getElementById(k);
       obj[k] = el.value;
     }
-    for (const k of ['isdel']) {
+    for (const k of ['isdel', 'iswrite']) {
       const el = document.getElementById(k);
       obj[k] = el?.checked;
     }
@@ -40,6 +40,15 @@ class Misc {
     ]) {
       const el = document.getElementById(k);
       obj[k] = Number.parseFloat(el?.value);
+    }
+    for (const k of ['denses']) {
+      const el = document.getElementById(k);
+      const val = el?.value;
+      try {
+        obj[k] = JSON.parse(val);
+      } catch (e) {
+        console.warn(`${k} catch`, e);
+      }
     }
     return obj;
   }
@@ -542,6 +551,7 @@ class Misc {
    */
   async renumber() {
     const param = this.gatherParam();
+    const iswrite = param.iswrite;
 
     const srcDir = await this.searchHandle(this.root, param.source);
     const dstDir = await this.searchHandle(this.root, param.destination);
@@ -560,7 +570,7 @@ class Misc {
     const re = /^(?<base>\D+)(?<number>\d+)\.(?<ext>[^\.]+)$/;
     const m = re.exec(srcOne.name);
     if (!m) {
-      console.log('no match');
+      console.log('renumber no match');
       return;
     }
     const base = m.groups['base'];
@@ -576,7 +586,7 @@ class Misc {
       mapNum[`${index}`] = {type: 5};
     }
     // デンス30
-    const denses = JSON.parse(denses);
+    const denses = param.denses || [];
     for (const dense of denses) {
       for (let i = 0; i < 30; ++i) {
         const index = dense + i;
@@ -586,6 +596,23 @@ class Misc {
 
     const nums = Object.keys(mapNum).map(v => Number.parseFloat(v)).sort((a, b) => a - b);
     nums.splice(150);
+
+    if (!iswrite) {
+      let count = 0;
+      const parent = document.createElement('div');
+      parent.id = 'parent';
+      parent.classList.add('wrap5');
+      for (let i = 0; i < nums.length; ++i) {
+        const div = document.createElement('div');
+        const val = nums[i];
+        div.textContent = `${val}, ${mapNum['' + val].type}`;
+        parent.appendChild(div);
+
+        count += 1;
+      }
+      document.body.appendChild(parent);
+      return;
+    }
 
     let count = 0;
     for (const num of nums) {
@@ -598,9 +625,10 @@ class Misc {
       await this.writeFile(dstDir, dstName, buf);
 
       count += 1;
+      console.log('renumber', count, srcName);
     }
 
-    console.log('renumber');
+    console.log('renumber', iswrite);
   }
 
 }
