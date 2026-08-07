@@ -421,7 +421,7 @@ export class CharBuilder extends PMX.Maker {
           }
 
           bone._blockIndex = bi; // 保持しておく
-          { // ローカル軸 TODO: 肩を含み手系は全部あるのかも
+          if (false) { // ローカル軸 TODO: 肩を含み手系は全部あるのかも
             // 実はローカル軸はGUIローカルにしか使用しないとか???
             // だとすると必須ではない
             const isLocalAxis = (bi === armTypeBlockIndex);
@@ -471,7 +471,7 @@ export class CharBuilder extends PMX.Maker {
           //yv = zv.cross(xv).normalizeInPlace();
           bone.xLocalVector = xv.asArray();
           bone.zLocalVector = zv.asArray();
-          bits |= PMX.Bone.BIT_LOCALAXIS;
+          bone.bits |= PMX.Bone.BIT_LOCALAXIS;
         }
       }
 

@@ -259,7 +259,7 @@ class Misc {
     }
 
     { // .pmx
-      const writer = new CharBuilder2();
+      const writer = new CharBuilder();
       writer.make(param);
       const bufs = writer.makeBuffer();
 
