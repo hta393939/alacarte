@@ -1,18 +1,17 @@
 
 /**
- * @param {number} v 値
+ * @typedef IParam
+ * @property {number} hdiv 水平側分割数
+ * @property {number} vdiv 垂直側分割数
+ * @property {PMX.Bone} bonea 根本側
+ * @property {PMX.Bone} boneb 先側
+ * @property {PMX.Vertex[]} vertices これまでの頂点が格納されていて追加する先の配列
+ * @property {number[][]} faces 追加する先の配列。3頂点インデックスの配列
+ * @property {number} lenhalf 箱。高さの半分
+ * @property {number} boneIndex 箱。決定後のボーンインデックス。所属
  */
-const _pad = (v, n = 2) => {
-  return String(v).padStart(n, '0');
-};
 
-const _lerp = (a, b, t) => {
-  return a + (b - a) * t;
-};
 
-const _rad = (deg) => {
-  return deg * Math.PI / 180;
-};
 
 /** 3次ベクトル */
 export class Vec3 {
@@ -70,12 +69,11 @@ export class Vec3 {
    * 破壊スカラー倍
    * @param {number} k 
    */
-  mulk(k) {
+  mulkInPlace(k) {
     this._x *= k;
     this._y *= k;
     this._z *= k;
     return this;
-    //return new Vec3(this.x * k, this.y * k, this.z * k);
   }
 
   len() {
@@ -86,12 +84,12 @@ export class Vec3 {
    * 破壊正規化
    * @returns 
    */
-  normalize() {
+  normalizeInPlace() {
     const len = this.len();
     if (len === 0) {
       return this;
     }
-    return this.mulk(1 / len);
+    return this.mulkInPlace(1 / len);
   }
 
   /**
@@ -119,6 +117,30 @@ export class Vec3 {
     this.z = this.z * ok + b.z * bk;
     return this;
   }
+
+  /**
+   * 破壊で加算
+   * @param {Vec3} b 
+   * @returns 
+   */
+  addInPlace(b) {
+    this.x += b.x;
+    this.y += b.y;
+    this.z += b.z;
+    return this;
+  }
+
+  /**
+   * 破壊引き算
+   * @param {Vec3} b 
+   */
+  subInPlace(b) {
+    this.x -= b.x;
+    this.y -= b.y;
+    this.z -= b.z;
+    return this;
+  }
+
 }
 
 export class Quat {
@@ -167,7 +189,10 @@ export class Quat {
     const bre = b.w;
     const aim = this.im();
     const bim = b.im();
-    const vre = aim.clone().mulk(bre).add(bim.clone().mulk(are)).add(aim.cross(bim));
+    const vre = aim.clone()
+      .mulkInPlace(bre)
+      .addInPlace(bim.clone().mulkInPlace(are))
+      .addInPlace(aim.cross(bim));
     return new Quat(
       vre.x,
       vre.y,
@@ -204,9 +229,9 @@ export class Quat {
    * @param {Vec3} center 
    */
   rotateByPoint(target, center) {
-    const p1 = target.clone().add(1, center, -1);
+    const p1 = target.clone().subInPlace(center);
     const p2 = this.rotate(p1);
-    return p2.add(1, center, 1);
+    return p2.addInPlace(center);
   }
 } 
 
@@ -218,6 +243,10 @@ export class CharBuilder extends PMX.Maker {
     this.materials = this.initMaterial();
 
     this.morphs = this.initEmotion();
+  }
+
+  lerp(a, b, t) {
+    return a + (b - a) * t;
   }
 
   initBone() {
@@ -336,7 +365,7 @@ export class CharBuilder extends PMX.Maker {
           }
           const diff = Vec3.fromArray(one.p);
           diff.x = diff.x * lrpre[i].x;
-          bone.position = parentPos.clone().add(1, diff, 1);
+          bone.position = parentPos.clone().addInPlace(diff);
           bone.p = bone.position.asArray();
           bone._index = bones.length;
 
@@ -375,13 +404,13 @@ export class CharBuilder extends PMX.Maker {
               bits |= PMX.Bone.BIT_LOCALAXIS;
 
               let vec = new Vec3(...bones[bone.parent].p);
-              vec.add(1, new Vec3(...bone.p), -1).normalize();
+              vec.subInPlace(new Vec3(...bone.p)).normalizeInPlace();
 
               let xv = new Vec3(1, 0, 0);
               let yv = vec;
               let zv = new Vec3(0, 0, 1);
-              xv = yv.cross(zv).normalize();
-              yv = zv.cross(xv).normalize();
+              xv = yv.cross(zv).normalizeInPlace();
+              yv = zv.cross(xv).normalizeInPlace();
               bone.xLocalVector = xv.asArray();
               bone.zLocalVector = zv.asArray();
             }
@@ -466,7 +495,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * 破壊
+   * 配列を破壊で正規化
    * @param {number[]} vs 
    */
   normalize(vs) {
@@ -707,7 +736,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * 物理シンプルな箱
+   * 変形無しの物理シンプルな箱
    */
   makeBox(param) {
     const lenhalf = param.lenhalf || 1;
@@ -723,7 +752,7 @@ export class CharBuilder extends PMX.Maker {
         {p: [-1,-1,  1]}, // 6
         {p: [ 1,-1,  1]}, // 7
       ];
-
+      /** UV用 */
       const k = 0.25;
       const mens = [
         {p: [0, 1, 2, 3], n: [0, 0, -1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
@@ -767,6 +796,7 @@ export class CharBuilder extends PMX.Maker {
 
   /**
    * シリンダー形状
+   * @param {IParam} param 
    */
   makeCyl(param) {
     const hdiv = param.hdiv || 8;
@@ -840,7 +870,7 @@ export class CharBuilder extends PMX.Maker {
 
   /**
    * シリンダー形状
-   * @param {object} param
+   * @param {IParam} param
    * @param {()=>number} param.rfunc
    * @param {number} param.hnum 垂直方向の点数
    * @param {(index:number)=>number} param.hfunc
@@ -849,6 +879,7 @@ export class CharBuilder extends PMX.Maker {
     const hdiv = param.hdiv || 8;
     const vdiv = param.vdiv || 4;
     const hhalf = param.hhalf || 1;
+    /** UV分割領域のインデックス */
     const index = param.index || 0;
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
@@ -881,7 +912,7 @@ export class CharBuilder extends PMX.Maker {
 
         let x = -sn * rr;
         let y = param.hfunc(j);
-        let z = cs * rr;
+        let z =  cs * rr;
 
         v.n = this.normalize([x, y, z]);
         v.p = [

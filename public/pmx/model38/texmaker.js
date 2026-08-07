@@ -1,4 +1,12 @@
 
+// テクスチャ分割計画
+// メインは1枚4つ
+// 左上: 左上角を色チップとする
+// 右上: 体とか顔とか標準
+// 左下: テクスチャ表情
+// 右下: 追加模様。数字とか
+// スフィアは標準
+
 const _one255 = (v) => {
   return Math.floor(v * 255 + 0.5);
 };
@@ -284,7 +292,7 @@ export class TexMaker {
   }
 
   /**
-   * 
+   * 追加。マーキング。
    * @param {HTMLCanvasElement} canvas 
    */
   drawMarking(canvas, offsetxrate, offsetyrate) {
@@ -388,7 +396,7 @@ export class TexMaker {
   }
 
   /**
-   * 
+   * 顔部分担当
    * @param {HTMLCanvasElement} canvas 
    */
   drawFace(canvas, offsetxrate, offsetyrate) {
@@ -523,7 +531,7 @@ export class TexMaker {
           b = 64;
         }
 
-        img.data[ft] = r;
+        img.data[ft  ] = r;
         img.data[ft+1] = x;
         img.data[ft+2] = b;
         img.data[ft+3] = a;
