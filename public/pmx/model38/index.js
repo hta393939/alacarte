@@ -1,5 +1,5 @@
 
-import { CharBuilder2 } from "./char2.js";
+import { CharBuilder } from "./charbuilder.js";
 import { TexMaker } from "./texmaker.js";
 
 /**

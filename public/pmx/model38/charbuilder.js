@@ -249,6 +249,27 @@ export class CharBuilder extends PMX.Maker {
     return a + (b - a) * t;
   }
 
+  /**
+   * 
+   * @param {PMX.Bone[]} bones 
+   * @param {string} parentName
+   */
+  searchChild(bones, parentName) {
+    const ret = [];
+    for (let i = 0; i < bones.length; ++i) {
+      const bone = bones[i];
+      const parentIndex = bone.parent;
+      if (parentIndex < 0) {
+        continue;
+      }
+      const parent = bones[parentIndex];
+      if (parent.nameJa === parentName) {
+        ret.push(bone);
+      }
+    }
+    return ret;
+  }
+
   initBone() {
     /** @type {PMX.Bone[]} */
     const bones = [];
@@ -339,6 +360,7 @@ export class CharBuilder extends PMX.Maker {
       return _index;
     };
 
+    const armTypeBlockIndex = 2;
     for (let bi = 0; bi < blocks.length; ++bi) {
       const block = blocks[bi];
       for (let i = ((block.lr) ? 0 : 1); i < 2; ++i) {
@@ -398,21 +420,27 @@ export class CharBuilder extends PMX.Maker {
             }
           }
 
-          { // ローカル軸 TODO: 
-            const isElbow = nameJa.endsWith('ひじ');
-            if (isElbow) {
-              bits |= PMX.Bone.BIT_LOCALAXIS;
+          bone._blockIndex = bi; // 保持しておく
+          { // ローカル軸 TODO: 肩を含み手系は全部あるのかも
+            // 実はローカル軸はGUIローカルにしか使用しないとか???
+            // だとすると必須ではない
+            const isLocalAxis = (bi === armTypeBlockIndex);
+            if (isLocalAxis) {
+              let boneVec = new Vec3(...bone.p);
+              let child = null; // 子ボーンのうちどれかか、どこかの方向
+              if (child) {
+                let vec = child.subInPlace(boneVec).normalizeInPlace();
+                let xv = vec;
+                let yv = new Vec3(0, 1, 0);
+                let zv = new Vec3(0, 0, 1); // 基本はZ軸(0,0,+1)。指もだいたいこれ
+                // 親指０だけ異なる
 
-              let vec = new Vec3(...bones[bone.parent].p);
-              vec.subInPlace(new Vec3(...bone.p)).normalizeInPlace();
-
-              let xv = new Vec3(1, 0, 0);
-              let yv = vec;
-              let zv = new Vec3(0, 0, 1);
-              xv = yv.cross(zv).normalizeInPlace();
-              yv = zv.cross(xv).normalizeInPlace();
-              bone.xLocalVector = xv.asArray();
-              bone.zLocalVector = zv.asArray();
+                xv = yv.cross(zv).normalizeInPlace();
+                yv = zv.cross(xv).normalizeInPlace();
+                bone.xLocalVector = xv.asArray();
+                bone.zLocalVector = zv.asArray();
+                bits |= PMX.Bone.BIT_LOCALAXIS;
+              }
             }
           }
 
@@ -420,6 +448,33 @@ export class CharBuilder extends PMX.Maker {
           bones.push(bone);
         }
       }
+    }
+
+    for (let i = 0; i < bones.length; ++i) {
+      const bone = bones[i];
+      // ローカル軸 TODO: 肩を含み手系は全部あるのかも
+      // 実はローカル軸はGUIローカルにしか使用しないとか???
+      // だとすると必須ではない
+      const isLocalAxis = (bone._blockIndex === armTypeBlockIndex);
+      if (isLocalAxis) {
+        let boneVec = new Vec3(...bone.p);
+        let childlen = this.searchChild(bones, bone.nameJa); // 子ボーンのうちどれかか、どこかの方向
+        let child = (childlen.length >= 1) ? childlen[0] : null;
+        if (child) {
+          let vec = Vec3.fromArray(child.p).subInPlace(boneVec).normalizeInPlace();
+          let xv = vec;
+          let yv = new Vec3(0, 1, 0);
+          let zv = new Vec3(0, 0, 1); // 基本はZ軸(0,0,+1)。指もだいたいこれ
+          // 親指０だけ異なる
+
+          yv = zv.cross(xv).normalizeInPlace();
+          //yv = zv.cross(xv).normalizeInPlace();
+          bone.xLocalVector = xv.asArray();
+          bone.zLocalVector = zv.asArray();
+          bits |= PMX.Bone.BIT_LOCALAXIS;
+        }
+      }
+
     }
 
     return bones;
@@ -529,6 +584,7 @@ export class CharBuilder extends PMX.Maker {
   /**
    * make() を実装
    * このインスタンスに保存する
+   * 有効だが、Char2 にも使っていない make() の残骸がある
    */
   make(param) {
     console.log('CharBuilder::make');
@@ -943,6 +999,71 @@ export class CharBuilder extends PMX.Maker {
       }
     }
 
+  }
+
+  /**
+   * 
+   * @param {IParam} param 
+   * @param {booelan} isLeft 
+   */
+  makeMobius(param) {
+    console.log('makeMobius');
+    const hdiv = param.hdiv || 16;
+    const radius = param.radius || 0.5;
+    const dhalf = 0.125;
+    const hhalf = 0.25;
+    const vs = [
+      {p: [0, hhalf, -dhalf]}, // 上の手前(外)
+      {p: [0, hhalf,  dhalf]}, // 上の奥(内)
+      {p: [0,-hhalf, -dhalf]}, // 下の手前(外)
+      {p: [0,-hhalf,  dhalf]}, // 下の奥(内)
+    ]; // NOTE: 法線分離するかなあ
+    vs.forEach(v => {
+      v.pos = Vec3.fromArray(v.p);
+      v.n = v.pos.clone().normalizeInPlace();
+    });
+
+    const vertices = param.vertices;
+    const faces = param.faces;
+    let lastIndex = vertices.length;
+    for (let i = 0; i < hdiv; ++i) {
+      const v = vs[i];
+      const deg = i / hdiv;
+      const ang = deg * Math.PI / 180;
+
+      let pv = v.pos.clone();
+      let nv = v.n.clone();
+
+      // □ x を ang で回転、n も回転
+      // TODO: 
+
+      // 位置を半径分移動
+      pv.addInPlace(new Vec3(0, 0, radius));
+
+      // □ と n を y: ang で回転
+      // TODO: 
+    }
+
+    for (let i = 0; i < hdiv; ++i) {
+      const v0 = i * 4;
+      const v1 = v0 + 1;
+      const v2 = v0 + 2;
+      const v3 = v0 + 3;
+      const v4 = ((i + 1) % hdiv) * 4;
+      const v5 = v4 + 1;
+      const v6 = v5 + 2;
+      const v7 = v6 + 3;
+      faces.push([v0, v1, v2, v3]);
+      faces.push([v0, v1, v2, v3]);
+      faces.push([v0, v1, v2, v3]);
+      faces.push([v0, v1, v2, v3]);
+      faces.push([v0, v1, v2, v3]);
+      faces.push([v0, v1, v2, v3]);
+      faces.push([v0, v1, v2, v3]);
+      faces.push([v0, v1, v2, v3]);
+    }
+
+    console.log('makeMobius');
   }
 
 }
