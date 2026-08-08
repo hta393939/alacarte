@@ -19,6 +19,11 @@ export class Vec3 {
   static YAXIS = 'y';
   static ZAXIS = 'z';
 
+  /**
+   * 
+   * @param {number[]} arr 
+   * @returns 
+   */
   static fromArray(arr) {
     return new Vec3(arr[0], arr[1], arr[2]);
   }
@@ -189,6 +194,19 @@ export class Quat {
   }
   get w() {
     return this._w;
+  }
+
+  set x(val) {
+    this._x = val;
+  }
+  set y(val) {
+    this._y = val;
+  }
+  set z(val) {
+    this._z = val;
+  }
+  set w(val) {
+    this._w = val;
   }
 
   clone() {
@@ -620,7 +638,6 @@ export class CharBuilder extends PMX.Maker {
   /**
    * make() を実装
    * このインスタンスに保存する
-   * 有効だが、Char2 にも使っていない make() の残骸がある
    */
   make(param) {
     console.log('CharBuilder::make');
@@ -768,7 +785,7 @@ export class CharBuilder extends PMX.Maker {
           radius: 0.5,
           hhalf: 0.5,
           bonea: bone,
-          boneb: bone,
+          boneb: bone, // TODO: 同じもの渡している
           vertices: this.vts,
           faces: this.materials[0].faces,
           index: i,
@@ -776,14 +793,25 @@ export class CharBuilder extends PMX.Maker {
         const nameJa = bone.nameJa;
         const nameEn = bone.nameEn;
         if (nameEn.endsWith('End')) {
-          continue;
+          continue; // ～先にのるメッシュは無い
         }
-        this.makeCyl(param);
+
+        if (nameJa.includes('ひじ') || nameJa.includes('ひざ')) {
+          delete param.radius;
+          delete param.hhalf;
+          this.makeMobius(param);
+        } else {
+          this.makeCyl(param);
+        }
       }
     }
 
   }
 
+  /**
+   * 現在のボーンの配列に対して、end 情報を決定する
+   * 標準的な移動可能ボーンにビットを付与する
+   */
   indexed() {
     console.log('indexed');
     {
@@ -888,6 +916,7 @@ export class CharBuilder extends PMX.Maker {
 
   /**
    * シリンダー形状
+   * ボーン2つ渡しているがウエイト割り当てしていない
    * @param {IParam} param 
    */
   makeCyl(param) {
@@ -932,7 +961,7 @@ export class CharBuilder extends PMX.Maker {
         v.n = this.normalize([x, y, z]);
         v.p = [
           x * radius + bonea.p[0],
-          y * hhalf + bonea.p[1],
+          y * hhalf  + bonea.p[1],
           z * radius + bonea.p[2],
         ];
         v.uv = [
@@ -1040,14 +1069,16 @@ export class CharBuilder extends PMX.Maker {
   /**
    * 
    * @param {IParam} param 
-   * @param {booelan} isLeft 
    */
   makeMobius(param) {
     console.log('makeMobius');
     const hdiv = param.hdiv || 16;
     const radius = param.radius || 0.5;
-    const dhalf = 0.125;
+    const bonea = param.bonea;
+    const isLeft = (bonea.p[0] > 0);
+    const boneIndex = param.index;
     const hhalf = 0.25;
+    const dhalf = hhalf * 0.25;
     const vs = [
       {p: [0, hhalf, -dhalf]}, // 上内
       {p: [0, hhalf,  dhalf]}, // 上外
@@ -1059,52 +1090,71 @@ export class CharBuilder extends PMX.Maker {
       v.n = v.pos.clone().normalizeInPlace();
     });
 
-    const vertices = param.vertices;
+    const vts = param.vertices;
     const faces = param.faces;
-    let lastIndex = vertices.length;
+    let startIndex = vts.length;
     for (let i = 0; i <= hdiv; ++i) {
-      const v = vs[i];
       const twistAng = - Math.PI * i / hdiv;
-      const roundAng = - 2 * Math.PI * (i % hdiv) / hdiv;
+      const roundAng = 2 * Math.PI * (i % hdiv) / hdiv * (isLeft ? -1 : 1);
+      for (let j = 0; j < 4; ++j) {
+        const v = vs[j];
 
-      let pv = v.pos.clone();
-      let nv = v.n.clone();
+        let pv = v.pos.clone();
+        let nv = v.n.clone();
 
-      // □ x を ang で回転、n も回転 
-      const twistQ = Quat.axisRot(new Vec3(1, 0, 0), twistAng);
-      pv = twistQ.rotate(pv);
-      nv = twistQ.rotate(nv);
+        // □ を X+ ang で回転、n も回転 
+        const twistQ = Quat.axisRot(new Vec3(1, 0, 0), twistAng);
+        pv = twistQ.rotate(pv);
+        nv = twistQ.rotate(nv);
 
-      // 位置を半径分移動
-      pv.addInPlace(new Vec3(0, 0, radius));
+        // 位置を半径分 Z+ へ移動
+        pv.addInPlace(new Vec3(0, 0, radius));
 
-      // □ と n を y: ang で回転
-      const roundQ = Quat.axisRot(new Vec3(0, 1, 0), roundAng);
-      pv = roundQ.rotate(pv);
-      nv = roundQ.rotate(nv);
+        // □ と n を Y+ ang で回転
+        const roundQ = Quat.axisRot(new Vec3(0, 1, 0), roundAng);
+        pv = roundQ.rotate(pv);
+        nv = roundQ.rotate(nv);
 
-      // TODO: ボーンローカル回転してボーンの位置に移動
-      // 
+        // TODO: ボーンローカル回転してボーンの位置に移動
+        const boneQ = Quat.axisRot(new Vec3(0, 0, 1), 0);
+        pv = boneQ.rotate(pv);
+        nv = boneQ.rotate(nv);
+
+        pv.addInPlace(Vec3.fromArray(bonea.p));
+
+        const vtx = new PMX.Vertex();
+        vtx.p = pv.asArray();
+        vtx.n = nv.asArray();
+        let offsetu = 0.5;
+        let offsetv = 0.5;
+        let rsc = 0.5;
+        vtx.uv = [ // TODO: オフセットとスケール変換が必要
+          (j / 4) * rsc + offsetu, // 本来は 0, 4 は分けた方がいい
+          (i / hdiv) * rsc + offsetv,
+        ];
+        vtx.joints = [boneIndex, 0, 0, 0];
+        vts.push(vtx);
+      }
     }
 
     // 面の追加
     for (let i = 0; i < hdiv; ++i) {
-      const v0 = i * 4;
+      const v0 = i * 4 + startIndex;
       const v1 = v0 + 1;
       const v2 = v0 + 2;
       const v3 = v0 + 3;
-      const v4 = v0 + 4;
+      const v4 = v0 + 4; // 次
       const v5 = v4 + 1;
-      const v6 = v5 + 2;
-      const v7 = v6 + 3;
-      faces.push([v0, v1, v2]);
-      faces.push([v2, v1, v3]);
-      faces.push([v1, v2, v3]);
-      faces.push([v3, v2, v0]);
-      faces.push([v2, v3, v0]);
-      faces.push([v0, v3, v1]);
-      faces.push([v3, v0, v1]);
-      faces.push([v1, v0, v2]);
+      const v6 = v4 + 2;
+      const v7 = v4 + 3;
+      faces.push([v0, v1, v4]);
+      faces.push([v4, v1, v5]);
+      faces.push([v1, v3, v5]);
+      faces.push([v5, v3, v7]);
+      faces.push([v3, v2, v7]);
+      faces.push([v7, v2, v6]);
+      faces.push([v2, v0, v6]);
+      faces.push([v6, v0, v4]);
     }
 
     console.log('makeMobius');
