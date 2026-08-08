@@ -1,10 +1,14 @@
 /**
  * @file pmx.js
  */
+// 2026-08-08
 // 2024-05-06
 
 (function(_global) {
 
+/**
+ * 頂点クラス
+ */
 class Vertex {
   /**
    * BDEF1
@@ -48,9 +52,10 @@ class Vertex {
     this._index = 0;
 
     /**
-     * @type {[number, number, number]}
+     * 位置 @type {[number, number, number]}
      */
     this.p = [0, 0,  0];
+    /** 法線 @type {[number, number, number]} */
     this.n = [0, 0, -1];
     /** V成分は上から下が 0.0～1.0 */
     this.uv = [0.5, 0.5];
@@ -111,6 +116,9 @@ class IKLink {
   }
 }
 
+/**
+ * ボーンクラス
+ */
 class Bone {
   /** 接続先、bone で指定 */
   static BIT_BONECONNECT = 0x0001;
@@ -146,7 +154,7 @@ class Bone {
     this.nameEn = 'bone000';
     /** ボーン 16bit 値 */
     this.bits = 0;
-    /** 位置 */
+    /** 位置 @type {number[]} */
     this.p = [0, 0, 0];
     /**
      * 親ボーンインデックス
@@ -351,62 +359,62 @@ class Material {
  * 材質モーフ1要素分
  */
 class MaterialMorph {
-/**
- * 積
- */
+  /**
+   * 積
+   */
   static CALC_MUL = 0;
-/**
- * 和
- */
+  /**
+   * 和
+   */
   static CALC_ADD = 1;
   constructor() {
-/**
- * クリップ文字列に作文する場合
- * 配列のインデックス
- */
+    /**
+     * クリップ文字列に作文する場合
+     * 配列のインデックス
+     */
     this._index = 0;
     this._parentName = 'mr000';
 
     this._materialName = 'mtl000';
-/**
- * -1 だと全材質らしい
- */
+    /**
+     * -1 だと全材質らしい
+     */
     this.materialIndex = -1;
 
-/**
- * @type {number}
- */
+    /**
+     * @type {number}
+     */
     this.calcType = MaterialMorph.CALC_MUL;
-/**
- * RGBA
- */
+    /**
+     * RGBA
+     */
     this.diffuse = [0, 0, 0, 0];
-/**
- * no A
- */
+    /**
+     * no A
+     */
     this.specular = [0, 0, 0];
     this.power = 0;
-/**
- * no A
- */
+    /**
+     * no A
+     */
     this.ambient = [0, 0, 0];
     this.edgeSize = 0;
-/**
- * RGBA
- */
+    /**
+     * RGBA
+     */
     this.edge = [0, 0, 0, 0];
-/**
- * よく使う．RGBA
- */
+    /**
+     * よく使う．RGBA
+     */
     this.tex = [0, 0, 0, 0];
     this.sphere = [0, 0, 0, 0];
     this.toon = [0, 0, 0, 0];
   }
 
-/**
- * 
- * @param {number} val 0(add default) or 1(mul default) 
- */
+  /**
+   * 
+   * @param {number} val 0(add default) or 1(mul default) 
+   */
   setValue(val) {
     this.diffuse = [val, val, val, val];
     this.specular = [val, val, val];
@@ -540,10 +548,10 @@ class Morph {
     return ss.join(',');
   }
 
-/**
- * API. 複数行で返す。こっちを使う。
- * @returns {string[]}
- */
+  /**
+   * API. 複数行で返す。こっちを使う。
+   * @returns {string[]}
+   */
   toLines() {
     const ss = [
       'PmxMorph',
@@ -1535,7 +1543,7 @@ class Parser extends PMXObject {
         //console.log('joint', j.nameJa, i);
       }
     }
-// softbody
+    // softbody
     if (this.version > 2.0) {
       const num = this.readu32s(p, 1)[0];
       console.log('softbody num', num);
