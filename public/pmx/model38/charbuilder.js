@@ -1080,10 +1080,11 @@ export class CharBuilder extends PMX.Maker {
     const hhalf = 0.25;
     const dhalf = hhalf * 0.25;
     const vs = [
-      {p: [0, hhalf, -dhalf]}, // 上内
       {p: [0, hhalf,  dhalf]}, // 上外
+      {p: [0, hhalf, -dhalf]}, // 上内
       {p: [0,-hhalf, -dhalf]}, // 下内
       {p: [0,-hhalf,  dhalf]}, // 下外
+      {p: [0, hhalf,  dhalf]}, // 上外
     ]; // NOTE: 法線分離するかなあ
     vs.forEach(v => {
       v.pos = Vec3.fromArray(v.p);
@@ -1096,7 +1097,7 @@ export class CharBuilder extends PMX.Maker {
     for (let i = 0; i <= hdiv; ++i) {
       const twistAng = - Math.PI * i / hdiv;
       const roundAng = 2 * Math.PI * (i % hdiv) / hdiv * (isLeft ? -1 : 1);
-      for (let j = 0; j < 4; ++j) {
+      for (let j = 0; j <= 4; ++j) {
         const v = vs[j];
 
         let pv = v.pos.clone();
@@ -1126,10 +1127,10 @@ export class CharBuilder extends PMX.Maker {
         vtx.p = pv.asArray();
         vtx.n = nv.asArray();
         let offsetu = 0.5;
-        let offsetv = 0.5;
+        let offsetv = 0.0;
         let rsc = 0.5;
         vtx.uv = [ // TODO: オフセットとスケール変換が必要
-          (j / 4) * rsc + offsetu, // 本来は 0, 4 は分けた方がいい
+          (j / 4) * rsc + offsetu,
           (i / hdiv) * rsc + offsetv,
         ];
         vtx.joints = [boneIndex, 0, 0, 0];
@@ -1139,22 +1140,36 @@ export class CharBuilder extends PMX.Maker {
 
     // 面の追加
     for (let i = 0; i < hdiv; ++i) {
-      const v0 = i * 4 + startIndex;
+      const v0 = i * 5 + startIndex;
       const v1 = v0 + 1;
       const v2 = v0 + 2;
       const v3 = v0 + 3;
-      const v4 = v0 + 4; // 次
+      const v0b = v0 + 4;
+      const v4 = v0 + 5; // 次
       const v5 = v4 + 1;
       const v6 = v4 + 2;
       const v7 = v4 + 3;
-      faces.push([v0, v1, v4]);
-      faces.push([v4, v1, v5]);
-      faces.push([v1, v3, v5]);
-      faces.push([v5, v3, v7]);
-      faces.push([v3, v2, v7]);
-      faces.push([v7, v2, v6]);
-      faces.push([v2, v0, v6]);
-      faces.push([v6, v0, v4]);
+      const v4b = v4 + 4;
+
+      const fs = [
+      [v0, v1, v4],
+      [v4, v1, v5],
+      [v1, v2, v5],
+      [v5, v2, v6],
+      [v2, v3, v6],
+      [v6, v3, v7],
+      [v3, v0b, v7],
+      [v7, v0b, v4b],
+      ];
+
+      if (!isLeft) {
+        fs.forEach(fi => {
+          const tmp = fi[1];
+          fi[1] = fi[2];
+          fi[2] = tmp;
+        });
+      }
+      faces.push(...fs);
     }
 
     console.log('makeMobius');
