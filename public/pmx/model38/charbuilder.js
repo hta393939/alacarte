@@ -151,11 +151,31 @@ export class Quat {
     this._w = inw;
   }
 
+  /**
+   * 
+   * @param {number[]} arr w, x, y, z 順
+   * @returns 
+   */
   static fromArrayWHead(arr) {
-    return new Quat(arr[1], arr[2], arr[3], arr[0]);
+    const ret = new Quat();
+    ret.w = arr[0];
+    ret.x = arr[1];
+    ret.y = arr[2];
+    ret.z = arr[3];
+    return ret;
   }
+  /**
+   * 
+   * @param {number[]} arr x, y, z, w 順
+   * @returns 
+   */
   static fromArrayWTail(arr) {
-    return new Quat(arr[0], arr[1], arr[2], arr[3]);
+    const ret = new Quat();
+    ret.x = arr[0];
+    ret.y = arr[1];
+    ret.z = arr[2];
+    ret.w = arr[3];
+    return ret;
   }
 
   get x() {
@@ -172,7 +192,8 @@ export class Quat {
   }
 
   clone() {
-    return new Quat(this.x, this.y, this.z, this.w);
+    const ret = Quat.fromArrayWTail(this.x, this.y, this.z, this.w);
+    return ret;
   }
 
   im() {
@@ -181,7 +202,7 @@ export class Quat {
 
   /**
    * 積。新しいインスタンスで。
-   * @param {*} b 
+   * @param {Quat} b 
    * @returns 
    */
   mul(b) {
@@ -193,12 +214,12 @@ export class Quat {
       .mulkInPlace(bre)
       .addInPlace(bim.clone().mulkInPlace(are))
       .addInPlace(aim.cross(bim));
-    return new Quat(
+    return Quat.fromArrayWTail([
       vre.x,
       vre.y,
       vre.z,
       are * bre - aim.dot(bim),
-    );
+    ]);
   }
 
   toVec3() {
@@ -210,7 +231,8 @@ export class Quat {
    * @returns 
    */
   conj() {
-    return new Quat(-this.x, -this.y, -this.z, this.w);
+    const ret = Quat.fromArrayWTail([-this.x, -this.y, -this.z, this.w]);
+    return ret;
   }
 
   /**
@@ -219,7 +241,7 @@ export class Quat {
    * @returns {Vec3}
    */
   rotate(target) {
-    const posq = new Quat(target.x, target.y, target.z, 0);
+    const posq = Quat.fromArrayWTail([target.x, target.y, target.z, 0]);
     return this.mul(posq).mul(this.conj()).toVec3();   
   }
 
@@ -232,6 +254,20 @@ export class Quat {
     const p1 = target.clone().subInPlace(center);
     const p2 = this.rotate(p1);
     return p2.addInPlace(center);
+  }
+
+  /**
+   * axis 周りに ang ラジアン回転させるクォータニオン
+   * @param {Vec3} axis 
+   * @param {number} ang 
+   */
+  static axisRot(axis, ang) {
+    const vec = axis.normalizeInPlace().mulkInPlace(Math.sin(ang * 0.5));
+    const ret = Quat.fromArrayWTail([
+      vec.x, vec.y, vec.z,
+      Math.cos(ang * 0.5),
+    ]);
+    return ret;
   }
 } 
 
@@ -1013,10 +1049,10 @@ export class CharBuilder extends PMX.Maker {
     const dhalf = 0.125;
     const hhalf = 0.25;
     const vs = [
-      {p: [0, hhalf, -dhalf]}, // 上の手前(外)
-      {p: [0, hhalf,  dhalf]}, // 上の奥(内)
-      {p: [0,-hhalf, -dhalf]}, // 下の手前(外)
-      {p: [0,-hhalf,  dhalf]}, // 下の奥(内)
+      {p: [0, hhalf, -dhalf]}, // 上内
+      {p: [0, hhalf,  dhalf]}, // 上外
+      {p: [0,-hhalf, -dhalf]}, // 下内
+      {p: [0,-hhalf,  dhalf]}, // 下外
     ]; // NOTE: 法線分離するかなあ
     vs.forEach(v => {
       v.pos = Vec3.fromArray(v.p);
@@ -1026,41 +1062,49 @@ export class CharBuilder extends PMX.Maker {
     const vertices = param.vertices;
     const faces = param.faces;
     let lastIndex = vertices.length;
-    for (let i = 0; i < hdiv; ++i) {
+    for (let i = 0; i <= hdiv; ++i) {
       const v = vs[i];
-      const deg = i / hdiv;
-      const ang = deg * Math.PI / 180;
+      const twistAng = - Math.PI * i / hdiv;
+      const roundAng = - 2 * Math.PI * (i % hdiv) / hdiv;
 
       let pv = v.pos.clone();
       let nv = v.n.clone();
 
-      // □ x を ang で回転、n も回転
-      // TODO: 
+      // □ x を ang で回転、n も回転 
+      const twistQ = Quat.axisRot(new Vec3(1, 0, 0), twistAng);
+      pv = twistQ.rotate(pv);
+      nv = twistQ.rotate(nv);
 
       // 位置を半径分移動
       pv.addInPlace(new Vec3(0, 0, radius));
 
       // □ と n を y: ang で回転
-      // TODO: 
+      const roundQ = Quat.axisRot(new Vec3(0, 1, 0), roundAng);
+      pv = roundQ.rotate(pv);
+      nv = roundQ.rotate(nv);
+
+      // TODO: ボーンローカル回転してボーンの位置に移動
+      // 
     }
 
+    // 面の追加
     for (let i = 0; i < hdiv; ++i) {
       const v0 = i * 4;
       const v1 = v0 + 1;
       const v2 = v0 + 2;
       const v3 = v0 + 3;
-      const v4 = ((i + 1) % hdiv) * 4;
+      const v4 = v0 + 4;
       const v5 = v4 + 1;
       const v6 = v5 + 2;
       const v7 = v6 + 3;
-      faces.push([v0, v1, v2, v3]);
-      faces.push([v0, v1, v2, v3]);
-      faces.push([v0, v1, v2, v3]);
-      faces.push([v0, v1, v2, v3]);
-      faces.push([v0, v1, v2, v3]);
-      faces.push([v0, v1, v2, v3]);
-      faces.push([v0, v1, v2, v3]);
-      faces.push([v0, v1, v2, v3]);
+      faces.push([v0, v1, v2]);
+      faces.push([v2, v1, v3]);
+      faces.push([v1, v2, v3]);
+      faces.push([v3, v2, v0]);
+      faces.push([v2, v3, v0]);
+      faces.push([v0, v3, v1]);
+      faces.push([v3, v0, v1]);
+      faces.push([v1, v0, v2]);
     }
 
     console.log('makeMobius');
