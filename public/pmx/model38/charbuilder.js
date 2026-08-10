@@ -295,6 +295,11 @@ export class CharBuilder extends PMX.Maker {
   /** 8x8 uv インデックス */
   static INDEX_OWNJOINT = 1;
 
+  /** 腕のベクトルの正規化X成分 */
+  static ANX = 0.788;
+  /** 腕のベクトルの正規化Y成分の正 */
+  static ANY = 0.616;
+
   constructor() {
     super();
 
@@ -333,6 +338,13 @@ export class CharBuilder extends PMX.Maker {
     /** @type {PMX.Bone[]} */
     const bones = [];
 
+    const ax = CharBuilder.ANX * 1;
+    const ay = CharBuilder.ANY * 1;
+    const fx = CharBuilder.ANX * 0.25;
+    const fy = CharBuilder.ANY * 0.25;
+    /** 指ずれ */
+    const fit = 0.06;
+
     const blocks = [
 { lr: false, bones: [
 { parentName: '', nameJa: '全ての親', nameEn: 'root', p:[0,0,0] },
@@ -353,32 +365,33 @@ export class CharBuilder extends PMX.Maker {
 { lr: true, bones: [
 {parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder', p:[0.5,0,0]},
 {parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm', p:[0.5,0,0]},
-{parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[1,-1,0]},
-{parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[1,-1,0]},
-{parentName: '_手首',nameJa: '小指１', nameEn: 'LittleProximal', p:[0,0,0]},
-{parentName: '_小指１',nameJa: '小指２', nameEn: 'LittleIntermediate', p:[0,0,0]},
-{parentName: '_小指２',nameJa: '小指３', nameEn: 'LittleDistal', p:[0,0,0]},
-{parentName: '_小指３',nameJa: '小指先', nameEn: 'LittleEnd', p:[0,0,0]},
+{parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[ax,-ay,0]},
+{parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[ax,-ay,0]},
+// 薬指を手首の先として使用する
+{parentName: '_手首',nameJa: '薬指１', nameEn: 'RingProximal', p:[fx,-fy,0]},
+{parentName: '_薬指１',nameJa: '薬指２', nameEn: 'RingIntermediate', p:[fx,-fy,0]},
+{parentName: '_薬指２',nameJa: '薬指３', nameEn: 'RingDistal', p:[fx,-fy,0]},
+{parentName: '_薬指３',nameJa: '薬指先', nameEn: 'RingEnd', p:[fx,-fy,0]},
 
-{parentName: '_手首',nameJa: '薬指１', nameEn: 'RingProximal', p:[0,0,0]},
-{parentName: '_薬指１',nameJa: '薬指２', nameEn: 'RingIntermediate', p:[0,0,0]},
-{parentName: '_薬指２',nameJa: '薬指３', nameEn: 'RingDistal', p:[0,0,0]},
-{parentName: '_薬指３',nameJa: '薬指先', nameEn: 'RingEnd', p:[0,0,0]},
+{parentName: '_手首',nameJa: '小指１', nameEn: 'LittleProximal', p:[fx,-fy,fit]},
+{parentName: '_小指１',nameJa: '小指２', nameEn: 'LittleIntermediate', p:[fx,-fy,0]},
+{parentName: '_小指２',nameJa: '小指３', nameEn: 'LittleDistal', p:[fx,-fy,0]},
+{parentName: '_小指３',nameJa: '小指先', nameEn: 'LittleEnd', p:[fx,-fy,0]},
 
-{parentName: '_手首',nameJa: '中指１', nameEn: 'MiddleProximal', p:[0,0,0]},
-{parentName: '_中指１',nameJa: '中指２', nameEn: 'MiddleIntermediate', p:[0,0,0]},
-{parentName: '_中指２',nameJa: '中指３', nameEn: 'MiddleDistal', p:[0,0,0]},
-{parentName: '_中指３',nameJa: '中指先', nameEn: 'MiddleEnd', p:[0,0,0]},
+{parentName: '_手首',nameJa: '中指１', nameEn: 'MiddleProximal', p:[fx,-fy,-fit]},
+{parentName: '_中指１',nameJa: '中指２', nameEn: 'MiddleIntermediate', p:[fx,-fy,0]},
+{parentName: '_中指２',nameJa: '中指３', nameEn: 'MiddleDistal', p:[fx,-fy,0]},
+{parentName: '_中指３',nameJa: '中指先', nameEn: 'MiddleEnd', p:[fx,-fy,0]},
 
-{parentName: '_手首',nameJa: '人指１', nameEn: 'IndexProximal', p:[0,0,0]},
-{parentName: '_人指１',nameJa: '人指２', nameEn: 'IndexIntermediate', p:[0,0,0]},
-{parentName: '_人指２',nameJa: '人指３', nameEn: 'IndexDistal', p:[0,0,0]},
-{parentName: '_人指３',nameJa: '人指先', nameEn: 'IndexEnd', p:[0,0,0]},
+{parentName: '_手首',nameJa: '人指１', nameEn: 'IndexProximal', p:[fx,-fy,-fit*2]},
+{parentName: '_人指１',nameJa: '人指２', nameEn: 'IndexIntermediate', p:[fx,-fy,0]},
+{parentName: '_人指２',nameJa: '人指３', nameEn: 'IndexDistal', p:[fx,-fy,0]},
+{parentName: '_人指３',nameJa: '人指先', nameEn: 'IndexEnd', p:[fx,-fy,0]},
 
-{parentName: '_手首',nameJa: '親指０', nameEn: 'ThumbMetacarpal', p:[0,0,0]},
-{parentName: '_親指０',nameJa: '親指１', nameEn: 'ThumbProximal', p:[0,0,0]},
-{parentName: '_親指１',nameJa: '親指２', nameEn: 'ThumbDistal', p:[0,0,0]},
-{parentName: '_親指２',nameJa: '親指先', nameEn: 'ThumbEnd', p:[0,0,0]},
+{parentName: '_手首',nameJa: '親指０', nameEn: 'ThumbMetacarpal', p:[fx,-fy,-fit*3]},
+{parentName: '_親指０',nameJa: '親指１', nameEn: 'ThumbProximal', p:[fx,-fy,0]},
+{parentName: '_親指１',nameJa: '親指２', nameEn: 'ThumbDistal', p:[fx,-fy,0]},
+{parentName: '_親指２',nameJa: '親指先', nameEn: 'ThumbEnd', p:[fx,-fy,0]},
 ]},
 { lr: true, bones: [
 {parentName: '頭',nameJa: '目', nameEn: 'Eye', p:[0.2,0,-0.2]},
@@ -444,6 +457,7 @@ export class CharBuilder extends PMX.Maker {
             bone.parent = index;
             parentPos = bones[index].position?.clone() || new Vec3(0,0,0);
           }
+          // p は相対とした
           const diff = Vec3.fromArray(one.p);
           diff.x = diff.x * lrpre[i].x;
           bone.position = parentPos.clone().addInPlace(diff);
