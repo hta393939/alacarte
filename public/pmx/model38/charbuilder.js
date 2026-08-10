@@ -299,6 +299,8 @@ export class CharBuilder extends PMX.Maker {
   static ANX = 0.788;
   /** 腕のベクトルの正規化Y成分の正 */
   static ANY = 0.616;
+  /** 指ボーンの隙間 */
+  static FINGER_INTERVAL = 0.08;
 
   constructor() {
     super();
@@ -343,7 +345,7 @@ export class CharBuilder extends PMX.Maker {
     const fx = CharBuilder.ANX * 0.25;
     const fy = CharBuilder.ANY * 0.25;
     /** 指ずれ */
-    const fit = 0.06;
+    const fit = CharBuilder.FINGER_INTERVAL;
 
     const blocks = [
 { lr: false, bones: [
@@ -705,7 +707,7 @@ export class CharBuilder extends PMX.Maker {
     { // ボーングループフレーム
       const _bones = [...this.bones];
 
-      /** _func(b: PMX.Bone): boolean */
+      /** 条件を満たすボーンのインデックスの配列を得る。 _func(b: PMX.Bone): boolean */
       const _sel = (_func) => {
         const ret = [];
         for (let j = 0; j < _bones.length; ++j) {
@@ -812,7 +814,12 @@ export class CharBuilder extends PMX.Maker {
         const nameJa = bone.nameJa;
         const nameEn = bone.nameEn;
         if (nameEn.endsWith('End')) {
-          continue; // ～先にのるメッシュは無い
+          continue; // ～先 にのるメッシュは無い
+        }
+
+        if (nameJa.includes('指')) {
+          param.radius = CharBuilder.FINGER_INTERVAL * 0.5;
+          param.hhalf = CharBuilder.FINGER_INTERVAL * 0.5;
         }
 
         if (nameJa.includes('ひじ') || nameJa.includes('ひざ')) {
@@ -822,6 +829,11 @@ export class CharBuilder extends PMX.Maker {
         } else {
           this.makeJoint(param);
         }
+
+        if (false) { // TODO: ボーンメッシュのように
+          this.makeCyl(param);
+        }
+
       }
     }
 
@@ -1161,6 +1173,12 @@ export class CharBuilder extends PMX.Maker {
     const radius = param.radius || 0.5;
     const bonea = param.bonea;
     const isLeft = (bonea.p[0] > 0);
+
+    const localRotAng = Math.atan2(
+      CharBuilder.ANX,
+      CharBuilder.ANY,
+    ) * (isLeft ? -1 : 1);
+
     const boneIndex = param.index;
     const hhalf = 0.25;
     const dhalf = hhalf * 0.25;
@@ -1201,8 +1219,8 @@ export class CharBuilder extends PMX.Maker {
         pv = roundQ.rotate(pv);
         nv = roundQ.rotate(nv);
 
-        // TODO: ボーンローカル回転してボーンの位置に移動
-        const boneQ = Quat.axisRot(new Vec3(0, 0, 1), 0);
+        // ボーンローカル回転してボーンの位置に移動
+        const boneQ = Quat.axisRot(new Vec3(0, 0, 1), localRotAng);
         pv = boneQ.rotate(pv);
         nv = boneQ.rotate(nv);
 
@@ -1211,13 +1229,15 @@ export class CharBuilder extends PMX.Maker {
         const vtx = new PMX.Vertex();
         vtx.p = pv.asArray();
         vtx.n = nv.asArray();
-        let offsetu = 0.5;
-        let offsetv = 0.0;
-        let rsc = 0.5;
-        vtx.uv = [ // TODO: オフセットとスケール変換が必要
-          (j / 4) * rsc + offsetu,
-          (i / hdiv) * rsc + offsetv,
-        ];
+        let subu = (j / 4);
+        let subv = (i / hdiv);
+        //let rsc = 0.5;
+        vtx.uv = TexMaker.subTex8(subu, subv, 4);
+        /*
+         [ // TODO: オフセットとスケール変換が必要
+          subu * rsc + offsetu,
+          subv * rsc + offsetv,
+        ]; */
         vtx.joints = [boneIndex, 0, 0, 0];
         vts.push(vtx);
       }
