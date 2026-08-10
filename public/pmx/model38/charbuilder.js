@@ -832,31 +832,23 @@ export class CharBuilder extends PMX.Maker {
    * 標準的な移動可能ボーンにビットを付与する
    */
   indexed() {
-    console.log('indexed');
+    console.log('indexed', this.bones);
     {
       const num = this.bones.length;
       for (let i = 0; i < num; ++i) {
         const bone = this.bones[i];
         //bone._index = i;
 
-        /** @type {PMX.Bone} */
-        let end = null;
-        const cs = this.bones.filter(b => {
-          if (b._parentName !== bone.nameJa) {
-            return false;
-          }
-          if (b.nameEn.endsWith('End')) {
-            end = b;
-          }
-          return true;
-        });
+        const cs = this.searchChild(this.bones, bone.nameJa);
+        /** *End があったら優先する @type {PMX.Bone} */
+        let end = cs.find(_b => _b.nameEn.endsWith('End'));
         if (!end && cs.length >= 1) {
           end = cs[0];
         }
         const index = end?._index ?? -1;
 
         if (index >= 0) {
-          bone.endBoneIndex = index;          
+          bone.endBoneIndex = index;
           bone.bits |= PMX.Bone.BIT_BONECONNECT;
         } else {
           bone.endOffset = [0, 0, -1];
