@@ -294,6 +294,8 @@ export class Quat {
 export class CharBuilder extends PMX.Maker {
   /** 8x8 uv インデックス */
   static INDEX_OWNJOINT = 1;
+  /** 8x8 uv インデックス */
+  static INDEX_MOBIUS = 2;
 
   /** 腕のベクトルの正規化X成分 */
   static ANX = 0.788;
@@ -1097,8 +1099,8 @@ export class CharBuilder extends PMX.Maker {
    * @param {IParam} param 
    */
   makeJoint(param) {
-    const hdiv = param.hdiv || 8;
-    const vdiv = param.vdiv || 4;
+    const hdiv = param.hdiv || 16;
+    const vdiv = param.vdiv || 8;
     const hhalf = param.hhalf || 1;
     const radius = param.radius || 1;
     const index = param.index || 0;
@@ -1177,7 +1179,7 @@ export class CharBuilder extends PMX.Maker {
     const localRotAng = Math.atan2(
       CharBuilder.ANX,
       CharBuilder.ANY,
-    ) * (isLeft ? -1 : 1);
+    ) * (isLeft ? 1 : -1);
 
     const boneIndex = param.index;
     const hhalf = 0.25;

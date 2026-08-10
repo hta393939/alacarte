@@ -255,6 +255,8 @@ class Misc {
         colb: [201,  91, 128],
         mode: 'lineary3',
       });
+      maker.drawMobius(cvs[0], CharBuilder.INDEX_MOBIUS, {
+      });
     }
     for (let i = 0; i < 2; ++i) {
       const blob = await this.toBlob(cvs[i]);
