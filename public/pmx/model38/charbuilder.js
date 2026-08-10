@@ -292,6 +292,8 @@ export class Quat {
 } 
 
 export class CharBuilder extends PMX.Maker {
+  static VERSION = '0.1.0';
+
   /** 8x8 uv インデックス */
   static INDEX_OWNJOINT = 1;
   /** 8x8 uv インデックス */
@@ -558,10 +560,11 @@ export class CharBuilder extends PMX.Maker {
   }
 
   initMaterial() {
-      let bits = 0;
-      //  | PMX.Material.BIT_GROUND
+    let bits = 0
+        | PMX.Material.BIT_GROUND
       //  | PMX.Material.BIT_TOMAP
       //  | PMX.Material.BIT_SELFSHADOW
+        | PMX.Material.BIT_EDGE;
 
     const mtls = [];
     const mtl = new PMX.Material();
@@ -827,6 +830,9 @@ export class CharBuilder extends PMX.Maker {
         if (nameJa.includes('ひじ') || nameJa.includes('ひざ')) {
           delete param.radius;
           delete param.hhalf;
+          if (nameJa.includes('ひざ')) {
+            param.zrot = 0;
+          }
           this.makeMobius(param);
         } else {
           this.makeJoint(param);
@@ -1171,12 +1177,12 @@ export class CharBuilder extends PMX.Maker {
    */
   makeMobius(param) {
     console.log('makeMobius');
-    const hdiv = param.hdiv || 16;
+    const hdiv = param.hdiv || 32;
     const radius = param.radius || 0.5;
     const bonea = param.bonea;
     const isLeft = (bonea.p[0] > 0);
 
-    const localRotAng = Math.atan2(
+    const localRotAng = param.zrot ?? Math.atan2(
       CharBuilder.ANX,
       CharBuilder.ANY,
     ) * (isLeft ? 1 : -1);
@@ -1233,13 +1239,7 @@ export class CharBuilder extends PMX.Maker {
         vtx.n = nv.asArray();
         let subu = (j / 4);
         let subv = (i / hdiv);
-        //let rsc = 0.5;
-        vtx.uv = TexMaker.subTex8(subu, subv, 4);
-        /*
-         [ // TODO: オフセットとスケール変換が必要
-          subu * rsc + offsetu,
-          subv * rsc + offsetv,
-        ]; */
+        vtx.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_MOBIUS);
         vtx.joints = [boneIndex, 0, 0, 0];
         vts.push(vtx);
       }

@@ -602,9 +602,9 @@ export class TexMaker {
    * @param {number} index 0～63
    */
   static subTex8(u, v, index) {
-    const whole = 2048;
+    //const whole = 2048;
     const div = 8;
-    const side = whole / div;
+    //const side = whole / div;
     const bx = (index % div);
     const by = Math.floor(index / div);
     return [bx / div + u / div, by / div + v / div];
