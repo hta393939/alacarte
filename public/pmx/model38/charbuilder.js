@@ -298,6 +298,8 @@ export class CharBuilder extends PMX.Maker {
   static INDEX_OWNJOINT = 1;
   /** 8x8 uv インデックス */
   static INDEX_MOBIUS = 2;
+  /** ボーンにのっかるメッシュのサブテクスチャインデックス */
+  static INDEX_OWNBONE = 3;
 
   /** 腕のベクトルの正規化X成分 */
   static ANX = 0.788;
@@ -727,7 +729,7 @@ export class CharBuilder extends PMX.Maker {
         return ret;
       };
 
-      for (let i = 0; i < 9; ++i) {
+      for (let i = 0; i < 10; ++i) {
         const f = new PMX.Frame();
         f.nameJa = 'その他のボーン';
         f.nameEn = `fr00${i}`;
@@ -785,6 +787,9 @@ export class CharBuilder extends PMX.Maker {
             return false;
           }));
         } else if (i === 7) {
+          f.nameJa = '指';
+          f.bones.push(..._sel(b => b.nameJa.includes('指')));
+        } else if (i === 8) {
           f.nameJa = 'パーツ';
           f.bones.push(..._sel(b => {
             for (const _k of ['パーツ']) {
@@ -808,8 +813,8 @@ export class CharBuilder extends PMX.Maker {
       for (let i = 0; i < num; ++i) {
         const bone = this.bones[i];
         const param = {
-          radius: 0.25, // 共通で 0.5 だが大きいので小さくする。指はもっと小さく
-          hhalf: 0.25,
+          radius: 0.125, // 指はもっと小さく
+          hhalf: 0.125,
           bonea: bone,
           boneb: bone, // TODO: 同じもの渡している
           vertices: this.vts,
@@ -828,8 +833,8 @@ export class CharBuilder extends PMX.Maker {
         }
 
         if (nameJa.includes('ひじ') || nameJa.includes('ひざ')) {
-          delete param.radius;
-          delete param.hhalf;
+          param.radius = 0.5;
+          param.hhalf = 0.25;
           if (nameJa.includes('ひざ')) {
             param.zrot = 0;
           }
@@ -838,8 +843,10 @@ export class CharBuilder extends PMX.Maker {
           this.makeJoint(param);
         }
 
-        if (false) { // TODO: ボーンメッシュのように
-          this.makeCyl(param);
+        if (true) { // ボーンメッシュのように
+          param.intl = [0, -0.25, 0];
+          param.hhalf = param.radius * 2;
+          this.makeSphere(param);
         }
 
       }
@@ -946,16 +953,17 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * ジョイントとして使用している → makeJoint へ移行
-   * シリンダー形状
+   * 歪み球形状
    * ボーン2つ渡しているがウエイト割り当てしていない
    * @param {IParam} param 
    */
-  makeCyl(param) {
-    const hdiv = param.hdiv || 8;
-    const vdiv = param.vdiv || 4;
+  makeSphere(param) {
+    const hdiv = param.hdiv || 16;
+    const vdiv = param.vdiv || 8;
     const hhalf = param.hhalf || 1;
     const radius = param.radius || 1;
+    /** 最初に平行移動する分(回転よりも前) */
+    const intl = param.intl || [0, 0, 0];
     const index = param.index || 0;
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
@@ -964,12 +972,6 @@ export class CharBuilder extends PMX.Maker {
     const vts = param.vertices;
     const startIndex = vts.length;
     const faces = param.faces;
-
-
-    const stepnum = 8;
-    const rsc = (1 / stepnum) * 0.5 * 0.5;
-    const offsetu = 0.5 + ((index % stepnum) * 2 + 1) * rsc;
-    const offsetv = (Math.floor(index / stepnum) * 2 + 1) * rsc;
 
     for (let i = 0; i <= vdiv; ++i) { // 上から下か
       const vang = i * Math.PI / vdiv;
@@ -990,16 +992,23 @@ export class CharBuilder extends PMX.Maker {
         let y = Math.cos(vang);
         let z = cs * rr;
 
-        v.n = this.normalize([x, y, z]);
-        v.p = [
-          x * radius + bonea.p[0],
-          y * hhalf  + bonea.p[1],
-          z * radius + bonea.p[2],
-        ];
-        v.uv = [
-          ratex * rsc + offsetu,
-          ratey * rsc + offsetv,
-        ];
+        let pv = Vec3.fromArray([x * radius, y * hhalf, z * radius]);
+        let nv = Vec3.fromArray([x, y, z]);
+
+        pv.addInPlace(Vec3.fromArray(intl));
+
+        // TODO: ボーン内回転
+        const inq = Quat.axisRot(Vec3.fromArray([0, 0, 1]), 0);
+        pv = inq.rotate(pv);
+        nv = inq.rotate(nv);
+
+        pv.addInPlace(Vec3.fromArray(bonea.p));
+
+        v.n = nv.asArray();
+        v.p = pv.asArray();
+        let subu = j / hdiv;
+        let subv = i / vdiv;
+        v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE);
         v.deformType = PMX.Vertex.DEFORM_BDEF2;
         v.joints = [bonea._index, boneb._index, 0, 0];
         v.weights = [1, 0, 0, 0];
@@ -1188,7 +1197,7 @@ export class CharBuilder extends PMX.Maker {
     ) * (isLeft ? 1 : -1);
 
     const boneIndex = param.index;
-    const hhalf = 0.25;
+    const hhalf = param.hhalf || 0.25;
     const dhalf = hhalf * 0.25;
     const vs = [
       {p: [0, hhalf,  dhalf]}, // 上外

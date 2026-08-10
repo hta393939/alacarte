@@ -2,30 +2,29 @@
 import { CharBuilder } from "./charbuilder.js";
 import { TexMaker } from "./texmaker.js";
 
-/**
- * @param {number} v 値
- */
-const _pad = (v, n = 2) => {
-  return String(v).padStart(n, '0');
-};
-
-const _dstr = (d = new Date()) => {
-  let s = '';
-  s += _pad(d.getFullYear(), 4);
-  s += `_${_pad(d.getMonth() + 1)}`;
-  s += _pad(d.getDate());
-  s += `_${_pad(d.getHours())}`;
-  s += _pad(d.getMinutes());
-  s += _pad(d.getSeconds());
-  s += `_${_pad(d.getMilliseconds(), 3)}`;
-  return s;
-};
-
-
 class Misc {
   constructor() {
     this.STORAGE = 'model';
   }
+
+/**
+ * @param {number} v 値
+ */
+//const _pad = (v, n = 2) => {
+//  return String(v).padStart(n, '0');
+//};
+/*
+  dstr(d = new Date()) {
+    let s = '';
+    s += _pad(d.getFullYear(), 4);
+    s += `_${_pad(d.getMonth() + 1)}`;
+    s += _pad(d.getDate());
+    s += `_${_pad(d.getHours())}`;
+    s += _pad(d.getMinutes());
+    s += _pad(d.getSeconds());
+    s += `_${_pad(d.getMilliseconds(), 3)}`;
+    return s;
+  } */
 
   getCommonOptions() {
     const param = {
@@ -256,6 +255,8 @@ class Misc {
         mode: 'lineary3',
       });
       maker.drawMobius(cvs[0], CharBuilder.INDEX_MOBIUS, {
+      });
+      maker.drawOwnBone(cvs[0], CharBuilder.INDEX_OWNBONE, {
       });
     }
     for (let i = 0; i < 2; ++i) {
