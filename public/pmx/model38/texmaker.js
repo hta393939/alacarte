@@ -136,7 +136,32 @@ export class TexMaker {
   }
 
   /**
-   * 
+   * 2048 に 16x16ピクセル四方で8インデックスオフセットな UV 位置
+   * V は上から下とする
+   * @param {number} ri 0～5 
+   * @param {number} gi 0～5
+   * @param {number} bi 0～5
+   * @param {number} vindex 0以上 65536 ぐらいで少し一周する
+   */
+  static calcColorUV(ri, gi, bi, vindex) {
+    const whole = 2048;
+    const side = 16;
+    let index = 8 + ri * 36 + gi * 6 + bi;
+    let bx = index % 16;
+    let by = Math.floor(index / 16);
+    let cx = (bx + 0.5) * side / whole;
+    let cy = (by + 0.5) * side / whole;
+    let radius = side / whole * 0.5; // 全部使う場合の半径
+    radius *= 0.75;
+    const rate = vindex / 65536;
+    radius *= (2 ** (-rate / 2));
+    const ang = (vindex % 65536) / 65536 * Math.PI * 2;
+    const vec = [radius * Math.cos(ang), radius * Math.sin(ang)];
+    return [cx + vec[0], cy + vec[1]];
+  }
+
+  /**
+   * 2048px にドローしているので16x16になってる
    * @param {HTMLCanvasElement} canvas 
    */
   drawChip(canvas, offsetxrate, offsetyrate) {
@@ -220,7 +245,7 @@ export class TexMaker {
   }
 
   /**
-   * sha マップ生成
+   * sha マップ生成。別画像用。
    * @param {HTMLCanvasElement} canvas 
    */
   drawAdd(canvas) {
@@ -549,6 +574,86 @@ export class TexMaker {
     for (let i = 0; i < 256; ++i) {
       lt[i] = turbo_colormap_data[i].map(x => Math.floor(this.srgbtolinear(x) * 255));
     }
+  }
+
+  /**
+   * 1色で塗りつぶす。
+   * いや違うな。本来はなにかグラデーションとかにしたい。
+   * @param {HTMLCanvasElement} canvas 描画先
+   * @param {number} index 8x8ブロックとみたときのインデックス 
+   * @param {string} colstr 
+   */
+  drawOneColor(canvas, index, colstr) {
+    const padding = 4;
+    const whole = canvas.width;
+    const side = whole / 8;
+    const bx = (index % 8) * side;
+    const by = Math.floor(index / 8) * side;
+    const c = canvas.getContext('2d');
+    c.clearRect(bx, by, side, side);
+    c.fillStyle = colstr;
+    c.fillRect(bx + padding, by + padding, side - padding * 2, side - padding * 2);
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   * @param {number} index 8x8で0～63のどこか
+   */
+  drawSquare1(canvas, index, param) {
+    const padding = 4;
+    const whole = canvas.width;
+    const side = whole / 8;
+    const bx = (index % 8) * side;
+    const by = Math.floor(index / 8) * side;
+    const c = canvas.getContext('2d');
+
+    const mode = param.mode || 'lineary';
+    /** @type {number[]} */
+    const cola = param.cola || [255, 255, 255];
+    /** @type {number[]} */
+    const colb = param.colb || [0, 0, 0];
+
+    const img = c.getImageData(bx, by, side, side);
+    for (let y = 0; y < side; ++y) {
+      for (let x = 0; x < side; ++x) {
+        let t = y / (side * 0.5) - 0.5; // 0.0, 0.5, 1.0, 1.5, 2.0
+        if (mode === 'lineary') {
+          t = 1 - t;
+        }
+        let offset = (x + side * y) * 4;
+        t = Math.max(0, Math.min(t, 1));
+        let r = cola[0] * t + colb[0] * (1 - t);
+        let g = cola[1] * t + colb[1] * (1 - t);
+        let b = cola[2] * t + colb[2] * (1 - t);
+        let a = 255;
+        img.data[offset  ] = r;
+        img.data[offset+1] = g;
+        img.data[offset+2] = b;
+        img.data[offset+3] = a;
+      }
+    }
+    c.putImageData(img, bx, by);
+
+    this.clearPad(canvas, index, padding);
+  }
+
+  /**
+   * パディング幅の分ずつ消す
+   * @param {HTMLCanvasElement} canvas 
+   * @param {number} index 8x8で0～63のどこか
+   */
+  clearPad(canvas, index, padding) {
+    const whole = canvas.width;
+    const side = whole / 8;
+    const bx = (index % 8) * side;
+    const by = Math.floor(index / 8) * side;
+    const c = canvas.getContext('2d');
+
+    c.clearRect(bx, by, side, padding); // 上全幅
+    c.clearRect(bx, by + side - padding, side, padding); // 下全幅
+    c.clearRect(bx, by, padding, side); // 左全幅
+    c.clearRect(bx + side - padding, by, padding, side); // 右全幅
   }
 
 }

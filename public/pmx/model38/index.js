@@ -242,12 +242,17 @@ class Misc {
 
     {
       const maker = new TexMaker();
+      maker.drawAdd(cvs[1]);
+
       maker.drawChip(cvs[0], 0, 0);
       maker.drawWide(cvs[0], 0.5, 0);
       maker.drawFace(cvs[0], 0, 0.5);
       maker.drawMarking(cvs[0], 0.5, 0.5);
 
-      maker.drawAdd(cvs[1]);
+      maker.drawSquare1(cvs[0], 1, {
+        cola: [128, 255, 128],
+        colb: [64, 128, 64],
+      });
     }
     for (let i = 0; i < 2; ++i) {
       const blob = await this.toBlob(cvs[i]);

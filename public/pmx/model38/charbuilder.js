@@ -915,6 +915,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
+   * ジョイントとして使用している
    * シリンダー形状
    * ボーン2つ渡しているがウエイト割り当てしていない
    * @param {IParam} param 
@@ -990,7 +991,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * シリンダー形状
+   * 使用していない。シリンダー形状
    * @param {IParam} param
    * @param {()=>number} param.rfunc
    * @param {number} param.hnum 垂直方向の点数
