@@ -249,9 +249,11 @@ class Misc {
       maker.drawFace(cvs[0], 0, 0.5);
       maker.drawMarking(cvs[0], 0.5, 0.5);
 
-      maker.drawSquare1(cvs[0], 1, {
-        cola: [128, 255, 128],
-        colb: [64, 128, 64],
+      maker.drawSquare1(cvs[0], CharBuilder.INDEX_OWNJOINT, {
+        cola: [255, 155, 192],
+        col:  [233, 123, 160],
+        colb: [201,  91, 128],
+        mode: 'lineary3',
       });
     }
     for (let i = 0; i < 2; ++i) {

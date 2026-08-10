@@ -596,6 +596,35 @@ export class TexMaker {
   }
 
   /**
+   * 1つのテクスチャを8x8に分割して考えてUVを変換する
+   * @param {number} u サブテクスチャの0.0～1.0
+   * @param {number} v サブテクスチャの0.0～1.0
+   * @param {number} index 0～63
+   */
+  static subTex8(u, v, index) {
+    const whole = 2048;
+    const div = 8;
+    const side = whole / div;
+    const bx = (index % div);
+    const by = Math.floor(index / div);
+    return [bx / div + u / div, by / div + v / div];
+  }
+
+  /**
+   * 
+   * @param {number} r 
+   * @param {number} g 
+   * @param {number} b 
+   * @returns 
+   */
+  static s255(r, g, b) {
+    const cs = [r, g, b].map(v => {
+      return Math.floor(Math.max(0, Math.min(255, v)));
+    });
+    return '#' + cs.map(v => `${v.toString(16).padStart(2, '0')}`).join('');
+  }
+
+  /**
    * 
    * @param {HTMLCanvasElement} canvas 
    * @param {number} index 8x8で0～63のどこか
@@ -608,18 +637,42 @@ export class TexMaker {
     const by = Math.floor(index / 8) * side;
     const c = canvas.getContext('2d');
 
-    const mode = param.mode || 'lineary';
+    const mode = param.mode || 'lineary3';
     /** @type {number[]} */
-    const cola = param.cola || [255, 255, 255];
-    /** @type {number[]} */
-    const colb = param.colb || [0, 0, 0];
+    let cola = param.cola || [255, 255, 255];
 
-    const img = c.getImageData(bx, by, side, side);
+    let col = param.col || [128, 128, 128];
+    /** @type {number[]} */
+    let colb = param.colb || [0, 0, 0];
+
+    //const img = c.getImageData(bx, by, side, side);
+    let grad = c.createLinearGradient(bx, by, bx, by + side);
+
+    switch (mode) {
+      case 'lineary3':
+        grad.addColorStop(0.125, TexMaker.s255(...cola));
+        grad.addColorStop(0.5  , TexMaker.s255(...col));
+        grad.addColorStop(0.875, TexMaker.s255(...colb));
+        c.fillStyle = grad;
+        c.fillRect(bx, by, side, side);
+        break;
+    }
+
+    /*
     for (let y = 0; y < side; ++y) {
       for (let x = 0; x < side; ++x) {
+        // 半分だけ使う場合
         let t = y / (side * 0.5) - 0.5; // 0.0, 0.5, 1.0, 1.5, 2.0
         if (mode === 'lineary') {
           t = 1 - t;
+        } else if (mode === 'lineary3') { // 3点指定
+          if (y < side * 0.5) {
+            colb = param.col || [128, 128, 128];
+            t = 1 - t * 2;
+          } else {
+            cola = param.col || [128, 128, 128];
+            t = 1 - (t - 0.5) * 2;
+          }
         }
         let offset = (x + side * y) * 4;
         t = Math.max(0, Math.min(t, 1));
@@ -634,6 +687,7 @@ export class TexMaker {
       }
     }
     c.putImageData(img, bx, by);
+    */
 
     this.clearPad(canvas, index, padding);
   }

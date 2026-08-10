@@ -1,4 +1,6 @@
 
+import { TexMaker } from './texmaker.js';
+
 /**
  * @typedef IParam
  * @property {number} hdiv 水平側分割数
@@ -290,6 +292,9 @@ export class Quat {
 } 
 
 export class CharBuilder extends PMX.Maker {
+  /** 8x8 uv インデックス */
+  static INDEX_OWNJOINT = 1;
+
   constructor() {
     super();
 
@@ -782,8 +787,8 @@ export class CharBuilder extends PMX.Maker {
       for (let i = 0; i < num; ++i) {
         const bone = this.bones[i];
         const param = {
-          radius: 0.5,
-          hhalf: 0.5,
+          radius: 0.25, // 共通で 0.5 だが大きいので小さくする。指はもっと小さく
+          hhalf: 0.25,
           bonea: bone,
           boneb: bone, // TODO: 同じもの渡している
           vertices: this.vts,
@@ -801,7 +806,7 @@ export class CharBuilder extends PMX.Maker {
           delete param.hhalf;
           this.makeMobius(param);
         } else {
-          this.makeCyl(param);
+          this.makeJoint(param);
         }
       }
     }
@@ -915,7 +920,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * ジョイントとして使用している
+   * ジョイントとして使用している → makeJoint へ移行
    * シリンダー形状
    * ボーン2つ渡しているがウエイト割り当てしていない
    * @param {IParam} param 
@@ -1055,6 +1060,79 @@ export class CharBuilder extends PMX.Maker {
     }
 
     for (let i = 0; i < param.hnum - 1; ++i) {
+      for (let j = 0; j < hdiv; ++j) {
+        const v0 = (hdiv + 1) * i + j + startIndex;
+        const v1 = v0 + 1;
+        const v2 = v0 + (hdiv + 1);
+        const v3 = v2 + 1;
+        faces.push([v0, v1, v2]);
+        faces.push([v2, v1, v3]);
+      }
+    }
+
+  }
+
+  /**
+   * ジョイントとして使用している
+   * シリンダー形状
+   * ボーン2つ渡しているがウエイト割り当てしていない
+   * @param {IParam} param 
+   */
+  makeJoint(param) {
+    const hdiv = param.hdiv || 8;
+    const vdiv = param.vdiv || 4;
+    const hhalf = param.hhalf || 1;
+    const radius = param.radius || 1;
+    const index = param.index || 0;
+    /** @type {PMX.Bone} */
+    const bonea = param.bonea;
+    const boneb = param.boneb;
+
+    const vts = param.vertices;
+    const startIndex = vts.length;
+    const faces = param.faces;
+
+    for (let i = 0; i <= vdiv; ++i) { // 上から下か
+      const vang = i * Math.PI / vdiv;
+      let rr = Math.sin(vang);
+
+      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
+      for (let j = 0; j <= hdiv; ++j) {
+        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
+
+        const hang = (j % hdiv) * Math.PI * 2 / hdiv;
+
+        const cs = Math.cos(hang);
+        const sn = Math.sin(hang);
+
+        const v = new PMX.Vertex();
+
+        let x = -sn * rr;
+        let y = Math.cos(vang);
+        let z =  cs * rr;
+
+        // TODO: 回転
+
+        v.n = this.normalize([x, y, z]);
+        v.p = [
+          x * radius + bonea.p[0],
+          y * hhalf  + bonea.p[1],
+          z * radius + bonea.p[2],
+        ];
+
+        v.uv = TexMaker.subTex8(
+          ((j - hdiv / 2) / hdiv) * 0.75 + 0.5,
+          ((i - vdiv / 2) / vdiv) * 0.75 + 0.5,
+          CharBuilder.INDEX_OWNJOINT);
+        v.deformType = PMX.Vertex.DEFORM_BDEF2;
+        v.joints = [bonea._index, boneb._index, 0, 0];
+        v.weights = [1, 0, 0, 0];
+
+        vts.push(v);
+      }
+    }
+
+    for (let i = 0; i < vdiv; ++i) {
       for (let j = 0; j < hdiv; ++j) {
         const v0 = (hdiv + 1) * i + j + startIndex;
         const v1 = v0 + 1;
