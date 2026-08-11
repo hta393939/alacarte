@@ -849,6 +849,10 @@ export class CharBuilder extends PMX.Maker {
           param.hhalf = 0.75;
           param.dhalf = 0.75;
           this.makeHead(param);
+        } else if (nameJa.includes('目')) {
+          isBone = false;
+          param.intl = [0, 0, -0.5];
+          this.makeEye(param);
         } else if (nameJa.includes('上半身2')) { // 2 は半角
           isBone = false;
           param.whalf = 1;
@@ -1181,6 +1185,142 @@ export class CharBuilder extends PMX.Maker {
    * @param {IParam} param
    * @param {()=>number} param.rfunc
    * @param {number} param.hnum 垂直方向の点数
+   */
+  makeCyl(param) {
+    const hdiv = param.hdiv || 8;
+    const vdiv = param.vdiv || 4;
+    const hhalf = param.hhalf || 1;
+    const radius = param.radius || 1;
+    /** @type {PMX.Bone} */
+    const bonea = param.bonea;
+    //const boneb = param.boneb;
+
+    const intl = param.intl || [0, 0, 0];
+    const modelrot = param.modelrot || [0, 0, 0];
+
+    const vts = param.vertices;
+    const startIndex = vts.length;
+    const faces = param.faces;
+
+    const subIndex = 2;
+
+    for (let i = 0; i < param.hnum * 0.5; ++i) { // 上から下か 上半分
+      const vang = i * Math.PI / vdiv;
+      //let rr = param.rfunc(i);
+      let rr = Math.sin(vang);
+
+      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
+      for (let j = 0; j <= hdiv; ++j) {
+        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
+
+        const hang = (j % hdiv) * Math.PI * 2 / hdiv;
+
+        const cs = Math.cos(hang);
+        const sn = Math.sin(hang);
+
+        const v = new PMX.Vertex();
+
+        let x = -sn * rr;
+        let y = Math.cos(vang);
+        let z =  cs * rr;
+
+        this.applyEuler(
+          [x * radius, y * radius + hhalf, z * radius],
+          [x, y, z],
+          intl, modelrot,
+          bonea, v
+        );
+
+        v.uv = TexMaker.subTex8(ratex, ratey, subIndex);
+
+        vts.push(v);
+      }
+    }
+
+    for (let i = 0; i < param.hnum; ++i) { // まんなか
+      const vang = i * Math.PI / vdiv;
+      //let rr = param.rfunc(i);
+      let rr = 1;
+
+      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
+      for (let j = 0; j <= hdiv; ++j) {
+        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
+
+        const hang = (j % hdiv) * Math.PI * 2 / hdiv;
+
+        const cs = Math.cos(hang);
+        const sn = Math.sin(hang);
+
+        const v = new PMX.Vertex();
+
+        let x = -sn * rr;
+        let y = (1 - i / param.hnum * 2);
+        let z =  cs * rr;
+
+        this.applyEuler(
+          [x * radius, y * hhalf, z * radius],
+          [x, 0, z],
+          intl, modelrot,
+          bonea, v
+        );
+
+        v.uv = TexMaker.subTex8(ratex, ratey, subIndex);
+
+        vts.push(v);
+      }
+    }
+
+    for (let i = param.hnum * 0.5; i < param.hnum; ++i) { // 上から下か。下半分
+      const vang = i * Math.PI / vdiv;
+      //let rr = param.rfunc(i);
+      let rr = Math.sin(vang);
+
+      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
+      for (let j = 0; j <= hdiv; ++j) {
+        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
+
+        const hang = (j % hdiv) * Math.PI * 2 / hdiv;
+
+        const cs = Math.cos(hang);
+        const sn = Math.sin(hang);
+
+        const v = new PMX.Vertex();
+
+        let x = -sn * rr;
+        let y = Math.cos(vang);
+        let z =  cs * rr;
+
+        this.applyEuler(
+          [x * radius, y * radius - hhalf, z * radius],
+          [x, y, z],
+          intl, modelrot,
+          bonea, v
+        );
+
+        v.uv = TexMaker.subTex8(ratex, ratey, subIndex);
+
+        vts.push(v);
+      }
+    }
+
+    for (let i = 0; i < param.hnum * 2; ++i) {
+      for (let j = 0; j < hdiv; ++j) {
+        const v0 = (hdiv + 1) * i + j + startIndex;
+        const v1 = v0 + 1;
+        const v2 = v0 + (hdiv + 1);
+        const v3 = v2 + 1;
+        faces.push([v0, v1, v2]);
+        faces.push([v2, v1, v3]);
+      }
+    }
+
+  }
+
+  /**
+   * 使用していない。シリンダー形状
+   * @param {IParam} param
+   * @param {()=>number} param.rfunc
+   * @param {number} param.hnum 垂直方向の点数
    * @param {(index:number)=>number} param.hfunc
    */
   makeCyl2(param) {
@@ -1188,20 +1328,17 @@ export class CharBuilder extends PMX.Maker {
     const vdiv = param.vdiv || 4;
     const hhalf = param.hhalf || 1;
     /** UV分割領域のインデックス */
-    const index = param.index || 0;
+    //const index = param.index || 0;
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
-    const boneb = param.boneb;
+    //const boneb = param.boneb;
+
+    const intl = param.intl || [0, 0, 0];
+    const modelrot = param.modelrot || [0, 0, 0];
 
     const vts = param.vertices;
     const startIndex = vts.length;
     const faces = param.faces;
-
-
-    const stepnum = 8;
-    const rsc = (1 / stepnum) * 0.5 * 0.5;
-    const offsetu = 0.5 + ((index % stepnum) * 2 + 1) * rsc;
-    const offsetv = (Math.floor(index / stepnum) * 2 + 1) * rsc;
 
     for (let i = 0; i < param.hnum; ++i) { // 上から下か
       const vang = i * Math.PI / vdiv;
@@ -1222,19 +1359,14 @@ export class CharBuilder extends PMX.Maker {
         let y = param.hfunc(j);
         let z =  cs * rr;
 
-        v.n = this.normalize([x, y, z]);
-        v.p = [
-          x * radius + bonea.p[0],
-          y * hhalf + bonea.p[1],
-          z * radius + bonea.p[2],
-        ];
-        v.uv = [
-          ratex * rsc + offsetu,
-          ratey * rsc + offsetv,
-        ];
-        v.deformType = PMX.Vertex.DEFORM_BDEF2;
-        v.joints = [bonea._index, boneb._index, 0, 0];
-        v.weights = [1, 0, 0, 0];
+        this.applyEuler(
+          [x * radius, y * hhalf, z * radius],
+          [x, y, z],
+          intl, modelrot,
+          bonea, v
+        );
+
+        v.uv = TexMaker.subTex8(ratex, ratey, 2);
 
         vts.push(v);
       }
@@ -1439,6 +1571,17 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
+   * 
+   * @param {IParam} param 
+   */
+  makeEye(param) {
+    console.log('未実装');
+    param.hnum = 16;
+    this.makeCyl(param);
+    return;
+  }
+
+  /**
    * 上体の予定
    * @param {IParam} param 
    */
@@ -1466,7 +1609,7 @@ export class CharBuilder extends PMX.Maker {
   makeHand(param) {
     console.log('未実装');
     this.makeBox(param);
-    return;   
+    return;
   }
 
 }

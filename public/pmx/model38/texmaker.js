@@ -830,4 +830,26 @@ export class TexMaker {
     //this.clearPad(canvas, index, padding);
   }
 
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  drawLogo(canvas) {
+    const whole = canvas.width;
+    const div = 8;
+    const side = whole / div;
+    const c = canvas.getContext('2d');
+    c.rotate(Math.PI * 0.5); // 時計回り
+    c.translate(side * 2, side * -1);
+    c.clearRect(0, 0, side * 2, side);
+
+    c.fillStyle = 'black';
+    c.font = 'normal 96px Consolas';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText('VCA-139', side, side * 0.5);
+
+    c.resetTransform();
+  }
+
 }

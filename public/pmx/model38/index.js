@@ -258,6 +258,7 @@ class Misc {
       });
       maker.drawOwnBone(cvs[0], CharBuilder.INDEX_OWNBONE, {
       });
+      maker.drawLogo(cvs[0]);
     }
     for (let i = 0; i < 2; ++i) {
       const blob = await this.toBlob(cvs[i]);
