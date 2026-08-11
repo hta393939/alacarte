@@ -786,7 +786,7 @@ export class CharBuilder extends PMX.Maker {
 
     {
       this.indexed();
-
+      /** (0, -1, 0) をZ+に回すときの回転量 */
       const armang = Math.atan2(CharBuilder.ANX, CharBuilder.ANY);
 
       const num = this.bones.length;
@@ -845,11 +845,18 @@ export class CharBuilder extends PMX.Maker {
           isBone = false;
         } else if (nameJa.includes('頭')) {
           isBone = false;
+          param.whalf = 0.75;
+          param.hhalf = 0.75;
+          param.dhalf = 0.75;
           this.makeHead(param);
-        } else if (nameJa.includes('上半身２')) {
+        } else if (nameJa.includes('上半身2')) { // 2 は半角
           isBone = false;
+          param.whalf = 1;
+          param.hhalf = 1;
+          param.dhalf = 1;
           this.makeBody(param);
         } else if (nameJa.includes('手')) {
+          param.modelrot = [0, 0, armang];
           this.makeJoint(param);
           isBone = false;
           this.makeHand(param);
@@ -909,7 +916,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * 
+   * サポート関数
    * @param {number[]} p 
    * @param {number[]} n 
    * @param {number[]} intl 平行移動量
@@ -946,9 +953,88 @@ export class CharBuilder extends PMX.Maker {
   /**
    * 変形無しの物理シンプルな箱
    * 面ごとに頂点を分割する場合。これだとエッジがおかしくなる
+   * 法線を位置で補正してエッジの問題を回避したもの
    * @param {IParam} param 
    */
   makeBox(param) {
+    const radius = param.radius || 1;
+    const bonea = param.bonea;
+    const boneIndex = bonea._index;
+    const isLeft = (bonea.p[0] > 0);
+    const whalf = param.whalf || radius;
+    const hhalf = param.hhalf || radius;
+    const dhalf = param.dhalf || radius;
+    const intl = param.intl || [0, 0, 0];
+    const modelrot = param.modelrot || [0, 0, 0];
+    {
+      const vs = [
+        {p: [-1, 1, -1]}, // 0 手前
+        {p: [ 1, 1, -1]}, // 1
+        {p: [-1,-1, -1]}, // 2 z
+        {p: [ 1,-1, -1]}, // 3 手前 下
+        {p: [-1, 1,  1]}, // 4 奥上
+        {p: [ 1, 1,  1]}, // 5
+        {p: [-1,-1,  1]}, // 6
+        {p: [ 1,-1,  1]}, // 7
+      ];
+      /** UV用 */
+      const k = 0.25;
+      const mens = [
+        {p: [0, 1, 2, 3], n: [ 0,  0, -1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
+        {p: [4, 0, 6, 2], n: [-1,  0,  0], uv: [k * 1, k * 2, k * 2, k * 2, k * 1, k * 1, k * 2, k * 1,]},
+        {p: [1, 5, 3, 7], n: [ 1,  0,  0], uv: [k * 3, k * 2, k * 4, k * 2, k * 3, k * 1, k * 4, k * 1,]},
+        {p: [4, 5, 0, 1], n: [ 0,  1,  0], uv: [k * 2, k * 3, k * 3, k * 3, k * 2, k * 2, k * 3, k * 2,]},
+        {p: [2, 3, 6, 7], n: [ 0, -1,  0], uv: [k * 2, k * 1, k * 3, k * 1, k * 2, k * 0, k * 3, k * 0,]},
+        {p: [5, 4, 7, 6], n: [ 0,  0,  1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
+      ];
+
+      const vts = param.vertices;
+      const faces = param.faces;
+
+      for (const men of mens) {
+        const startIndex = vts.length;
+        for (let j = 0; j < 4; ++j) {
+          const vp = vs[men.p[j]];
+
+          const v = new PMX.Vertex();
+          const p = [
+            vp.p[0] * whalf,
+            vp.p[1] * hhalf,
+            vp.p[2] * dhalf,
+          ];
+          this.applyEuler(p, p,
+            intl, modelrot,
+            bonea, v);
+
+          v.uv = TexMaker.subTex8(
+            men.uv[j*2+0],
+            men.uv[j*2+1],
+            2,
+          );
+
+          vts.push(v);
+        }
+
+        { // 面張り
+          const v0 = startIndex;
+          const v1 = v0 + 1;
+          const v2 = v0 + 2;
+          const v3 = v0 + 3;
+          faces.push([v0, v1, v2]);
+          faces.push([v2, v1, v3]);
+        }
+
+      }
+    }
+
+  }
+
+  /**
+   * 使用していない。変形無しの物理シンプルな箱
+   * 面ごとに頂点を分割する場合。これだとエッジがおかしくなる
+   * @param {IParam} param 
+   */
+  makeBox2(param) {
     const radius = param.radius || 1;
     const hhalf = param.hhalf || radius;
     const bonea = param.bonea;
@@ -1036,7 +1122,7 @@ export class CharBuilder extends PMX.Maker {
     const index = param.index || 0;
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
-    const boneb = param.boneb;
+    //const boneb = param.boneb;
 
     const isLeft = (bonea.p[0] > 0);
     const modelrot = param.modelrot || [0, 0, 0];
@@ -1064,31 +1150,14 @@ export class CharBuilder extends PMX.Maker {
         let y = Math.cos(vang);
         let z = cs * rr;
 
-        let pv = Vec3.fromArray([x * radius, y * hhalf, z * radius]);
-        let nv = Vec3.fromArray([x, y, z]);
+        this.applyEuler([x * radius, y * hhalf, z * radius],
+          [x, y, z],
+          intl, modelrot,
+          bonea, v);
 
-        pv.addInPlace(Vec3.fromArray(intl));
-
-        // モデル座標回転
-        const zq = Quat.axisRot(Vec3.fromArray([0, 0, 1]),
-          modelrot[2] * (isLeft ? 1 : -1));
-        const xq = Quat.axisRot(Vec3.fromArray([1, 0, 0]), modelrot[0]);
-        const yq = Quat.axisRot(Vec3.fromArray([0, 1, 0]),
-          modelrot[1] * (isLeft ? 1 : -1));
-        const eq = yq.mul(xq).mul(zq);
-        pv = eq.rotate(pv);
-        nv = eq.rotate(nv);
-
-        pv.addInPlace(Vec3.fromArray(bonea.p));
-
-        v.n = nv.asArray();
-        v.p = pv.asArray();
         let subu = j / hdiv;
         let subv = i / vdiv;
         v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE);
-        v.deformType = PMX.Vertex.DEFORM_BDEF2;
-        v.joints = [bonea._index, boneb._index, 0, 0];
-        v.weights = [1, 0, 0, 0];
 
         vts.push(v);
       }
@@ -1186,19 +1255,17 @@ export class CharBuilder extends PMX.Maker {
 
   /**
    * ジョイントとして使用している
-   * シリンダー形状
-   * ボーン2つ渡しているがウエイト割り当てしていない
    * @param {IParam} param 
    */
   makeJoint(param) {
     const hdiv = param.hdiv || 16;
     const vdiv = param.vdiv || 8;
-    const hhalf = param.hhalf || 1;
     const radius = param.radius || 1;
-    const index = param.index || 0;
+    const hhalf = param.hhalf || 1;
+    const intl = param.intl || [0, 0, 0];
+    const modelrot = param.modelrot || [0, 0, 0];
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
-    const boneb = param.boneb;
 
     const vts = param.vertices;
     const startIndex = vts.length;
@@ -1223,22 +1290,17 @@ export class CharBuilder extends PMX.Maker {
         let y = Math.cos(vang);
         let z =  cs * rr;
 
-        // TODO: 回転
-
-        v.n = this.normalize([x, y, z]);
-        v.p = [
-          x * radius + bonea.p[0],
-          y * hhalf  + bonea.p[1],
-          z * radius + bonea.p[2],
-        ];
+        // 回転
+        this.applyEuler([x * radius, y * hhalf, z * radius],
+          [x, y, z],
+          intl, modelrot,
+          bonea, v
+        );
 
         v.uv = TexMaker.subTex8(
           ((j - hdiv / 2) / hdiv) * 0.75 + 0.5,
           ((i - vdiv / 2) / vdiv) * 0.75 + 0.5,
           CharBuilder.INDEX_OWNJOINT);
-        v.deformType = PMX.Vertex.DEFORM_BDEF2;
-        v.joints = [bonea._index, boneb._index, 0, 0];
-        v.weights = [1, 0, 0, 0];
 
         vts.push(v);
       }
@@ -1271,7 +1333,7 @@ export class CharBuilder extends PMX.Maker {
     const localRotAng = param.zrot ?? Math.atan2(
       CharBuilder.ANX,
       CharBuilder.ANY,
-    ) * (isLeft ? 1 : -1);
+    );
 
     const boneIndex = param.index;
     const hhalf = param.hhalf || 0.25;
@@ -1297,6 +1359,8 @@ export class CharBuilder extends PMX.Maker {
       for (let j = 0; j <= 4; ++j) {
         const v = vs[j];
 
+        const vtx = new PMX.Vertex();
+
         let pv = v.pos.clone();
         let nv = v.n.clone();
 
@@ -1313,20 +1377,16 @@ export class CharBuilder extends PMX.Maker {
         pv = roundQ.rotate(pv);
         nv = roundQ.rotate(nv);
 
-        // ボーンローカル回転してボーンの位置に移動
-        const boneQ = Quat.axisRot(new Vec3(0, 0, 1), localRotAng);
-        pv = boneQ.rotate(pv);
-        nv = boneQ.rotate(nv);
 
-        pv.addInPlace(Vec3.fromArray(bonea.p));
-
-        const vtx = new PMX.Vertex();
-        vtx.p = pv.asArray();
-        vtx.n = nv.asArray();
+        this.applyEuler(pv.asArray(),
+          nv.asArray(),
+          [0, 0, 0],
+          [0, 0, localRotAng],
+          bonea, vtx
+        );
         let subu = (j / 4);
         let subv = (i / hdiv);
         vtx.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_MOBIUS);
-        vtx.joints = [boneIndex, 0, 0, 0];
         vts.push(vtx);
       }
     }
