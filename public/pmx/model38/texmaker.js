@@ -723,50 +723,37 @@ export class TexMaker {
     const by = Math.floor(index / 8) * side;
     const c = canvas.getContext('2d');
 
-    for (let i = 0; i < 4; ++i) {
-      let grad = c.createLinearGradient(bx, by, bx, by + side);
-
-      /** @type {number[]} */
-      let cola = param.cola || [255, 0, 0];
-
-      let col = param.col || [0, 255, 0];
-      /** @type {number[]} */
-      let colb = param.colb || [255, 0, 0];
-
-      if ((i & 1) === 1) {
-        cola = [255, 255, 0];
-        col  = [0, 0, 255];
-        colb = [255, 255, 0];
-      }
-
-      grad.addColorStop(0.25, TexMaker.s255(...cola));
-      grad.addColorStop(0.50, TexMaker.s255(...col));
-      grad.addColorStop(0.75, TexMaker.s255(...colb));
-      c.fillStyle = grad;
-      c.fillRect(bx + side * 0.25 * i, by, side * 0.25, side);
-    }
-
-    /*
+    const img = c.getImageData(bx, by, side, side);
     for (let y = 0; y < side; ++y) {
       for (let x = 0; x < side; ++x) {
-        // 半分だけ使う場合
-        let t = y / (side * 0.5) - 0.5; // 0.0, 0.5, 1.0, 1.5, 2.0
-        if (mode === 'lineary') {
-          t = 1 - t;
-        } else if (mode === 'lineary3') { // 3点指定
-          if (y < side * 0.5) {
-            colb = param.col || [128, 128, 128];
-            t = 1 - t * 2;
-          } else {
-            cola = param.col || [128, 128, 128];
-            t = 1 - (t - 0.5) * 2;
+        const bi = Math.floor(x / (side / 4)); // 0, 1, 2, 3
+
+        let cola = [255, 0, 0];
+        let colb = [255, 255, 0];
+        if (y >= side * 0.5) {
+          cola = [255, 255, 0];
+          colb = [255, 0, 0];
+        }
+        if ((bi & 1) === 1) {
+          cola = [0, 255, 0];
+          colb = [255, 255, 0];
+          if (y >= side * 0.5) {
+            cola = [255, 255, 0];
+            colb = [0, 255, 0];
           }
         }
+
+        let t = (y % (side / 2)) / (side / 4);
+        if (y < side * 0.5) {
+          t = t - 1;
+        } else {
+          // Do nothing.
+        }
         let offset = (x + side * y) * 4;
-        t = Math.max(0, Math.min(t, 1));
-        let r = cola[0] * t + colb[0] * (1 - t);
-        let g = cola[1] * t + colb[1] * (1 - t);
-        let b = cola[2] * t + colb[2] * (1 - t);
+        const wt = Math.max(0, Math.min(1 - t, 1));
+        let r = cola[0] * wt + colb[0] * (1 - wt);
+        let g = cola[1] * wt + colb[1] * (1 - wt);
+        let b = cola[2] * wt + colb[2] * (1 - wt);
         let a = 255;
         img.data[offset  ] = r;
         img.data[offset+1] = g;
@@ -775,7 +762,6 @@ export class TexMaker {
       }
     }
     c.putImageData(img, bx, by);
-    */
 
     //this.clearPad(canvas, index, padding);
   }
@@ -841,7 +827,7 @@ export class TexMaker {
     c.putImageData(img, bx, by);
     */
 
-    this.clearPad(canvas, index, padding);
+    //this.clearPad(canvas, index, padding);
   }
 
 }

@@ -9,8 +9,10 @@ import { TexMaker } from './texmaker.js';
  * @property {PMX.Bone} boneb 先側
  * @property {PMX.Vertex[]} vertices これまでの頂点が格納されていて追加する先の配列
  * @property {number[][]} faces 追加する先の配列。3頂点インデックスの配列
- * @property {number} lenhalf 箱。高さの半分
- * @property {number} boneIndex 箱。決定後のボーンインデックス。所属
+ * @property {number} radius 半径
+ * @property {number} hhalf 縦長さの半分
+ * @property {number[]} intl 最初の平行移動。
+ * @property {number[]} modelrot ボーン位置反映前の回転
  */
 
 
@@ -317,10 +319,6 @@ export class CharBuilder extends PMX.Maker {
     this.morphs = this.initEmotion();
   }
 
-  lerp(a, b, t) {
-    return a + (b - a) * t;
-  }
-
   /**
    * 
    * @param {PMX.Bone[]} bones 
@@ -415,8 +413,8 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '_つま先ＩＫ', nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
-{parentName: '上半身2', nameJa: 'パーツ１', nameEn: 'parts1', p:[1,0,0]},
-{parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'parts2', p:[0,1,0]},
+{parentName: '上半身2', nameJa: 'パーツ１', nameEn: 'Parts1', p:[1,0,1]},
+{parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'Parts2', p:[0,1,1]},
 ]}
     ];
     const lrpre = [
@@ -504,28 +502,6 @@ export class CharBuilder extends PMX.Maker {
           }
 
           bone._blockIndex = bi; // 保持しておく
-          if (false) { // ローカル軸 TODO: 肩を含み手系は全部あるのかも
-            // 実はローカル軸はGUIローカルにしか使用しないとか???
-            // だとすると必須ではない
-            const isLocalAxis = (bi === armTypeBlockIndex);
-            if (isLocalAxis) {
-              let boneVec = new Vec3(...bone.p);
-              let child = null; // 子ボーンのうちどれかか、どこかの方向
-              if (child) {
-                let vec = child.subInPlace(boneVec).normalizeInPlace();
-                let xv = vec;
-                let yv = new Vec3(0, 1, 0);
-                let zv = new Vec3(0, 0, 1); // 基本はZ軸(0,0,+1)。指もだいたいこれ
-                // 親指０だけ異なる
-
-                xv = yv.cross(zv).normalizeInPlace();
-                yv = zv.cross(xv).normalizeInPlace();
-                bone.xLocalVector = xv.asArray();
-                bone.zLocalVector = zv.asArray();
-                bits |= PMX.Bone.BIT_LOCALAXIS;
-              }
-            }
-          }
 
           bone.bits = bits;
           bones.push(bone);
@@ -831,35 +807,46 @@ export class CharBuilder extends PMX.Maker {
           continue; // ～先 にのるメッシュは無い
         }
 
+        let isBone = true;
         if (nameJa.includes('指')) {
           param.radius = CharBuilder.FINGER_INTERVAL * 0.5;
           param.hhalf = CharBuilder.FINGER_INTERVAL * 0.5;
           param.modelrot = [0, 0, armang];
-        }
+          this.makeJoint(param);
 
-        if (nameJa.includes('ひじ') || nameJa.includes('ひざ')) {
+          isBone = false;
+          param.hhalf = param.radius * 2;
+          param.intl = [0, -0.125, 0];
+          this.makeSphere(param);
+
+        } else if (nameJa.includes('ひじ') || nameJa.includes('ひざ')) {
           param.radius = 0.5;
           param.hhalf = 0.25;
           if (nameJa.includes('ひざ')) {
             param.zrot = 0;
           }
           this.makeMobius(param);
+        } else if (nameJa.includes('パーツ')) {
+          this.makeJoint(param);
+
+          param.radius = 0.5;
+          param.hhalf = 2;
+          param.modelrot = [
+            -30 * Math.PI / 180,
+            10 * Math.PI / 180,
+            10 * Math.PI / 180,
+          ];
+          this.makeBox(param);
+
+          isBone = false;
         } else {
           this.makeJoint(param);
         }
 
-        if (true) { // ボーンメッシュのように
+        if (isBone) { // ボーンメッシュのように
           param.intl = [0, -0.25, 0];
           param.hhalf = param.radius * 2;
-          if (nameJa.includes('指')) {
-            param.intl = [0, -0.125, 0];
-          }
           this.makeSphere(param);
-        }
-
-        if (nameJa.includes('パーツ')) {
-          param.hhalf = 1;
-          this.makeBox(param);
         }
 
       }
@@ -909,18 +896,22 @@ export class CharBuilder extends PMX.Maker {
 
   /**
    * 変形無しの物理シンプルな箱
+   * @param {IParam} param 
    */
   makeBox(param) {
-    const scale = 1;
-    const lenhalf = param.lenhalf || 1;
+    const radius = param.radius || 1;
+    const hhalf = param.hhalf || 1;
     const bonea = param.bonea;
     const boneIndex = bonea._index;
+    const isLeft = (bonea.p[0] > 0);
+    const intl = param.intl || [0, 0, 0];
+    const modelrot = param.modelrot || [0, 0, 0];
     {
       const vs = [
-        {p: [-1, 1, -1]}, // 手前
-        {p: [ 1, 1, -1]},
-        {p: [-1,-1, -1]}, // z
-        {p: [ 1,-1, -1]}, // 手前 下
+        {p: [-1, 1, -1]}, // 0 手前
+        {p: [ 1, 1, -1]}, // 1
+        {p: [-1,-1, -1]}, // 2 z
+        {p: [ 1,-1, -1]}, // 3 手前 下
         {p: [-1, 1,  1]}, // 4 奥上
         {p: [ 1, 1,  1]}, // 5
         {p: [-1,-1,  1]}, // 6
@@ -929,40 +920,68 @@ export class CharBuilder extends PMX.Maker {
       /** UV用 */
       const k = 0.25;
       const mens = [
-        {p: [0, 1, 2, 3], n: [0, 0, -1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
-        {p: [4, 0, 6, 2], n: [-1, 0, 0], uv: [k * 1, k * 2, k * 2, k * 2, k * 1, k * 1, k * 2, k * 1,]},
-        {p: [1, 5, 3, 7], n: [1, 0, 0], uv: [k * 3, k * 2, k * 4, k * 2, k * 3, k * 1, k * 4, k * 1,]},
-        {p: [4, 5, 0, 1], n: [0, 1, 0], uv: [k * 2, k * 3, k * 3, k * 3, k * 2, k * 2, k * 3, k * 2,]},
-        {p: [2, 3, 6, 7], n: [0, -1, 0], uv: [k * 2, k * 1, k * 3, k * 1, k * 2, k * 0, k * 3, k * 0,]},
-        {p: [5, 4, 7, 6], n: [0, 0, 1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
+        {p: [0, 1, 2, 3], n: [ 0,  0, -1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
+        {p: [4, 0, 6, 2], n: [-1,  0,  0], uv: [k * 1, k * 2, k * 2, k * 2, k * 1, k * 1, k * 2, k * 1,]},
+        {p: [1, 5, 3, 7], n: [ 1,  0,  0], uv: [k * 3, k * 2, k * 4, k * 2, k * 3, k * 1, k * 4, k * 1,]},
+        {p: [4, 5, 0, 1], n: [ 0,  1,  0], uv: [k * 2, k * 3, k * 3, k * 3, k * 2, k * 2, k * 3, k * 2,]},
+        {p: [2, 3, 6, 7], n: [ 0, -1,  0], uv: [k * 2, k * 1, k * 3, k * 1, k * 2, k * 0, k * 3, k * 0,]},
+        {p: [5, 4, 7, 6], n: [ 0,  0,  1], uv: [k * 2, k * 2, k * 3, k * 2, k * 2, k * 1, k * 3, k * 1,]},
       ];
 
+      const vts = param.vertices;
+
+      const faces = param.faces;
+
       for (const men of mens) {
+        const startIndex = vts.length;
         for (let j = 0; j < 4; ++j) {
           const vp = vs[men.p[j]];
 
           const v = new PMX.Vertex();
 
-          let x = vp.p[0];
-          let y = vp.p[1];
-          let z = vp.p[2];
+          let pv = Vec3.fromArray([
+            vp.p[0] * radius,
+            vp.p[1] * hhalf,
+            vp.p[2] * radius]);
+          let nv = Vec3.fromArray(men.n).normalizeInPlace();
 
-          v.n = this.normalize(men.n);
-          v.p = [
-            x * scale * 1,
-            y * scale * lenhalf,
-            z * scale * 1,
-          ];
-          v.uv = [
+          pv.addInPlace(Vec3.fromArray(intl));
+
+          // モデル座標回転
+          const zq = Quat.axisRot(Vec3.fromArray([0, 0, 1]),
+            modelrot[2] * (isLeft ? 1 : -1));
+          const xq = Quat.axisRot(Vec3.fromArray([1, 0, 0]), modelrot[0]);
+          const yq = Quat.axisRot(Vec3.fromArray([0, 1, 0]),
+            modelrot[1] * (isLeft ? 1 : -1));
+          const eq = yq.mul(xq).mul(zq);
+          pv = eq.rotate(pv);
+          nv = eq.rotate(nv);
+
+          pv.addInPlace(Vec3.fromArray(bonea.p));
+
+          v.n = nv.asArray();
+          v.p = pv.asArray();
+          v.uv = TexMaker.subTex8(
             men.uv[j*2+0],
             men.uv[j*2+1],
-          ];
+            2,
+          );
           v.deformType = PMX.Vertex.DEFORM_BDEF1;
           v.joints = [boneIndex, 0, 0, 0];
           v.weights = [1, 0, 0, 0];
 
-          this.vts.push(v);
+          vts.push(v);
         }
+
+        {
+          const v0 = startIndex;
+          const v1 = v0 + 1;
+          const v2 = v0 + 2;
+          const v3 = v0 + 3;
+          faces.push([v0, v1, v2]);
+          faces.push([v2, v1, v3]);
+        }
+
       }
     }
 
