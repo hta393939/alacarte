@@ -826,11 +826,15 @@ export class CharBuilder extends PMX.Maker {
             param.zrot = 0;
           }
           this.makeMobius(param);
+
+          param.radius = 0.125;
+          param.hhalf = 0.125;
         } else if (nameJa.includes('パーツ')) {
           this.makeJoint(param);
 
-          param.radius = 0.5;
+          param.whalf = 0.5;
           param.hhalf = 2;
+          param.dhalf = 0.125;
           param.modelrot = [
             -30 * Math.PI / 180,
             10 * Math.PI / 180,
@@ -839,6 +843,16 @@ export class CharBuilder extends PMX.Maker {
           this.makeBox(param);
 
           isBone = false;
+        } else if (nameJa.includes('頭')) {
+          isBone = false;
+          this.makeHead(param);
+        } else if (nameJa.includes('上半身２')) {
+          isBone = false;
+          this.makeBody(param);
+        } else if (nameJa.includes('手')) {
+          this.makeJoint(param);
+          isBone = false;
+          this.makeHand(param);
         } else {
           this.makeJoint(param);
         }
@@ -895,15 +909,53 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
+   * 
+   * @param {number[]} p 
+   * @param {number[]} n 
+   * @param {number[]} intl 平行移動量
+   * @param {number[]} modelrot model z, x, y の順
+   * @param {PMX.Bone} bonea 
+   * @param {PMX.Vertex} vt 反映先
+   */
+  applyEuler(p, n, intl, modelrot, bonea, vt) {
+    const isLeft = (bonea.p[0] > 0);
+
+    let pv = Vec3.fromArray(p);
+    let nv = Vec3.fromArray(n);
+    pv.addInPlace(Vec3.fromArray(intl));
+
+    // モデル座標回転
+    const zq = Quat.axisRot(Vec3.fromArray([0, 0, 1]),
+      modelrot[2] * (isLeft ? 1 : -1));
+    const xq = Quat.axisRot(Vec3.fromArray([1, 0, 0]), modelrot[0]);
+    const yq = Quat.axisRot(Vec3.fromArray([0, 1, 0]),
+      modelrot[1] * (isLeft ? 1 : -1));
+    const eq = yq.mul(xq).mul(zq);
+    pv = eq.rotate(pv);
+    nv = eq.rotate(nv);
+
+    pv.addInPlace(Vec3.fromArray(bonea.p));
+    vt.p = pv.asArray();
+    vt.n = nv.normalizeInPlace().asArray();
+
+    vt.deformType = PMX.Vertex.DEFORM_BDEF1;
+    vt.joints = [bonea._index, 0, 0, 0];
+    vt.weights = [1, 0, 0, 0];
+  }
+
+  /**
    * 変形無しの物理シンプルな箱
+   * 面ごとに頂点を分割する場合。これだとエッジがおかしくなる
    * @param {IParam} param 
    */
   makeBox(param) {
     const radius = param.radius || 1;
-    const hhalf = param.hhalf || 1;
+    const hhalf = param.hhalf || radius;
     const bonea = param.bonea;
     const boneIndex = bonea._index;
     const isLeft = (bonea.p[0] > 0);
+    const whalf = param.whalf || radius;
+    const dhalf = param.dhalf || radius;
     const intl = param.intl || [0, 0, 0];
     const modelrot = param.modelrot || [0, 0, 0];
     {
@@ -929,7 +981,6 @@ export class CharBuilder extends PMX.Maker {
       ];
 
       const vts = param.vertices;
-
       const faces = param.faces;
 
       for (const men of mens) {
@@ -939,41 +990,24 @@ export class CharBuilder extends PMX.Maker {
 
           const v = new PMX.Vertex();
 
-          let pv = Vec3.fromArray([
-            vp.p[0] * radius,
+          this.applyEuler([
+            vp.p[0] * whalf,
             vp.p[1] * hhalf,
-            vp.p[2] * radius]);
-          let nv = Vec3.fromArray(men.n).normalizeInPlace();
+            vp.p[2] * dhalf],
+            men.n,
+            intl, modelrot,
+            bonea, v);
 
-          pv.addInPlace(Vec3.fromArray(intl));
-
-          // モデル座標回転
-          const zq = Quat.axisRot(Vec3.fromArray([0, 0, 1]),
-            modelrot[2] * (isLeft ? 1 : -1));
-          const xq = Quat.axisRot(Vec3.fromArray([1, 0, 0]), modelrot[0]);
-          const yq = Quat.axisRot(Vec3.fromArray([0, 1, 0]),
-            modelrot[1] * (isLeft ? 1 : -1));
-          const eq = yq.mul(xq).mul(zq);
-          pv = eq.rotate(pv);
-          nv = eq.rotate(nv);
-
-          pv.addInPlace(Vec3.fromArray(bonea.p));
-
-          v.n = nv.asArray();
-          v.p = pv.asArray();
           v.uv = TexMaker.subTex8(
             men.uv[j*2+0],
             men.uv[j*2+1],
             2,
           );
-          v.deformType = PMX.Vertex.DEFORM_BDEF1;
-          v.joints = [boneIndex, 0, 0, 0];
-          v.weights = [1, 0, 0, 0];
 
           vts.push(v);
         }
 
-        {
+        { // 面張り
           const v0 = startIndex;
           const v1 = v0 + 1;
           const v2 = v0 + 2;
@@ -1340,7 +1374,39 @@ export class CharBuilder extends PMX.Maker {
    */
   makeHead(param) {
     console.log('未実装');
+    this.makeBox(param);
     return;
+  }
+
+  /**
+   * 上体の予定
+   * @param {IParam} param 
+   */
+  makeBody(param) {
+    console.log('未実装');
+    this.makeBox(param);
+    return;
+  }
+
+  /**
+   * 下体の予定
+   * @param {IParam} param 
+   */
+  makeWaist(param) {
+    console.log('未実装');
+    this.makeBox(param);
+    return;
+  }
+
+  /**
+   * 手の予定
+   * @param {IParam} param 
+   * @returns 
+   */
+  makeHand(param) {
+    console.log('未実装');
+    this.makeBox(param);
+    return;   
   }
 
 }
