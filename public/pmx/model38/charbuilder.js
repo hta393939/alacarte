@@ -357,8 +357,10 @@ export class CharBuilder extends PMX.Maker {
 { lr: false, bones: [
 { parentName: '', nameJa: '全ての親', nameEn: 'root', p:[0,0,0] },
 { parentName: '全ての親', nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
-{ parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0,5,0] },
-{ parentName: 'センター', nameJa: '下半身', nameEn: 'spine', p: [0,0,0] },
+{ parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0, 5, 0] },
+{ parentName: 'センター', nameJa: 'グルーブ', nameEn: 'groove', p:[0, 0.25, 0] },
+{ parentName: 'グルーブ', nameJa: '腰', nameEn: 'waist', p:[0, 0.5, 0] },
+{ parentName: '腰', nameJa: '下半身', nameEn: 'spine', p: [0, 0.5, 0] },
 { parentName: '下半身', nameJa: '上半身', nameEn: 'chest', p:[0,1,0] },
 { parentName: '上半身', nameJa: '上半身2', nameEn: 'upperChest', p:[0,1,0] },
 { parentName: '上半身2', nameJa: '首', nameEn: 'neck', p:[0,1,0] },
@@ -366,8 +368,8 @@ export class CharBuilder extends PMX.Maker {
 ]},
 { lr: true, bones: [
 {parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg', p:[1,0,0]},
-{parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg', p:[0,-1,0]},
-{parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot', p:[0,-1,0]},
+{parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg', p:[0,-2,0]},
+{parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot', p:[0,-2,0]},
 {parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
@@ -764,7 +766,7 @@ export class CharBuilder extends PMX.Maker {
         } else if (i === 3) {
           f.nameJa = 'センター';
           f.bones.push(..._sel(b =>
-            ['センター'].includes(b.nameJa)
+            ['センター', 'グルーブ', '腰'].includes(b.nameJa)
           ));
         } else if (i === 4) {
           f.nameJa = '体(下)';
@@ -809,6 +811,8 @@ export class CharBuilder extends PMX.Maker {
     {
       this.indexed();
 
+      const armang = Math.atan2(CharBuilder.ANX, CharBuilder.ANY);
+
       const num = this.bones.length;
       for (let i = 0; i < num; ++i) {
         const bone = this.bones[i];
@@ -830,6 +834,7 @@ export class CharBuilder extends PMX.Maker {
         if (nameJa.includes('指')) {
           param.radius = CharBuilder.FINGER_INTERVAL * 0.5;
           param.hhalf = CharBuilder.FINGER_INTERVAL * 0.5;
+          param.modelrot = [0, 0, armang];
         }
 
         if (nameJa.includes('ひじ') || nameJa.includes('ひざ')) {
@@ -846,7 +851,15 @@ export class CharBuilder extends PMX.Maker {
         if (true) { // ボーンメッシュのように
           param.intl = [0, -0.25, 0];
           param.hhalf = param.radius * 2;
+          if (nameJa.includes('指')) {
+            param.intl = [0, -0.125, 0];
+          }
           this.makeSphere(param);
+        }
+
+        if (nameJa.includes('パーツ')) {
+          param.hhalf = 1;
+          this.makeBox(param);
         }
 
       }
@@ -885,6 +898,7 @@ export class CharBuilder extends PMX.Maker {
         case '全ての親':
         case '操作中心':
         case 'センター':
+        case 'グルーブ':
           bone.bits |= PMX.Bone.BIT_MOVE;
           break;
         }
@@ -897,8 +911,10 @@ export class CharBuilder extends PMX.Maker {
    * 変形無しの物理シンプルな箱
    */
   makeBox(param) {
+    const scale = 1;
     const lenhalf = param.lenhalf || 1;
-    const boneIndex = param.boneIndex || 0;
+    const bonea = param.bonea;
+    const boneIndex = bonea._index;
     {
       const vs = [
         {p: [-1, 1, -1]}, // 手前
@@ -969,6 +985,9 @@ export class CharBuilder extends PMX.Maker {
     const bonea = param.bonea;
     const boneb = param.boneb;
 
+    const isLeft = (bonea.p[0] > 0);
+    const modelrot = param.modelrot || [0, 0, 0];
+
     const vts = param.vertices;
     const startIndex = vts.length;
     const faces = param.faces;
@@ -997,10 +1016,15 @@ export class CharBuilder extends PMX.Maker {
 
         pv.addInPlace(Vec3.fromArray(intl));
 
-        // TODO: ボーン内回転
-        const inq = Quat.axisRot(Vec3.fromArray([0, 0, 1]), 0);
-        pv = inq.rotate(pv);
-        nv = inq.rotate(nv);
+        // モデル座標回転
+        const zq = Quat.axisRot(Vec3.fromArray([0, 0, 1]),
+          modelrot[2] * (isLeft ? 1 : -1));
+        const xq = Quat.axisRot(Vec3.fromArray([1, 0, 0]), modelrot[0]);
+        const yq = Quat.axisRot(Vec3.fromArray([0, 1, 0]),
+          modelrot[1] * (isLeft ? 1 : -1));
+        const eq = yq.mul(xq).mul(zq);
+        pv = eq.rotate(pv);
+        nv = eq.rotate(nv);
 
         pv.addInPlace(Vec3.fromArray(bonea.p));
 
@@ -1289,6 +1313,15 @@ export class CharBuilder extends PMX.Maker {
     }
 
     console.log('makeMobius');
+  }
+
+  /**
+   * 頭、顔の予定
+   * @param {IParam} param 
+   */
+  makeHead(param) {
+    console.log('未実装');
+    return;
   }
 
 }

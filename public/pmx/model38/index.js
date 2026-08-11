@@ -126,8 +126,8 @@ class Misc {
       console.log('makechar', param);
   
       Object.assign(param, {
-        nameJa: `ウサギ式パラメトミク`,
-        nameEn: `Usagi's Paramet Miku`,
+        nameJa: `ウサギ式初音ミク アバタースタイル`,
+        nameEn: `Usagi's Hatsune Miku - avatar style`,
         commentJa: `https://piapro.jp/license/pcl/summary\r\n${new Date().toLocaleString()}\r\n${CharBuilder.VERSION}`,
         commentEn: `https://piapro.jp/license/pcl/summary`,
         textures: [

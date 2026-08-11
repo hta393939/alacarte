@@ -777,7 +777,7 @@ export class TexMaker {
     c.putImageData(img, bx, by);
     */
 
-    this.clearPad(canvas, index, padding);
+    //this.clearPad(canvas, index, padding);
   }
 
   /**
