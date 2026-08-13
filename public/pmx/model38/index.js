@@ -136,9 +136,7 @@ class Misc {
           `sph.png`,
         ],
       });
-      if (isWrite) {
-        this.makeFiles(param, this.dh);
-      }
+      this.makeFiles(param, this.dh);
     };
 
     window.makechar?.addEventListener('click', () => {
@@ -234,9 +232,10 @@ class Misc {
   /**
    * 一連のファイル群を作成する
    * @param {FileSystemDirectoryHandle} dh 
+   * @param {boolean} isWrite ファイル書き出しするかしないか
    */
-  async makeFiles(param, dh) {
-    console.log('makeFiles start');
+  async makeFiles(param, dh, isWrite) {
+    console.log('makeFiles start', isWrite);
     /** @type {HTMLCanvasElement[]} */
     const cvs = [];
     for (let i = 0; i < 2; ++i) {
@@ -269,13 +268,16 @@ class Misc {
       });
       maker.drawLogo(cvs[0]);
     }
-    for (let i = 0; i < 2; ++i) {
-      const blob = await this.toBlob(cvs[i]);
-      await this.makeFile(dh,
-        [],
-        param.textures[i],
-        blob,
-      );
+
+    if (isWrite) {
+      for (let i = 0; i < 2; ++i) {
+        const blob = await this.toBlob(cvs[i]);
+        await this.makeFile(dh,
+          [],
+          param.textures[i],
+          blob,
+        );
+      }
     }
 
     { // .pmx
@@ -283,13 +285,15 @@ class Misc {
       writer.make(param);
       const bufs = writer.makeBuffer();
 
-      await this.makeFile(dh,
-        [],
-        'parametmiku.pmx',
-        new Blob(bufs),
-      );
+      if (isWrite) {
+        await this.makeFile(dh,
+          [],
+          'parametmiku.pmx',
+          new Blob(bufs),
+        );
+      }
     }
-    console.log('makeFiles end');
+    console.log('makeFiles end', isWrite);
   }
 
   /**
