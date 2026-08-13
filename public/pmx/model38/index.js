@@ -121,9 +121,10 @@ class Misc {
       });
     }
 
-    window.makechar?.addEventListener('click', () => {
+
+    const _makeChar = (isWrite) => {
       const param = this.getCommonOptions();
-      console.log('makechar', param);
+      console.log('_makechar', isWrite, param);
   
       Object.assign(param, {
         nameJa: `ウサギ式初音ミク アバタースタイル`,
@@ -135,8 +136,16 @@ class Misc {
           `sph.png`,
         ],
       });
-      this.makeFiles(param, this.dh);
+      if (isWrite) {
+        this.makeFiles(param, this.dh);
+      }
+    };
 
+    window.makechar?.addEventListener('click', () => {
+      _makeChar(true);
+    });
+    window.drychar?.addEventListener('click', () => {
+      _makeChar(false);
     });
 
     { // クリップ
