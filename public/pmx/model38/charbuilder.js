@@ -1612,4 +1612,97 @@ export class CharBuilder extends PMX.Maker {
     return;
   }
 
+  makeBebel1(param) {
+    const vts = param.vertices;
+    const startIndex = vts.length;
+    const faces = param.faces;
+    const whalf = param.whalf || 1;
+    const hhalf = param.hhalf || 1;
+    const dhalf = param.dhalf || 1;
+    const bonea = param.bonea;
+    const bebelSub = 0.1; // パディングのような量
+    const bebelAdd = 0.1; // 元の直方体から厚みを増やす
+    const mens = [ // 正の値
+      {x: whalf, y: hhalf, z: dhalf, rot: [0,0,0] }, // Z-
+      {x: dhalf, y: hhalf, z: whalf, rot: [0,90,0] }, // X-
+      {x: whalf, y: hhalf, z: dhalf, rot: [0,180,0] }, // Z+
+      {x: dhalf, y: hhalf, z: whalf, rot: [0,-90,0] }, // X+
+      {x: whalf, y: dhalf, z: hhalf, rot: [90,0,0] }, // Y+
+      {x: whalf, y: dhalf, z: hhalf, rot: [-90,0,0] }, // Y-
+    ];
+
+    for (const men of mens) {
+      const faceq = Quat.axisRot(new Vec3(0,1,0), rot[1] * Math.PI / 180)
+        .mul(Quat.axisRot(new Vec3(1, 0, 0), rot[0] * Math.PI / 180));
+      for (const i = 0; i < 3; ++i) {
+        const vnums = [1, 4, 8];
+        for (const j = 0; j < vnums[i]; ++j) {
+          const v = new PMX.Vertex();
+
+          let pv = new Vec3(0, 0, -men.z - bebelAdd);
+          let nv = new Vec3(0, 0, -1);
+
+          switch (i) {
+            case 0: // 真ん中のみ
+              break;
+            case 1:
+              {
+                const w = men.x - bebelSub;
+                const h = men.y - bebelSub;
+                const ps = [
+                  {p: [-w,  h, 0]},
+                  {p: [ w,  h, 0]},
+                  {p: [ w, -h, 0]},
+                  {p: [-w, -h, 0]},
+                ];
+                pv.x = ps[j].p[0];
+                pv.y = ps[j].p[1];
+              }
+              break;
+            case 2:
+              {
+                const w = men.x;
+                const h = men.y;
+                // TODO: 位置を決める
+                const ps = [
+                  {p: [w, h, 0]},
+                  {p: [w, h, 0]},
+                  {p: [w, h, 0]},
+                  {p: [w, h, 0]},
+                  {p: [w, h, 0]},
+                  {p: [w, h, 0]},
+                  {p: [w, h, 0]},
+                  {p: [w, h, 0]},
+                ];
+                pv.x = ps[j].p[0];
+                pv.y = ps[j].p[1];
+                nv = pv.clone().normalizeInPlace();
+              }
+              break;
+          }
+
+          this.applyEuler(pv.asArray(),
+            nv.asArray(),
+            [0, 0, 0],
+            [0, 0, 0],
+            bonea, v
+          );
+          v.uv = TexMaker.subTex8(
+            0.5, 0.5, 2,
+          );
+          vts.push(v);
+        }
+      }
+      const fis = [
+        [0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1],
+        [1, 6, 2], [2, 8, 3], [3, 10, 4], [4, 12, 1],
+        [1, 5, 6], [2, 6, 7], [2, 7, 8], [3, 8, 9],
+        [3, 9, 10], [4, 10, 11], [4, 11, 12], [1, 12, 5],
+      ];
+      for (const fi of fis) {
+        faces.push(fi.map(index => index + startIndex));
+      }
+    }
+  }
+
 }
