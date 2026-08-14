@@ -1612,6 +1612,10 @@ export class CharBuilder extends PMX.Maker {
     return;
   }
 
+  /**
+   * べべルつき直方体
+   * @param {IParam} param 
+   */
   makeBebel1(param) {
     const vts = param.vertices;
     const startIndex = vts.length;
@@ -1620,6 +1624,8 @@ export class CharBuilder extends PMX.Maker {
     const hhalf = param.hhalf || 1;
     const dhalf = param.dhalf || 1;
     const bonea = param.bonea;
+    const intl = param.intl || [0, 0, 0];
+    const modelrot = param.modelrot || [0, 0, 0];
     const bebelSub = 0.1; // パディングのような量
     const bebelAdd = 0.1; // 元の直方体から厚みを増やす
     const mens = [ // 正の値
@@ -1639,7 +1645,7 @@ export class CharBuilder extends PMX.Maker {
         for (const j = 0; j < vnums[i]; ++j) {
           const v = new PMX.Vertex();
 
-          let pv = new Vec3(0, 0, -men.z - bebelAdd);
+          let pv = new Vec3(0, 0, -men.z);
           let nv = new Vec3(0, 0, -1);
 
           switch (i) {
@@ -1657,22 +1663,22 @@ export class CharBuilder extends PMX.Maker {
                 ];
                 pv.x = ps[j].p[0];
                 pv.y = ps[j].p[1];
+                pv.z = -men.z - bebelAdd;
               }
               break;
             case 2:
               {
                 const w = men.x;
                 const h = men.y;
-                // TODO: 位置を決める
                 const ps = [
-                  {p: [w, h, 0]},
-                  {p: [w, h, 0]},
-                  {p: [w, h, 0]},
-                  {p: [w, h, 0]},
-                  {p: [w, h, 0]},
-                  {p: [w, h, 0]},
-                  {p: [w, h, 0]},
-                  {p: [w, h, 0]},
+                  {p: [-w,  h, 0]},
+                  {p: [ 0,  h, 0]},
+                  {p: [ w,  h, 0]},
+                  {p: [ w,  0, 0]},
+                  {p: [ w, -h, 0]},
+                  {p: [ 0, -h, 0]},
+                  {p: [-w, -h, 0]},
+                  {p: [-w,  0, 0]},
                 ];
                 pv.x = ps[j].p[0];
                 pv.y = ps[j].p[1];
@@ -1683,12 +1689,16 @@ export class CharBuilder extends PMX.Maker {
 
           this.applyEuler(pv.asArray(),
             nv.asArray(),
-            [0, 0, 0],
-            [0, 0, 0],
+            intl, modelrot,
             bonea, v
           );
+          const sqSize = Math.max(men.x, men.y);
+          const uv = [
+            pv.x / sqSize * 0.5 + 0.5,
+            pv.y / sqSize * 0.5 + 0.5,
+          ];
           v.uv = TexMaker.subTex8(
-            0.5, 0.5, 2,
+            uv[0], uv[1], 2,
           );
           vts.push(v);
         }
