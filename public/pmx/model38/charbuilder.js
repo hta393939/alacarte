@@ -1614,11 +1614,11 @@ export class CharBuilder extends PMX.Maker {
   makeBebel1(param) {
     const sepface = param.sepface ?? -1;
     const vts = param.vertices;
-    const startIndex = vts.length;
+
     const faces = param.faces;
-    const whalf = param.whalf || 1;
-    const hhalf = param.hhalf || 1;
-    const dhalf = param.dhalf || 1;
+    const whalf = param.whalf ?? 1;
+    const hhalf = param.hhalf ?? 1;
+    const dhalf = param.dhalf ?? 1; // 0 を許容する
     const bonea = param.bonea;
     const intl = param.intl || [0, 0, 0];
     const modelrot = param.modelrot || [0, 0, 0];
@@ -1626,15 +1626,14 @@ export class CharBuilder extends PMX.Maker {
     const bebelAdd = 0.1; // 元の直方体から厚みを増やす
     const mens = [ // 正の値
       {x: whalf, y: hhalf, z: dhalf, rot: [0,0,0] }, // Z-
-      {x: dhalf, y: hhalf, z: whalf, rot: [0,90,0] }, // X-
       {x: whalf, y: hhalf, z: dhalf, rot: [0,180,0] }, // Z+
+      {x: dhalf, y: hhalf, z: whalf, rot: [0,90,0] }, // X-
       {x: dhalf, y: hhalf, z: whalf, rot: [0,-90,0] }, // X+
       {x: whalf, y: dhalf, z: hhalf, rot: [90,0,0] }, // Y+
       {x: whalf, y: dhalf, z: hhalf, rot: [-90,0,0] }, // Y-
     ];
     if (dhalf === 0) {
-      mens.splice(3);
-      mens.splice(1);
+      mens.splice(2);
     }
 
     for (let mi = 0; mi < mens.length; ++mi) {
@@ -1644,6 +1643,7 @@ export class CharBuilder extends PMX.Maker {
       if (mi === sepface) {
         vnums.push(1, 4);
       }
+      const startIndex = vts.length;
       for (let i = 0; i < vnums.length; ++i) {
         for (let j = 0; j < vnums[i % 3]; ++j) {
           const v = new PMX.Vertex();
@@ -1653,6 +1653,7 @@ export class CharBuilder extends PMX.Maker {
 
           switch (i % 3) {
             case 0: // 真ん中のみ
+              pv.z = -men.z - bebelAdd;
               break;
             case 1:
               {
@@ -1690,6 +1691,12 @@ export class CharBuilder extends PMX.Maker {
               break;
           }
 
+          const sqSize = Math.max(men.x, men.y);
+          let uv = [
+            pv.x / sqSize * 0.5 * 0.75 + 0.5,
+            pv.y / sqSize * 0.5 * 0.75 + 0.5,
+          ];
+
           pv = faceq.rotate(pv);
           nv = faceq.rotate(nv);
 
@@ -1698,13 +1705,14 @@ export class CharBuilder extends PMX.Maker {
             intl, modelrot, // ボーンとしての補正
             bonea, v
           );
-          const sqSize = Math.max(men.x, men.y);
-          const uv = [
-            pv.x / sqSize * 0.5 * 0.75 + 0.5,
-            pv.y / sqSize * 0.5 * 0.75 + 0.5,
-          ];
+
+          let index = 0;
+          if (i >= 3) { // TODO: UV を広く取るか??
+            index = 2;
+          }
+
           v.uv = TexMaker.subTex8(
-            uv[0], uv[1], sepface ? 2 : 0,
+            uv[0], uv[1], index,
           );
           vts.push(v);
         }
@@ -1725,6 +1733,7 @@ export class CharBuilder extends PMX.Maker {
         faces.push(fi.map(index => index + startIndex));
       }
     }
+
   }
 
 }
