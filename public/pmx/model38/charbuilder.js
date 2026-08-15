@@ -1622,8 +1622,8 @@ export class CharBuilder extends PMX.Maker {
     const bonea = param.bonea;
     const intl = param.intl || [0, 0, 0];
     const modelrot = param.modelrot || [0, 0, 0];
-    const bebelSub = 0.1; // パディングのような量
-    const bebelAdd = 0.1; // 元の直方体から厚みを増やす
+    const bebelsub = param.bebelsub || 0.1; // パディングのような量
+    const bebeladd = param.bebeladd || 0.1; // 元の直方体から厚みを増やす
     const mens = [ // 正の値
       {x: whalf, y: hhalf, z: dhalf, rot: [0,0,0] }, // Z-
       {x: whalf, y: hhalf, z: dhalf, rot: [0,180,0] }, // Z+
@@ -1653,12 +1653,12 @@ export class CharBuilder extends PMX.Maker {
 
           switch (i % 3) {
             case 0: // 真ん中のみ
-              pv.z = -men.z - bebelAdd;
+              pv.z = -men.z - bebeladd;
               break;
             case 1:
               {
-                const w = men.x - bebelSub;
-                const h = men.y - bebelSub;
+                const w = men.x - bebelsub;
+                const h = men.y - bebelsub;
                 const ps = [
                   {p: [-w,  h, 0]},
                   {p: [ w,  h, 0]},
@@ -1667,7 +1667,7 @@ export class CharBuilder extends PMX.Maker {
                 ];
                 pv.x = ps[j].p[0];
                 pv.y = ps[j].p[1];
-                pv.z = -men.z - bebelAdd;
+                pv.z = -men.z - bebeladd;
               }
               break;
             case 2:
