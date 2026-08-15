@@ -13,8 +13,9 @@ import { TexMaker } from './texmaker.js';
  * @property {number} hhalf 縦長さの半分
  * @property {number[]} intl 最初の平行移動。
  * @property {number[]} modelrot ボーン位置反映前の回転
+ * @property {number?} subindex8 8x8分割の場合の基準インデックス
+ * @property {[number,number,number]?} col6 存在する場合、色固定(0～5)
  */
-
 
 
 /** 3次ベクトル */
@@ -1176,14 +1177,15 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * 使用していない。シリンダー形状
+   * シリンダー形状
    * @param {IParam} param
    * @param {()=>number} param.rfunc
    * @param {number} param.hnum 垂直方向の点数
    */
   makeCyl(param) {
-    const hdiv = param.hdiv || 8;
-    const vdiv = param.vdiv || 4;
+    const hdiv = param.hdiv || 16;
+    const vdiv = param.vdiv || 8;
+    const hnum = param.hnum || 2;
     const hhalf = param.hhalf || 1;
     const radius = param.radius || 1;
     /** @type {PMX.Bone} */
@@ -1197,15 +1199,23 @@ export class CharBuilder extends PMX.Maker {
     const startIndex = vts.length;
     const faces = param.faces;
 
-    const subIndex = 2;
+    const subindex8 = param.subindex8 || -1;
+    const col6 = param.col6;
 
-    for (let i = 0; i < param.hnum * 0.5; ++i) { // 上から下か 上半分
+    const _calcuv = (ratex, ratey) => {
+      if (subindex8 >= 0) {
+        return TexMaker.subTex8(ratex, ratey, subindex8);
+      }
+      return TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
+    };
+
+    for (let i = 0; i < vdiv * 0.5; ++i) { // 上から下か 上半分
       const vang = i * Math.PI / vdiv;
       //let rr = param.rfunc(i);
       let rr = Math.sin(vang);
 
       const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
-      for (let j = 0; j <= hdiv; ++j) {
+      for (let j = 0; j < vdiv * 0.5; ++j) {
         const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
 
         const hang = (j % hdiv) * Math.PI * 2 / hdiv;
@@ -1226,14 +1236,14 @@ export class CharBuilder extends PMX.Maker {
           bonea, v
         );
 
-        v.uv = TexMaker.subTex8(ratex, ratey, subIndex);
+        v.uv = _calcuv(ratex, ratey);
 
         vts.push(v);
       }
     }
 
-    for (let i = 0; i < param.hnum; ++i) { // まんなか
-      const vang = i * Math.PI / vdiv;
+    for (let i = 0; i < hnum; ++i) { // まんなか
+      //const vang = i * Math.PI / vdiv;
       //let rr = param.rfunc(i);
       let rr = 1;
 
@@ -1249,7 +1259,7 @@ export class CharBuilder extends PMX.Maker {
         const v = new PMX.Vertex();
 
         let x = -sn * rr;
-        let y = (1 - i / param.hnum * 2);
+        let y = (1 - i / hnum * 2);
         let z =  cs * rr;
 
         this.applyEuler(
@@ -1259,13 +1269,13 @@ export class CharBuilder extends PMX.Maker {
           bonea, v
         );
 
-        v.uv = TexMaker.subTex8(ratex, ratey, subIndex);
+        v.uv = _calcuv(ratex, ratey);
 
         vts.push(v);
       }
     }
 
-    for (let i = param.hnum * 0.5; i <= param.hnum; ++i) { // 上から下か。下半分
+    for (let i = vdiv * 0.5; i <= vdiv; ++i) { // 上から下か。下半分
       const vang = i * Math.PI / vdiv;
       //let rr = param.rfunc(i);
       let rr = Math.sin(vang);
@@ -1292,13 +1302,13 @@ export class CharBuilder extends PMX.Maker {
           bonea, v
         );
 
-        v.uv = TexMaker.subTex8(ratex, ratey, subIndex);
+        v.uv = _calcuv(ratex, ratey);
 
         vts.push(v);
       }
     }
 
-    for (let i = 0; i < param.hnum * 2; ++i) {
+    for (let i = 0; i < (vdiv + hnum); ++i) {
       for (let j = 0; j < hdiv; ++j) {
         const v0 = (hdiv + 1) * i + j + startIndex;
         const v1 = v0 + 1;
@@ -1312,18 +1322,10 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * 使用していない。シリンダー形状
+   * 使用していない。トンネル形状
    * @param {IParam} param
-   * @param {()=>number} param.rfunc
-   * @param {number} param.hnum 垂直方向の点数
-   * @param {(index:number)=>number} param.hfunc
    */
-  makeCyl2(param) {
-    const hdiv = param.hdiv || 8;
-    const vdiv = param.vdiv || 4;
-    const hhalf = param.hhalf || 1;
-    /** UV分割領域のインデックス */
-    //const index = param.index || 0;
+  makeTun(param) {
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
     //const boneb = param.boneb;
@@ -1335,47 +1337,64 @@ export class CharBuilder extends PMX.Maker {
     const startIndex = vts.length;
     const faces = param.faces;
 
-    for (let i = 0; i < param.hnum; ++i) { // 上から下か
-      const vang = i * Math.PI / vdiv;
-      let rr = param.rfunc(i);
+    const col6 = param.col6;
 
-      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
-      for (let j = 0; j <= hdiv; ++j) {
-        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
-
-        const hang = (j % hdiv) * Math.PI * 2 / hdiv;
-
-        const cs = Math.cos(hang);
-        const sn = Math.sin(hang);
-
+    const whalf = param.whalf || 1;
+    const hhalf = param.hhalf || 1;
+    const dhalf = param.dhalf || 1;
+    const thick = param.thick || 0.1;
+    const vs = [ // 上だけ
+      {p: [-whalf, hhalf,  dhalf], rv: 1},
+      {p: [-whalf, hhalf, -dhalf], rv: 1},
+      {p: [ whalf, hhalf, -dhalf], rv: 1},
+      {p: [ whalf, hhalf,  dhalf], rv: 1},
+      {p: [ whalf - thick, hhalf,  dhalf], rv: -1},
+      {p: [ whalf - thick, hhalf, -dhalf], rv: -1},
+      {p: [-whalf + thick, hhalf, -dhalf], rv: -1},
+      {p: [-whalf + thick, hhalf,  dhalf], rv: -1},
+    ];
+    for (let i = 0; i < 2; ++i) { // 上と下
+      for (let j = 0; j < vs.length; ++j) {
         const v = new PMX.Vertex();
 
-        let x = -sn * rr;
-        let y = param.hfunc(j);
-        let z =  cs * rr;
+        let pv = Vec3.fromArray(vs[j].p);
+        if (i === 1) {
+          pv.y = -pv.y;
+        }
+        let nv = new Vec3(pv.x * vs[j].rv, pv.y, pv.z * vs[j].rv)
+          .normalizeInPlace();
 
-        this.applyEuler(
-          [x * radius, y * hhalf, z * radius],
-          [x, y, z],
+        // TODO: 回転
+
+        this.applyEuler(pv.asArray(),
+          nv.asArray(),
           intl, modelrot,
-          bonea, v
-        );
+          bonea, v);
 
-        v.uv = TexMaker.subTex8(ratex, ratey, 2);
-
+        v.uv = TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
         vts.push(v);
       }
     }
 
-    for (let i = 0; i < param.hnum - 1; ++i) {
-      for (let j = 0; j < hdiv; ++j) {
-        const v0 = (hdiv + 1) * i + j + startIndex;
-        const v1 = v0 + 1;
-        const v2 = v0 + (hdiv + 1);
-        const v3 = v2 + 1;
-        faces.push([v0, v1, v2]);
-        faces.push([v2, v1, v3]);
-      }
+    const clocks = [
+      [0, 1, 9, 8],
+      [1, 2, 10, 9],
+      [2, 3, 11, 10],
+      [3, 4, 12, 11], // 側面
+      [4, 5, 13, 12],
+      [5, 6, 14, 13],
+      [6, 7, 15, 14],
+      [7, 0, 8, 15], // ここまで側面
+      [7, 6, 1, 0], // 上
+      [6, 5, 2, 1],
+      [5, 4, 3, 2],
+      [12, 13, 10, 11], // 下
+      [13, 14, 9, 10],
+      [14, 15, 8, 9],
+    ];
+    for (const clock of clocks) {
+      const fis = clock.map(i => i + startIndex);
+      faces.push([fis[0], fis[1], fis[3]], [fis[1], fis[3], fis[2]]);
     }
 
   }
@@ -1570,10 +1589,10 @@ export class CharBuilder extends PMX.Maker {
    * @param {IParam} param 
    */
   makeEye(param) {
-    console.log('未実装');
-    param.hnum = 16;
+    console.log('未実装 目');
+    param.hnum = 2;
+    param.col6 = [5, 3, 1];
     this.makeCyl(param);
-    return;
   }
 
   /**
