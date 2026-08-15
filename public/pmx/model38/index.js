@@ -136,7 +136,7 @@ class Misc {
           `sph.png`,
         ],
       });
-      this.makeFiles(param, this.dh);
+      this.makeFiles(param, this.dh, isWrite);
     };
 
     window.makechar?.addEventListener('click', () => {
@@ -249,7 +249,13 @@ class Misc {
 
     {
       const maker = new TexMaker();
-      maker.drawAdd(cvs[1]);
+      if (false) {
+        maker.drawAdd(cvs[1]);
+      } else {
+        const c = cvs[1].getContext('2d');
+        c.fillStyle = 'black';
+        c.fillRect(0, 0, c.canvas.width, c.canvas.height);
+      }
 
       maker.drawChip(cvs[0], 0, 0);
       maker.drawWide(cvs[0], 0.5, 0);

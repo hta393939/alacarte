@@ -291,6 +291,13 @@ export class Quat {
     ]);
     return ret;
   }
+
+  static euler(es) {
+    const ret = Quat.axisRot(new Vec3(0, 1, 0), es[1] * Math.PI / 180)
+      .mul(Quat.axisRot(new Vec3(1, 0, 0), es[0] * Math.PI / 180))
+      .mul(Quat.axisRot(new Vec3(0, 0, 1), es[2] * Math.PI / 180));
+    return ret;
+  }
 } 
 
 export class CharBuilder extends PMX.Maker {
@@ -610,26 +617,11 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * 配列を破壊で正規化
-   * @param {number[]} vs 
-   */
-  normalize(vs) {
-    let sum = vs.reduce((p, c) => p + c * c, 0);
-    if (sum === 0) {
-      return vs;
-    }
-    const k = 1 / Math.sqrt(sum);
-    for (let i = 0; i < vs.length; ++i) {
-      vs[i] *= k;
-    }
-    return vs;
-  }
-
-  /**
    * Z軸周り2次元回転
    * @param {number[]} vs 破壊
    * @param {number} deg 
    */
+  /*
   rotate(vs, deg) {
     const ang = deg * Math.PI / 180;
     const cs = Math.cos(ang);
@@ -639,7 +631,7 @@ export class CharBuilder extends PMX.Maker {
     vs[0] = x;
     vs[1] = y;
     return vs;
-  }
+  } */
 
   /**
    * make() を実装
@@ -832,15 +824,18 @@ export class CharBuilder extends PMX.Maker {
         } else if (nameJa.includes('パーツ')) {
           this.makeJoint(param);
 
+          param.sepface = 1;
           param.whalf = 0.5;
           param.hhalf = 2;
-          param.dhalf = 0.125;
+          //param.dhalf = 0.125;
+          param.dhalf = 0;
           param.modelrot = [
             -30 * Math.PI / 180,
             10 * Math.PI / 180,
             10 * Math.PI / 180,
           ];
-          this.makeBox(param);
+          //this.makeBox(param);
+          this.makeBebel1(param);
 
           isBone = false;
         } else if (nameJa.includes('頭')) {
@@ -1617,6 +1612,7 @@ export class CharBuilder extends PMX.Maker {
    * @param {IParam} param 
    */
   makeBebel1(param) {
+    const sepface = param.sepface ?? -1;
     const vts = param.vertices;
     const startIndex = vts.length;
     const faces = param.faces;
@@ -1641,18 +1637,21 @@ export class CharBuilder extends PMX.Maker {
       mens.splice(1);
     }
 
-    for (const men of mens) {
-      const faceq = Quat.axisRot(new Vec3(0,1,0), rot[1] * Math.PI / 180)
-        .mul(Quat.axisRot(new Vec3(1, 0, 0), rot[0] * Math.PI / 180));
-      for (const i = 0; i < 3; ++i) {
-        const vnums = [1, 4, 8];
-        for (const j = 0; j < vnums[i]; ++j) {
+    for (let mi = 0; mi < mens.length; ++mi) {
+      const men = mens[mi];
+      const faceq = Quat.euler(men.rot);
+      const vnums = [1, 4, 8];
+      if (mi === sepface) {
+        vnums.push(1, 4);
+      }
+      for (let i = 0; i < vnums.length; ++i) {
+        for (let j = 0; j < vnums[i % 3]; ++j) {
           const v = new PMX.Vertex();
 
           let pv = new Vec3(0, 0, -men.z);
           let nv = new Vec3(0, 0, -1);
 
-          switch (i) {
+          switch (i % 3) {
             case 0: // 真ん中のみ
               break;
             case 1:
@@ -1691,9 +1690,12 @@ export class CharBuilder extends PMX.Maker {
               break;
           }
 
+          pv = faceq.rotate(pv);
+          nv = faceq.rotate(nv);
+
           this.applyEuler(pv.asArray(),
             nv.asArray(),
-            intl, modelrot,
+            intl, modelrot, // ボーンとしての補正
             bonea, v
           );
           const sqSize = Math.max(men.x, men.y);
@@ -1702,7 +1704,7 @@ export class CharBuilder extends PMX.Maker {
             pv.y / sqSize * 0.5 * 0.75 + 0.5,
           ];
           v.uv = TexMaker.subTex8(
-            uv[0], uv[1], 2,
+            uv[0], uv[1], sepface ? 2 : 0,
           );
           vts.push(v);
         }
@@ -1712,7 +1714,10 @@ export class CharBuilder extends PMX.Maker {
         [1, 5, 6], [2, 6, 7], [2, 7, 8], [3, 8, 9],
         [3, 9, 10], [4, 10, 11], [4, 11, 12], [1, 12, 5],
       ];
-      if (true) {
+
+      if (mi === sepface) {
+        fis.push([13, 14, 15], [13, 15, 16], [13, 16, 17], [13, 17, 14]);
+      } else {
         fis.push([0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1]);
       }
 
