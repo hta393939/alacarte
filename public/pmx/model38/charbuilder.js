@@ -420,7 +420,7 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '_つま先ＩＫ', nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
-{parentName: '上半身2', nameJa: 'パーツ１', nameEn: 'Parts1', p:[1,0,1]},
+{parentName: '上半身2', nameJa: 'パーツ１', nameEn: 'Parts1', p:[1,0,2]},
 {parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'Parts2', p:[0,1,1]},
 ]}
     ];
@@ -1265,7 +1265,7 @@ export class CharBuilder extends PMX.Maker {
       }
     }
 
-    for (let i = param.hnum * 0.5; i < param.hnum; ++i) { // 上から下か。下半分
+    for (let i = param.hnum * 0.5; i <= param.hnum; ++i) { // 上から下か。下半分
       const vang = i * Math.PI / vdiv;
       //let rr = param.rfunc(i);
       let rr = Math.sin(vang);
@@ -1302,7 +1302,7 @@ export class CharBuilder extends PMX.Maker {
       for (let j = 0; j < hdiv; ++j) {
         const v0 = (hdiv + 1) * i + j + startIndex;
         const v1 = v0 + 1;
-        const v2 = v0 + (hdiv + 1);
+        const v2 = v0 + (hdiv + 1); // 裏で切れてる
         const v3 = v2 + 1;
         faces.push([v0, v1, v2]);
         faces.push([v2, v1, v3]);
