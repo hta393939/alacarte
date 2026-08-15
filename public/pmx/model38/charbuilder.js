@@ -1636,6 +1636,10 @@ export class CharBuilder extends PMX.Maker {
       {x: whalf, y: dhalf, z: hhalf, rot: [90,0,0] }, // Y+
       {x: whalf, y: dhalf, z: hhalf, rot: [-90,0,0] }, // Y-
     ];
+    if (dhalf === 0) {
+      mens.splice(3);
+      mens.splice(1);
+    }
 
     for (const men of mens) {
       const faceq = Quat.axisRot(new Vec3(0,1,0), rot[1] * Math.PI / 180)
@@ -1694,8 +1698,8 @@ export class CharBuilder extends PMX.Maker {
           );
           const sqSize = Math.max(men.x, men.y);
           const uv = [
-            pv.x / sqSize * 0.5 + 0.5,
-            pv.y / sqSize * 0.5 + 0.5,
+            pv.x / sqSize * 0.5 * 0.75 + 0.5,
+            pv.y / sqSize * 0.5 * 0.75 + 0.5,
           ];
           v.uv = TexMaker.subTex8(
             uv[0], uv[1], 2,
@@ -1704,11 +1708,14 @@ export class CharBuilder extends PMX.Maker {
         }
       }
       const fis = [
-        [0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1],
         [1, 6, 2], [2, 8, 3], [3, 10, 4], [4, 12, 1],
         [1, 5, 6], [2, 6, 7], [2, 7, 8], [3, 8, 9],
         [3, 9, 10], [4, 10, 11], [4, 11, 12], [1, 12, 5],
       ];
+      if (true) {
+        fis.push([0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 1]);
+      }
+
       for (const fi of fis) {
         faces.push(fi.map(index => index + startIndex));
       }
