@@ -855,6 +855,15 @@ export class CharBuilder extends PMX.Maker {
           param.hhalf = 1;
           param.dhalf = 1;
           this.makeBody(param);
+        } else if (nameJa.includes('足')) {
+          param.whalf = 0.6;
+          param.winterval = 0.3;
+          param.thick = 0.1;
+          param.dhalf = 0.5;
+          param.hhalf = 0.5;
+          param.cutout = 0.05;
+          param.cutin = 0.025;
+          this.makeTun(param);
         } else if (nameJa.includes('手')) {
           param.modelrot = [0, 0, armang];
           this.makeJoint(param);
@@ -1202,7 +1211,7 @@ export class CharBuilder extends PMX.Maker {
 
     // 面張り
     for (let j = 0; j < hdiv; ++j) {
-      faces.push([0, 1 + j, 1 + j + 1].map(v => v + startIndex));
+      faces.push([0, 1 + j + 1, 1 + j].map(v => v + startIndex));
     }
 
     for (let i = 1; i < vdiv - 1; ++i) {
@@ -1218,7 +1227,7 @@ export class CharBuilder extends PMX.Maker {
 
     const bottomIndex = vts.length - 1 - (hdiv + 1);
     for (let j = 0; j < hdiv; ++j) {
-      faces.push([bottomIndex, bottomIndex + 1, vts.length - 1].map(v => v + startIndex));
+      faces.push([bottomIndex + 1, bottomIndex, vts.length - 1]);
     }
 
   }
@@ -1385,7 +1394,7 @@ export class CharBuilder extends PMX.Maker {
     const startIndex = vts.length;
     const faces = param.faces;
 
-    const col6 = param.col6;
+    const col6 = param.col6 || [1, 5, 5];
 
     const whalf = param.whalf || 1;
     const hhalf = param.hhalf || 1;
@@ -1402,10 +1411,10 @@ export class CharBuilder extends PMX.Maker {
       {p: [ winterval, hhalf, dhalf], rv: 1, n: [-1,1,1]},
 
       {p: [ winterval, hhalf, dhalf - thick], rv: -1, n: [-1,1,-1]},
-      {p: [ whalf - thick, hhalf,  dhalf], rv: -1, n: [-1,1,1]},
-      {p: [ whalf - thick, hhalf, -dhalf], rv: -1, n: [-1,1,-1]},
-      {p: [-whalf + thick, hhalf, -dhalf], rv: -1, n: [1,1,-1]},
-      {p: [-whalf + thick, hhalf,  dhalf], rv: -1, n: [1,1,1]},
+      {p: [ whalf - thick, hhalf,  dhalf - thick], rv: -1, n: [-1,1,1]},
+      {p: [ whalf - thick, hhalf, -dhalf + thick], rv: -1, n: [-1,1,-1]},
+      {p: [-whalf + thick, hhalf, -dhalf + thick], rv: -1, n: [1,1,-1]},
+      {p: [-whalf + thick, hhalf,  dhalf - thick], rv: -1, n: [1,1,1]},
       {p: [-winterval, hhalf, dhalf - thick], rv: -1, n: [1,1,-1]},
     ];
     const num = vs.length; // 12個
@@ -1439,7 +1448,7 @@ export class CharBuilder extends PMX.Maker {
       const v0 = i;
       const v1 = (i + 1) % num;
       const zig = [v0, v1, v0 + num, v1 + num];
-      zigs.push(fi);
+      zigs.push(zig);
     }
     for (let i = 0; i < num2 - 1; ++i) { // 上
       const v2 = i;
