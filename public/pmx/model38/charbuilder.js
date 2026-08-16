@@ -1342,27 +1342,36 @@ export class CharBuilder extends PMX.Maker {
     const whalf = param.whalf || 1;
     const hhalf = param.hhalf || 1;
     const dhalf = param.dhalf || 1;
+    /** 内側に厚み */
     const thick = param.thick || 0.1;
+    const winterval = param.winterval || 0.5;
     const vs = [ // 上だけ
-      {p: [-whalf, hhalf,  dhalf], rv: 1},
-      {p: [-whalf, hhalf, -dhalf], rv: 1},
-      {p: [ whalf, hhalf, -dhalf], rv: 1},
-      {p: [ whalf, hhalf,  dhalf], rv: 1},
-      {p: [ whalf - thick, hhalf,  dhalf], rv: -1},
-      {p: [ whalf - thick, hhalf, -dhalf], rv: -1},
-      {p: [-whalf + thick, hhalf, -dhalf], rv: -1},
-      {p: [-whalf + thick, hhalf,  dhalf], rv: -1},
+      {p: [-winterval, hhalf, dhalf], rv: 1, n: [1,1,1]},
+      {p: [-whalf, hhalf,  dhalf], rv: 1, n: [-1,1,1]},
+      {p: [-whalf, hhalf, -dhalf], rv: 1, n: [-1,1,-1]},
+      {p: [ whalf, hhalf, -dhalf], rv: 1, n: [ 1,1,-1]},
+      {p: [ whalf, hhalf,  dhalf], rv: 1, n: [ 1,1, 1]},
+      {p: [ winterval, hhalf, dhalf], rv: 1, n: [-1,1,1]},
+
+      {p: [ winterval, hhalf, dhalf - thick], rv: -1, n: [-1,1,-1]},
+      {p: [ whalf - thick, hhalf,  dhalf], rv: -1, n: [-1,1,1]},
+      {p: [ whalf - thick, hhalf, -dhalf], rv: -1, n: [-1,1,-1]},
+      {p: [-whalf + thick, hhalf, -dhalf], rv: -1, n: [1,1,-1]},
+      {p: [-whalf + thick, hhalf,  dhalf], rv: -1, n: [1,1,1]},
+      {p: [-winterval, hhalf, dhalf - thick], rv: -1, n: [1,1,-1]},
     ];
+    const num = vs.length; // 12個
+    const num2 = num / 2; // 6個
     for (let i = 0; i < 2; ++i) { // 上と下
       for (let j = 0; j < vs.length; ++j) {
         const v = new PMX.Vertex();
 
         let pv = Vec3.fromArray(vs[j].p);
+        let nv = Vec3.fromArray(vs[j].n).normalizeInPlace();
         if (i === 1) {
           pv.y = -pv.y;
+          nv.y = -nv.y;
         }
-        let nv = new Vec3(pv.x * vs[j].rv, pv.y, pv.z * vs[j].rv)
-          .normalizeInPlace();
 
         // TODO: 回転
 
@@ -1376,25 +1385,32 @@ export class CharBuilder extends PMX.Maker {
       }
     }
 
-    const clocks = [
-      [0, 1, 9, 8],
-      [1, 2, 10, 9],
-      [2, 3, 11, 10],
-      [3, 4, 12, 11], // 側面
-      [4, 5, 13, 12],
-      [5, 6, 14, 13],
-      [6, 7, 15, 14],
-      [7, 0, 8, 15], // ここまで側面
-      [7, 6, 1, 0], // 上
-      [6, 5, 2, 1],
-      [5, 4, 3, 2],
-      [12, 13, 10, 11], // 下
-      [13, 14, 9, 10],
-      [14, 15, 8, 9],
-    ];
-    for (const clock of clocks) {
-      const fis = clock.map(i => i + startIndex);
-      faces.push([fis[0], fis[1], fis[3]], [fis[1], fis[3], fis[2]]);
+    // 面張り
+    const zigs = [];
+    for (let i = 0; i < num; ++i) { // 側面
+      const v0 = i;
+      const v1 = (i + 1) % num;
+      const zig = [v0, v1, v0 + num, v1 + num];
+      zigs.push(fi);
+    }
+    for (let i = 0; i < num2 - 1; ++i) { // 上
+      const v2 = i;
+      const v3 = v2 + 1;
+      const v0 = num - 1 - i;
+      const v1 = v0 - 1;
+      zigs.push([v0, v1, v2, v3]);
+    }
+    for (let i = 0; i < num2 - 1; ++i) { // 下
+      const v0 = num + i;
+      const v1 = v0 + 1;
+      const v2 = num * 2 - 1 - i;
+      const v3 = v2 - 1;
+      zigs.push([v0, v1, v2, v3]);
+    }
+
+    for (const zig of zigs) {
+      const fis = zig.map(i => i + startIndex);
+      faces.push([fis[0], fis[1], fis[2]], [fis[2], fis[1], fis[3]]);
     }
 
   }
