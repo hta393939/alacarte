@@ -816,7 +816,7 @@ export class CharBuilder extends PMX.Maker {
           param.intl = [0, -0.125, 0];
           this.makeSphere(param);
         } else if (nameJa.includes('腕')) {
-          param.intl = [0, -0.25, 0];
+          param.intl = [0, -1, 0];
           param.modelrot = [0, Math.PI, - armang];
 
           param.col6 = [5, 5, 4];
@@ -824,7 +824,7 @@ export class CharBuilder extends PMX.Maker {
           param.whalf = 0.2;
           param.winterval = 0.1;
           param.dhalf = 0.2;
-          param.hhalf = 0.4;
+          param.hhalf = 0.6;
           param.cutout = 0.05;
           param.cutin = 0.025;
           this.makeTun(param);
@@ -837,7 +837,7 @@ export class CharBuilder extends PMX.Maker {
           param.hhalf = 0.25;
           this.makeMobius(param);
 
-          param.intl = [0, -0.25, 0];
+          param.intl = [0, -1, 0];
           param.modelrot = [
             0, Math.PI,
             - Math.atan2(
@@ -849,27 +849,8 @@ export class CharBuilder extends PMX.Maker {
           param.col6 = [5, 5, 4];
           param.whalf = 0.2;
           param.winterval = 0.1;
-          param.dhalf = 0.3;
-          param.hhalf = 0.5;
-          param.cutout = 0.05;
-          param.cutin = 0.025;
-          this.makeTun(param);
-
-          param.radius = 0.125;
-          param.hhalf = 0.125;
-        } else if (nameJa.includes('ひざ')) {
-          param.radius = 0.5;
-          param.hhalf = 0.25;
-          param.zrot = 0;
-          this.makeMobius(param);
-
-          param.thick = thickTun;
-          param.intl = [0, -0.2, 0];
-          param.col6 = [5, 5, 4];
-          param.whalf = 0.3;
-          param.winterval = 0.1;
-          param.dhalf = 0.3;
-          param.hhalf = 0.6;
+          param.dhalf = 0.2;
+          param.hhalf = 0.75;
           param.cutout = 0.05;
           param.cutin = 0.025;
           this.makeTun(param);
@@ -914,17 +895,38 @@ export class CharBuilder extends PMX.Maker {
           this.makeBody(param);
         } else if (nameJa.includes('足首')) {
           this.makeCyl(param);
+
         } else if (nameJa.includes('足')) {
-          param.intl = [0, -0.5, 0];
+          param.intl = [0, -3, 0];
           param.whalf = 0.6;
           param.winterval = 0.3;
           param.thick = 0.1;
           param.dhalf = 0.5;
-          param.hhalf = 0.5;
+          param.hhalf = 2;
           param.cutout = 0.05;
           param.cutin = 0.025;
           this.makeTun(param);
         //} else if (nameJa.includes('')) {
+
+        } else if (nameJa.includes('ひざ')) {
+          param.radius = 0.5;
+          param.hhalf = 0.25;
+          param.zrot = 0;
+          this.makeMobius(param);
+
+          param.thick = thickTun;
+          param.intl = [0, -2, 0];
+          param.col6 = [5, 5, 4];
+          param.whalf = 0.3;
+          param.winterval = 0.1;
+          param.dhalf = 0.3;
+          param.hhalf = 2;
+          param.cutout = 0.05;
+          param.cutin = 0.025;
+          this.makeTun(param);
+
+          param.radius = 0.125;
+          param.hhalf = 0.125;
 
         } else if (nameJa.includes('手')) {
           param.modelrot = [0, 0, armang];
