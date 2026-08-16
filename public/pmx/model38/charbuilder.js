@@ -1119,7 +1119,7 @@ export class CharBuilder extends PMX.Maker {
     const radius = param.radius || 1;
     /** 最初に平行移動する分(回転よりも前) */
     const intl = param.intl || [0, 0, 0];
-    const index = param.index || 0;
+
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
     //const boneb = param.boneb;
@@ -1216,9 +1216,9 @@ export class CharBuilder extends PMX.Maker {
       }
     }
 
-    const index = vts.length - 1 - hdiv;
+    const bottomIndex = vts.length - 1 - (hdiv + 1);
     for (let j = 0; j < hdiv; ++j) {
-      faces.push([index, index + 1, vts.length - 1].map(v => v + startIndex));
+      faces.push([bottomIndex, bottomIndex + 1, vts.length - 1].map(v => v + startIndex));
     }
 
   }
