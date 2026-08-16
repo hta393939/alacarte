@@ -564,7 +564,7 @@ export class CharBuilder extends PMX.Maker {
       specular: [0.2, 0.2, 0.2],
       specPower: 0.5,
       ambient: [0.7, 0.7, 0.7],
-      edgeColor: [156/255, 130/255, 48/255, 1],
+      edgeColor: [102/255, 102/255, 0/255, 1],
       bitFlag: bits,
       sphereMode: PMX.Material.SPMODE_ADD,
       sphereIndex: 1,
@@ -856,6 +856,7 @@ export class CharBuilder extends PMX.Maker {
           param.dhalf = 1;
           this.makeBody(param);
         } else if (nameJa.includes('足')) {
+          param.intl = [0, -0.5, 0];
           param.whalf = 0.6;
           param.winterval = 0.3;
           param.thick = 0.1;
@@ -1227,7 +1228,7 @@ export class CharBuilder extends PMX.Maker {
 
     const bottomIndex = vts.length - 1 - (hdiv + 1);
     for (let j = 0; j < hdiv; ++j) {
-      faces.push([bottomIndex + 1, bottomIndex, vts.length - 1]);
+      faces.push([bottomIndex + j, bottomIndex + j + 1, vts.length - 1]);
     }
 
   }
@@ -1402,23 +1403,39 @@ export class CharBuilder extends PMX.Maker {
     /** 内側に厚み */
     const thick = param.thick || 0.1;
     const winterval = param.winterval || 0.5;
+    const cutout = param.cutout || 0.05;
+    const cutin = param.cutin || 0.025;
     const vs = [ // 上だけ
       {p: [-winterval, hhalf, dhalf], rv: 1, n: [1,1,1]},
-      {p: [-whalf, hhalf,  dhalf], rv: 1, n: [-1,1,1]},
-      {p: [-whalf, hhalf, -dhalf], rv: 1, n: [-1,1,-1]},
-      {p: [ whalf, hhalf, -dhalf], rv: 1, n: [ 1,1,-1]},
-      {p: [ whalf, hhalf,  dhalf], rv: 1, n: [ 1,1, 1]},
-      {p: [ winterval, hhalf, dhalf], rv: 1, n: [-1,1,1]},
+      {p: [-whalf + cutout, hhalf,  dhalf], rv: 1, n: [0,1,1]},
+      {p: [-whalf, hhalf,  dhalf - cutout], rv: 1, n: [-1,1,0]}, // 左奥
 
-      {p: [ winterval, hhalf, dhalf - thick], rv: -1, n: [-1,1,-1]},
-      {p: [ whalf - thick, hhalf,  dhalf - thick], rv: -1, n: [-1,1,1]},
-      {p: [ whalf - thick, hhalf, -dhalf + thick], rv: -1, n: [-1,1,-1]},
-      {p: [-whalf + thick, hhalf, -dhalf + thick], rv: -1, n: [1,1,-1]},
-      {p: [-whalf + thick, hhalf,  dhalf - thick], rv: -1, n: [1,1,1]},
+      {p: [-whalf, hhalf, -dhalf + cutout], rv: 1, n: [-1,1,0]},
+      {p: [-whalf + cutout, hhalf, -dhalf], rv: 1, n: [0,1,-1]}, // 左手前
+
+      {p: [ whalf - cutout, hhalf, -dhalf], rv: 1, n: [0,1,-1]}, // 右手前
+      {p: [ whalf, hhalf, -dhalf + cutout], rv: 1, n: [ 1,1,0]},
+
+      {p: [ whalf, hhalf,  dhalf - cutout], rv: 1, n: [ 1,1,0]},
+      {p: [ whalf - cutout, hhalf,  dhalf], rv: 1, n: [0,1, 1]}, // 右奥
+      {p: [ winterval, hhalf, dhalf], rv: 1, n: [-1,1,1]}, // 外周
+
+      {p: [ winterval, hhalf, dhalf - thick], rv: -1, n: [-1,1,-1]}, // 内周
+      {p: [ whalf - thick - cutin, hhalf,  dhalf - thick], rv: -1, n: [0,1,1]}, // 右奥
+      {p: [ whalf - thick, hhalf,  dhalf - thick - cutin], rv: -1, n: [-1,1,0]},
+
+      {p: [ whalf - thick, hhalf, -dhalf + thick + cutin], rv: -1, n: [-1,1,0]}, // 右手前
+      {p: [ whalf - thick - cutin, hhalf, -dhalf + thick], rv: -1, n: [0,1,-1]},
+
+      {p: [-whalf + thick + cutin, hhalf, -dhalf + thick], rv: -1, n: [0,1,-1]}, // 左手前
+      {p: [-whalf + thick, hhalf, -dhalf + thick + cutin], rv: -1, n: [1,1,0]},
+
+      {p: [-whalf + thick, hhalf,  dhalf - thick - cutin], rv: -1, n: [0,1,1]},
+      {p: [-whalf + thick + cutin, hhalf,  dhalf - thick], rv: -1, n: [1,1,0]},
       {p: [-winterval, hhalf, dhalf - thick], rv: -1, n: [1,1,-1]},
     ];
-    const num = vs.length; // 12個
-    const num2 = num / 2; // 6個
+    const num = vs.length; // 12個+
+    const num2 = num / 2; // 6個+
     for (let i = 0; i < 2; ++i) { // 上と下
       for (let j = 0; j < vs.length; ++j) {
         const v = new PMX.Vertex();
