@@ -1131,7 +1131,25 @@ export class CharBuilder extends PMX.Maker {
     const startIndex = vts.length;
     const faces = param.faces;
 
-    for (let i = 0; i <= vdiv; ++i) { // 上から下か
+    {
+        const v = new PMX.Vertex();
+        let x = 0;
+        let y = 1;
+        let z = 0;
+
+        this.applyEuler([x * radius, y * hhalf, z * radius],
+          [x, y, z],
+          intl, modelrot,
+          bonea, v);
+
+        let subu = 0.5;
+        let subv = 0;
+        v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE);
+
+        vts.push(v);  
+    }
+
+    for (let i = 1; i < vdiv; ++i) { // 上から下か
       const vang = i * Math.PI / vdiv;
       let rr = Math.sin(vang);
 
@@ -1163,15 +1181,44 @@ export class CharBuilder extends PMX.Maker {
       }
     }
 
-    for (let i = 0; i < vdiv; ++i) {
+    {
+        const v = new PMX.Vertex();
+
+        let x = 0;
+        let y = -1;
+        let z = 0;
+
+        this.applyEuler([x * radius, y * hhalf, z * radius],
+          [x, y, z],
+          intl, modelrot,
+          bonea, v);
+
+        let subu = 0.5;
+        let subv = 1;
+        v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE);
+
+        vts.push(v);
+    }
+
+    // 面張り
+    for (let j = 0; j < hdiv; ++j) {
+      faces.push([0, 1 + j, 1 + j + 1].map(v => v + startIndex));
+    }
+
+    for (let i = 1; i < vdiv - 1; ++i) {
       for (let j = 0; j < hdiv; ++j) {
-        const v0 = (hdiv + 1) * i + j + startIndex;
+        const v0 = (hdiv + 1) * (i - 1) + j + (startIndex + 1);
         const v1 = v0 + 1;
         const v2 = v0 + (hdiv + 1);
         const v3 = v2 + 1;
         faces.push([v0, v1, v2]);
         faces.push([v2, v1, v3]);
       }
+    }
+
+    const index = vts.length - 1 - hdiv;
+    for (let j = 0; j < hdiv; ++j) {
+      faces.push([index, index + 1, vts.length - 1].map(v => v + startIndex));
     }
 
   }
@@ -1196,6 +1243,7 @@ export class CharBuilder extends PMX.Maker {
     const modelrot = param.modelrot || [0, 0, 0];
 
     const vts = param.vertices;
+    /** この関数での先頭 */
     const startIndex = vts.length;
     const faces = param.faces;
 
@@ -1215,7 +1263,7 @@ export class CharBuilder extends PMX.Maker {
       let rr = Math.sin(vang);
 
       const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
-      for (let j = 0; j < vdiv * 0.5; ++j) {
+      for (let j = 0; j <= hdiv; ++j) {
         const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
 
         const hang = (j % hdiv) * Math.PI * 2 / hdiv;
