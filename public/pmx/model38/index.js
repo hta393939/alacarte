@@ -249,7 +249,7 @@ class Misc {
 
     {
       const maker = new TexMaker();
-      if (false) {
+      if (false) { // TODO: スフィアマップ有効時
         maker.drawAdd(cvs[1]);
       } else {
         const c = cvs[1].getContext('2d');

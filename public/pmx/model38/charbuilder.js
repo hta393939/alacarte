@@ -363,26 +363,26 @@ export class CharBuilder extends PMX.Maker {
 { lr: false, bones: [
 { parentName: '', nameJa: '全ての親', nameEn: 'root', p:[0,0,0] },
 { parentName: '全ての親', nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
-{ parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0, 5, 0] },
-{ parentName: 'センター', nameJa: 'グルーブ', nameEn: 'groove', p:[0, 0.25, 0] },
-{ parentName: 'グルーブ', nameJa: '腰', nameEn: 'waist', p:[0, 0.5, 0] },
-{ parentName: '腰', nameJa: '下半身', nameEn: 'spine', p: [0, 0.5, 0] },
-{ parentName: '下半身', nameJa: '上半身', nameEn: 'chest', p:[0,1,0] },
-{ parentName: '上半身', nameJa: '上半身2', nameEn: 'upperChest', p:[0,1,0] },
-{ parentName: '上半身2', nameJa: '首', nameEn: 'neck', p:[0,1,0] },
-{ parentName: '首', nameJa: '頭', nameEn: 'head', p:[0,1,0] }, // #7
+{ parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0, 8, 0] },
+{ parentName: 'センター', nameJa: 'グルーブ', nameEn: 'groove', p:[0, 1, 0] },
+{ parentName: 'グルーブ', nameJa: '腰', nameEn: 'waist', p:[0, 3, 0] },
+{ parentName: '腰', nameJa: '下半身', nameEn: 'spine', p: [0, 1, 0] },
+{ parentName: '下半身', nameJa: '上半身', nameEn: 'chest', p:[0, 1, 0] },
+{ parentName: '上半身', nameJa: '上半身2', nameEn: 'upperChest', p:[0, 2, 0] },
+{ parentName: '上半身2', nameJa: '首', nameEn: 'neck', p:[0, 1, 0] },
+{ parentName: '首', nameJa: '頭', nameEn: 'head', p:[0, 1, 0] }, // #7
 ]},
 { lr: true, bones: [
 {parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg', p:[1,0,0]},
-{parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg', p:[0,-2,0]},
-{parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot', p:[0,-2,0]},
+{parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg', p:[0,-5,0]},
+{parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot', p:[0,-5,0]},
 {parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
 {parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder', p:[0.5,0,0]},
 {parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm', p:[0.5,0,0]},
-{parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[ax,-ay,0]},
-{parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[ax,-ay,0]},
+{parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[ax * 2,-ay * 2,0]},
+{parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[ax * 2,-ay * 2,0]},
 // 薬指を手首の先として使用する
 {parentName: '_手首',nameJa: '薬指１', nameEn: 'RingProximal', p:[fx,-fy,0]},
 {parentName: '_薬指１',nameJa: '薬指２', nameEn: 'RingIntermediate', p:[fx,-fy,0]},
@@ -561,9 +561,9 @@ export class CharBuilder extends PMX.Maker {
       nameEn: `material000`,
       texIndex: 0,
       diffuse: [1, 1, 1, 1],
-      specular: [0.2, 0.2, 0.2],
-      specPower: 0.5,
-      ambient: [0.7, 0.7, 0.7],
+      specular: [0.7, 0.7, 0.7],
+      specPower: 10, // 0.5
+      ambient: [0.3, 0.3, 0.3],
       edgeColor: [102/255, 102/255, 0/255, 1],
       bitFlag: bits,
       sphereMode: PMX.Material.SPMODE_ADD,
@@ -777,7 +777,9 @@ export class CharBuilder extends PMX.Maker {
       }
     }
 
-    {
+    { // トンネルの厚み
+      const thickTun = 0.06;
+
       this.indexed();
       /** (0, -1, 0) をZ+に回すときの回転量 */
       const armang = Math.atan2(CharBuilder.ANX, CharBuilder.ANY);
@@ -801,7 +803,9 @@ export class CharBuilder extends PMX.Maker {
         }
 
         let isBone = true;
-        if (nameJa.includes('指')) {
+        if (nameJa.includes('ＩＫ')) { // 全角
+          isBone = false;
+        } else if (nameJa.includes('指')) {
           param.radius = CharBuilder.FINGER_INTERVAL * 0.5;
           param.hhalf = CharBuilder.FINGER_INTERVAL * 0.5;
           param.modelrot = [0, 0, armang];
@@ -811,17 +815,68 @@ export class CharBuilder extends PMX.Maker {
           param.hhalf = param.radius * 2;
           param.intl = [0, -0.125, 0];
           this.makeSphere(param);
+        } else if (nameJa.includes('腕')) {
+          param.intl = [0, -0.25, 0];
+          param.modelrot = [0, Math.PI, - armang];
 
-        } else if (nameJa.includes('ひじ') || nameJa.includes('ひざ')) {
-          param.radius = 0.5;
-          param.hhalf = 0.25;
-          if (nameJa.includes('ひざ')) {
-            param.zrot = 0;
-          }
-          this.makeMobius(param);
+          param.col6 = [5, 5, 4];
+          param.thick = thickTun;
+          param.whalf = 0.2;
+          param.winterval = 0.1;
+          param.dhalf = 0.2;
+          param.hhalf = 0.4;
+          param.cutout = 0.05;
+          param.cutin = 0.025;
+          this.makeTun(param);
 
           param.radius = 0.125;
           param.hhalf = 0.125;
+
+        } else if (nameJa.includes('ひじ')) {
+          param.radius = 0.5;
+          param.hhalf = 0.25;
+          this.makeMobius(param);
+
+          param.intl = [0, -0.25, 0];
+          param.modelrot = [
+            0, Math.PI,
+            - Math.atan2(
+              CharBuilder.ANX,
+              CharBuilder.ANY,
+            )];
+
+          param.thick = thickTun;
+          param.col6 = [5, 5, 4];
+          param.whalf = 0.2;
+          param.winterval = 0.1;
+          param.dhalf = 0.3;
+          param.hhalf = 0.5;
+          param.cutout = 0.05;
+          param.cutin = 0.025;
+          this.makeTun(param);
+
+          param.radius = 0.125;
+          param.hhalf = 0.125;
+        } else if (nameJa.includes('ひざ')) {
+          param.radius = 0.5;
+          param.hhalf = 0.25;
+          param.zrot = 0;
+          this.makeMobius(param);
+
+          param.thick = thickTun;
+          param.intl = [0, -0.2, 0];
+          param.col6 = [5, 5, 4];
+          param.whalf = 0.3;
+          param.winterval = 0.1;
+          param.dhalf = 0.3;
+          param.hhalf = 0.6;
+          param.cutout = 0.05;
+          param.cutin = 0.025;
+          this.makeTun(param);
+
+          param.radius = 0.125;
+          param.hhalf = 0.125;
+
         } else if (nameJa.includes('パーツ')) {
           this.makeJoint(param);
 
@@ -848,6 +903,8 @@ export class CharBuilder extends PMX.Maker {
         } else if (nameJa.includes('目')) {
           isBone = false;
           param.intl = [0, 0, -0.5];
+          param.hhalf = 0.1;
+          param.col6 = [2, 2, 2];
           this.makeEye(param);
         } else if (nameJa.includes('上半身2')) { // 2 は半角
           isBone = false;
@@ -855,6 +912,8 @@ export class CharBuilder extends PMX.Maker {
           param.hhalf = 1;
           param.dhalf = 1;
           this.makeBody(param);
+        } else if (nameJa.includes('足首')) {
+          this.makeCyl(param);
         } else if (nameJa.includes('足')) {
           param.intl = [0, -0.5, 0];
           param.whalf = 0.6;
@@ -865,6 +924,8 @@ export class CharBuilder extends PMX.Maker {
           param.cutout = 0.05;
           param.cutin = 0.025;
           this.makeTun(param);
+        //} else if (nameJa.includes('')) {
+
         } else if (nameJa.includes('手')) {
           param.modelrot = [0, 0, armang];
           this.makeJoint(param);
@@ -1258,7 +1319,7 @@ export class CharBuilder extends PMX.Maker {
     const faces = param.faces;
 
     const subindex8 = param.subindex8 || -1;
-    const col6 = param.col6;
+    const col6 = param.col6 || [5, 5, 5];
 
     const _calcuv = (ratex, ratey) => {
       if (subindex8 >= 0) {
@@ -1421,17 +1482,17 @@ export class CharBuilder extends PMX.Maker {
       {p: [ winterval, hhalf, dhalf], rv: 1, n: [-1,1,1]}, // 外周
 
       {p: [ winterval, hhalf, dhalf - thick], rv: -1, n: [-1,1,-1]}, // 内周
-      {p: [ whalf - thick - cutin, hhalf,  dhalf - thick], rv: -1, n: [0,1,1]}, // 右奥
+      {p: [ whalf - thick - cutin, hhalf,  dhalf - thick], rv: -1, n: [0,1,-1]}, // 右奥
       {p: [ whalf - thick, hhalf,  dhalf - thick - cutin], rv: -1, n: [-1,1,0]},
 
       {p: [ whalf - thick, hhalf, -dhalf + thick + cutin], rv: -1, n: [-1,1,0]}, // 右手前
-      {p: [ whalf - thick - cutin, hhalf, -dhalf + thick], rv: -1, n: [0,1,-1]},
+      {p: [ whalf - thick - cutin, hhalf, -dhalf + thick], rv: -1, n: [0,1,1]},
 
-      {p: [-whalf + thick + cutin, hhalf, -dhalf + thick], rv: -1, n: [0,1,-1]}, // 左手前
+      {p: [-whalf + thick + cutin, hhalf, -dhalf + thick], rv: -1, n: [0,1,1]}, // 左手前
       {p: [-whalf + thick, hhalf, -dhalf + thick + cutin], rv: -1, n: [1,1,0]},
 
-      {p: [-whalf + thick, hhalf,  dhalf - thick - cutin], rv: -1, n: [0,1,1]},
-      {p: [-whalf + thick + cutin, hhalf,  dhalf - thick], rv: -1, n: [1,1,0]},
+      {p: [-whalf + thick, hhalf,  dhalf - thick - cutin], rv: -1, n: [1,1,0]},
+      {p: [-whalf + thick + cutin, hhalf,  dhalf - thick], rv: -1, n: [0,1,-1]},
       {p: [-winterval, hhalf, dhalf - thick], rv: -1, n: [1,1,-1]},
     ];
     const num = vs.length; // 12個+
