@@ -2,6 +2,14 @@
 import { CharBuilder } from "./charbuilder.js";
 import { TexMaker } from "./texmaker.js";
 
+/**
+ * 髪1 [0,1,1]
+ * 髪2 [0,1,0]
+ * 服灰 [1,1,1]
+ * 服黒 [0,0,0]
+ * アクセント紫 [1,0,1]
+ * アクセント黒 [0,0,0]
+ */
 class Misc {
   constructor() {
     this.STORAGE = 'model';
@@ -125,11 +133,14 @@ class Misc {
     const _makeChar = (isWrite) => {
       const param = this.getCommonOptions();
       console.log('_makechar', isWrite, param);
-  
+
+      let commentJa = `https://piapro.jp/license/pcl/summary\r\n${new Date().toLocaleString()}\r\n${CharBuilder.VERSION}\r\n`;
+      commentJa += `ボーン構造など ニコニ立体 アリシア・ソリッド モデルを参考にしています。\r\n`;
+
       Object.assign(param, {
-        nameJa: `ウサギ式初音ミク アバタースタイル`,
-        nameEn: `Usagi's Hatsune Miku - avatar style`,
-        commentJa: `https://piapro.jp/license/pcl/summary\r\n${new Date().toLocaleString()}\r\n${CharBuilder.VERSION}`,
+        nameJa: `ウサギ式初音ミク ロボアバタースタイル`,
+        nameEn: `Usagi's Hatsune Miku - robo avatar style`,
+        commentJa,
         commentEn: `https://piapro.jp/license/pcl/summary`,
         textures: [
           `tex.png`,

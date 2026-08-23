@@ -837,20 +837,29 @@ export class TexMaker {
   drawLogo(canvas) {
     const whole = canvas.width;
     const div = 8;
+    /** 1つ分 */
     const side = whole / div;
     const c = canvas.getContext('2d');
     c.rotate(Math.PI * 0.5); // 時計回り
-    c.translate(side * 2, side * -1);
+
+    c.translate(side * 2, side * -8);
 
     c.fillStyle = '#00ffff';
-    c.fillRect(0, 0, side * 2, side);
+    c.fillRect(0, 0, side * 4, side);
     //c.clearRect(0, 0, side * 2, side);
 
     c.fillStyle = 'black';
-    c.font = 'normal 90px Consolas';
+    c.font = 'bold 80px Consolas';
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-    c.fillText('VCAL-139', side, side * 0.5 + 40);
+
+    const text = 'VoCAL-139';
+    c.lineWidth = 10;
+    c.strokeText(text, side * 2, side * 0.5 + 40);
+    c.fillText(text, side * 2, side * 0.5 + 40);
+
+    c.fillStyle = 'white';
+    c.fillText(text, side * 2, side * 0.5 + 40);
 
     c.resetTransform();
   }

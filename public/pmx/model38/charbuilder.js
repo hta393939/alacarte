@@ -1832,9 +1832,9 @@ export class CharBuilder extends PMX.Maker {
                 const w = men.x - bebelsub;
                 const h = men.y - bebelsub;
                 const ps = [
-                  {p: [-w,  h, 0]},
-                  {p: [ w,  h, 0]},
-                  {p: [ w, -h, 0]},
+                  {p: [-w,  h, 0]}, // 左上
+                  {p: [ w,  h, 0]}, // 右上
+                  {p: [ w, -h, 0]}, // 右下
                   {p: [-w, -h, 0]},
                 ];
                 pv.x = ps[j].p[0];
@@ -1879,13 +1879,25 @@ export class CharBuilder extends PMX.Maker {
           );
 
           let index = 0;
-          if (i >= 3) { // TODO: UV を広く取るか??
-            index = 2;
-          }
-
           v.uv = TexMaker.subTex8(
             uv[0], uv[1], index,
           );
+
+          if (i >= 3) { // 専用部分
+            const cs = [15/16, 0.5];
+            v.uv = cs;
+            if (i >= 4) {
+              const uh = 1 / 16;
+              const vh = 1 / 4;
+              v.uv = [
+                [cs[0] - uh, cs[1] - vh],
+                [cs[0] + uh, cs[1] - vh],
+                [cs[0] + uh, cs[1] + vh],
+                [cs[0] - uh, cs[1] + vh],
+              ][j];
+            }
+          }
+
           vts.push(v);
         }
       }
