@@ -1544,16 +1544,18 @@ export class CharBuilder extends PMX.Maker {
       {p: [-whalf + thick, hhalf,  dhalf - thick - cutin], rv: -1, n: [1,1,0]},
       {p: [-whalf + thick + cutin, hhalf,  dhalf - thick], rv: -1, n: [0,1,-1]},
       {p: [-winterval, hhalf, dhalf - thick], rv: -1, n: [1,1,-1]},
+
+      {p: [-winterval, hhalf, dhalf], rv: 1, n: [1,1,1]},
     ];
-    const num = vs.length; // 12個+
-    const num2 = num / 2; // 6個+
+    const num = vs.length; // 20個 + 1
+    const num2 = Math.floor(num / 2); // 切り捨てて10個
     for (let i = 0; i < 2; ++i) { // 上と下
       for (let j = 0; j < vs.length; ++j) {
         const v = new PMX.Vertex();
 
         let pv = Vec3.fromArray(vs[j].p);
         let nv = Vec3.fromArray(vs[j].n).normalizeInPlace();
-        if (i === 1) {
+        if (i === 1) { // 下の点
           pv.y = -pv.y;
           nv.y = -nv.y;
         }
