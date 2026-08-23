@@ -779,6 +779,8 @@ export class CharBuilder extends PMX.Maker {
 
     { // トンネルの厚み
       const thickTun = 0.06;
+      // ピン半径
+      const rpin = 3 / 80 * 12 * 0.5;
 
       this.indexed();
       /** (0, -1, 0) をZ+に回すときの回転量 */
@@ -802,9 +804,9 @@ export class CharBuilder extends PMX.Maker {
           continue; // ～先 にのるメッシュは無い
         }
 
-        let isBone = true;
+        let isBone = 'sphere';
         if (nameJa.includes('ＩＫ')) { // 全角
-          isBone = false;
+          isBone = '';
         } else if (nameJa.includes('指')) {
           param.radius = CharBuilder.FINGER_INTERVAL * 0.5;
           param.hhalf = CharBuilder.FINGER_INTERVAL * 0.5;
@@ -894,6 +896,7 @@ export class CharBuilder extends PMX.Maker {
           param.dhalf = 1;
           this.makeBody(param);
         } else if (nameJa.includes('足首')) {
+
           this.makeCyl(param);
 
         } else if (nameJa.includes('足')) {
@@ -906,7 +909,9 @@ export class CharBuilder extends PMX.Maker {
           param.cutout = 0.05;
           param.cutin = 0.025;
           this.makeTun(param);
-        //} else if (nameJa.includes('')) {
+
+          console.log('足のはず', nameJa);
+          isBone = 'pin';
 
         } else if (nameJa.includes('ひざ')) {
           param.radius = 0.5;
@@ -931,16 +936,23 @@ export class CharBuilder extends PMX.Maker {
         } else if (nameJa.includes('手')) {
           param.modelrot = [0, 0, armang];
           this.makeJoint(param);
-          isBone = false;
+          isBone = '';
           this.makeHand(param);
         } else {
           this.makeJoint(param);
         }
 
-        if (isBone) { // ボーンメッシュのように
+
+        if (isBone === 'sphere') { // ボーンメッシュのように
           param.intl = [0, -0.25, 0];
           param.hhalf = param.radius * 2;
           this.makeSphere(param);
+        } else if (isBone === 'pin') {
+          param.intl = [0, -0.25, 0];
+          param.hhalf = param.radius * 2;
+          param.radius = rpin;
+          param.vdiv = 4;
+          this.makeCyl(param);
         }
 
       }
@@ -1306,8 +1318,10 @@ export class CharBuilder extends PMX.Maker {
     const hdiv = param.hdiv || 16;
     const vdiv = param.vdiv || 8;
     const hnum = param.hnum || 2;
-    const hhalf = param.hhalf || 1;
+
     const radius = param.radius || 1;
+    const hhalf = param.hhalf || radius;
+
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
     //const boneb = param.boneb;
@@ -1317,7 +1331,7 @@ export class CharBuilder extends PMX.Maker {
 
     const vts = param.vertices;
     /** この関数での先頭 */
-    const startIndex = vts.length;
+    let startIndex = vts.length;
     const faces = param.faces;
 
     const subindex8 = param.subindex8 || -1;
