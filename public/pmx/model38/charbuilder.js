@@ -1330,6 +1330,23 @@ export class CharBuilder extends PMX.Maker {
       return TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
     };
 
+    if (false) {
+      {
+        const v = new PMX.Vertex();
+        let x = 0;
+        let y = 1;
+        let z = 0;
+        this.applyEuler(
+          [x * radius, y * radius + hhalf, z * radius],
+          [x, y, z],
+          intl, modelrot,
+          bonea, v
+        );
+        v.uv = [0.5, 0];
+        vts.push(v);       
+      }
+    }
+
     for (let i = 0; i < vdiv * 0.5; ++i) { // 上から下か 上半分
       const vang = i * Math.PI / vdiv;
       //let rr = param.rfunc(i);
@@ -1428,7 +1445,24 @@ export class CharBuilder extends PMX.Maker {
         vts.push(v);
       }
     }
+    if (false) {
+      {
+        const v = new PMX.Vertex();
+        let x = 0;
+        let y = -1;
+        let z = 0;
+        this.applyEuler(
+          [x * radius, y * radius + hhalf, z * radius],
+          [x, y, z],
+          intl, modelrot,
+          bonea, v
+        );
+        v.uv = [0.5, 1];
+        vts.push(v);       
+      }
+    }
 
+    // 面
     for (let i = 0; i < (vdiv + hnum); ++i) {
       for (let j = 0; j < hdiv; ++j) {
         const v0 = (hdiv + 1) * i + j + startIndex;
