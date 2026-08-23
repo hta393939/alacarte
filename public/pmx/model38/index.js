@@ -279,6 +279,23 @@ class Misc {
         colb: [201,  91, 128],
         mode: 'lineary3',
       });
+      // 腕ひじ足ひざなど
+      maker.drawSquare1(cvs[0], CharBuilder.INDEX_TUNNEL8, {
+        cola: [17, 238, 17],
+        col : [238, 238, 221],
+        colb: [153, 153, 51],
+      });
+      maker.drawSquare1(cvs[0], CharBuilder.INDEX_TUNNEL9, {
+        cola: [17, 238, 17],
+        col : [238, 238, 221],
+        colb: [153, 153, 51],
+      });
+      maker.drawSquare1(cvs[0], CharBuilder.INDEX_TUNNEL10, {
+        cola: [17, 238, 17],
+        col : [238, 238, 221],
+        colb: [153, 153, 51],
+      });
+
       maker.drawMobius(cvs[0], CharBuilder.INDEX_MOBIUS, {
       });
       maker.drawOwnBone(cvs[0], CharBuilder.INDEX_OWNBONE, {

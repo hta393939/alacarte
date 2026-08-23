@@ -497,7 +497,7 @@ export class TexMaker {
   }
 
   /**
-   * 
+   * なんだっけ..
    * @param {HTMLCanvasElement} canvas 
    */ 
   draw5(canvas, offsetxrate, offsetyrate) {
@@ -600,14 +600,18 @@ export class TexMaker {
    * @param {number} u サブテクスチャの0.0～1.0
    * @param {number} v サブテクスチャの0.0～1.0
    * @param {number} index 0～63
+   * @param {number} [scale=1] 0.5 を中心に縮める用スケール
    */
-  static subTex8(u, v, index) {
+  static subTex8(u, v, index, scale = 1) {
     //const whole = 2048;
     const div = 8;
     //const side = whole / div;
     const bx = (index % div);
     const by = Math.floor(index / div);
-    return [bx / div + u / div, by / div + v / div];
+    return [
+      bx / div + ((u - 0.5) * scale + 0.5) / div,
+      by / div + ((v - 0.5) * scale + 0.5) / div,
+    ];
   }
 
   /**
@@ -625,7 +629,7 @@ export class TexMaker {
   }
 
   /**
-   * 
+   * 上から下へのリニア汎用
    * @param {HTMLCanvasElement} canvas 
    * @param {number} index 8x8で0～63のどこか
    */
@@ -639,11 +643,11 @@ export class TexMaker {
 
     const mode = param.mode || 'lineary3';
     /** @type {number[]} */
-    let cola = param.cola || [255, 255, 255];
+    let cola = param.cola || [238, 238, 238];
 
     let col = param.col || [128, 128, 128];
     /** @type {number[]} */
-    let colb = param.colb || [0, 0, 0];
+    let colb = param.colb || [17, 17, 17];
 
     //const img = c.getImageData(bx, by, side, side);
     let grad = c.createLinearGradient(bx, by, bx, by + side);
@@ -657,38 +661,6 @@ export class TexMaker {
         c.fillRect(bx, by, side, side);
         break;
     }
-
-    /*
-    for (let y = 0; y < side; ++y) {
-      for (let x = 0; x < side; ++x) {
-        // 半分だけ使う場合
-        let t = y / (side * 0.5) - 0.5; // 0.0, 0.5, 1.0, 1.5, 2.0
-        if (mode === 'lineary') {
-          t = 1 - t;
-        } else if (mode === 'lineary3') { // 3点指定
-          if (y < side * 0.5) {
-            colb = param.col || [128, 128, 128];
-            t = 1 - t * 2;
-          } else {
-            cola = param.col || [128, 128, 128];
-            t = 1 - (t - 0.5) * 2;
-          }
-        }
-        let offset = (x + side * y) * 4;
-        t = Math.max(0, Math.min(t, 1));
-        let r = cola[0] * t + colb[0] * (1 - t);
-        let g = cola[1] * t + colb[1] * (1 - t);
-        let b = cola[2] * t + colb[2] * (1 - t);
-        let a = 255;
-        img.data[offset  ] = r;
-        img.data[offset+1] = g;
-        img.data[offset+2] = b;
-        img.data[offset+3] = a;
-      }
-    }
-    c.putImageData(img, bx, by);
-    */
-
     this.clearPad(canvas, index, padding);
   }
 
@@ -696,6 +668,7 @@ export class TexMaker {
    * パディング幅の分ずつ消す
    * @param {HTMLCanvasElement} canvas 
    * @param {number} index 8x8で0～63のどこか
+   * @param {number} padding
    */
   clearPad(canvas, index, padding) {
     const whole = canvas.width;
@@ -862,6 +835,65 @@ export class TexMaker {
     c.fillText(text, side * 2, side * 0.5 + 40);
 
     c.resetTransform();
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   * @param {number} index
+   */
+  draw8(canvas, index) {
+    const padding = 4;
+
+    const whole = canvas.width;
+    const div = 8;
+    const side = whole / div;
+
+    const bx = (index % 8) * side;
+    const by = Math.floor(index / 8) * side;
+    const c = canvas.getContext('2d');
+
+    const img = c.getImageData(bx, by, side, side);
+    for (let y = 0; y < side; ++y) {
+      for (let x = 0; x < side; ++x) {
+        const bi = Math.floor(x / (side / 4)); // 0, 1, 2, 3
+
+        let cola = [255, 0, 0];
+        let colb = [255, 255, 0];
+        if (y >= side * 0.5) {
+          cola = [255, 255, 0];
+          colb = [255, 0, 0];
+        }
+        if ((bi & 1) === 1) {
+          cola = [0, 255, 0];
+          colb = [255, 255, 0];
+          if (y >= side * 0.5) {
+            cola = [255, 255, 0];
+            colb = [0, 255, 0];
+          }
+        }
+
+        let t = (y % (side / 2)) / (side / 4);
+        if (y < side * 0.5) {
+          t = t - 1;
+        } else {
+          // Do nothing.
+        }
+        let offset = (x + side * y) * 4;
+        const wt = Math.max(0, Math.min(1 - t, 1));
+        let r = cola[0] * wt + colb[0] * (1 - wt);
+        let g = cola[1] * wt + colb[1] * (1 - wt);
+        let b = cola[2] * wt + colb[2] * (1 - wt);
+        let a = 255;
+        img.data[offset  ] = r;
+        img.data[offset+1] = g;
+        img.data[offset+2] = b;
+        img.data[offset+3] = a;
+      }
+    }
+    c.putImageData(img, bx, by);  
+
+    this.clearPad(canvas, index, padding);
   }
 
 }

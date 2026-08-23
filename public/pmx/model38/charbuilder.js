@@ -310,6 +310,12 @@ export class CharBuilder extends PMX.Maker {
   static INDEX_MOBIUS = 2;
   /** ボーンにのっかるメッシュのサブテクスチャインデックス */
   static INDEX_OWNBONE = 3;
+  /** トンネル表と裏 */
+  static INDEX_TUNNEL8 = 8;
+  /** トンネル表と裏 */
+  static INDEX_TUNNEL9 = 9;
+  /** トンネル表と裏 */
+  static INDEX_TUNNEL10 = 10;
 
   /** 腕のベクトルの正規化X成分 */
   static ANX = 0.788;
@@ -422,7 +428,7 @@ export class CharBuilder extends PMX.Maker {
 ]},
 { lr: true, bones: [
 {parentName: '上半身2', nameJa: 'パーツ１', nameEn: 'Parts1', p:[1,0,2]},
-{parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'Parts2', p:[0,1,1]},
+{parentName: '_パーツ１', nameJa: 'パーツ２', nameEn: 'Parts2', p:[0,1,0.5]},
 ]}
     ];
     const lrpre = [
@@ -861,7 +867,7 @@ export class CharBuilder extends PMX.Maker {
           param.hhalf = 0.125;
 
         } else if (nameJa.includes('パーツ')) {
-          this.makeJoint(param);
+          //this.makeJoint(param);
 
           param.sepface = 1;
           param.whalf = 0.5;
@@ -874,9 +880,14 @@ export class CharBuilder extends PMX.Maker {
             10 * Math.PI / 180,
           ];
           //this.makeBox(param);
-          this.makeBebel1(param);
+          if (nameJa.includes('左パーツ')) {
+            this.makeBebel1(param);
+          } else {
+            param.sepface = -1;
+            this.makeBebel1(param);
+          }
 
-          isBone = false;
+          isBone = '';
         } else if (nameJa.includes('頭')) {
           isBone = false;
           param.whalf = 0.75;
@@ -921,7 +932,8 @@ export class CharBuilder extends PMX.Maker {
 
           param.thick = thickTun;
           param.intl = [0, -2, 0];
-          param.col6 = [5, 5, 4];
+          param.subindex8 = TexMaker.INDEX_TUNNEL8;
+          //param.col6 = [5, 5, 4];
           param.whalf = 0.3;
           param.winterval = 0.1;
           param.dhalf = 0.3;
@@ -1524,7 +1536,16 @@ export class CharBuilder extends PMX.Maker {
     const startIndex = vts.length;
     const faces = param.faces;
 
+    const subindex8 = param.subindex8 || -1;
     const col6 = param.col6 || [1, 5, 5];
+
+    const _calcuv = (ratex, ratey) => {
+      if (subindex8 >= 0) {
+        return TexMaker.subTex8(ratex, ratey, subindex8, 3/4);
+      }
+      return TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
+    };
+
 
     const whalf = param.whalf || 1;
     const hhalf = param.hhalf || 1;
@@ -1586,14 +1607,10 @@ export class CharBuilder extends PMX.Maker {
           bonea, v);
 
         // TODO: 横張りテクスチャ
-        if (true) {
-          v.uv = TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
-        } else {
-          v.uv = TexMaker.subTex8(
-            (j / num) * 6/8 + 1/8,
-            (i === 0) ? 1/8 : 7/8,
-            2);
-        }
+        v.uv = _calcuv(
+            j / num,
+            (i === 0) ? 0 : 1);
+
         vts.push(v);
       }
     }
