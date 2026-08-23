@@ -963,7 +963,7 @@ export class CharBuilder extends PMX.Maker {
           param.intl = [0, -0.25, 0];
           param.hhalf = param.radius * 2;
           param.radius = rpin;
-          param.vdiv = 4;
+          param.vdiv = 2;
           this.makeCyl(param);
         }
 
@@ -1539,9 +1539,9 @@ export class CharBuilder extends PMX.Maker {
     const subindex8 = param.subindex8 || -1;
     const col6 = param.col6 || [1, 5, 5];
 
-    const _calcuv = (ratex, ratey) => {
+    const _calcuv = (u, v) => {
       if (subindex8 >= 0) {
-        return TexMaker.subTex8(ratex, ratey, subindex8, 3/4);
+        return TexMaker.subTex8(u, v, subindex8, 3/4);
       }
       return TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
     };
@@ -1620,21 +1620,21 @@ export class CharBuilder extends PMX.Maker {
     for (let i = 0; i < num - 1; ++i) { // 側面
       const v0 = i;
       //const v1 = (i + 1) % num;
-      const v1 = i + 1; // TODO: 多分あってるけど
+      const v1 = i + 1;
       const zig = [v0, v1, v0 + num, v1 + num];
       zigs.push(zig);
     }
     for (let i = 0; i < num2 - 1; ++i) { // 上
       const v2 = i;
       const v3 = v2 + 1;
-      const v0 = num - 1 - i;
+      const v0 = (num - 1) - 1 - i;
       const v1 = v0 - 1;
       zigs.push([v0, v1, v2, v3]);
     }
-    for (let i = 0; i < num2 - 1; ++i) { // 下
+    for (let i = 0; i < num2 - 1; ++i) { // 下 TODO: バグ
       const v0 = num + i;
       const v1 = v0 + 1;
-      const v2 = num * 2 - 1 - i;
+      const v2 = (num - 0) * 2 - 1 - i;
       const v3 = v2 - 1;
       zigs.push([v0, v1, v2, v3]);
     }
