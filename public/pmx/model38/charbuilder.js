@@ -1320,7 +1320,8 @@ export class CharBuilder extends PMX.Maker {
     const hnum = param.hnum || 2;
 
     const radius = param.radius || 1;
-    const hhalf = param.hhalf || radius;
+    const hradius = param.hradius || radius;
+    const hhalf = param.hhalf || 1;
 
     /** @type {PMX.Bone} */
     const bonea = param.bonea;
@@ -1344,24 +1345,25 @@ export class CharBuilder extends PMX.Maker {
       return TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
     };
 
-    if (false) {
-      {
+
+    {
+      { // 一番上
         const v = new PMX.Vertex();
         let x = 0;
         let y = 1;
         let z = 0;
         this.applyEuler(
-          [x * radius, y * radius + hhalf, z * radius],
+          [x * radius, y * hradius + hhalf, z * radius],
           [x, y, z],
           intl, modelrot,
           bonea, v
         );
-        v.uv = [0.5, 0];
+        v.uv = _calcuv(0.5, 0);
         vts.push(v);       
       }
     }
 
-    for (let i = 0; i < vdiv * 0.5; ++i) { // 上から下か 上半分
+    for (let i = 1; i < vdiv * 0.5; ++i) { // 上から下か 上半分
       const vang = i * Math.PI / vdiv;
       //let rr = param.rfunc(i);
       let rr = Math.sin(vang);
@@ -1380,10 +1382,10 @@ export class CharBuilder extends PMX.Maker {
         let x = -sn * rr;
         let y = Math.cos(vang);
         let z =  cs * rr;
-
+        const ns = [x * radius, y * hradius, z * radius];
         this.applyEuler(
-          [x * radius, y * radius + hhalf, z * radius],
-          [x, y, z],
+          [ns[0], ns[1] + hhalf, ns[2]],
+          ns,
           intl, modelrot,
           bonea, v
         );
@@ -1427,7 +1429,7 @@ export class CharBuilder extends PMX.Maker {
       }
     }
 
-    for (let i = vdiv * 0.5; i <= vdiv; ++i) { // 上から下か。下半分
+    for (let i = vdiv * 0.5; i < vdiv; ++i) { // 上から下か。下半分
       const vang = i * Math.PI / vdiv;
       //let rr = param.rfunc(i);
       let rr = Math.sin(vang);
@@ -1446,10 +1448,10 @@ export class CharBuilder extends PMX.Maker {
         let x = -sn * rr;
         let y = Math.cos(vang);
         let z =  cs * rr;
-
+        const ns = [x * radius, y * hradius, z * radius];
         this.applyEuler(
-          [x * radius, y * radius - hhalf, z * radius],
-          [x, y, z],
+          [ns[0], ns[1] - hhalf, ns[2]],
+          ns,
           intl, modelrot,
           bonea, v
         );
@@ -1459,32 +1461,48 @@ export class CharBuilder extends PMX.Maker {
         vts.push(v);
       }
     }
-    if (false) {
-      {
+    {
+      { // 一番下
         const v = new PMX.Vertex();
         let x = 0;
         let y = -1;
         let z = 0;
         this.applyEuler(
-          [x * radius, y * radius + hhalf, z * radius],
+          [x * radius, y * hradius - hhalf, z * radius],
           [x, y, z],
           intl, modelrot,
           bonea, v
         );
-        v.uv = [0.5, 1];
+        v.uv = _calcuv(0.5, 1);
         vts.push(v);       
       }
     }
 
     // 面
-    for (let i = 0; i < (vdiv + hnum); ++i) {
+    {
       for (let j = 0; j < hdiv; ++j) {
-        const v0 = (hdiv + 1) * i + j + startIndex;
+        const fi = [0, 1 + j + 1, 1 + j];
+        faces.push(fi.map(index => index + startIndex));
+      }
+    }
+    startIndex += 1;
+
+    for (let i = 1; i < (vdiv + hnum) - 1; ++i) {
+      for (let j = 0; j < hdiv; ++j) {
+        const v0 = (hdiv + 1) * (i - 1) + j + startIndex; // 一段減らす
         const v1 = v0 + 1;
         const v2 = v0 + (hdiv + 1); // 裏で切れてる
         const v3 = v2 + 1;
         faces.push([v0, v1, v2]);
         faces.push([v2, v1, v3]);
+      }
+    }
+
+    startIndex = vts.length - 1 - (hdiv + 1);
+    {
+      for (let j = 0; j < hdiv; ++j) {
+        const fi = [j + startIndex, j + 1 + startIndex, vts.length - 1];
+        faces.push(fi);
       }
     }
 
@@ -1550,7 +1568,7 @@ export class CharBuilder extends PMX.Maker {
     const num = vs.length; // 20個 + 1
     const num2 = Math.floor(num / 2); // 切り捨てて10個
     for (let i = 0; i < 2; ++i) { // 上と下
-      for (let j = 0; j < vs.length; ++j) {
+      for (let j = 0; j < num; ++j) {
         const v = new PMX.Vertex();
 
         let pv = Vec3.fromArray(vs[j].p);
@@ -1567,16 +1585,25 @@ export class CharBuilder extends PMX.Maker {
           intl, modelrot,
           bonea, v);
 
-        v.uv = TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
+        // TODO: 横張りテクスチャ
+        if (true) {
+          v.uv = TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
+        } else {
+          v.uv = TexMaker.subTex8(
+            (j / num) * 6/8 + 1/8,
+            (i === 0) ? 1/8 : 7/8,
+            2);
+        }
         vts.push(v);
       }
     }
 
     // 面張り
     const zigs = [];
-    for (let i = 0; i < num; ++i) { // 側面
+    for (let i = 0; i < num - 1; ++i) { // 側面
       const v0 = i;
-      const v1 = (i + 1) % num;
+      //const v1 = (i + 1) % num;
+      const v1 = i + 1; // TODO: 多分あってるけど
       const zig = [v0, v1, v0 + num, v1 + num];
       zigs.push(zig);
     }
