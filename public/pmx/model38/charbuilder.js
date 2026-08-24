@@ -1612,7 +1612,7 @@ export class CharBuilder extends PMX.Maker {
 
         // TODO: 横張りテクスチャ
         v.uv = _calcuv(
-            j / num,
+            j / (num - 1),
             (i === 0) ? 0 : 1);
 
         vts.push(v);

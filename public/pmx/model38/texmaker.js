@@ -842,57 +842,53 @@ export class TexMaker {
    * @param {HTMLCanvasElement} canvas 
    * @param {number} index
    */
-  draw8(canvas, index) {
+  /**
+   * 上から下へのリニア汎用
+   * @param {HTMLCanvasElement} canvas 
+   * @param {number} index 8x8で0～63のどこか
+   */
+  draw8(canvas, index, param) {
     const padding = 4;
-
     const whole = canvas.width;
-    const div = 8;
-    const side = whole / div;
-
+    const side = whole / 8;
     const bx = (index % 8) * side;
     const by = Math.floor(index / 8) * side;
     const c = canvas.getContext('2d');
 
-    const img = c.getImageData(bx, by, side, side);
-    for (let y = 0; y < side; ++y) {
-      for (let x = 0; x < side; ++x) {
-        const bi = Math.floor(x / (side / 4)); // 0, 1, 2, 3
+    const mode = param.mode || 'lineary3';
+    /** @type {number[]} */
+    let cola = param.cola || [238, 238, 238];
 
-        let cola = [255, 0, 0];
-        let colb = [255, 255, 0];
-        if (y >= side * 0.5) {
-          cola = [255, 255, 0];
-          colb = [255, 0, 0];
+    let col = param.col || [128, 128, 128];
+    /** @type {number[]} */
+    let colb = param.colb || [17, 17, 17];
+
+    switch (mode) {
+      case 'lineary3':
+        {
+          let grad = c.createLinearGradient(bx, by, bx, by + side);
+          grad.addColorStop(0.125, TexMaker.s255(...cola));
+          grad.addColorStop(0.5  , TexMaker.s255(...col));
+          grad.addColorStop(0.875, TexMaker.s255(...colb));
+          c.fillStyle = grad;
+          c.fillRect(bx, by, side * 0.5, side);
         }
-        if ((bi & 1) === 1) {
-          cola = [0, 255, 0];
-          colb = [255, 255, 0];
-          if (y >= side * 0.5) {
-            cola = [255, 255, 0];
-            colb = [0, 255, 0];
-          }
+        {
+          cola = cola.map(col => col - 51 - 17);
+          col  = col.map(col => col - 51 - 17);
+          colb = colb.map(col => col - 51 - 17);
+
+          let grad = c.createLinearGradient(bx, by, bx, by + side);
+          grad.addColorStop(0.125, TexMaker.s255(...cola));
+          grad.addColorStop(0.5  , TexMaker.s255(...col));
+          grad.addColorStop(0.875, TexMaker.s255(...colb));
+          c.fillStyle = grad;
+          c.fillRect(bx + side * 0.5, by, side * 0.5, side);
         }
 
-        let t = (y % (side / 2)) / (side / 4);
-        if (y < side * 0.5) {
-          t = t - 1;
-        } else {
-          // Do nothing.
-        }
-        let offset = (x + side * y) * 4;
-        const wt = Math.max(0, Math.min(1 - t, 1));
-        let r = cola[0] * wt + colb[0] * (1 - wt);
-        let g = cola[1] * wt + colb[1] * (1 - wt);
-        let b = cola[2] * wt + colb[2] * (1 - wt);
-        let a = 255;
-        img.data[offset  ] = r;
-        img.data[offset+1] = g;
-        img.data[offset+2] = b;
-        img.data[offset+3] = a;
-      }
+
+        break;
     }
-    c.putImageData(img, bx, by);  
-
     this.clearPad(canvas, index, padding);
   }
 
