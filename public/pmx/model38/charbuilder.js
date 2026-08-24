@@ -1333,8 +1333,8 @@ export class CharBuilder extends PMX.Maker {
     const hnum = param.hnum || 2;
 
     const radius = param.radius || 1;
-    /** 半球の高さ */
-    const hradius = param.hradius || radius;
+    /** 半球の高さ。0 も有効 */
+    const hradius = param.hradius ?? radius;
     const hhalf = param.hhalf || 1;
 
     /** @type {PMX.Bone} */
