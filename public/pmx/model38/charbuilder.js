@@ -923,6 +923,7 @@ export class CharBuilder extends PMX.Maker {
 
           console.log('足のはず', nameJa);
           isBone = 'pin';
+          param.hradius = 0;
 
         } else if (nameJa.includes('ひざ')) {
           param.radius = 0.5;
@@ -932,7 +933,7 @@ export class CharBuilder extends PMX.Maker {
 
           param.thick = thickTun;
           param.intl = [0, -2, 0];
-          param.subindex8 = TexMaker.INDEX_TUNNEL8;
+          param.subindex8 = CharBuilder.INDEX_TUNNEL8;
           //param.col6 = [5, 5, 4];
           param.whalf = 0.3;
           param.winterval = 0.1;
@@ -1332,6 +1333,7 @@ export class CharBuilder extends PMX.Maker {
     const hnum = param.hnum || 2;
 
     const radius = param.radius || 1;
+    /** 半球の高さ */
     const hradius = param.hradius || radius;
     const hhalf = param.hhalf || 1;
 
@@ -1356,6 +1358,8 @@ export class CharBuilder extends PMX.Maker {
       }
       return TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
     };
+
+    console.log('hradius', hradius);
 
 
     {
@@ -1634,7 +1638,7 @@ export class CharBuilder extends PMX.Maker {
     for (let i = 0; i < num2 - 1; ++i) { // 下 TODO: バグ
       const v0 = num + i;
       const v1 = v0 + 1;
-      const v2 = (num - 0) * 2 - 1 - i;
+      const v2 = num + num - 1 - 1 - i;
       const v3 = v2 - 1;
       zigs.push([v0, v1, v2, v3]);
     }
