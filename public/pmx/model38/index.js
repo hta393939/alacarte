@@ -1,4 +1,5 @@
 
+import "./util.js";
 import { CharBuilder } from "./charbuilder.js";
 import { TexMaker } from "./texmaker.js";
 
@@ -286,14 +287,19 @@ class Misc {
         colb: [153, 153, 51],
       });
       maker.drawSquare1(cvs[0], CharBuilder.INDEX_TUNNEL9, {
-        cola: [17, 238, 17],
-        col : [238, 238, 221],
-        colb: [153, 153, 51],
+        cola: [238, 238, 221],
+        col : [153, 153, 102],
+        colb: [238, 238, 221],
       });
       maker.drawSquare1(cvs[0], CharBuilder.INDEX_TUNNEL10, {
-        cola: [17, 238, 17],
-        col : [238, 238, 221],
-        colb: [153, 153, 51],
+        cola: [17, 17, 17],
+        col : [153, 153, 153],
+        colb: [204, 204, 204],
+      });
+      maker.drawSquare1(cvs[0], CharBuilder.INDEX_TUNNEL11, {
+        cola: [17, 17, 17],
+        col : [153, 153, 153],
+        colb: [204, 204, 204],
       });
 
       maker.drawMobius(cvs[0], CharBuilder.INDEX_MOBIUS, {

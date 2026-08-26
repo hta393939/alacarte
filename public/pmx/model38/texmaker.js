@@ -871,21 +871,28 @@ export class TexMaker {
           grad.addColorStop(0.5  , TexMaker.s255(...col));
           grad.addColorStop(0.875, TexMaker.s255(...colb));
           c.fillStyle = grad;
-          c.fillRect(bx, by, side * 0.5, side);
+          c.fillRect(bx, by, side, side);
         }
         {
-          cola = cola.map(col => col - 51 - 17);
-          col  = col.map(col => col - 51 - 17);
-          colb = colb.map(col => col - 51 - 17);
+          const dcola = cola.map(col => col - 51 - 17);
+          const dcol  = col.map(col => col - 51 - 17);
+          const dcolb = colb.map(col => col - 51 - 17);
 
           let grad = c.createLinearGradient(bx, by, bx, by + side);
-          grad.addColorStop(0.125, TexMaker.s255(...cola));
-          grad.addColorStop(0.5  , TexMaker.s255(...col));
-          grad.addColorStop(0.875, TexMaker.s255(...colb));
+          grad.addColorStop(0.125, TexMaker.s255(...dcola));
+          grad.addColorStop(0.5  , TexMaker.s255(...dcol));
+          grad.addColorStop(0.875, TexMaker.s255(...dcolb));
           c.fillStyle = grad;
-          c.fillRect(bx + side * 0.5, by, side * 0.5, side);
+          c.fillRect(bx + side * 0.5, by, side * 0.5 - 32, side);
         }
-
+        {
+          c.fillStyle = TexMaker.s255(...cola);
+          c.fillRect(bx, by, side, side / 8 + 4);
+        }
+        {
+          c.fillStyle = TexMaker.s255(...colb);
+          c.fillRect(bx, by + side * 7 / 8 - 4, side, side / 8 + 4);
+        }
 
         break;
     }

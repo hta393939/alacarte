@@ -316,6 +316,7 @@ export class CharBuilder extends PMX.Maker {
   static INDEX_TUNNEL9 = 9;
   /** トンネル表と裏 */
   static INDEX_TUNNEL10 = 10;
+  static INDEX_TUNNEL11 = 11;
 
   /** 腕のベクトルの正規化X成分 */
   static ANX = 0.788;
@@ -921,9 +922,20 @@ export class CharBuilder extends PMX.Maker {
           param.cutin = 0.025;
           this.makeTun(param);
 
-          console.log('足のはず', nameJa);
+
+          param.intl = [0, 0.02, 0];
+          param.thick = rpin / 3 * 2;
+          param.whalf = rpin + param.thick;
+          param.winterval = param.thick / 4;
+
+          param.dhalf = param.whalf;
+          param.hhalf = param.whalf * 0.5;
+          param.cutout = param.whalf * (2 - Math.sqrt(2));
+          param.cutin = rpin * (2 - Math.sqrt(2));       
+          this.makeTun(param);
+
           isBone = 'pin';
-          param.hradius = 0;
+          param.hradius = 0.002;
 
         } else if (nameJa.includes('ひざ')) {
           param.radius = 0.5;
@@ -963,8 +975,8 @@ export class CharBuilder extends PMX.Maker {
         } else if (isBone === 'pin') {
           param.intl = [0, -0.25, 0];
           param.hhalf = param.radius * 2;
-          param.radius = rpin;
-          param.vdiv = 2;
+          param.radius = rpin * 15 / 16;
+          param.vdiv = 4;
           this.makeCyl(param);
         }
 
