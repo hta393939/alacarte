@@ -935,7 +935,7 @@ export class CharBuilder extends PMX.Maker {
           this.makeTun(param);
 
           isBone = 'pin';
-          param.hradius = 0.002;
+          param.hradius = 0.01;
 
         } else if (nameJa.includes('ひざ')) {
           param.radius = 0.5;
@@ -950,7 +950,7 @@ export class CharBuilder extends PMX.Maker {
           param.whalf = 0.3;
           param.winterval = 0.1;
           param.dhalf = 0.3;
-          param.hhalf = 2;
+          param.hhalf = 1.6; // TODO: 
           param.cutout = 0.05;
           param.cutin = 0.025;
           this.makeTun(param);
@@ -975,7 +975,7 @@ export class CharBuilder extends PMX.Maker {
         } else if (isBone === 'pin') {
           param.intl = [0, -0.25, 0];
           param.hhalf = param.radius * 2;
-          param.radius = rpin * 15 / 16;
+          param.radius = rpin * 15 / 16; // 少し小さくした
           param.vdiv = 4;
           this.makeCyl(param);
         }

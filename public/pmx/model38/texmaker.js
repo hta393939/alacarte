@@ -883,13 +883,17 @@ export class TexMaker {
           grad.addColorStop(0.5  , TexMaker.s255(...dcol));
           grad.addColorStop(0.875, TexMaker.s255(...dcolb));
           c.fillStyle = grad;
-          c.fillRect(bx + side * 0.5, by, side * 0.5 - 32, side);
+          c.fillRect(
+            bx + side * 4 / 8 + 0,
+            by + side * 1 / 8 + 2,
+            side * 3 / 8 - side * 6 / 8 * 5 / (num - 1), // ここのはず
+            side * 6 / 8 - 2 * 2);
         }
-        {
+        if (false) {
           c.fillStyle = TexMaker.s255(...cola);
           c.fillRect(bx, by, side, side / 8 + 4);
         }
-        {
+        if (false) {
           c.fillStyle = TexMaker.s255(...colb);
           c.fillRect(bx, by + side * 7 / 8 - 4, side, side / 8 + 4);
         }
