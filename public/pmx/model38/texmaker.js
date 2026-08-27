@@ -883,10 +883,11 @@ export class TexMaker {
           grad.addColorStop(0.5  , TexMaker.s255(...dcol));
           grad.addColorStop(0.875, TexMaker.s255(...dcolb));
           c.fillStyle = grad;
+          const num = 21; // makeTun() より
           c.fillRect(
             bx + side * 4 / 8 + 0,
             by + side * 1 / 8 + 2,
-            side * 3 / 8 - side * 6 / 8 * 5 / (num - 1), // ここのはず
+            side * 3 / 8 - side * 6 / 8 * 1 / (num - 1), // ここ
             side * 6 / 8 - 2 * 2);
         }
         if (false) {
