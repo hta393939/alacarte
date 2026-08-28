@@ -281,10 +281,11 @@ class Misc {
         mode: 'lineary3',
       });
       // 腕ひじ足ひざなど
-      maker.draw8(cvs[0], CharBuilder.INDEX_TUNNEL8, {
+      maker.drawForTun(cvs[0], CharBuilder.INDEX_TUNNEL8, {
         cola: [17, 238, 17],
         col : [238, 238, 221],
         colb: [153, 153, 51],
+        isNarrow: true,
       });
       maker.drawSquare1(cvs[0], CharBuilder.INDEX_TUNNEL9, {
         cola: [238, 238, 221],

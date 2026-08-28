@@ -847,7 +847,7 @@ export class TexMaker {
    * @param {HTMLCanvasElement} canvas 
    * @param {number} index 8x8で0～63のどこか
    */
-  draw8(canvas, index, param) {
+  drawForTun(canvas, index, param) {
     const padding = 4;
     const whole = canvas.width;
     const side = whole / 8;
@@ -884,19 +884,13 @@ export class TexMaker {
           grad.addColorStop(0.875, TexMaker.s255(...dcolb));
           c.fillStyle = grad;
           const num = 21; // makeTun() より
+          let offset = side * 6 / 8 * 1 / (num - 1) * (param.isNarrow ? 1 : 0);
+          let yPad = (param.isNarrow) ? 0 : 2;
           c.fillRect(
-            bx + side * 4 / 8 + 0,
-            by + side * 1 / 8 + 2,
-            side * 3 / 8 - side * 6 / 8 * 1 / (num - 1), // ここ
-            side * 6 / 8 - 2 * 2);
-        }
-        if (false) {
-          c.fillStyle = TexMaker.s255(...cola);
-          c.fillRect(bx, by, side, side / 8 + 4);
-        }
-        if (false) {
-          c.fillStyle = TexMaker.s255(...colb);
-          c.fillRect(bx, by + side * 7 / 8 - 4, side, side / 8 + 4);
+            bx + side * 4 / 8 - offset,
+            by + side * 1 / 8 + yPad,
+            side * 3 / 8 - side * 6 / 8 * 1 / (num - 1) + offset * 2,
+            side * 6 / 8 - yPad * 2);
         }
 
         break;
