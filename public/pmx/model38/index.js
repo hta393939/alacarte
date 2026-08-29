@@ -45,9 +45,9 @@ class Misc {
 //            denom: Number.parseFloat(document.getElementById('denom')?.value ?? 1),
       usephy: document.getElementById('usephyelement')?.checked,
       /**
-       * ik 書き出しするかどうか
+       * グレースケール化しない
        */
-      useik: document.getElementById('useikelement')?.checked,
+      usecolor: document.getElementById('usecolor')?.checked,
       useradius: document.getElementById('useradius')?.checked,
       useradiusq: document.getElementById('useradiusq')?.checked,
       usedynamic: document.getElementById('usedynamic')?.checked,
@@ -308,6 +308,28 @@ class Misc {
       maker.drawOwnBone(cvs[0], CharBuilder.INDEX_OWNBONE, {
       });
       maker.drawLogo(cvs[0]);
+
+      if (!param.usecolor) {
+        const c = cvs[0].getContext('2d');
+        const w = c.canvas.width;
+        const h = c.canvas.height;
+        const img = c.getImageData(0, 0, w, h);
+        for (let y = 0; y < h; ++y) {
+          for (let x = 0; x < w; ++x) {
+            let offset = (w * y + x) * 4;
+            let r = img.data[offset];
+            let g = img.data[offset+1];
+            let b = img.data[offset+2];
+            let a = img.data[offset+3];
+            // グレースケールと少し暗く
+            let lv = (r * 79 + g * 150 + b * 27) / 256 - 17;
+            img.data[offset] = lv - 17;
+            img.data[offset+1] = lv - 17;
+            img.data[offset+2] = lv;
+          } 
+        }
+        c.putImageData(img, 0, 0);
+      }
     }
 
     if (isWrite) {
