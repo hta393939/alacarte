@@ -40,12 +40,18 @@ export class Util {
         continue;
       }
       const bv = Vec3.fromArray(base.p);
+      const bx = Vec3.fromArray(base.x);
+      const bz = Vec3.fromArray(base.z);
       const tv = Vec3.fromArray(top.p);
       const diff = tv.clone().subInPlace(bv);
       const len = diff.len();
       const dir = diff.clone().normalizeInPlace();
 
       console.log('diff, len, dir', diff, len, dir);
+      // 0->1, 1->2 は自然
+      console.log('dot', dir.dot(bx));
+      
+      console.log('cross', dir.cross(bz));
     }
 
   }

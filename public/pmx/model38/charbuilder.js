@@ -151,6 +151,20 @@ export class Vec3 {
     return this;
   }
 
+  /**
+   * radian euler を返す
+   * @param {number} x 
+   * @param {number} y 
+   * @param {number} z 
+   */
+  eulerForDropRing() {
+    const tov = this.clone().normalizeInPlace();
+    const ret = new Vec3(0, 0, 0);
+    ret.x = Math.acos(-tov.y);
+    ret.y = Math.atan2(-tov.x, -tov.z);
+    return ret;
+  }
+
 }
 
 export class Quat {
@@ -642,6 +656,19 @@ export class CharBuilder extends PMX.Maker {
   } */
 
   /**
+   * ボーンの向いている方向
+   * @param {PMX.Bone} bone 
+   * @param {PMX.Bone[]} bones
+   */
+  boneDir(bone, bones) {
+    if (bone.bits & PMX.Bone.BIT_BONECONNECT & bone.endBoneIndex >= 0) {
+      const endBone = bones[bone.endBoneIndex];
+      return Vec3.fromArray(endBone.p).subInPlace(Vec3.fromArray(bone.p));
+    }
+    return Vec3.fromArray(bone.endOffset);
+  }
+
+  /**
    * make() を実装
    * このインスタンスに保存する
    */
@@ -800,7 +827,8 @@ export class CharBuilder extends PMX.Maker {
           radius: 0.125, // 指はもっと小さく
           hhalf: 0.125,
           bonea: bone,
-          boneb: bone, // TODO: 同じもの渡している
+          boneb: ((bone.bits & PMX.BIT_BONECONNECT) != 0 && bone.endBoneIndex >= 0)
+            ? this.bones[bone.endBoneIndex] : bone,
           vertices: this.vts,
           faces: this.materials[0].faces,
           index: i,
@@ -815,15 +843,35 @@ export class CharBuilder extends PMX.Maker {
         if (nameJa.includes('ＩＫ')) { // 全角
           isBone = '';
         } else if (nameJa.includes('指')) {
-          param.radius = CharBuilder.FINGER_INTERVAL * 0.5;
-          param.hhalf = CharBuilder.FINGER_INTERVAL * 0.5;
-          param.modelrot = [0, 0, armang];
-          this.makeJoint(param);
 
-          isBone = false;
-          param.hhalf = param.radius * 2;
-          param.intl = [0, -0.125, 0];
-          this.makeSphere(param);
+          if (nameJa.includes('親')) {
+
+            param.radius = CharBuilder.FINGER_INTERVAL * 0.5;
+            param.hhalf = CharBuilder.FINGER_INTERVAL * 0.5;
+            const dirv = this.boneDir(bone, this.bones);
+            dirv.x = Math.abs(dirv.x); // NOTE: 中で判定するので正に揃える
+            param.modelrot = dirv.eulerForDropRing().asArray();
+            this.makeJoint(param);
+
+            isBone = false;
+            param.hradius = param.radius * 2;
+            param.intl = [0, -0.125, 0];
+            this.makeSphere(param);
+
+          } else {
+
+            param.radius = CharBuilder.FINGER_INTERVAL * 0.5;
+            param.hhalf = CharBuilder.FINGER_INTERVAL * 0.5;
+            param.modelrot = [0, 0, armang];
+            this.makeJoint(param);
+
+            isBone = false;
+            param.hradius = param.radius * 2;
+            param.intl = [0, -0.125, 0];
+            this.makeSphere(param);
+
+          }
+
         } else if (nameJa.includes('腕')) {
           param.intl = [0, -1, 0];
           param.modelrot = [0, Math.PI, - armang];
@@ -935,7 +983,7 @@ export class CharBuilder extends PMX.Maker {
           this.makeTun(param);
 
           isBone = 'pin';
-          param.hradius = 0.01;
+          param.hradius = 0.04;
 
         } else if (nameJa.includes('ひざ')) {
           param.radius = 0.5;
@@ -950,7 +998,7 @@ export class CharBuilder extends PMX.Maker {
           param.whalf = 0.3;
           param.winterval = 0.1;
           param.dhalf = 0.3;
-          param.hhalf = 1.6; // TODO: 
+          param.hhalf = 1.4; // TODO: 
           param.cutout = 0.05;
           param.cutin = 0.025;
           this.makeTun(param);
@@ -970,7 +1018,7 @@ export class CharBuilder extends PMX.Maker {
 
         if (isBone === 'sphere') { // ボーンメッシュのように
           param.intl = [0, -0.25, 0];
-          param.hhalf = param.radius * 2;
+          param.hradius = param.radius * 2;
           this.makeSphere(param);
         } else if (isBone === 'pin') {
           param.intl = [0, -0.25, 0];
@@ -1026,7 +1074,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * サポート関数
+   * サポート関数。今 isLeft は中で判定している
    * @param {number[]} p 
    * @param {number[]} n 
    * @param {number[]} intl 平行移動量
@@ -1225,8 +1273,8 @@ export class CharBuilder extends PMX.Maker {
   makeSphere(param) {
     const hdiv = param.hdiv || 16;
     const vdiv = param.vdiv || 8;
-    const hhalf = param.hhalf || 1;
     const radius = param.radius || 1;
+    const hradius = param.hradius || radius;
     /** 最初に平行移動する分(回転よりも前) */
     const intl = param.intl || [0, 0, 0];
 
@@ -1234,27 +1282,27 @@ export class CharBuilder extends PMX.Maker {
     const bonea = param.bonea;
     //const boneb = param.boneb;
 
-    const isLeft = (bonea.p[0] > 0);
     const modelrot = param.modelrot || [0, 0, 0];
 
     const vts = param.vertices;
     const startIndex = vts.length;
     const faces = param.faces;
 
+    const uvscale = 3 / 4;
     {
         const v = new PMX.Vertex();
         let x = 0;
         let y = 1;
         let z = 0;
 
-        this.applyEuler([x * radius, y * hhalf, z * radius],
+        this.applyEuler([x * radius, y * hradius, z * radius],
           [x, y, z],
           intl, modelrot,
           bonea, v);
 
         let subu = 0.5;
         let subv = 0;
-        v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE);
+        v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE, uvscale);
 
         vts.push(v);  
     }
@@ -1278,14 +1326,14 @@ export class CharBuilder extends PMX.Maker {
         let y = Math.cos(vang);
         let z = cs * rr;
 
-        this.applyEuler([x * radius, y * hhalf, z * radius],
+        this.applyEuler([x * radius, y * hradius, z * radius],
           [x, y, z],
           intl, modelrot,
           bonea, v);
 
         let subu = j / hdiv;
         let subv = i / vdiv;
-        v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE);
+        v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE, uvscale);
 
         vts.push(v);
       }
@@ -1298,14 +1346,14 @@ export class CharBuilder extends PMX.Maker {
         let y = -1;
         let z = 0;
 
-        this.applyEuler([x * radius, y * hhalf, z * radius],
+        this.applyEuler([x * radius, y * hradius, z * radius],
           [x, y, z],
           intl, modelrot,
           bonea, v);
 
         let subu = 0.5;
         let subv = 1;
-        v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE);
+        v.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_OWNBONE, uvscale);
 
         vts.push(v);
     }
