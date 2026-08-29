@@ -885,7 +885,7 @@ export class TexMaker {
           c.fillStyle = grad;
           const num = 21; // makeTun() より
           let offset = side * 6 / 8 * 1 / (num - 1) * (param.isNarrow ? 1 : 0);
-          let yPad = (param.isNarrow) ? 0 : 2;
+          let yPad = (param.isNarrow) ? 1 : 1;
           c.fillRect(
             bx + side * 4 / 8 - offset,
             by + side * 1 / 8 + yPad,
