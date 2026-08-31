@@ -321,8 +321,17 @@ class Misc {
             let g = img.data[offset+1];
             let b = img.data[offset+2];
             let a = img.data[offset+3];
+            /*
             // グレースケールと少し暗く
             let lv = (r * 79 + g * 150 + b * 27) / 256 - 17;
+            img.data[offset] = lv - 17;
+            img.data[offset+1] = lv - 17;
+            img.data[offset+2] = lv;
+            */
+
+            // グレースケールと少し明るめ
+            let lv = (r * 79 + g * 150 + b * 27) / 256;
+            lv = Math.min(255, lv * 1.3);
             img.data[offset] = lv - 17;
             img.data[offset+1] = lv - 17;
             img.data[offset+2] = lv;
