@@ -380,6 +380,28 @@ export class CharBuilder extends PMX.Maker {
     /** 指ずれ */
     const fit = CharBuilder.FINGER_INTERVAL;
 
+    const thumbs = {
+      tow0: [fx, -fy, -fit * 3],
+      tow0rate: 1,
+
+      to01: [fx, -fy, 0],
+      to01rate: 1,
+      to01x: [1, 0, 0],
+      to01z: [0, 0, 0.9],
+  
+      to12: [fx, -fy, 0],
+      to12rate: 1,
+      to12x: [1, 0, 0],
+      to12z: [0, 0, 1], // 実質これ
+
+      //to2e: [fx, -fy, 0],
+      to2e: [0.523, -0.852, -0.038],
+      to2erate: 0.264, // 実値 [0.138, -0.225, -0.010] ぐらい
+      to2x: [1, 0, 0],
+      to2z: [0, 0, 1], // 実質これ
+    };
+    thumbs.endOffset = thumbs.to2erate; // 同じ量を伸ばす
+
     const blocks = [
 { lr: false, bones: [
 { parentName: '', nameJa: '全ての親', nameEn: 'root', p:[0,0,0] },
@@ -425,10 +447,18 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '_人指２',nameJa: '人指３', nameEn: 'IndexDistal', p:[fx,-fy,0]},
 {parentName: '_人指３',nameJa: '人指先', nameEn: 'IndexEnd', p:[fx,-fy,0]},
 
-{parentName: '_手首',nameJa: '親指０', nameEn: 'ThumbMetacarpal', p:[fx,-fy,-fit*3]},
-{parentName: '_親指０',nameJa: '親指１', nameEn: 'ThumbProximal', p:[fx,-fy,0]},
-{parentName: '_親指１',nameJa: '親指２', nameEn: 'ThumbDistal', p:[fx,-fy,0]},
-{parentName: '_親指２',nameJa: '親指先', nameEn: 'ThumbEnd', p:[fx,-fy,0]},
+{parentName: '_手首',nameJa: '親指０', nameEn: 'ThumbMetacarpal', p: thumbs.tow0,
+  x: thumbs.to01x, z: thumbs.to01z,
+},
+{parentName: '_親指０',nameJa: '親指１', nameEn: 'ThumbProximal', p: thumbs.to01,
+  x: thumbs.to12x, z: thumbs.to12z,
+},
+{parentName: '_親指１',nameJa: '親指２', nameEn: 'ThumbDistal', p: thumbs.to12,
+  x: thumbs.to2ex, z: thumbs.to2ez,
+},
+{parentName: '_親指２',nameJa: '親指先', nameEn: 'ThumbEnd', p: thumbs.to2e,
+  endOffset: [0, 0, 0],
+},
 ]},
 { lr: true, bones: [
 {parentName: '頭',nameJa: '目', nameEn: 'Eye', p:[0.2,0,-0.2]},
