@@ -316,7 +316,7 @@ export class Quat {
 } 
 
 export class CharBuilder extends PMX.Maker {
-  static VERSION = '0.1.0';
+  static VERSION = '0.1.2';
 
   /** 8x8 uv インデックス */
   static INDEX_OWNJOINT = 1;
@@ -388,13 +388,13 @@ export class CharBuilder extends PMX.Maker {
 { parentName: 'センター', nameJa: 'グルーブ', nameEn: 'groove', p:[0, 1, 0] },
 { parentName: 'グルーブ', nameJa: '腰', nameEn: 'waist', p:[0, 3, 0] },
 { parentName: '腰', nameJa: '下半身', nameEn: 'spine', p: [0, 1, 0] },
-{ parentName: '下半身', nameJa: '上半身', nameEn: 'chest', p:[0, 1, 0] },
-{ parentName: '上半身', nameJa: '上半身2', nameEn: 'upperChest', p:[0, 2, 0] },
-{ parentName: '上半身2', nameJa: '首', nameEn: 'neck', p:[0, 1, 0] },
+{ parentName: '下半身', nameJa: '上半身', nameEn: 'chest', p:[0, 0.2, 0] },
+{ parentName: '上半身', nameJa: '上半身2', nameEn: 'upperChest', p:[0, 2.8, 0] },
+{ parentName: '上半身2', nameJa: '首', nameEn: 'neck', p:[0, 0.5, 0] },
 { parentName: '首', nameJa: '頭', nameEn: 'head', p:[0, 1, 0] }, // #7
 ]},
 { lr: true, bones: [
-{parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg', p:[1,0,0]},
+{parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg', p:[1, -2, 0]}, // NOTE: 少し下げる
 {parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg', p:[0,-5,0]},
 {parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot', p:[0,-5,0]},
 {parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0,0,-1]},
@@ -736,7 +736,7 @@ export class CharBuilder extends PMX.Maker {
 
       for (let i = 0; i < 10; ++i) {
         const f = new PMX.Frame();
-        f.nameJa = 'その他のボーン';
+        f.nameJa = 'その他';
         f.nameEn = `fr00${i}`;
         f.bones = [];
         f.specialFlag = 0;
@@ -774,7 +774,7 @@ export class CharBuilder extends PMX.Maker {
         } else if (i === 4) {
           f.nameJa = '体(下)';
           f.bones.push(..._sel(b =>
-            ['下半身'].includes(b.nameJa)
+            ['下半身', '足', 'ひざ', 'つま先'].includes(b.nameJa)
           ));  
         } else if (i === 5) {
           f.nameJa = '体(上)';
@@ -784,7 +784,7 @@ export class CharBuilder extends PMX.Maker {
         } else if (i === 6) {
           f.nameJa = '腕';
           f.bones.push(..._sel(b => {
-            for (const _k of ['肩', 'ひじ', '手首']) {
+            for (const _k of ['肩', '腕', 'ひじ', '手首']) {
               if (b.nameJa.endsWith(_k)) {
                 return true;
               }
