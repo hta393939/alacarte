@@ -769,18 +769,33 @@ export class CharBuilder extends PMX.Maker {
         } else if (i === 3) {
           f.nameJa = 'センター';
           f.bones.push(..._sel(b =>
-            ['センター', 'グルーブ', '腰'].includes(b.nameJa)
+            ['センター', 'グルーブ', '腰', '操作中心'].includes(b.nameJa)
           ));
         } else if (i === 4) {
           f.nameJa = '体(下)';
-          f.bones.push(..._sel(b =>
-            ['下半身', '足', 'ひざ', 'つま先'].includes(b.nameJa)
-          ));  
+          f.bones.push(..._sel(b => {
+            for (const _k of ['下半身', '足', 'ひざ', '足首', 'つま先']) {
+              if (b.nameJa.endsWith(_k)) {
+                return true;
+              }
+            }
+            return false;
+          }));  
         } else if (i === 5) {
           f.nameJa = '体(上)';
-          f.bones.push(..._sel(b =>
-            ['首', '頭', '上半身', '上半身2'].includes(b.nameJa)
-          ));
+          f.bones.push(..._sel(b => {
+            for (const _k of ['首', '頭', '上半身', '上半身2']) {
+              if (b === _k) {
+                return true;
+              }
+            }
+            for (const _k of ['目']) {
+              if (b.nameJa.endsWith(_k)) {
+                return true;
+              }
+            }
+            return false;
+          }));
         } else if (i === 6) {
           f.nameJa = '腕';
           f.bones.push(..._sel(b => {
@@ -798,7 +813,7 @@ export class CharBuilder extends PMX.Maker {
           f.nameJa = 'パーツ';
           f.bones.push(..._sel(b => {
             for (const _k of ['パーツ']) {
-              if (b.nameJa.endsWith(_k)) {
+              if (b.nameJa.includes(_k)) {
                 return true;
               }
             }
