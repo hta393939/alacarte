@@ -398,14 +398,13 @@ export class CharBuilder extends PMX.Maker {
       to12z: [0, 0, 1], // 実質これ
 
       //to2e: [fx, -fy, 0],
-      to2e: [0.523, -0.852, -0.038],
+      to2e: [0.523, -0.852, -0.038], // ◇
       to2erate: 0.264, // 実値 [0.138, -0.225, -0.010] ぐらい
       to2ex: [0.523, -0.852, -0.038], // 正規化後
       to2ez: [0, 0, 1], // 実質これ
       
-      endOffset: [0, 0, -1],
+      endOffset: [0.138, -0.225, -0.010], // ◇ 同じ値だけ伸ばす
     };
-    thumbs.endOffset = thumbs.to2erate; // 同じ量を伸ばす
 
     /** 手首から根元の差分 */
     const finroots = [
@@ -813,7 +812,9 @@ export class CharBuilder extends PMX.Maker {
         } else if (i === 3) {
           f.nameJa = 'センター';
           f.bones.push(..._sel(b =>
-            ['センター', 'グルーブ', '腰', '操作中心'].includes(b.nameJa)
+            ['センター', 'グルーブ', '腰',
+              //'操作中心'
+            ].includes(b.nameJa)
           ));
         } else if (i === 4) {
           f.nameJa = '体(下)';
@@ -829,7 +830,7 @@ export class CharBuilder extends PMX.Maker {
           f.nameJa = '体(上)';
           f.bones.push(..._sel(b => {
             for (const _k of ['首', '頭', '上半身', '上半身2']) {
-              if (b === _k) {
+              if (b.nameJa === _k) {
                 return true;
               }
             }
