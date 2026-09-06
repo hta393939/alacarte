@@ -373,6 +373,7 @@ export class CharBuilder extends PMX.Maker {
     /** @type {PMX.Bone[]} */
     const bones = [];
 
+    /** 正規化成分 */
     const ax = CharBuilder.ANX * 1;
     const ay = CharBuilder.ANY * 1;
     const fx = CharBuilder.ANX * 0.25;
@@ -381,24 +382,26 @@ export class CharBuilder extends PMX.Maker {
     const fit = CharBuilder.FINGER_INTERVAL;
 
     const thumbs = {
-      tow0: [fx, -fy, -fit * 3],
+      //tow0: [fx, -fy, -fit * 3],
+      tow0: [0.039, -0.016, -0.200],
       tow0rate: 1,
 
       to01: [fx, -fy, 0],
       to01rate: 1,
-      to01x: [1, 0, 0],
-      to01z: [0, 0, 0.9],
-  
+      to01x: [0.592, -0.688, -0.420],
+      //to01y: [0.0491, 0.653, -0.377],
+      to01z: [0.274, -0.318, 0.908],
+ 
       to12: [fx, -fy, 0],
       to12rate: 1,
-      to12x: [1, 0, 0],
+      to12x: [ax, -ay, 0], // 同じ向き
       to12z: [0, 0, 1], // 実質これ
 
       //to2e: [fx, -fy, 0],
       to2e: [0.523, -0.852, -0.038],
       to2erate: 0.264, // 実値 [0.138, -0.225, -0.010] ぐらい
-      to2x: [1, 0, 0],
-      to2z: [0, 0, 1], // 実質これ
+      to2ex: [0.523, -0.852, -0.038], // 正規化後
+      to2ez: [0, 0, 1], // 実質これ
     };
     thumbs.endOffset = thumbs.to2erate; // 同じ量を伸ばす
 
