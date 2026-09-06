@@ -383,7 +383,7 @@ export class CharBuilder extends PMX.Maker {
 
     const thumbs = {
       //tow0: [fx, -fy, -fit * 3],
-      tow0: [0.039, -0.016, -0.200],
+      tow0: [0.039, -0.160, -0.200], // ▽
       tow0rate: 1,
 
       to01: [fx, -fy, 0],
@@ -402,11 +402,14 @@ export class CharBuilder extends PMX.Maker {
       to2erate: 0.264, // 実値 [0.138, -0.225, -0.010] ぐらい
       to2ex: [0.523, -0.852, -0.038], // 正規化後
       to2ez: [0, 0, 1], // 実質これ
+      
+      endOffset: [0, 0, -1],
     };
     thumbs.endOffset = thumbs.to2erate; // 同じ量を伸ばす
 
+    /** 手首から根元の差分 */
     const finroots = [
-      {diff: [0.039, -0.160, -0.199]}, // 親
+      {diff: [0.039, -0.160, -0.199]}, // 親▽
       {diff: [0.565, -0.360, -0.194]}, // 人
       {diff: [0.572, -0.362, -0.020]}, // 中
       {diff: [0.547, -0.387,  0.145]}, // 薬
@@ -437,26 +440,26 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm', p:[0.5,0,0]},
 {parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[ax * 2,-ay * 2,0]},
 {parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[ax * 2,-ay * 2,0]},
-// 薬指を手首の先として使用する
-{parentName: '_手首',nameJa: '薬指１', nameEn: 'RingProximal', p:[fx,-fy,0]},
-{parentName: '_薬指１',nameJa: '薬指２', nameEn: 'RingIntermediate', p:[fx,-fy,0]},
-{parentName: '_薬指２',nameJa: '薬指３', nameEn: 'RingDistal', p:[fx,-fy,0]},
-{parentName: '_薬指３',nameJa: '薬指先', nameEn: 'RingEnd', p:[fx,-fy,0]},
-
-{parentName: '_手首',nameJa: '小指１', nameEn: 'LittleProximal', p:[fx,-fy,fit]},
-{parentName: '_小指１',nameJa: '小指２', nameEn: 'LittleIntermediate', p:[fx,-fy,0]},
-{parentName: '_小指２',nameJa: '小指３', nameEn: 'LittleDistal', p:[fx,-fy,0]},
-{parentName: '_小指３',nameJa: '小指先', nameEn: 'LittleEnd', p:[fx,-fy,0]},
-
-{parentName: '_手首',nameJa: '中指１', nameEn: 'MiddleProximal', p:[fx,-fy,-fit]},
+// 中指を手首の先として使用する
+{parentName: '_手首',nameJa: '中指１', nameEn: 'MiddleProximal', p: finroots[2].diff},
 {parentName: '_中指１',nameJa: '中指２', nameEn: 'MiddleIntermediate', p:[fx,-fy,0]},
 {parentName: '_中指２',nameJa: '中指３', nameEn: 'MiddleDistal', p:[fx,-fy,0]},
 {parentName: '_中指３',nameJa: '中指先', nameEn: 'MiddleEnd', p:[fx,-fy,0]},
 
-{parentName: '_手首',nameJa: '人指１', nameEn: 'IndexProximal', p:[fx,-fy,-fit*2]},
+{parentName: '_手首',nameJa: '人指１', nameEn: 'IndexProximal', p: finroots[1].diff},
 {parentName: '_人指１',nameJa: '人指２', nameEn: 'IndexIntermediate', p:[fx,-fy,0]},
 {parentName: '_人指２',nameJa: '人指３', nameEn: 'IndexDistal', p:[fx,-fy,0]},
 {parentName: '_人指３',nameJa: '人指先', nameEn: 'IndexEnd', p:[fx,-fy,0]},
+
+{parentName: '_手首',nameJa: '薬指１', nameEn: 'RingProximal', p: finroots[3].diff},
+{parentName: '_薬指１',nameJa: '薬指２', nameEn: 'RingIntermediate', p:[fx,-fy,0]},
+{parentName: '_薬指２',nameJa: '薬指３', nameEn: 'RingDistal', p:[fx,-fy,0]},
+{parentName: '_薬指３',nameJa: '薬指先', nameEn: 'RingEnd', p:[fx,-fy,0]},
+
+{parentName: '_手首',nameJa: '小指１', nameEn: 'LittleProximal', p: finroots[4].diff},
+{parentName: '_小指１',nameJa: '小指２', nameEn: 'LittleIntermediate', p:[fx,-fy,0]},
+{parentName: '_小指２',nameJa: '小指３', nameEn: 'LittleDistal', p:[fx,-fy,0]},
+{parentName: '_小指３',nameJa: '小指先', nameEn: 'LittleEnd', p:[fx,-fy,0]},
 
 {parentName: '_手首',nameJa: '親指０', nameEn: 'ThumbMetacarpal', p: thumbs.tow0,
   x: thumbs.to01x, z: thumbs.to01z,
@@ -468,7 +471,7 @@ export class CharBuilder extends PMX.Maker {
   x: thumbs.to2ex, z: thumbs.to2ez,
 },
 {parentName: '_親指２',nameJa: '親指先', nameEn: 'ThumbEnd', p: thumbs.to2e,
-  endOffset: [0, 0, 0],
+  endOffset: thumbs.endOffset,
 },
 ]},
 { lr: true, bones: [
