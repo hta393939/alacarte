@@ -420,16 +420,16 @@ export class CharBuilder extends PMX.Maker {
 { parentName: '', nameJa: '全ての親', nameEn: 'root', p:[0,0,0] },
 { parentName: '全ての親', nameJa: '操作中心', nameEn: 'view cnt bone', p:[0,0,0] },
 { parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0, 8, 0] },
-{ parentName: 'センター', nameJa: 'グルーブ', nameEn: 'groove', p:[0, 1, 0] },
+{ parentName: 'センター', nameJa: 'グルーブ', nameEn: 'groove', p:[0, 0.25, 0] },
 { parentName: 'グルーブ', nameJa: '腰', nameEn: 'waist', p:[0, 3, 0] },
 { parentName: '腰', nameJa: '下半身', nameEn: 'spine', p: [0, 1, 0] },
-{ parentName: '下半身', nameJa: '上半身', nameEn: 'chest', p:[0, 0.2, 0] },
+{ parentName: '腰', nameJa: '上半身', nameEn: 'chest', p:[0, 1.25, 0] },
 { parentName: '上半身', nameJa: '上半身2', nameEn: 'upperChest', p:[0, 2.8, 0] },
 { parentName: '上半身2', nameJa: '首', nameEn: 'neck', p:[0, 0.5, 0] },
 { parentName: '首', nameJa: '頭', nameEn: 'head', p:[0, 1, 0] }, // #7
 ]},
 { lr: true, bones: [
-{parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg', p:[1, -2, 0]}, // NOTE: 少し下げる
+{parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg', p:[1, -1, 0]},
 {parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg', p:[0,-5,0]},
 {parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot', p:[0,-5,0]},
 {parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0,0,-1]},
