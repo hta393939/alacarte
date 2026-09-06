@@ -7,6 +7,7 @@ import {Vec3} from "./charbuilder.js";
 export class Util {
   constructor() {
     this.calc();    
+    this.calcWrist();
   }
 
   initialize() {
@@ -63,6 +64,33 @@ export class Util {
       console.log('cross', dir.cross(bz));
     }
 
+  }
+
+  /**
+   * 手首から根元へ 差分
+   * 親 [0.039, -0.160, -0.199],
+   * 人 [0.565, -0.360, -0.194],
+   * 中 [0.572, -0.362, -0.020],
+   * 薬 [0.547, -0.387,  0.145],
+   * 小 [0.474, -0.394,  0.284],
+   */
+  calcWrist() {
+    const wrist = {p: [5.147, 12.579, 0.119]};
+    const fs = [
+      {p: [5.186, 12.419, -0.080]},
+      {p: [5.712, 12.219, -0.075]},
+      {p: [5.719, 12.217,  0.099]},
+      {p: [5.694, 12.192,  0.264]},
+      {p: [5.621, 12.185,  0.403]},
+    ];
+    const wv = Vec3.fromArray(wrist.p);
+    for (const f of fs) {
+      const basev = Vec3.fromArray(f.p);
+      const diff = basev.clone().subInPlace(wv);
+      const len = diff.len();
+      const dirv = diff.clone().normalizeInPlace();
+      console.log('指の付け根へ, diff, len, dirv', diff, len, dirv);
+    }
   }
 
 }

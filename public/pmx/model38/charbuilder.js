@@ -405,6 +405,14 @@ export class CharBuilder extends PMX.Maker {
     };
     thumbs.endOffset = thumbs.to2erate; // 同じ量を伸ばす
 
+    const finroots = [
+      {diff: [0.039, -0.160, -0.199]}, // 親
+      {diff: [0.565, -0.360, -0.194]}, // 人
+      {diff: [0.572, -0.362, -0.020]}, // 中
+      {diff: [0.547, -0.387,  0.145]}, // 薬
+      {diff: [0.474, -0.394,  0.284]}, // 子
+    ];
+
     const blocks = [
 { lr: false, bones: [
 { parentName: '', nameJa: '全ての親', nameEn: 'root', p:[0,0,0] },
