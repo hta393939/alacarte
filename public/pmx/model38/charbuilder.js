@@ -418,8 +418,8 @@ export class CharBuilder extends PMX.Maker {
     const blocks = [
 { lr: false, bones: [
 { parentName: '', nameJa: '全ての親', nameEn: 'root', p:[0,0,0] },
-{ parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0, 8, 0] },
 { parentName: '全ての親', nameJa: '操作中心', nameEn: 'view cnt', p:[0,0,0] },
+{ parentName: '全ての親', nameJa: 'センター', nameEn: 'center', p:[0, 8, 0] },
 { parentName: 'センター', nameJa: 'グルーブ', nameEn: 'groove', p:[0, 0.25, 0] },
 { parentName: 'グルーブ', nameJa: '腰', nameEn: 'waist', p:[0, 3, 0] },
 { parentName: '腰', nameJa: '下半身', nameEn: 'spine', p: [0, 1, 0] },
@@ -555,14 +555,14 @@ export class CharBuilder extends PMX.Maker {
           if (isFootIK || isToeIK) {
             bits |= PMX.Bone.BIT_IK | PMX.Bone.BIT_MOVE;
             bone.ikTargetBone = _search(`${lrpre[i].nameJa}${isFootIK ? '足首' : 'つま先'}`);
-            bone.ikLimitation = isFootIK ? 2 : 4; // radian
+            bone.ikLimitation = isFootIK ? 2 : 2; // radian
             bone.ikLoopCount = isFootIK ? 40 : 3; // loop
             for (let i2 = 0; i2 < (isFootIK ? 2 : 1); ++i2) {
               const link = new PMX.IKLink();
               let linkName = `${lrpre[i].nameJa}`;
               if (i2 === 0 && isFootIK) { // 角度制限
                 link.isLimitation = 1;
-                link.upper = [-5 * Math.PI / 180, 0, 0];
+                link.upper = [-0.5 * Math.PI / 180, 0, 0];
                 link.lower = [-Math.PI, 0, 0];
                 linkName += 'ひざ';
               } else {
