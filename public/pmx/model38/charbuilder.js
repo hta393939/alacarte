@@ -433,7 +433,7 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '下半身',nameJa: '足', nameEn: 'UpperLeg', p:[1, -1, -1/64]},
 {parentName: '_足',nameJa: 'ひざ', nameEn: 'LowerLeg', p:[0,-5 + 0.25, 0]},
 {parentName: '_ひざ',nameJa: '足首', nameEn: 'Foot', p:[0,-5 - 0.25, 20/64]},
-{parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0, -1, -46/64 - 16/64]},
+{parentName: '_足首',nameJa: 'つま先', nameEn: 'Toe', p:[0, -1, -44/64 - 19/64]},
 ]},
 { lr: true, bones: [
 {parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder', p:[0.5, 1.75, 1/4]},
@@ -478,11 +478,11 @@ export class CharBuilder extends PMX.Maker {
 {parentName: '両目',nameJa: '目', nameEn: 'Eye', p:[0.25, -3, -0.2]},
 ]},
 { lr: true, bones: [
-{parentName: '全ての親', nameJa: '足ＩＫ', nameEn: 'LegIK', p:[1, 1.25, 0.25]}, // 足首位置を合わせる
+{parentName: '全ての親', nameJa: '足ＩＫ', nameEn: 'LegIK', p:[1, 1.25, 19/64]}, // 足首位置を合わせる
 {parentName: '_足ＩＫ', nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
-{parentName: '_足ＩＫ', nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[0,0, -1]}, // つま先位置を合わせる
+{parentName: '_足ＩＫ', nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[0, 0.25, -44/64]}, // つま先位置を合わせる
 {parentName: '_つま先ＩＫ', nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,-1]},
 ]},
 { lr: true, bones: [
