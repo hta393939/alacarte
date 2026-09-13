@@ -438,8 +438,9 @@ export class CharBuilder extends PMX.Maker {
 { lr: true, bones: [
 {parentName: '上半身2',nameJa: '肩', nameEn: 'Shoulder', p:[0.5, 1.75, 1/4]},
 {parentName: '_肩',nameJa: '腕', nameEn: 'UpperArm', p:[0.5,0,0]},
-{parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[ax * 2,-ay * 2,0]},
-{parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[ax * 2,-ay * 2,0]},
+{parentName: '_腕',nameJa: 'ひじ', nameEn: 'LowerArm', p:[ax * (2 + 32 /64),-ay * (2 + 32 / 64), 0]},
+// 48 かそれより長いか。64 は追い越し
+{parentName: '_ひじ',nameJa: '手首', nameEn: 'Hand', p:[ax * (2 + 56/64), -ay * (2 + 56/64), 0]},
 // 中指を手首の先として使用する
 {parentName: '_手首',nameJa: '中指１', nameEn: 'MiddleProximal', p: finroots[2].diff},
 {parentName: '_中指１',nameJa: '中指２', nameEn: 'MiddleIntermediate', p:[fx,-fy,0]},
