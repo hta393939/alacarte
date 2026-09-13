@@ -280,7 +280,7 @@ class Misc {
         colb: [201,  91, 128],
         mode: 'lineary3',
       });
-      // 腕ひじ足ひざなど
+      // 腕ひじ足ひざなど 今はネギっぽい
       maker.drawForTun(cvs[0], CharBuilder.INDEX_TUNNEL8, {
         cola: [17, 238, 17],
         col : [238, 238, 221],
@@ -303,11 +303,28 @@ class Misc {
         colb: [204, 204, 204],
       });
 
+      maker.drawForTun(cvs[0], CharBuilder.INDEX_WAIST, {
+        cola: [255, 255, 255],
+        col : [238, 17, 17],
+        colb: [255, 255, 255],
+        isNarrow: true,
+      }); // 腰予定
+
+      maker.drawForTun(cvs[0], CharBuilder.INDEX_BODY1, {
+        cola: CharBuilder.BODY1,
+        col : CharBuilder.BODY1.map(v => Math.min(255, v + 51)),
+        colb: CharBuilder.BODY1,
+        isNarrow: true,
+      });   
+
       maker.drawMobius(cvs[0], CharBuilder.INDEX_MOBIUS, {
+        cola: CharBuilder.PURPLE,
+        colb: CharBuilder.BLACK,
       });
+
       maker.drawOwnBone(cvs[0], CharBuilder.INDEX_OWNBONE, {
       });
-      maker.drawLogo(cvs[0]);
+      maker.drawLogo(cvs[0], {cola: CharBuilder.MAINHAIR});
 
       if (!param.usecolor) {
         const c = cvs[0].getContext('2d');

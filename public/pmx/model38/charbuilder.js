@@ -316,7 +316,7 @@ export class Quat {
 } 
 
 export class CharBuilder extends PMX.Maker {
-  static VERSION = '0.1.2';
+  static VERSION = '0.1.3';
 
   /** 8x8 uv インデックス */
   static INDEX_OWNJOINT = 1;
@@ -332,12 +332,36 @@ export class CharBuilder extends PMX.Maker {
   static INDEX_TUNNEL10 = 10;
   static INDEX_TUNNEL11 = 11;
 
+  /** 腰予定 */
+  static INDEX_WAIST = 16;
+  /** トンネル体 */
+  static INDEX_BODY1 = 17;
+  static INDEX_TUNNEL18 = 18;
+  static INDEX_TUNNEL19 = 19;
+
   /** 腕のベクトルの正規化X成分 */
   static ANX = 0.788;
   /** 腕のベクトルの正規化Y成分の正 */
   static ANY = 0.616;
   /** 指ボーンの隙間 */
   static FINGER_INTERVAL = 0.08;
+
+  /** 髪 */
+  static MAINHAIR = [136, 204, 204];
+  /** 明るい灰色 */
+  static LIGHTCLOTH = [187, 187, 204];
+  /** アクセの紫 */
+  static PURPLE = [221, 51, 136];
+  /** 黒 */
+  static BLACK = [17, 17, 17];
+  /** 体1 */
+  static BODY1 = [247, 245, 228];
+  /** 体2 丸めると色の雰囲気が違う */
+  static BODY2 = [247, 243, 232];
+  /** スカートの明るい部分 */
+  static LIGHTSKIRT = [72, 77, 80];
+  /** 明るい服 */
+  static LIGHTCLOTH2 = [246, 238, 243];
 
   constructor() {
     super();
@@ -938,7 +962,8 @@ export class CharBuilder extends PMX.Maker {
           param.intl = [0, -1, 0];
           param.modelrot = [0, Math.PI, - armang];
 
-          param.col6 = [5, 5, 4];
+          //param.col6 = [5, 5, 4];
+          param.subindex8 = CharBuilder.INDEX_BODY1;
           param.thick = thickTun;
           param.whalf = 0.2;
           param.winterval = 0.1;
@@ -965,7 +990,8 @@ export class CharBuilder extends PMX.Maker {
             )];
 
           param.thick = thickTun;
-          param.col6 = [5, 5, 4];
+          //param.col6 = [5, 5, 4];
+          param.subindex8 = CharBuilder.INDEX_BODY1;
           param.whalf = 0.2;
           param.winterval = 0.1;
           param.dhalf = 0.2;
@@ -1022,6 +1048,7 @@ export class CharBuilder extends PMX.Maker {
           this.makeCyl(param);
 
         } else if (nameJa.includes('足')) {
+          param.subindex8 = CharBuilder.INDEX_BODY1;
           param.intl = [0, -3, 0];
           param.whalf = 0.6;
           param.winterval = 0.3;
@@ -1042,7 +1069,7 @@ export class CharBuilder extends PMX.Maker {
           param.hhalf = param.whalf * 0.5;
           param.cutout = param.whalf * (2 - Math.sqrt(2));
           param.cutin = rpin * (2 - Math.sqrt(2));       
-          this.makeTun(param);
+          this.makeTun(param); // 受け軸
 
           isBone = 'pin';
           param.hradius = 0.04;
@@ -1647,7 +1674,7 @@ export class CharBuilder extends PMX.Maker {
   }
 
   /**
-   * 使用していない。トンネル形状
+   * トンネル形状
    * @param {IParam} param
    */
   makeTun(param) {
@@ -1905,7 +1932,7 @@ export class CharBuilder extends PMX.Maker {
         );
         let subu = (j / 4);
         let subv = (i / hdiv);
-        vtx.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_MOBIUS);
+        vtx.uv = TexMaker.subTex8(subu, subv, CharBuilder.INDEX_MOBIUS, 6/8);
         vts.push(vtx);
       }
     }

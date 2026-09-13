@@ -696,6 +696,59 @@ export class TexMaker {
     const by = Math.floor(index / 8) * side;
     const c = canvas.getContext('2d');
 
+    let cola = param.cola;
+    let colb = param.cola;
+
+    const img = c.getImageData(bx, by, side, side);
+    for (let y = 0; y < side; ++y) {
+      for (let x = 0; x < side; ++x) {
+
+        let ox = x + side * 1 / 16;
+        let oxb = Math.floor(ox / (side * 3 / 16));
+        let oxm = ox % (side * 3 / 16);
+
+        let oy = y - side * 1 / 8;
+        let oym = oy / (side * 6 / 8);
+
+        cola = ((oxb & 1) === 1) ? param.cola : param.colb;
+        colb = [cola[0] + 51, cola[1] + 51, cola[2] + 51].map(v => Math.min(255, v));
+        let t = oym;
+        if (t >= 0.5) {
+          t = (1 - t) * 2;
+        } else {
+          t *= 2;
+        }
+
+        let offset = (x + side * y) * 4;
+        const wt = Math.max(0, Math.min(1 - t, 1));
+        let r = cola[0] * wt + colb[0] * (1 - wt);
+        let g = cola[1] * wt + colb[1] * (1 - wt);
+        let b = cola[2] * wt + colb[2] * (1 - wt);
+        let a = 255;
+        img.data[offset  ] = r;
+        img.data[offset+1] = g;
+        img.data[offset+2] = b;
+        img.data[offset+3] = a;
+      }
+    }
+    c.putImageData(img, bx, by);
+
+    this.clearPad(canvas, index, padding);
+  }
+
+  /**
+   * メビウス関節用。色あたり
+   * @param {HTMLCanvasElement} canvas 
+   * @param {number} index 8x8で0～63のどこか
+   */
+  drawMobius1(canvas, index, param) {
+    const padding = 4;
+    const whole = canvas.width;
+    const side = whole / 8;
+    const bx = (index % 8) * side;
+    const by = Math.floor(index / 8) * side;
+    const c = canvas.getContext('2d');
+
     const img = c.getImageData(bx, by, side, side);
     for (let y = 0; y < side; ++y) {
       for (let x = 0; x < side; ++x) {
@@ -807,7 +860,7 @@ export class TexMaker {
    * 
    * @param {HTMLCanvasElement} canvas 
    */
-  drawLogo(canvas) {
+  drawLogo(canvas, param) {
     const whole = canvas.width;
     const div = 8;
     /** 1つ分 */
@@ -817,7 +870,9 @@ export class TexMaker {
 
     c.translate(side * 2, side * -8);
 
-    c.fillStyle = '#00ffff';
+    const cola = param.cola;
+
+    c.fillStyle = _colstr(...cola, 255);
     c.fillRect(0, 0, side * 4, side);
     //c.clearRect(0, 0, side * 2, side);
 
