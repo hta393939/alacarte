@@ -711,7 +711,7 @@ export class TexMaker {
         let oym = oy / (side * 6 / 8);
 
         cola = ((oxb & 1) === 1) ? param.cola : param.colb;
-        colb = [cola[0] + 51, cola[1] + 51, cola[2] + 51].map(v => Math.min(255, v));
+        colb = [cola[0] + 102, cola[1] + 102, cola[2] + 102].map(v => Math.min(255, v));
         let t = oym;
         if (t >= 0.5) {
           t = (1 - t) * 2;
@@ -737,7 +737,7 @@ export class TexMaker {
   }
 
   /**
-   * メビウス関節用。色あたり
+   * メビウス関節用。赤黄色の目立つもの
    * @param {HTMLCanvasElement} canvas 
    * @param {number} index 8x8で0～63のどこか
    */

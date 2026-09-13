@@ -336,7 +336,7 @@ export class CharBuilder extends PMX.Maker {
   static INDEX_WAIST = 16;
   /** トンネル体 */
   static INDEX_BODY1 = 17;
-  static INDEX_TUNNEL18 = 18;
+  static INDEX_PIN = 18;
   static INDEX_TUNNEL19 = 19;
 
   /** 腕のベクトルの正規化X成分 */
@@ -1110,6 +1110,7 @@ export class CharBuilder extends PMX.Maker {
           param.hradius = param.radius * 2;
           this.makeSphere(param);
         } else if (isBone === 'pin') {
+          param.subindex8 = CharBuilder.INDEX_PIN;
           param.intl = [0, -0.25, 0];
           param.hhalf = param.radius * 2;
           param.radius = rpin * 15 / 16; // 少し小さくした
@@ -1503,7 +1504,7 @@ export class CharBuilder extends PMX.Maker {
 
     const _calcuv = (ratex, ratey) => {
       if (subindex8 >= 0) {
-        return TexMaker.subTex8(ratex, ratey, subindex8);
+        return TexMaker.subTex8(ratex, ratey, subindex8, 6/8);
       }
       return TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
     };

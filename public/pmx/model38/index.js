@@ -315,7 +315,11 @@ class Misc {
         col : CharBuilder.BODY1.map(v => Math.min(255, v + 51)),
         colb: CharBuilder.BODY1,
         isNarrow: true,
-      });   
+      });
+
+      maker.drawOneColor(cvs[0], CharBuilder.INDEX_PIN,
+        '#ff8000',
+      );
 
       maker.drawMobius(cvs[0], CharBuilder.INDEX_MOBIUS, {
         cola: CharBuilder.PURPLE,
