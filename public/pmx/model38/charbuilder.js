@@ -479,11 +479,11 @@ export class CharBuilder extends PMX.Maker {
 ]},
 { lr: true, bones: [
 {parentName: '全ての親', nameJa: '足ＩＫ', nameEn: 'LegIK', p:[1, 1.25, 19/64]}, // 足首位置を合わせる
-{parentName: '_足ＩＫ', nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0,0,-1]},
+{parentName: '_足ＩＫ', nameJa: '足ＩＫ先', nameEn: 'LegIKEnd', p:[0, -3.5, 1.25]},
 ]},
 { lr: true, bones: [
-{parentName: '_足ＩＫ', nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[0, 0.25, -44/64]}, // つま先位置を合わせる
-{parentName: '_つま先ＩＫ', nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0,0,-1]},
+{parentName: '_足ＩＫ', nameJa: 'つま先ＩＫ', nameEn: 'ToeIKTop', p:[0, -1, -63/64]}, // つま先位置を合わせる
+{parentName: '_つま先ＩＫ', nameJa: 'つま先ＩＫ先', nameEn: 'ToeIKEnd', p:[0, -1.25, 0]},
 ]},
 { lr: true, bones: [
 {parentName: '上半身2', nameJa: 'パーツ１', nameEn: 'Parts1', p:[1,0,2]},
@@ -555,7 +555,7 @@ export class CharBuilder extends PMX.Maker {
           if (isFootIK || isToeIK) {
             bits |= PMX.Bone.BIT_IK | PMX.Bone.BIT_MOVE;
             bone.ikTargetBone = _search(`${lrpre[i].nameJa}${isFootIK ? '足首' : 'つま先'}`);
-            bone.ikLimitation = isFootIK ? 2 : 2; // radian
+            bone.ikLimitation = isFootIK ? 1 : 1; // radian
             bone.ikLoopCount = isFootIK ? 40 : 3; // loop
             for (let i2 = 0; i2 < (isFootIK ? 2 : 1); ++i2) {
               const link = new PMX.IKLink();
