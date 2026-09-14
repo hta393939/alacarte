@@ -1482,9 +1482,11 @@ export class CharBuilder extends PMX.Maker {
     const vdiv = param.vdiv || 8;
     const hnum = param.hnum || 2;
 
+    /** 円柱部の半径 */
     const radius = param.radius || 1;
     /** 半球の高さ。0 も有効 */
     const hradius = param.hradius ?? radius;
+    /** 筒の長さの半分 */
     const hhalf = param.hhalf || 1;
 
     /** @type {PMX.Bone} */
@@ -1509,7 +1511,7 @@ export class CharBuilder extends PMX.Maker {
       return TexMaker.calcColorUV(col6[0], col6[1], col6[2], vts.length);
     };
 
-    console.log('hradius', hradius);
+    console.log('シリンダー hradius', hradius);
 
 
     {
@@ -1534,9 +1536,7 @@ export class CharBuilder extends PMX.Maker {
       //let rr = param.rfunc(i);
       let rr = Math.sin(vang);
 
-      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
       for (let j = 0; j <= hdiv; ++j) {
-        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
 
         const hang = (j % hdiv) * Math.PI * 2 / hdiv;
 
@@ -1556,7 +1556,7 @@ export class CharBuilder extends PMX.Maker {
           bonea, v
         );
 
-        v.uv = _calcuv(ratex, ratey);
+        v.uv = _calcuv(j / hdiv, i / (vdiv * 0.5) * 0.25);
 
         vts.push(v);
       }
@@ -1567,10 +1567,7 @@ export class CharBuilder extends PMX.Maker {
       //let rr = param.rfunc(i);
       let rr = 1;
 
-      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
       for (let j = 0; j <= hdiv; ++j) {
-        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
-
         const hang = (j % hdiv) * Math.PI * 2 / hdiv;
 
         const cs = Math.cos(hang);
@@ -1589,7 +1586,7 @@ export class CharBuilder extends PMX.Maker {
           bonea, v
         );
 
-        v.uv = _calcuv(ratex, ratey);
+        v.uv = _calcuv(j / hdiv, 0.25 + i / hnum * 0.5);
 
         vts.push(v);
       }
@@ -1600,9 +1597,7 @@ export class CharBuilder extends PMX.Maker {
       //let rr = param.rfunc(i);
       let rr = Math.sin(vang);
 
-      const ratey = (i - vdiv * 0.5) / (vdiv * 0.5);
       for (let j = 0; j <= hdiv; ++j) {
-        const ratex = (j - hdiv * 0.5) / (hdiv * 0.5);
 
         const hang = (j % hdiv) * Math.PI * 2 / hdiv;
 
@@ -1622,7 +1617,7 @@ export class CharBuilder extends PMX.Maker {
           bonea, v
         );
 
-        v.uv = _calcuv(ratex, ratey);
+        v.uv = _calcuv(j / hdiv, 0.75 + i / (vdiv * 0.5) * 0.25);
 
         vts.push(v);
       }
