@@ -347,21 +347,21 @@ export class CharBuilder extends PMX.Maker {
   static FINGER_INTERVAL = 0.08;
 
   /** 髪 */
-  static MAINHAIR = [136, 204, 204];
+  static RGB_MAINHAIR = [136, 204, 204];
   /** 明るい灰色 */
-  static LIGHTCLOTH = [187, 187, 204];
+  static RGB_LIGHTCLOTH = [187, 187, 204];
   /** アクセの紫 */
-  static PURPLE = [221, 51, 136];
+  static RGB_PURPLE = [221, 51, 136];
   /** 黒 */
-  static BLACK = [17, 17, 17];
+  static RGB_BLACK = [17, 17, 17];
   /** 体1 */
-  static BODY1 = [247, 245, 228];
+  static RGB_BODY1 = [247, 245, 228];
   /** 体2 丸めると色の雰囲気が違う */
-  static BODY2 = [247, 243, 232];
+  static RGB_BODY2 = [247, 243, 232];
   /** スカートの明るい部分 */
-  static LIGHTSKIRT = [72, 77, 80];
+  static RGB_LIGHTSKIRT = [72, 77, 80];
   /** 明るい服 */
-  static LIGHTCLOTH2 = [246, 238, 243];
+  static RGB_LIGHTCLOTH2 = [246, 238, 243];
 
   constructor() {
     super();
@@ -1042,7 +1042,10 @@ export class CharBuilder extends PMX.Maker {
           param.whalf = 1;
           param.hhalf = 1;
           param.dhalf = 1;
-          this.makeBody(param);
+          //this.makeBody(param);
+
+        } else if (nameJa.includes('上半身')) { // 順番はあと
+          this.makeWaist(param);
         } else if (nameJa.includes('足首')) {
 
           this.makeCyl(param);
@@ -1100,6 +1103,8 @@ export class CharBuilder extends PMX.Maker {
           this.makeJoint(param);
           isBone = '';
           this.makeHand(param);
+        } else if (nameJa.includes('腰')) {
+
         } else {
           this.makeJoint(param);
         }
@@ -1996,7 +2001,7 @@ export class CharBuilder extends PMX.Maker {
    * @param {IParam} param 
    */
   makeBody(param) {
-    console.log('未実装');
+    console.log('未実装 makeBody');
     this.makeBox(param);
     return;
   }
@@ -2005,9 +2010,43 @@ export class CharBuilder extends PMX.Maker {
    * 下体の予定
    * @param {IParam} param 
    */
-  makeWaist(param) {
-    console.log('未実装');
-    this.makeBox(param);
+  makeWaist(inparam) {
+    console.log('makeWaist');
+    //this.makeBox(param);
+    {
+      const param = {
+        bonea: inparam.bonea,
+        vertices: inparam.vertices,
+        faces: inparam.faces,
+        subindex8: CharBuilder.RGB_LIGHTCLOTH,
+        intl: [0, 0.5, 0.1],
+        modelrot: [0, Math.PI, 0],
+        whalf: 1,
+        hhalf: 0.5,
+        dhalf: 0.5,
+        winterval: 0.25,
+        cutout: 0.1,
+        cutin: 0.1,
+      };
+      this.makeTun(param);
+    }
+    {
+      const param = {
+        bonea: inparam.bonea,
+        vertices: inparam.vertices,
+        faces: inparam.faces,
+        subindex8: CharBuilder.RGB_LIGHTCLOTH,
+        intl: [0, 0, -0.1],
+        modelrot: [0, Math.PI, 0],
+        whalf: 1,
+        hhalf: 0.5,
+        dhalf: 0.5,
+        winterval: 0.1,
+        cutout: 0.1,
+        cutin: 0.1,
+      };
+      this.makeTun(param);
+    }
     return;
   }
 

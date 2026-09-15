@@ -4,12 +4,7 @@ import { CharBuilder } from "./charbuilder.js";
 import { TexMaker } from "./texmaker.js";
 
 /**
- * 髪1 [0,1,1]
- * 髪2 [0,1,0]
- * 服灰 [1,1,1]
- * 服黒 [0,0,0]
- * アクセント紫 [1,0,1]
- * アクセント黒 [0,0,0]
+ * 
  */
 class Misc {
   constructor() {
@@ -311,9 +306,9 @@ class Misc {
       }); // 腰予定
 
       maker.drawForTun(cvs[0], CharBuilder.INDEX_BODY1, {
-        cola: CharBuilder.BODY1,
-        col : CharBuilder.BODY1.map(v => Math.min(255, v + 51)),
-        colb: CharBuilder.BODY1,
+        cola: CharBuilder.RGB_BODY1,
+        col : CharBuilder.RGB_BODY1.map(v => Math.min(255, v + 51)),
+        colb: CharBuilder.RGB_BODY1,
         isNarrow: true,
       });
 
@@ -322,13 +317,13 @@ class Misc {
       );
 
       maker.drawMobius(cvs[0], CharBuilder.INDEX_MOBIUS, {
-        cola: CharBuilder.PURPLE,
-        colb: CharBuilder.BLACK,
+        cola: CharBuilder.RGB_PURPLE,
+        colb: CharBuilder.RGB_BLACK,
       });
 
       maker.drawOwnBone(cvs[0], CharBuilder.INDEX_OWNBONE, {
       });
-      maker.drawLogo(cvs[0], {cola: CharBuilder.MAINHAIR});
+      maker.drawLogo(cvs[0], {cola: CharBuilder.RGB_MAINHAIR});
 
       if (!param.usecolor) {
         const c = cvs[0].getContext('2d');
