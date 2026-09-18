@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>xr inline</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+
+    <div class="tobottom">
+      <div id="wrapperaaa">
+        <canvas id="maincanvas"></canvas>
+      </div>
+  
+      <div>
+        <div>pointsize
+          <input class="num4" type="number" id="pointsize" value="5" min="1" />
+        </div>
+        <!--
+        <div class="drop">ファイルをドラッグアンドドロップ</div>
+      -->
+      </div>
+    </div>
+
+    <script src="../../../third_party/babylonjs/9.19.0/babylon.js"></script>
+    <script src="../../../third_party/babylonjs/9.19.0/loaders/babylonjs.loaders.min.js"></script>
+
+    <script src="../../../third_party/babylonjs/9.19.0/materialsLibrary/babylon.skyMaterial.min.js"></script>
+    <script src="../../../third_party/babylonjs/9.19.0/inspector/babylon.inspector-v2.bundle.js"></script>
+
+    <script type="module" src="index.js"></script>
+  </body>
+</html>
