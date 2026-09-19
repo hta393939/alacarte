@@ -3,7 +3,7 @@ import {Quaternion, Vector3} from "../../../lib/mathutil.js";
 
 
 class Misc {
-  static VERSION = '0.1.0';
+  static VERSION = '0.1.1';
 
   constructor() {
     this.param = {
@@ -235,27 +235,27 @@ class Misc {
   }
 
   async initXR(scene) {
-    // 
     const xrHelper = await scene.createDefaultXRExperienceAsync(
       {uiOptions: {sessionMode: 'inline'}},
     );
-    xrHelper.onStateChangedObservable.add((state) => {
+    xrHelper.baseExperience.onStateChangedObservable.add((state) => {
       switch (state) {
-          case WebXRState.IN_XR:
-              this.log('// XR is initialized and already submitted one frame');
-              break;
-          case WebXRState.ENTERING_XR:
-              // xr is being initialized, enter XR request was made
-          case WebXRState.EXITING_XR:
-              // xr exit request was made. not yet done.
-          case WebXRState.NOT_IN_XR:
-            console.log('// self explanatory - either out or not yet in XR');
-              break;
+        case WebXRState.IN_XR:
+          this.log('// XR is initialized and already submitted one frame');
+          break;
+        case WebXRState.ENTERING_XR:
+          this.log('// xr is being initialized, enter XR request was made');
+          break;
+        case WebXRState.EXITING_XR:
+          this.log('// xr exit request was made. not yet done.');
+          break;
+        case WebXRState.NOT_IN_XR:
+          this.log('// self explanatory - either out or not yet in XR');
+          break;
       }
     });
 
     await this.initFeature(scene, xrHelper);
-
   }
 
   async initFeature(scene, xrHelper) {
@@ -273,8 +273,8 @@ class Misc {
         'latest',
         {},
       );
-      mod.onFeatureStartObservable.add((...args) => {
-        this.log(...args);
+      mod.onFeatureAttachObservable.add((ifeat) => {
+        this.log('attach', ifeat);
       });
     }
   }
