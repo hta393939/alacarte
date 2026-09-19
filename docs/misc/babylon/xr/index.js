@@ -1,5 +1,5 @@
-import {BinParser, ColmapImage} from "../../../lib/colmap/colmapbin.js";
-import {Quaternion, Vector3} from "../../../lib/mathutil.js";
+//import {BinParser, ColmapImage} from "../../../lib/colmap/colmapbin.js";
+//import {Quaternion, Vector3} from "../../../lib/mathutil.js";
 
 
 class Misc {
@@ -43,7 +43,7 @@ class Misc {
         val = Number.parseFloat(val);
         param[k] = val;
       } catch (e) {
-
+        // 何もしない
       }
     }
     this.param = param;
@@ -138,7 +138,7 @@ class Misc {
    * @param {File} file 
    */
   async onDrop(file) {
-    console.log('onDrop', file.name);
+    this.log('onDrop', file.name);
 
     const pluginOptions = {
     };
@@ -148,7 +148,7 @@ class Misc {
       if (mesh) {
         mesh.name = file.name;
         const mtl = mesh.material;
-        console.log('mesh, mtl', mesh, mtl);
+        this.log('mesh, mtl', mesh, mtl);
         if (!mtl) {
           const material = new BABYLON.MeshStandardMaterial('mtl1', this.scene);
           mesh.material = material;
@@ -163,7 +163,7 @@ class Misc {
       }
     }
 
-    console.log('onDrop', file.name);
+    this.log('onDrop', file.name);
   }
 
   /**
@@ -240,16 +240,16 @@ class Misc {
     );
     xrHelper.baseExperience.onStateChangedObservable.add((state) => {
       switch (state) {
-        case WebXRState.IN_XR:
+        case BABYLON.WebXRState.IN_XR:
           this.log('// XR is initialized and already submitted one frame');
           break;
-        case WebXRState.ENTERING_XR:
+        case BABYLON.WebXRState.ENTERING_XR:
           this.log('// xr is being initialized, enter XR request was made');
           break;
-        case WebXRState.EXITING_XR:
+        case BABYLON.WebXRState.EXITING_XR:
           this.log('// xr exit request was made. not yet done.');
           break;
-        case WebXRState.NOT_IN_XR:
+        case BABYLON.WebXRState.NOT_IN_XR:
           this.log('// self explanatory - either out or not yet in XR');
           break;
       }
@@ -269,7 +269,7 @@ class Misc {
 
     {
       const mod = featuresManager.enableFeature(
-        BABYLON.WebXRFeatureName.PLANE_DETECT,
+        BABYLON.WebXRFeatureName.PLANE_DETECTION,
         'latest',
         {},
       );
