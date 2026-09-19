@@ -46,7 +46,7 @@ class Misc {
       this.log('first get', voices.length);
 
       setTimeout(() => {
-        this.initSpeech();
+        this.initSpeech(true);
       }, 1000);
     }
   }
@@ -152,11 +152,15 @@ class Misc {
 
   }
 
-  async initSpeech() {
+  async initSpeech(all = false) {
     const voices = window.speechSynthesis.getVoices();
     const jaens = [];
     const ret = {};
     for (const v of voices) {
+      if (all) {
+        this.log('', v.localService, v.lang, v.name);
+      }
+
       if (v.lang.startsWith('ja')) {
         jaens.push(v);
 
