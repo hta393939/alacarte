@@ -65,113 +65,45 @@ class Misc {
     el.volume = this.volume100 / 100;
   }
 
+  async speak(text) {
+    const voice = await this.initSpeech();
+    const ut = new SpeechSynthesisUtterance(text);
+    ut.voice = voice;
+    const d = new Date();
+    ut.addEventListener('start', () => {
+      this.log('start', Date.now() - d, ut.text);
+    });
+    this.log('speak', voice.name, ut.text);
+    window.speechSynthesis.speak(ut);
+  }
+
   setListener() {
     {
-      const el = document.getElementById('opendir');
+      const el = document.getElementById('speaktext');
       el?.addEventListener('click', async () => {
-
+        const textel = document.getElementById('textvalue');
+        const text = textel.value;
+        this.speak(text);
       });
     }
 
-    {
-      const el = document.getElementById('main');
-      el?.addEventListener('ended', async (ev) => {
-        console.log(ev.type, ev);
-        const result = await this.search(this.currentTree, 1);
-        await this.setTune(result?.treename);
-      });
-    }
-
-    {
-      const el = document.getElementById('reaccess');
-      el?.addEventListener('click', () => {
-        this.reaccess();
-      });
-    }
-
-    const step = 1 / 8;
-    {
-      const el = document.getElementById('butup');
-      el?.addEventListener('click', () => {
-        this.npanner.positionZ.value += -step;
-        this.outPos();
-      });
-    }
-    {
-      const el = document.getElementById('butdown');
-      el?.addEventListener('click', () => {
-        this.npanner.positionZ.value += step;
-        this.outPos();
-      });
-    }
-
-    {
-      const el = document.getElementById('butleft');
-      el?.addEventListener('click', () => {
-        this.npanner.positionX.value += -step;
-        this.outPos();
-      });
-    }
-    {
-      const el = document.getElementById('butright');
-      el?.addEventListener('click', () => {
-        this.npanner.positionX.value += step;
-        this.outPos();
-      });
-    }
-
-    {
-      const el = document.getElementById('butcw');
-      el?.addEventListener('click', () => {
-        this.clock = (this.clock + 1) % 12;
-        this.ring(this.ac, true);
-      });
-    }
-    {
-      const el = document.getElementById('butccw');
-      el?.addEventListener('click', () => {
-        this.clock = (this.clock + 11) % 12;
-        this.ring(this.ac, true);
-      });
-    }
-    {
-      const el = document.getElementById('butfar');
-      el?.addEventListener('click', () => {
-        this.radius += step;
-        this.ring(this.ac, true);
-      });
-    }
-    {
-      const el = document.getElementById('butnear');
-      el?.addEventListener('click', () => {
-        this.radius += -step;
-        this.ring(this.ac, true);
-      });
-    }
-
-    {
-      const el = document.getElementById('replay');
-      el?.addEventListener('click', async () => {
-        await this.ring(this.ac);
-      });
-    }
-
-    {
-      const el = document.getElementById('cleardb');
-      el?.addEventListener('click', async () => {
-        await this.emptyStore('parameter').catch(ec => { console.warn('parameter', ec); });
-        await this.emptyStore('handle').catch(ec => { console.warn('handle', ec); });
-        this.clearDB();
-      });
-    }
-
-    {
-      const el = document.getElementById('startlive');
-      el?.addEventListener('click', async () => {
-        // ライブ側
-        const ac = await this.requestAction();
-        this.ac = ac;
-        await this.makeNodes(ac);
+    const strs = [
+      '',
+      'ヒトハ',
+      'フタバ',
+      '三成',
+      '四葉',
+      'いつか',
+      '六郎',
+      'ななみ',
+      'やひろ',
+      'ここの'
+    ];
+    for (let i = 0; i < 10; ++i) {
+      const el = document.getElementById(`but${String(i).padStart(2, '0')}`);
+      el?.addEventListener('click', async (ev) => {
+        this.log(ev.type, ev);
+        this.speak(strs[i]);
       });
     }
 
@@ -207,11 +139,21 @@ class Misc {
   async initSpeech() {
     const voices = window.speechSynthesis.getVoices();
     const jaens = [];
+    let japan = null;
+    let us = null;
     for (const v of voices) {
       if (v.lang.startsWith('ja')) {
         jaens.push(v);
+
+        if (!japan?.localService) {
+          japan = v;
+        }
       } else if (v.lang.startsWith('en') && v.name.includes('United States')) {
         jaens.push(v);
+
+        if (!us?.localService) {
+          us = v;
+        }
       }
     }
 
@@ -219,6 +161,8 @@ class Misc {
       this.log('voice', v.localService, v.name, v.voiceURI);
     }
 
+    const voice = japan || us;
+    return voice;
   }
 
 }
