@@ -3,7 +3,7 @@ import {Quaternion, Vector3} from "../../../lib/mathutil.js";
 
 
 class Misc {
-  static VERSION = '0.1.1';
+  static VERSION = '0.1.2';
 
   constructor() {
     this.param = {
@@ -262,8 +262,8 @@ class Misc {
     const fms = BABYLON.WebXRFeaturesManager.GetAvailableFeatures();
     this.log('available', fms);
 
-    const featuesManager = xrHelper.baseExperience.featuresManager;
-    if (!featuesManager) {
+    const featuresManager = xrHelper.baseExperience.featuresManager;
+    if (!featuresManager) {
       return;
     }
 
