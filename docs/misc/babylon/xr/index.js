@@ -3,13 +3,35 @@ import {Quaternion, Vector3} from "../../../lib/mathutil.js";
 
 
 class Misc {
+  static VERSION = '0.1.0';
+
   constructor() {
     this.param = {
       pointsize: 4,
     };
+
+    this.lines = [];
+  }
+
+  log(...args) {
+    console.log(...args);
+    const line = args.join(', ');
+    this.lines.unshift(line);
+    const el = document.getElementById('consoleview');
+    if (!el) {
+      return;
+    }
+    el.innerHTML = this.lines.join('<br />');
   }
 
   initialize() {
+    {
+      const el = document.getElementById('versionview');
+      if (el) {
+        el.textContent = Misc.VERSION;
+      }
+    }
+
     const search = new URLSearchParams(location.search);
     const param = {};
     for (const k of ['pointsize']) {
@@ -117,10 +139,6 @@ class Misc {
    */
   async onDrop(file) {
     console.log('onDrop', file.name);
-    if (file.name === 'images.bin') {
-      this.onImages(file);
-      return;
-    }
 
     const pluginOptions = {
     };
@@ -146,63 +164,6 @@ class Misc {
     }
 
     console.log('onDrop', file.name);
-  }
-
-  /**
-   * images.bin を受け取った場合の追加処理
-   * @param {File} file 
-   */
-  async onImages(file) {
-    console.log('onImages');
-
-    const ab = await file.arrayBuffer();
-    const parser = new BinParser();
-    const images = parser.parseImage(ab, false);
-    const num = images.images.length;
-    const scene = this.scene;
-    for (let i = 0; i < num; ++i) {
-      /** @type {ColmapImage} */
-      const img = images.images[i];
-      {
-        const node = new BABYLON.TransformNode(`${i}`, scene);
-        const height = 0.4;
-        const radius = 0.2;
-        {
-          const cyl = BABYLON.MeshBuilder.CreateCylinder(`cyl${i}`, {
-            height,
-            diameterTop: radius,
-            diameterBottom: 0,
-          }, scene);
-          cyl.position = new BABYLON.Vector3(0, -height * 0.5, 0);
-          cyl.parent = node;
-        }
-        if (false) {
-          const sph = BABYLON.MeshBuilder.CreateSphere(`sph${i}`, {
-            diameter: radius,
-            radius: radius,
-          }, scene);
-          sph.position = new BABYLON.Vector3(0, 0, 1); // カメラ目線延長先
-          sph.parent = node;
-        }
-        if (true) {
-          const points = [
-            new BABYLON.Vector3(0, 0, 0),
-            new BABYLON.Vector3(0, 0, 5),
-          ];
-          const line = BABYLON.MeshBuilder.CreateLines(`line${i}`, {
-            points,
-          }, scene);
-          line.color = new BABYLON.Color3(1, 0, 0);
-          line.parent = node;
-        }
-
-        const vec = new Vector3(0, 0, 0).add(1, new Vector3(...img.t), -1);
-        const conj = Quaternion.fromTopW(...img.wtop).conjugate();
-        const origin = conj.rot(vec);
-        node.position = origin;
-        node.rotationQuaternion = conj;
-      }
-    }
   }
 
   /**
@@ -275,30 +236,47 @@ class Misc {
 
   async initXR(scene) {
     // 
-    const xrHelper = await scene.createDefaultExperienceAsync(
+    const xrHelper = await scene.createDefaultXRExperienceAsync(
       {uiOptions: {sessionMode: 'inline'}},
     );
-xrHelper.onStateChangedObservable.add((state) => {
-    switch (state) {
-        case WebXRState.IN_XR:
-            console.log('// XR is initialized and already submitted one frame');
-            break;
-        case WebXRState.ENTERING_XR:
-            // xr is being initialized, enter XR request was made
-        case WebXRState.EXITING_XR:
-            // xr exit request was made. not yet done.
-        case WebXRState.NOT_IN_XR:
-          console.log('// self explanatory - either out or not yet in XR');
-            break;
-    }
-});
+    xrHelper.onStateChangedObservable.add((state) => {
+      switch (state) {
+          case WebXRState.IN_XR:
+              this.log('// XR is initialized and already submitted one frame');
+              break;
+          case WebXRState.ENTERING_XR:
+              // xr is being initialized, enter XR request was made
+          case WebXRState.EXITING_XR:
+              // xr exit request was made. not yet done.
+          case WebXRState.NOT_IN_XR:
+            console.log('// self explanatory - either out or not yet in XR');
+              break;
+      }
+    });
 
-    await this.initFeature(scene);
+    await this.initFeature(scene, xrHelper);
 
   }
 
-  async initFeature(scene) {
-    
+  async initFeature(scene, xrHelper) {
+    const fms = BABYLON.WebXRFeaturesManager.GetAvailableFeatures();
+    this.log('available', fms);
+
+    const featuesManager = xrHelper.baseExperience.featuresManager;
+    if (!featuesManager) {
+      return;
+    }
+
+    {
+      const mod = featuresManager.enableFeature(
+        BABYLON.WebXRFeature.PLANE_DETECT,
+        'latest',
+        {},
+      );
+      mod.onFeatureStartObservable.add((...args) => {
+        this.log(...args);
+      });
+    }
   }
 
 }
