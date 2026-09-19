@@ -3,7 +3,7 @@ import {Quaternion, Vector3} from "../../../lib/mathutil.js";
 
 
 class Misc {
-  static VERSION = '0.1.2';
+  static VERSION = '0.1.3';
 
   constructor() {
     this.param = {
@@ -269,12 +269,12 @@ class Misc {
 
     {
       const mod = featuresManager.enableFeature(
-        BABYLON.WebXRFeature.PLANE_DETECT,
+        BABYLON.WebXRFeatureName.PLANE_DETECT,
         'latest',
         {},
       );
       mod.onFeatureAttachObservable.add((ifeat) => {
-        this.log('attach', ifeat);
+        this.log('attach plane', ifeat);
       });
     }
   }
