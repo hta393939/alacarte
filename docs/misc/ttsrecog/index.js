@@ -65,8 +65,7 @@ class Misc {
     el.volume = this.volume100 / 100;
   }
 
-  async speak(text) {
-    const voice = await this.initSpeech();
+  async speak(text, voice) {
     const ut = new SpeechSynthesisUtterance(text);
     ut.voice = voice;
     const d = new Date();
@@ -83,7 +82,8 @@ class Misc {
       el?.addEventListener('click', async () => {
         const textel = document.getElementById('textvalue');
         const text = textel.value;
-        this.speak(text);
+        const ret = await this.initSpeech();
+        this.speak(text, ret.japan || ret.us);
       });
     }
 
@@ -93,17 +93,33 @@ class Misc {
       'フタバ',
       '三成',
       '四葉',
-      'いつか',
+      'Get ready!',
       '六郎',
       'ななみ',
-      'やひろ',
+      '私はやひろです',
       'ここの'
     ];
     for (let i = 0; i < 10; ++i) {
       const el = document.getElementById(`but${String(i).padStart(2, '0')}`);
       el?.addEventListener('click', async (ev) => {
-        this.log(ev.type, ev);
-        this.speak(strs[i]);
+
+        const ret = await this.initSpeech();
+        let voice = ret.japan || ret.us;
+        switch (i) {
+          case 5:
+            voice = ret.multi || ret.us;
+            break;
+          case 6:
+            voice = ret.us || ret.multi;
+            break;
+          case 7:
+            voice = ret.nanami;
+            break;
+          case 8:
+            voice = ret.multi;
+            break;
+        }
+        this.speak(strs[i], voice);
       });
     }
 
@@ -139,30 +155,40 @@ class Misc {
   async initSpeech() {
     const voices = window.speechSynthesis.getVoices();
     const jaens = [];
-    let japan = null;
-    let us = null;
+    const ret = {};
     for (const v of voices) {
       if (v.lang.startsWith('ja')) {
         jaens.push(v);
 
-        if (!japan?.localService) {
-          japan = v;
+        if (!ret.japan?.localService) {
+          ret.japan = v;
         }
-      } else if (v.lang.startsWith('en') && v.name.includes('United States')) {
+
+        if (v.name.includes('七海')) {
+          ret.nanami = v;
+        }
+
+      } else if (v.lang === 'en-US') {
         jaens.push(v);
 
-        if (!us?.localService) {
-          us = v;
+        if (!ret.us?.localService) {
+          ret.us = v;
         }
+
+        if (v.name.includes('Multi')
+          && v.name.includes('Emma')
+          //&& v.name.includes('Ava')
+        ) {
+          ret.multi = v;
+        }
+
       }
     }
 
     for (const v of jaens) {
       this.log('voice', v.localService, v.name, v.voiceURI);
     }
-
-    const voice = japan || us;
-    return voice;
+    return ret;
   }
 
 }
