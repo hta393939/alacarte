@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>web audio</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+
+    <button id="startlive" class="pointer">開始</button>
+    <div class="drop">ドロップ</div>
+    <button class="pointer" id="replay">再生</button>
+
+    <div class="toright">
+      <button class="pointer" id="opendir">フォルダを開く</button>
+      <button class="but" id="reaccess">*</button>
+      <button class="pointer" id="cleardb">DB削除</button>
+    </div>
+
+    <div hidden>
+      <div>
+        <button class="but" id="butleft">←</button>
+        <button class="but" id="butright">→</button>
+        <button class="but" id="butdown">↓</button>
+        <button class="but" id="butup">↑</button>
+        <button class="but" id="butcw">↻</button>
+        <button class="but" id="butccw">↺</button>
+        <button class="but" id="butnear">near</button>
+        <button class="but" id="butfar">far</button>
+        <label class="pointer"><input c↺↺cked type="checkbox" class="pointer" id="exceptsame" />重複除外</label>
+      </div>
+      <div id="processinfo"></div>
+    </div>
+
+    <div id="consoleview"></div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
