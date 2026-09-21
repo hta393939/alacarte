@@ -12,6 +12,15 @@
   flex-direction: column;
 }
 
+.toright {
+  display: flex;
+  flex-direction: row;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
 .num4 {
   width: 4em;
 }

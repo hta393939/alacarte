@@ -284,8 +284,23 @@ class Misc {
       BABYLON.WebXRFeatureName.MESH_DETECTION,
     ];
 
+    const parent = document.body;
+    const template = document.getElementById('selecttemplate');
+
     for (const k of keys) {
       const val = BABYLON.WebXRFeatureName[k];
+
+      const clone = document.importNode(
+        template.content, true);
+      {
+        const q = clone.querySelector('.key');
+        if (q) {
+          q.textContent = `${k}`;
+        }
+      }
+      parent.appendChild(clone);
+
+
       if (diffs.includes(val)) {
         this.log('diff skip', val);
         continue;
@@ -297,10 +312,20 @@ class Misc {
         }
       }
 
+      const opt = {};
+      if (['POINTER_SELECTION',
+        'TELEPORTATION',
+        'HAND_TRACKING',
+        'NEAR_INTERACTION',
+        'MOVEMENT',
+        'PHYSICS_CONTROLLERS',
+      ].includes(k)) {
+        opt['xrInput'] = xrHelper.xrInput;
+      }      
       const mod = featuresManager.enableFeature(
         val,
         'latest',
-        {},
+        opt,
       );
       mod.onFeatureAttachObservable.add((ifeat) => {
         // 開始前からアタッチできるものもある
