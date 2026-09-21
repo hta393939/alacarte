@@ -234,6 +234,10 @@ class Misc {
 
   }
 
+  /**
+   * XR 初期化
+   * @param {*} scene 
+   */
   async initXR(scene) {
     const xrHelper = await scene.createDefaultXRExperienceAsync(
       {uiOptions: {sessionMode: 'inline'}},
@@ -241,16 +245,16 @@ class Misc {
     xrHelper.baseExperience.onStateChangedObservable.add((state) => {
       switch (state) {
         case BABYLON.WebXRState.IN_XR:
-          this.log('// XR is initialized and already submitted one frame');
+          this.log('in_xr');
           break;
         case BABYLON.WebXRState.ENTERING_XR:
-          this.log('// xr is being initialized, enter XR request was made');
+          this.log('entering');
           break;
         case BABYLON.WebXRState.EXITING_XR:
-          this.log('// xr exit request was made. not yet done.');
+          this.log('exiting');
           break;
         case BABYLON.WebXRState.NOT_IN_XR:
-          this.log('// self explanatory - either out or not yet in XR');
+          this.log('not in XR');
           break;
       }
     });
@@ -267,15 +271,17 @@ class Misc {
       return;
     }
 
-    {
+    const keys = Object.keys(BABYLON.WebXRFeatureName);
+    for (const k of keys) {
       const mod = featuresManager.enableFeature(
-        BABYLON.WebXRFeatureName.PLANE_DETECTION,
+        BABYLON.WebXRFeatureName[k],
         'latest',
         {},
       );
       mod.onFeatureAttachObservable.add((ifeat) => {
-        this.log('attach plane', ifeat);
+        this.log('attach', k, ifeat);
       });
+      this.log('enable', k);
     }
   }
 
