@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.8';
+  static VERSION = '0.1.9';
 
   constructor() {
     this.param = {
@@ -46,10 +46,10 @@ class Misc {
       let val = search.get(k) || true;
       try {
         val = JSON.parse(val);
-        param[k] = val;
       } catch (e) {
         // 何もしない
       }
+      param[k] = val;
     }
     Object.assign(this.param, param);
 
