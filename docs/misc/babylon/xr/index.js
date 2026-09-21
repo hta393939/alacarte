@@ -276,7 +276,7 @@ class Misc {
 
   async initFeature(scene, xrHelper) {
     const fms = BABYLON.WebXRFeaturesManager.GetAvailableFeatures();
-    this.log('available', fms);
+    this.log('available', fms.length, fms);
 
     const featuresManager = xrHelper.baseExperience.featuresManager;
     if (!featuresManager) {
@@ -287,7 +287,7 @@ class Misc {
     const keys = Object.keys(BABYLON.WebXRFeatureName);
     const isImm = true;
     /** inline では使用できないもの */
-    const imms = [
+    const imms = [ // 9
       BABYLON.WebXRFeatureName.ANCHOR_SYSTEM,
       BABYLON.WebXRFeatureName.HIT_TEST, // experimental
       BABYLON.WebXRFeatureName.PLANE_DETECTION,
@@ -298,20 +298,22 @@ class Misc {
       BABYLON.WebXRFeatureName.DEPTH_SENSING, // depthSensing が必要
       BABYLON.WebXRFeatureName.RAW_CAMERA_ACCESS,
     ];
-    const diffs = [
+    const diffs = [ // 6
       BABYLON.WebXRFeatureName.MESH_DETECTION,
       BABYLON.WebXRFeatureName.TELEPORTATION,
-      BABYLON.WebXRFeatureName.MOVEMENT,
+
       BABYLON.WebXRFeatureName.WALKING_LOCOMOTION,
 
       BABYLON.WebXRFeatureName.IMAGE_TRACKING, // unsupported
       BABYLON.WebXRFeatureName.FEATURE_POINTS, // bjsfeature unrecog
-      BABYLON.WebXRFeatureName.EYE_TRACKING, // unrecog
+
       BABYLON.WebXRFeatureName.SPACE_WARP, // unrecog
-      BABYLON.WebXRFeatureName.BODY_TRACKING, // unrecog
     ];
-    const disables = [
-      BABYLON.WebXRFeatureName.PHYSICS_CONTROLLERS,
+    const disables = [ // 4
+      BABYLON.WebXRFeatureName.PHYSICS_CONTROLLERS, // コントローラに物理衝突判定
+      BABYLON.WebXRFeatureName.EYE_TRACKING, // unrecog, アイトラ
+      BABYLON.WebXRFeatureName.BODY_TRACKING, // unrecog, ボディトラッキング
+      BABYLON.WebXRFeatureName.MOVEMENT, // 他のものを推奨される
     ];
 
     const parent = document.body;
