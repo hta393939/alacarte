@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.10';
+  static VERSION = '0.1.11';
 
   constructor() {
     this.param = {
@@ -108,6 +108,8 @@ class Misc {
     this.addHandler();
 
     this.initXR(scene);
+
+    this.addMesh(scene);
   }
 
   addHandler() {
@@ -424,6 +426,18 @@ class Misc {
       this.log('add attach', key, ifeat);
     });
     this.log('add enable', key);
+  }
+
+  addMesh(scene) {
+    for (let i = 0; i < 20; ++i) {
+      const m = BABYLON.MeshBuilder.CreateBox(`box${i}`, {
+        width: 0.1, height: 0.2, depth: 0.1,
+      }, scene);
+      m.position = new BABYLON.Vector3(Math.random(), 1 + Math.random, Math.random());
+      const mtl = new BABYLON.StandardMaterial(`m${i}`, scene);
+      mtl.diffuseColor = new BABYLON.Color3(1, Math.random() * 0.5 + 0.5, Math.random() * 0.5);
+      m.material = mtl;
+    }
   }
 
 }
