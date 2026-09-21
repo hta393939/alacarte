@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.4';
+  static VERSION = '0.1.5';
 
   constructor() {
     this.param = {
@@ -240,7 +240,10 @@ class Misc {
    */
   async initXR(scene) {
     const xrHelper = await scene.createDefaultXRExperienceAsync(
-      {uiOptions: {sessionMode: 'inline'}},
+      {uiOptions: {
+        //sessionMode: 'inline',
+        sessionMode: 'inline-vr',
+      }},
     );
     xrHelper.baseExperience.onStateChangedObservable.add((state) => {
       switch (state) {
@@ -271,8 +274,9 @@ class Misc {
       return;
     }
 
+    /** この時点では22個。そのうち1個増える */
     const keys = Object.keys(BABYLON.WebXRFeatureName);
-    const isImm = false;
+    const isImm = true;
     /** inline では使用できないもの */
     const imms = [
       BABYLON.WebXRFeatureName.ANCHOR_SYSTEM,
@@ -283,7 +287,7 @@ class Misc {
       BABYLON.WebXRFeatureName.LIGHT_ESTIMATION,
       BABYLON.WebXRFeatureName.LAYERS,
       BABYLON.WebXRFeatureName.DEPTH_SENSING, // depthSensing が必要
-      BABYLON.WebXRFeatureName.CAMERA_ACCESS,
+      BABYLON.WebXRFeatureName.RAW_CAMERA_ACCESS,
     ];
     const diffs = [
       BABYLON.WebXRFeatureName.MESH_DETECTION,
