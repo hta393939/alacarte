@@ -272,13 +272,38 @@ class Misc {
     }
 
     const keys = Object.keys(BABYLON.WebXRFeatureName);
+    const isImm = false;
+    /** inline では使用できないもの */
+    const imms = [
+      BABYLON.WebXRFeatureName.ANCHOR_SYSTEM,
+      BABYLON.WebXRFeatureName.HIT_TEST, // experimental
+      BABYLON.WebXRFeatureName.PLANE_DETECTION,
+      BABYLON.WebXRFeatureName.HAND_TRACKING,
+    ];
+    const diffs = [
+      BABYLON.WebXRFeatureName.MESH_DETECTION,
+    ];
+
     for (const k of keys) {
+      const val = BABYLON.WebXRFeatureName[k];
+      if (diffs.includes(val)) {
+        this.log('diff skip', val);
+        continue;
+      }
+      if (!isImm) {
+        if (imms.includes(val)) {
+          this.log('inline skip', val);
+          continue;
+        }
+      }
+
       const mod = featuresManager.enableFeature(
-        BABYLON.WebXRFeatureName[k],
+        val,
         'latest',
         {},
       );
       mod.onFeatureAttachObservable.add((ifeat) => {
+        // 開始前からアタッチできるものもある
         this.log('attach', k, ifeat);
       });
       this.log('enable', k);
