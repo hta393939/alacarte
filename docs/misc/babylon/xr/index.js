@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.9';
+  static VERSION = '0.1.10';
 
   constructor() {
     this.param = {
@@ -112,6 +112,24 @@ class Misc {
 
   addHandler() {
 
+    {
+      const el = document.getElementById('register');
+      el?.addEventListener('click', () => {
+        const qs = document.querySelectorAll('.feature');
+        for (const q of qs) {
+          const cb = q.querySelector('.enable');
+          if (!cb?.checked) {
+            continue;
+          }
+          const keyel = q.querySelector('.key');
+          if (!keyel) {
+            continue;
+          }
+          this.add(keyel.textContent);
+        }
+      });
+    }
+
     /*
     for (const k of ['dragover', 'drop']) {
       document.body.addEventListener(k, ev => {
@@ -136,6 +154,7 @@ class Misc {
         await this.onDrop(file);
       }
     });
+
   }
 
   /**
@@ -255,7 +274,7 @@ class Misc {
     xrHelper.baseExperience.onStateChangedObservable.add((state) => {
       switch (state) {
         case BABYLON.WebXRState.IN_XR:
-          this.log('in_xr');
+          this.log('in_xr'); // inline では発火しないか?
           break;
         case BABYLON.WebXRState.ENTERING_XR:
           this.log('entering');
@@ -279,6 +298,7 @@ class Misc {
     this.log('available', fms.length, fms);
 
     const featuresManager = xrHelper.baseExperience.featuresManager;
+    this.featuresManager = featuresManager;
     if (!featuresManager) {
       return;
     }
@@ -371,6 +391,39 @@ class Misc {
       });
       this.log('enable', k);
     }
+  }
+
+  /**
+   * 
+   * @param {string} key WebXRFeatureName のキー 
+   */
+  add(key) {
+    const featuresManager = this.featuresManager;
+    const opt = {};
+    if (['POINTER_SELECTION',
+      'TELEPORTATION',
+      'HAND_TRACKING',
+      'NEAR_INTERACTION',
+      'MOVEMENT',
+      'PHYSICS_CONTROLLERS',
+    ].includes(key)) {
+      opt['xrInput'] = xrHelper.input;
+    }
+
+
+    const val = BABYLON.WebXRFeatureName[key];
+    const mod = featuresManager.enableFeature(
+      val,
+      'latest',
+      opt,
+      true,
+      false, // false だと必須ではない
+    );
+    mod.onFeatureAttachObservable.add((ifeat) => {
+      // 開始前からアタッチできるものもある
+      this.log('add attach', key, ifeat);
+    });
+    this.log('add enable', key);
   }
 
 }
