@@ -16,6 +16,18 @@
         <button class="but" id="register">登録する</button>
       </div>
   
+      <ul>
+        <li><a href="./?session=inline&feature=0">inline no feat</a></li>
+        <li><a href="./?session=immersive-vr&feature=0">vr no feat</a></li>
+        <li><a href="./?session=immersive-ar&feature=0">ar no feat</a></li>
+        <li><a href="./?session=inline&ref=viewer">inline viewer</a></li>
+        <li><a href="./?session=immersive-vr&ref=viewer">vr viewer</a></li>
+        <li><a href="./?session=immersive-ar&ref=viewer">ar viewer</a></li>
+        <li><a href="./?session=inline">inline</a></li>
+        <li><a href="./?session=immersive-vr">vr</a></li>
+        <li><a href="./?session=immersive-ar">ar</a></li>
+      </ul>
+
       <div>
         <div>pointsize
           <input class="num4" type="number" id="pointsize" value="5" min="1" />
@@ -32,7 +44,7 @@
     <div>
       <template id="selecttemplate">
         <div class="toright">
-          <label class="pointer"><input class="pointer" type="checkbox" /><div class="key"></div>
+          <label class="toright "><input class="pointer" type="checkbox" /><div class="key"></div>
           </label>
         </div>
       </template>

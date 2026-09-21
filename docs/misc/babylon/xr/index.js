@@ -3,11 +3,14 @@
 
 
 class Misc {
-  static VERSION = '0.1.5';
+  static VERSION = '0.1.7';
 
   constructor() {
     this.param = {
       pointsize: 4,
+      feature: 1,
+      session: 'immersive-vr',
+      ref: 'local-floor',
     };
 
     this.lines = [];
@@ -34,19 +37,19 @@ class Misc {
 
     const search = new URLSearchParams(location.search);
     const param = {};
-    for (const k of ['pointsize']) {
+    for (const k of ['pointsize', 'feature']) {
       if (!search.has(k)) {
         continue;
       }
-      let val = search.get(k);
+      let val = search.get(k) || true;
       try {
-        val = Number.parseFloat(val);
+        val = JSON.parse(val);
         param[k] = val;
       } catch (e) {
         // 何もしない
       }
     }
-    this.param = param;
+    Object.assign(this.param, param);
 
 
     /** @type {HTMLCanvasElement} */
@@ -239,10 +242,12 @@ class Misc {
    * @param {*} scene 
    */
   async initXR(scene) {
+    this.log('initXR', this.param.session, this.param.ref);
     const xrHelper = await scene.createDefaultXRExperienceAsync(
       {uiOptions: {
         //sessionMode: 'inline',
-        sessionMode: 'inline-vr',
+        sessionMode: this.param.session,
+        referenceSpaceType: this.param.ref,
       }},
     );
     xrHelper.baseExperience.onStateChangedObservable.add((state) => {
@@ -262,7 +267,9 @@ class Misc {
       }
     });
 
-    await this.initFeature(scene, xrHelper);
+    if (this.param.feature) {
+      await this.initFeature(scene, xrHelper);
+    }
   }
 
   async initFeature(scene, xrHelper) {
@@ -301,6 +308,9 @@ class Misc {
       BABYLON.WebXRFeatureName.SPACE_WARP, // unrecog
       BABYLON.WebXRFeatureName.BODY_TRACKING, // unrecog
     ];
+    const disables = [
+      BABYLON.WebXRFeatureName.PHYSICS_CONTROLLERS,
+    ];
 
     const parent = document.body;
     const template = document.getElementById('selecttemplate');
@@ -318,14 +328,18 @@ class Misc {
       }
       parent.appendChild(clone);
 
+      if (disables.includes(val)) {
+        this.log('skip disable', val);
+        continue;
+      }
 
       if (diffs.includes(val)) {
-        this.log('diff skip', val);
+        this.log('skip diff', val);
         continue;
       }
       if (!isImm) {
         if (imms.includes(val)) {
-          this.log('inline skip', val);
+          this.log('skip inline', val);
           continue;
         }
       }
