@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.7';
+  static VERSION = '0.1.8';
 
   constructor() {
     this.param = {
@@ -37,7 +37,9 @@ class Misc {
 
     const search = new URLSearchParams(location.search);
     const param = {};
-    for (const k of ['pointsize', 'feature']) {
+    for (const k of ['pointsize', 'feature',
+      'session', 'ref',
+    ]) {
       if (!search.has(k)) {
         continue;
       }
