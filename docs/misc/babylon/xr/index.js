@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.3';
+  static VERSION = '0.1.4';
 
   constructor() {
     this.param = {
@@ -279,9 +279,23 @@ class Misc {
       BABYLON.WebXRFeatureName.HIT_TEST, // experimental
       BABYLON.WebXRFeatureName.PLANE_DETECTION,
       BABYLON.WebXRFeatureName.HAND_TRACKING,
+      BABYLON.WebXRFeatureName.DOM_OVERLAY,
+      BABYLON.WebXRFeatureName.LIGHT_ESTIMATION,
+      BABYLON.WebXRFeatureName.LAYERS,
+      BABYLON.WebXRFeatureName.DEPTH_SENSING, // depthSensing が必要
+      BABYLON.WebXRFeatureName.CAMERA_ACCESS,
     ];
     const diffs = [
       BABYLON.WebXRFeatureName.MESH_DETECTION,
+      BABYLON.WebXRFeatureName.TELEPORTATION,
+      BABYLON.WebXRFeatureName.MOVEMENT,
+      BABYLON.WebXRFeatureName.WALKING_LOCOMOTION,
+
+      BABYLON.WebXRFeatureName.IMAGE_TRACKING, // unsupported
+      BABYLON.WebXRFeatureName.FEATURE_POINTS, // bjsfeature unrecog
+      BABYLON.WebXRFeatureName.EYE_TRACKING, // unrecog
+      BABYLON.WebXRFeatureName.SPACE_WARP, // unrecog
+      BABYLON.WebXRFeatureName.BODY_TRACKING, // unrecog
     ];
 
     const parent = document.body;
@@ -320,12 +334,14 @@ class Misc {
         'MOVEMENT',
         'PHYSICS_CONTROLLERS',
       ].includes(k)) {
-        opt['xrInput'] = xrHelper.xrInput;
+        opt['xrInput'] = xrHelper.input;
       }      
       const mod = featuresManager.enableFeature(
         val,
         'latest',
         opt,
+        true,
+        false, // false だと必須ではない
       );
       mod.onFeatureAttachObservable.add((ifeat) => {
         // 開始前からアタッチできるものもある
