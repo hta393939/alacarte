@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.11';
+  static VERSION = '0.1.13';
 
   constructor() {
     this.param = {
@@ -266,14 +266,16 @@ class Misc {
    */
   async initXR(scene) {
     this.log('initXR', this.param.session, this.param.ref);
-    const xrHelper = await scene.createDefaultXRExperienceAsync(
-      {uiOptions: {
-        //sessionMode: 'inline',
-        sessionMode: this.param.session,
-        referenceSpaceType: this.param.ref,
-      }},
-    );
-    xrHelper.baseExperience.onStateChangedObservable.add((state) => {
+
+    try {
+      const xrHelper = await scene.createDefaultXRExperienceAsync(
+        {uiOptions: {
+          //sessionMode: 'inline',
+          sessionMode: this.param.session,
+          referenceSpaceType: this.param.ref,
+        }},
+      );
+      xrHelper.baseExperience.onStateChangedObservable.add((state) => {
       switch (state) {
         case BABYLON.WebXRState.IN_XR:
           this.log('in_xr'); // inline では発火しないか?
@@ -288,11 +290,16 @@ class Misc {
           this.log('not in XR');
           break;
       }
-    });
+      });
 
-    if (this.param.feature) {
-      await this.initFeature(scene, xrHelper);
+      if (this.param.feature) {
+        await this.initFeature(scene, xrHelper);
+      }
+
+    } catch (e) {
+      this.log('initXR catch', e.message, e);
     }
+
   }
 
   async initFeature(scene, xrHelper) {
@@ -400,35 +407,41 @@ class Misc {
    * @param {string} key WebXRFeatureName のキー 
    */
   add(key) {
-    const featuresManager = this.featuresManager;
-    const opt = {};
-    if (['POINTER_SELECTION',
-      'TELEPORTATION',
-      'HAND_TRACKING',
-      'NEAR_INTERACTION',
-      'MOVEMENT',
-      'PHYSICS_CONTROLLERS',
-    ].includes(key)) {
-      opt['xrInput'] = xrHelper.input;
+    try {
+      const featuresManager = this.featuresManager;
+      const opt = {};
+      if (['POINTER_SELECTION',
+        'TELEPORTATION',
+        'HAND_TRACKING',
+        'NEAR_INTERACTION',
+        'MOVEMENT',
+        'PHYSICS_CONTROLLERS',
+      ].includes(key)) {
+        opt['xrInput'] = xrHelper.input;
+      }
+
+      const val = BABYLON.WebXRFeatureName[key];
+      const mod = featuresManager.enableFeature(
+        val,
+        'latest',
+        opt,
+        true,
+        false, // false だと必須ではない
+      );
+      mod.onFeatureAttachObservable.add((ifeat) => {
+        // 開始前からアタッチできるものもある
+        this.log('add attach', key, ifeat);
+      });
+      this.log('add enable', key);
+
+    } catch (e) {
+      this.log('add catch', e.message, e);
     }
 
-
-    const val = BABYLON.WebXRFeatureName[key];
-    const mod = featuresManager.enableFeature(
-      val,
-      'latest',
-      opt,
-      true,
-      false, // false だと必須ではない
-    );
-    mod.onFeatureAttachObservable.add((ifeat) => {
-      // 開始前からアタッチできるものもある
-      this.log('add attach', key, ifeat);
-    });
-    this.log('add enable', key);
   }
 
   addMesh(scene) {
+    this.log('addMesh');
     for (let i = 0; i < 20; ++i) {
       const m = BABYLON.MeshBuilder.CreateBox(`box${i}`, {
         width: 0.1, height: 0.2, depth: 0.1,
