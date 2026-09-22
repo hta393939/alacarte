@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.14';
+  static VERSION = '0.1.15';
 
   constructor() {
     this.param = {
@@ -292,6 +292,9 @@ class Misc {
       }
       });
 
+      const fms = BABYLON.WebXRFeaturesManager.GetAvailableFeatures();
+      this.log('Available', fms.length, fms);
+
       if (this.param.feature) {
         await this.initFeature(scene, xrHelper);
       }
@@ -304,7 +307,7 @@ class Misc {
 
   async initFeature(scene, xrHelper) {
     const fms = BABYLON.WebXRFeaturesManager.GetAvailableFeatures();
-    this.log('available', fms.length, fms);
+    this.log('initFeature available', fms.length, fms);
 
     const featuresManager = xrHelper.baseExperience.featuresManager;
     this.featuresManager = featuresManager;
@@ -314,7 +317,7 @@ class Misc {
 
     /** この時点では22個。そのうち1個増える */
     const keys = Object.keys(BABYLON.WebXRFeatureName);
-    const isImm = true;
+    const isImm = (this.param.session !== 'inline');
     /** inline では使用できないもの */
     const imms = [ // 9
       BABYLON.WebXRFeatureName.ANCHOR_SYSTEM,
@@ -377,7 +380,9 @@ class Misc {
         }
       }
 
-      const opt = {};
+      const opt = {
+        xrInput: xrHelper.input,
+      };
       if (['POINTER_SELECTION',
         'TELEPORTATION',
         'HAND_TRACKING',
@@ -385,20 +390,24 @@ class Misc {
         'MOVEMENT',
         'PHYSICS_CONTROLLERS',
       ].includes(k)) {
-        opt['xrInput'] = xrHelper.input;
-      }      
-      const mod = featuresManager.enableFeature(
-        val,
-        'latest',
-        opt,
-        true,
-        false, // false だと必須ではない
-      );
-      mod.onFeatureAttachObservable.add((ifeat) => {
-        // 開始前からアタッチできるものもある
-        this.log('attach', k, ifeat);
-      });
-      this.log('enable', k);
+        //opt['xrInput'] = xrHelper.input;
+      }
+      try {
+        const mod = featuresManager.enableFeature(
+          val,
+          'latest',
+          opt,
+          true,
+          false, // false だと必須ではない
+        );
+        mod.onFeatureAttachObservable.add((ifeat) => {
+          // 開始前からアタッチできるものもある
+          this.log('attach', k, ifeat);
+        });
+        this.log('enable', k);
+      } catch (e) {
+        this.log('initFeature catch', e.message, e);
+      }
     }
   }
 
