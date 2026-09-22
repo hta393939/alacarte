@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.13';
+  static VERSION = '0.1.14';
 
   constructor() {
     this.param = {
@@ -446,7 +446,11 @@ class Misc {
       const m = BABYLON.MeshBuilder.CreateBox(`box${i}`, {
         width: 0.1, height: 0.2, depth: 0.1,
       }, scene);
-      m.position = new BABYLON.Vector3(Math.random(), 1 + Math.random, Math.random());
+      const sgny = (Math.random() <= 0.5) ? -1 : 1;
+      m.position = new BABYLON.Vector3(
+        Math.random(),
+        (1 + Math.random()) * sgny,
+        Math.random() * 2 - 1);
       const mtl = new BABYLON.StandardMaterial(`m${i}`, scene);
       mtl.diffuseColor = new BABYLON.Color3(1, Math.random() * 0.5 + 0.5, Math.random() * 0.5);
       m.material = mtl;
