@@ -3,7 +3,7 @@
 
 
 class Misc {
-  static VERSION = '0.1.15';
+  static VERSION = '0.1.16';
 
   constructor() {
     this.param = {
@@ -27,7 +27,7 @@ class Misc {
     el.innerHTML = this.lines.join('<br />');
   }
 
-  initialize() {
+  async initialize() {
     {
       const el = document.getElementById('versionview');
       if (el) {
@@ -107,7 +107,7 @@ class Misc {
 
     this.addHandler();
 
-    this.initXR(scene);
+    await this.initXR(scene);
 
     this.addMesh(scene);
   }
@@ -275,6 +275,7 @@ class Misc {
           referenceSpaceType: this.param.ref,
         }},
       );
+      this.xrHelper = xrHelper;
       xrHelper.baseExperience.onStateChangedObservable.add((state) => {
       switch (state) {
         case BABYLON.WebXRState.IN_XR:
@@ -418,7 +419,10 @@ class Misc {
   add(key) {
     try {
       const featuresManager = this.featuresManager;
-      const opt = {};
+      const xrHelper = this.xrHelper;
+      const opt = {
+        xrInput: xrHelper.input,
+      };
       if (['POINTER_SELECTION',
         'TELEPORTATION',
         'HAND_TRACKING',
@@ -426,7 +430,7 @@ class Misc {
         'MOVEMENT',
         'PHYSICS_CONTROLLERS',
       ].includes(key)) {
-        opt['xrInput'] = xrHelper.input;
+        //opt['xrInput'] = xrHelper.input;
       }
 
       const val = BABYLON.WebXRFeatureName[key];
@@ -462,6 +466,18 @@ class Misc {
         Math.random() * 2 - 1);
       const mtl = new BABYLON.StandardMaterial(`m${i}`, scene);
       mtl.diffuseColor = new BABYLON.Color3(1, Math.random() * 0.5 + 0.5, Math.random() * 0.5);
+      m.material = mtl;
+    }
+
+    for (let i = 0; i < 20; ++i) {
+      const m = BABYLON.MeshBuilder.CreateBox(`box2_${i}`, {
+        width: 0.02, height: 1, depth: 0.02,
+      }, scene);
+      m.position = new BABYLON.Vector3(
+        Math.random() * 2 - 1, -1, -1,
+      );
+      const mtl = new BABYLON.StandardMaterial(`m2_${i}`, scene);
+      mtl.diffuseColor = new BABYLON.Color3(Math.random() * 0.5, 0, 1);
       m.material = mtl;
     }
   }
