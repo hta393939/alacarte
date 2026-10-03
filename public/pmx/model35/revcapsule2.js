@@ -90,7 +90,7 @@ class RevCapsule2 extends PMX.Maker {
     const _belt = param.belt || 10;
     /** 内メッシュカット @type {boolean} */
     const _usecut = param.usecut ?? true;
-    /** すぼめ @type {boolean} */
+    /** すぼめ。モーフにしたので常に追加 @type {boolean} */
     const _usemouth = param.usemouth ?? false;
 
     const d = new Date();
@@ -98,7 +98,7 @@ class RevCapsule2 extends PMX.Maker {
      * 最終位置とサイズへの倍率
      */
     const scale = param.scale || (1 / 8);
-    let div = 16;
+    let div = 32;
 //        const beltNum = 20;
     const beltNum = _belt;
     const halfBeltNum = _belt * 0.5;
@@ -126,11 +126,11 @@ class RevCapsule2 extends PMX.Maker {
       const bwTarget = param.bwrate;
 
       const fw = 0.4;
-      let bwAmp = (1 - bwTarget) * 0.5;
+      let bwAmp = (1 - bwTarget) * 1.0;
       let fwAmp = (1 - fwTarget) * 0.5;
       /** 半径値の中心値 */
       //let bwCenter = 1 - bwAmp;
-      let bwCenter = bwTarget * 0.5;
+      let bwCenter = bwTarget;
 
       let fwCenter = 1 - fwAmp;
       //let fwPower = 1 / 4;
