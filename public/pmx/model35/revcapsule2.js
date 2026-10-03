@@ -212,17 +212,19 @@ class RevCapsule2 extends PMX.Maker {
       this.materials.push(m);
     }
 
-    /** 頂点モーフ 縮小 */
-    const mouth = new PMX.Morph();
-    this.morphs.push(mouth);
-    mouth.nameJa = 'close';
-    mouth.nameEn = 'close';
-    mouth.panel = PMX.Morph.PANEL_MOUTH;
-    mouth.type = PMX.Morph.TYPE_VERTEX;
-
     const waves = [];
+    { /** 頂点モーフ 縮小 */
+      const mouth = new PMX.Morph();
+      this.morphs.push(mouth);
+      waves.push(mouth);
+      mouth.nameJa = 'close';
+      mouth.nameEn = 'close';
+      mouth.panel = PMX.Morph.PANEL_MOUTH;
+      mouth.type = PMX.Morph.TYPE_VERTEX;
+    }
+
     for (let i = 0; i < 2; ++i) {
-      const name = ['wavex', 'wavez'][i];
+      const name = ['axisx', 'axisz'][i];
       const mor = new PMX.Morph();
       this.morphs.push(mor);
       waves.push(mor);
@@ -231,6 +233,23 @@ class RevCapsule2 extends PMX.Maker {
       mor.panel = PMX.Morph.PANEL_MOUTH;
       mor.type = PMX.Morph.TYPE_VERTEX;
     }
+
+    /** 一周 div に対する j で 0.0～1.0 を返す */
+          const _angindextorate = (_j, _is0) => {
+            // ちょうどのとき、0.0, 斜めで 45度で 1.0 にする
+            let _val = _j / div; // 一周で 1.0
+            if (_is0) {
+              if (_val >= 1/4 && _val <= 3/4) {
+                _val = _val - 0.5;
+              } else if (_val >= 0.5) {
+                _val = _val - 1.0;
+              }
+              _val /= (1/8);
+            } else {
+              _val = (_val - (_val <= 0.5) ? 1/4 : 3/4) / (1/8);
+            }
+            return Math.max(0, Math.min(1, Math.abs(_val)));
+          };
 
     let vertexOffset = 0;
     let m = this.materials[0];
@@ -306,27 +325,33 @@ class RevCapsule2 extends PMX.Maker {
 
           this.vts.push(v);
 
+
           const curVertexIndex = this.vts.length - 1;
+
           { // 縮小頂点モーフ
             const rate = 1.0;
             const vm = new PMX.VertexMorph();
             vm.target = curVertexIndex;
             vm.offset = [-v.p[0] * rate, 0, -v.p[2] * rate];
-            mouth.vertexMorphs.push(vm);
-          }
-          { // x=0で凹む
-            const rate = 1.0;
-            const vm = new PMX.VertexMorph();
-            vm.target = curVertexIndex;
-            vm.offset = [0 * rate, 0 * rate, 0 * rate]; // 差分
             waves[0].vertexMorphs.push(vm);
           }
-          { // z=0で凹む
-            const rate = 1.0;
+          { // x軸で凹む
+            const rate = adjustR * scale * 2.0;
             const vm = new PMX.VertexMorph();
             vm.target = curVertexIndex;
-            vm.offset = [0 * rate, 0 * rate, 0 * rate];
+            let val = 1.0 - _angindextorate(j, false);
+            val *= rt;
+            vm.offset = [0 * rate, val * rate, 0 * rate]; // 差分
             waves[1].vertexMorphs.push(vm);
+          }
+          { // z=0で凹む
+            const rate = adjustR * scale * 2.0;
+            const vm = new PMX.VertexMorph();
+            vm.target = curVertexIndex;
+            let val = 1.0 - _angindextorate(j, true);
+            val *= rt;
+            vm.offset = [0 * rate, val * rate, 0 * rate];
+            waves[2].vertexMorphs.push(vm);
           }
         }
       }
@@ -457,17 +482,36 @@ class RevCapsule2 extends PMX.Maker {
 
             this.vts.push(v);
 
-            {
+            const curVertexIndex = this.vts.length - 1;
+            { // NOTE: 縮小
               const changeRange = beltHeight * 1;
               const t = (y - (-beltHeight * halfBeltNum)) / changeRange;
+              /** イージング */
               const p = (1 - Math.cos(t * Math.PI)) * 0.5;
               const rate = (1 - p) * 1.0 + p * 0.0;
               if (0 <= t && t <= 1 && 0 < rate) {
-                const vm = new PMX.VertexMorph();
-                vm.target = this.vts.length - 1;
-                vm.offset = [-v.p[0] * rate, 0, -v.p[2] * rate];
-                mouth.vertexMorphs.push(vm);
+                {
+                  const vm = new PMX.VertexMorph();
+                  vm.target = curVertexIndex;
+                  vm.offset = [-v.p[0] * rate, 0, -v.p[2] * rate];
+                  waves[0].vertexMorphs.push(vm);
+                }
+                {
+                  const vm = new PMX.VertexMorph();
+                  vm.target = curVertexIndex;
+                  let val = 1 - _angindextorate(j, false);                  
+                  vm.offset = [0 * rate, val * rate, 0 * rate];
+                  waves[1].vertexMorphs.push(vm);
+                }
+                {
+                  const vm = new PMX.VertexMorph();
+                  vm.target = curVertexIndex;
+                  let val = 1 - _angindextorate(j, true);
+                  vm.offset = [0 * rate, val * rate, 0 * rate];
+                  waves[2].vertexMorphs.push(vm);
+                }
               }
+
             }
           }
         }
@@ -531,14 +575,9 @@ class RevCapsule2 extends PMX.Maker {
 
     }
 
-    /**
-     * 一切衝突しないグループ(1-origin)
-     */
+    /** 一切衝突しないグループ(1-origin) */
     const RIGID_IGNORE_GROUP = 14;
-
-    /**
-     * 普通の衝突グループ(1-origin UI)
-     */
+    /** 普通の衝突グループ(1-origin UI) */
     const RIGID_DEFAULT_GROUP = 4;
 
     this.textures.push(...param.texturePath);
