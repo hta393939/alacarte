@@ -90,6 +90,8 @@ class RevCapsule2 extends PMX.Maker {
     const _belt = param.belt || 10;
     /** 内メッシュカット @type {boolean} */
     const _usecut = param.usecut ?? true;
+    /** すぼめ @type {boolean} */
+    const _usemouth = param.usemouth ?? false;
 
     const d = new Date();
     /**
@@ -153,7 +155,7 @@ class RevCapsule2 extends PMX.Maker {
 
         return {r: u, nx: -tr, nr: tx};
       }
-      // 後半 あってる
+      // 後半、通常 あってる
       const ang = (t - fw) / (1 - fw) * Math.PI;
       let u = Math.cos(ang) * bwAmp + bwCenter;
 
@@ -213,13 +215,25 @@ class RevCapsule2 extends PMX.Maker {
       this.materials.push(m);
     }
 
-    /** 頂点モーフ */
+    /** 頂点モーフ 縮小 */
     const mouth = new PMX.Morph();
     this.morphs.push(mouth);
     mouth.nameJa = 'close';
     mouth.nameEn = 'close';
     mouth.panel = PMX.Morph.PANEL_MOUTH;
     mouth.type = PMX.Morph.TYPE_VERTEX;
+
+    const waves = [];
+    for (let i = 0; i < 2; ++i) {
+      const name = ['wavex', 'wavez'][i];
+      const mor = new PMX.Morph();
+      this.morphs.push(mor);
+      waves.push(mor);
+      mor.nameEn = name;
+      mor.nameJa = name;
+      mor.panel = PMX.Morph.PANEL_MOUTH;
+      mor.type = PMX.Morph.TYPE_VERTEX;
+    }
 
     let vertexOffset = 0;
     let m = this.materials[0];
@@ -517,16 +531,12 @@ class RevCapsule2 extends PMX.Maker {
 
     this.textures.push(...param.texturePath);
 
-    for (let i = 0; i <= 2; ++i) { // ボーン
-      /**
-       * ボーン
-       */
+    for (let i = 0; i <= 2; ++i) { // 最初の3ボーン
+      /** ボーン */
       let b = new PMX.Bone();
-      /**
-       * 剛体
-       */
+      /** 剛体 */
       let rb = new PMX.Rigid();
-// 関連ボーンのインデックス
+      // 関連ボーンのインデックス
       rb.bone = i;
       rb.type = PMX.Rigid.TYPE_STATIC;
       rb.nameEn = `rb${_pad(i, 3)}`;
@@ -557,7 +567,7 @@ class RevCapsule2 extends PMX.Maker {
         break;
       case 1:
         b.nameJa = '操作中心'; // 視点基準
-        b.nameEn = 'view cnt bone';
+        b.nameEn = 'view cnt';
         b.parent = -1;
         break;
       case 2:
@@ -576,15 +586,11 @@ class RevCapsule2 extends PMX.Maker {
     }
 
     for (let h = 0; h < 2; ++h) {
-      const dx = (h === 0) ? (-1) : 1;
+      const dx = (h === 0) ? (-1) : 1; // 下へのびる、上へのびる
       for (let i = 0; i < sideBoneNum; ++i) { // ボーン
-        /**
-         * ボーン
-         */
+        /** ボーン */
         let b = new PMX.Bone();
-        /**
-         * 剛体
-         */
+        /** 剛体 */
         let rb = new PMX.Rigid();
         rb.bone = baseBoneIndex + sideBoneNum * h + i;
         rb.type = PMX.Rigid.TYPE_STATIC; // 追従
@@ -600,9 +606,7 @@ class RevCapsule2 extends PMX.Maker {
           | PMX.Bone.BIT_VISIBLE;
         bits |= PMX.Bone.BIT_CONTROL;
         b.bits = bits;
-        /**
-         * odd が tree
-         */
+        /** odd が tree */
         let opt = ((i & 1) === 0) ?
           'effleaf' : 'tree';
         const index = this.bones.length;
@@ -686,7 +690,7 @@ class RevCapsule2 extends PMX.Maker {
       }
     }
 
-    { // モーフ 3個
+    { // モーフ 3個追加
       for (let i = 0; i < 3; ++i) {
         const m = new PMX.Morph();
         m.nameJa = `mr${i}`;

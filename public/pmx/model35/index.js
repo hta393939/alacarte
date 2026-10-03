@@ -131,6 +131,7 @@ class Misc {
       useradius8: document.getElementById('useradius8')?.checked,
       usedynamic: document.getElementById('usedynamic')?.checked,
       usecut: document.getElementById('usecut')?.checked,
+      usemouth: document.getElementById('usemouth')?.checked,
     };
     param.scale = 2 ** param.pow2;
     param.denom = 1 / param.scale;
