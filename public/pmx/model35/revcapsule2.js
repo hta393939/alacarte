@@ -234,22 +234,22 @@ class RevCapsule2 extends PMX.Maker {
       mor.type = PMX.Morph.TYPE_VERTEX;
     }
 
-    /** 一周 div に対する j で 0.0～1.0 を返す */
-          const _angindextorate = (_j, _is0) => {
-            // ちょうどのとき、0.0, 斜めで 45度で 1.0 にする
-            let _val = _j / div; // 一周で 1.0
-            if (_is0) {
-              if (_val >= 1/4 && _val <= 3/4) {
-                _val = _val - 0.5;
-              } else if (_val >= 0.5) {
-                _val = _val - 1.0;
-              }
-              _val /= (1/8);
-            } else {
-              _val = (_val - (_val <= 0.5) ? 1/4 : 3/4) / (1/8);
-            }
-            return Math.max(0, Math.min(1, Math.abs(_val)));
-          };
+    /** 一周 div に対する j で 0.0～1.0 を返す @param {number} _j @param {boolean} _is0 */
+    const _angindextorate = (_j, _is0) => {
+      // ちょうどのとき、0.0, 斜めで 45度で 1.0 にする
+      let _val = _j / div; // 一周で 1.0
+      if (_is0) {
+        if (_val >= 1/4 && _val <= 3/4) {
+          _val = _val - 0.5;
+        } else if (_val >= 0.5) {
+          _val = _val - 1.0;
+        }
+        _val /= (1/8);
+      } else {
+        _val = (_val - ((_val <= 0.5) ? 1/4 : 3/4)) / (1/8);
+      }
+      return Math.max(0, Math.min(1, Math.abs(_val)));
+    };
 
     let vertexOffset = 0;
     let m = this.materials[0];
@@ -336,16 +336,16 @@ class RevCapsule2 extends PMX.Maker {
             waves[0].vertexMorphs.push(vm);
           }
           { // x軸で凹む
-            const rate = adjustR * scale * 2.0;
+            const rate = adjustR * scale * 4.0;
             const vm = new PMX.VertexMorph();
             vm.target = curVertexIndex;
             let val = 1.0 - _angindextorate(j, false);
-            val *= rt;
+            val = (val ** 2) * rt;
             vm.offset = [0 * rate, val * rate, 0 * rate]; // 差分
             waves[1].vertexMorphs.push(vm);
           }
-          { // z=0で凹む
-            const rate = adjustR * scale * 2.0;
+          { // z軸で凹む
+            const rate = adjustR * scale * 4.0;
             const vm = new PMX.VertexMorph();
             vm.target = curVertexIndex;
             let val = 1.0 - _angindextorate(j, true);
@@ -499,15 +499,17 @@ class RevCapsule2 extends PMX.Maker {
                 {
                   const vm = new PMX.VertexMorph();
                   vm.target = curVertexIndex;
-                  let val = 1 - _angindextorate(j, false);                  
-                  vm.offset = [0 * rate, val * rate, 0 * rate];
+                  let val = 1 - _angindextorate(j, false);
+                  val = (val ** 2) * rt * adjustR * scale * 4.0;
+                  vm.offset = [0, val * rate, 0];
                   waves[1].vertexMorphs.push(vm);
                 }
                 {
                   const vm = new PMX.VertexMorph();
                   vm.target = curVertexIndex;
                   let val = 1 - _angindextorate(j, true);
-                  vm.offset = [0 * rate, val * rate, 0 * rate];
+                  val *= rt * adjustR * scale * 4.0;
+                  vm.offset = [0, val * rate, 0];
                   waves[2].vertexMorphs.push(vm);
                 }
               }
