@@ -94,11 +94,12 @@ class RevCapsule2 extends PMX.Maker {
     const _usemouth = param.usemouth ?? false;
 
     const d = new Date();
-    /**
-     * 最終位置とサイズへの倍率
-     */
+    /** 最終位置とサイズへの倍率 */
     const scale = param.scale || (1 / 8);
     let div = 32;
+    /** 水平分割 未使用 */
+    //const hdiv = 32;
+
 //        const beltNum = 20;
     const beltNum = _belt;
     const halfBeltNum = _belt * 0.5;
