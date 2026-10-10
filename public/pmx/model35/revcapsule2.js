@@ -133,18 +133,14 @@ class RevCapsule2 extends PMX.Maker {
       let bwCenter = bwTarget;
 
       let fwCenter = 1 - fwAmp;
-      //let fwPower = 1 / 4;
-      //let fwPower = 1 / 2;
-      let fwPower = 1;
       if (t < fw) { // 前半 リバース側
-        /*
-        const ang = Math.pow(t / fw, fwPower) * Math.PI;
-        let u = - Math.cos(ang) * fwAmp + fwCenter;
+
+        const ang = t / fw * Math.PI;
+        let u = (1 - Math.cos(ang)) * 0.5 * fwAmp * 2 - fwAmp + fwCenter;
 
         const tx = beltHeight * beltNum;
         // fwPower が 1
         let tr = Math.sin(ang) * fwAmp * Math.PI / fw;
-        */
 
         
         //let u = Math.pow(t / fw, 0.5) * fwAmp + fwCenter;
@@ -152,12 +148,13 @@ class RevCapsule2 extends PMX.Maker {
         //const tx = (t > 0) ? beltHeight * beltNum: 0;
         //let tr = (t > 0) ? (- 0.5 * Math.pow((t / fw), -0.5) * fwAmp / fw) : 1;
 
-        let u = t / fw * (bwTarget - fwTarget) + fwTarget;
-          + Math.sin(t / fw * Math.PI) * bwTarget;
+        
+        //let u = t / fw * (bwTarget - fwTarget) + fwTarget;
+        //  + Math.sin(t / fw * Math.PI) * bwTarget;
         /** 全体の長さを微分 */
-        const tx = beltHeight * beltNum;
-        let tr = (bwTarget - fwTarget) / fw
-          - Math.PI / fw * Math.cos(t / fw * Math.PI) * bwTarget;
+        //const tx = beltHeight * beltNum;
+        //let tr = (bwTarget - fwTarget) / fw
+         // - Math.PI / fw * Math.cos(t / fw * Math.PI) * bwTarget;
 
         if (Number.isNaN(tr)) {
           tr = 0;
@@ -549,7 +546,8 @@ class RevCapsule2 extends PMX.Maker {
       }
 
       /** div/4 だったところ */
-      const numOver = div / 4 / 2;
+      //const numOver = div / 4 / 2;
+      const numOver = div / 4;
       // 中心と半径の補正
       const adjustROver = 1 / Math.sin(numOver / div * 2 * Math.PI);
 
@@ -558,11 +556,12 @@ class RevCapsule2 extends PMX.Maker {
       adjustR = calcRadius(1).r * capsuleR;
 
       adjustYY = -adjustR * Math.cos(numOver / div * 2 * Math.PI);
+      adjustYY = 0;
 
       for (let i = 0; i <= numOver; ++i) { // 上半球 +Y
         for (let j = 0; j <= hdiv; ++j) {
           const v = new PMX.Vertex();
-          const vang = Math.PI * 2 * (i + div/8) / div;
+          const vang = Math.PI * 2 * (i + div/8 * 0) / div;
           const hang = Math.PI * 2 * j / hdiv;
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
