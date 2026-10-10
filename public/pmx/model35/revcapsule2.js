@@ -72,7 +72,6 @@ class RevCapsule2 extends PMX.Maker {
     console.log('make', param);
 
     // param.fwRate の値で決まる
-    //const useradius = param.useradius;
 
     /**
      * true でいいや
@@ -98,7 +97,7 @@ class RevCapsule2 extends PMX.Maker {
     const scale = param.scale || (1 / 8);
     let div = 32;
     /** 水平分割 未使用 */
-    //const hdiv = 32;
+    const hdiv = 32;
 
 //        const beltNum = 20;
     const beltNum = _belt;
@@ -138,14 +137,28 @@ class RevCapsule2 extends PMX.Maker {
       //let fwPower = 1 / 2;
       let fwPower = 1;
       if (t < fw) { // 前半 リバース側
+        /*
         const ang = Math.pow(t / fw, fwPower) * Math.PI;
         let u = - Math.cos(ang) * fwAmp + fwCenter;
 
         const tx = beltHeight * beltNum;
         // fwPower が 1
         let tr = Math.sin(ang) * fwAmp * Math.PI / fw;
-        // fwPower が 1 未満の場合
-        //let tr = Math.sin(ang) * fwAmp * Math.PI * Math.pow(1 / fw, fwPower) * fwPower * Math.pow(t, fwPower - 1);
+        */
+
+        
+        //let u = Math.pow(t / fw, 0.5) * fwAmp + fwCenter;
+        /** 全体の長さを微分 */
+        //const tx = (t > 0) ? beltHeight * beltNum: 0;
+        //let tr = (t > 0) ? (- 0.5 * Math.pow((t / fw), -0.5) * fwAmp / fw) : 1;
+
+        let u = t / fw * (bwTarget - fwTarget) + fwTarget;
+          + Math.sin(t / fw * Math.PI) * bwTarget;
+        /** 全体の長さを微分 */
+        const tx = beltHeight * beltNum;
+        let tr = (bwTarget - fwTarget) / fw
+          - Math.PI / fw * Math.cos(t / fw * Math.PI) * bwTarget;
+
         if (Number.isNaN(tr)) {
           tr = 0;
         }
@@ -252,6 +265,9 @@ class RevCapsule2 extends PMX.Maker {
       return Math.max(0, Math.min(1, Math.abs(_val)));
     };
 
+    /** 足す補正 */
+    let adjustYY = 0;
+
     let vertexOffset = 0;
     let m = this.materials[0];
     { // NOTE: 下の特殊返し
@@ -267,7 +283,7 @@ class RevCapsule2 extends PMX.Maker {
       const rt = (1 - ri) / 2;
 
       for (let i = 0; i <= allNum; ++i) { // 下半球 -Y
-        for (let j = 0; j <= div; ++j) {
+        for (let j = 0; j <= hdiv; ++j) {
           const v = new PMX.Vertex();
           let vang = Math.PI * 2 * i / div;
           let hang = Math.PI * 2 * j / div;
@@ -361,10 +377,10 @@ class RevCapsule2 extends PMX.Maker {
           continue;
         }
 
-        for (let j = 0; j < div; ++j) {
-          let v0 = vertexOffset + (div + 1) * i + j;
+        for (let j = 0; j < hdiv; ++j) {
+          let v0 = vertexOffset + (hdiv + 1) * i + j;
           let v1 = v0 + 1;
-          let v2 = v0 + (div + 1);
+          let v2 = v0 + (hdiv + 1);
           let v3 = v2 + 1;
 
           // 元
@@ -435,9 +451,9 @@ class RevCapsule2 extends PMX.Maker {
           const result = calcRadius((py - (-halfAllLength)) / (beltHeight * beltNum));
           adjustR = result.r * capsuleR;
 
-          for (let j = 0; j <= div; ++j) {
+          for (let j = 0; j <= hdiv; ++j) {
             const v = new PMX.Vertex();
-            let hang = Math.PI * 2 * j / div;
+            let hang = Math.PI * 2 * j / hdiv;
             const cs = Math.cos(hang);
             const sn = Math.sin(hang);
 
@@ -521,10 +537,10 @@ class RevCapsule2 extends PMX.Maker {
         by += beltHeight;
 
         for (let i = 0; i < div; ++i) {
-          for (let j = 0; j < div; ++j) {
-            let v0 = vertexOffset + (div + 1) * i + j;
+          for (let j = 0; j < hdiv; ++j) {
+            let v0 = vertexOffset + (hdiv + 1) * i + j;
             let v1 = v0 + 1;
-            let v2 = v0 + (div + 1);
+            let v2 = v0 + (hdiv + 1);
             let v3 = v2 + 1;
             m.faces.push([v0, v2, v1]);
             m.faces.push([v2, v3, v1]);
@@ -532,14 +548,22 @@ class RevCapsule2 extends PMX.Maker {
         }
       }
 
+      /** div/4 だったところ */
+      const numOver = div / 4 / 2;
+      // 中心と半径の補正
+      const adjustROver = 1 / Math.sin(numOver / div * 2 * Math.PI);
+
       vertexOffset = this.vts.length;
       console.log('通常の上半分', 'by', by, 'vertexOffset', vertexOffset);
       adjustR = calcRadius(1).r * capsuleR;
-      for (let i = 0; i <= div/4; ++i) { // 上半球 +Y
-        for (let j = 0; j <= div; ++j) {
+
+      adjustYY = -adjustR * Math.cos(numOver / div * 2 * Math.PI);
+
+      for (let i = 0; i <= numOver; ++i) { // 上半球 +Y
+        for (let j = 0; j <= hdiv; ++j) {
           const v = new PMX.Vertex();
-          const vang = Math.PI * 2 * i / div;
-          const hang = Math.PI * 2 * j / div;
+          const vang = Math.PI * 2 * (i + div/8) / div;
+          const hang = Math.PI * 2 * j / hdiv;
           const cs = Math.cos(hang);
           const sn = Math.sin(hang);
           let rr = Math.cos(vang);
@@ -548,9 +572,10 @@ class RevCapsule2 extends PMX.Maker {
           let y = Math.sin(vang);
 
           v.n = this.normalize([x, y, z]);
-          x *= adjustR;
-          y *= adjustR;
-          z *= adjustR;
+          x *= adjustR * adjustROver;
+          y *= adjustR * adjustROver;
+          z *= adjustR * adjustROver;
+          y += adjustYY;
           y += centerOffset;
           v.p = [x * scale, y * scale, z * scale];
           v.uv = [
@@ -566,10 +591,10 @@ class RevCapsule2 extends PMX.Maker {
         }          
       }
       for (let i = 0; i < div / 4; ++i) {
-        for (let j = 0; j < div; ++j) {
-          let v0 = vertexOffset + (div + 1) * i + j;
+        for (let j = 0; j < hdiv; ++j) {
+          let v0 = vertexOffset + (hdiv + 1) * i + j;
           let v1 = v0 + 1;
-          let v2 = v0 + (div + 1);
+          let v2 = v0 + (hdiv + 1);
           let v3 = v2 + 1;
           m.faces.push([v0, v2, v1]);
           m.faces.push([v2, v3, v1]);
