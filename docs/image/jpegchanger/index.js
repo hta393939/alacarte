@@ -454,6 +454,8 @@ class Misc {
    * @param {object} param パラメータたち
    */
   async miniFiles(dirobj, param) {
+    console.log('miniFiles');
+
     const divnum = param.divnum || 8;
     /** @type {FileSystemDirectoryHandle} */
     const dstDir = dirobj.imagesDir;
@@ -530,6 +532,39 @@ class Misc {
   }
 
   /**
+   * 
+   * @param {FileSystemDirectoryHandle} startDir 
+   * @param {string[]} names 
+   */
+  async makeDir(startDir, names) {
+    if (names.length === 0) {
+      return null;
+    }
+
+    let ret = await startDir.getDirectoryHandle(names[0],
+      {create: true},
+    );
+    if (names.length === 1) {
+      return ret;
+    }
+    const next = await this.makeDir(ret, names.slice(1));
+    return next;
+  }
+
+  /**
+   * 
+   * @param {FileSystemDirectoryHandle} startDir 
+   * @param {string} pathname 
+   * @returns 
+   */
+  async makeDirByPath(startDir, pathname) {
+    let ret = null;
+    const ss = pathname.split('/').filter(s => s !== '' && s !== '.');
+    ret = await this.makeDir(startDir, ss);
+    return ret;
+  }
+
+  /**
    * 直下に dst/, _foo/, _foodb/ を含むフォルダを指定する。 
    * @param {FileSystemDirectoryHandle} dirHandle 
    * @param {*} param 
@@ -572,14 +607,9 @@ class Misc {
       }
 
       dstDir = v;
-      try { // images フォルダを作成する
-        dstSubDir = await dstDir.getDirectoryHandle('images', {create: true});
-      } catch (e) {
-        console.warn('create folder images', e);
-      }
-
-      // 掘る
-      colmapDir = await this.searchFileByPath(v, 'sparse/0');
+      // images フォルダを作成する
+      dstSubDir = await this.makeDirByPath(v, 'images');
+      colmapDir = await this.makeDirByPath(v, 'sparse/0');
     }
 
     console.log('searchDir end');
