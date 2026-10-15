@@ -207,16 +207,23 @@ class Misc {
     a.click();
   }
 
-  makeFilename(num) {
-    return `${this.prefix}${this._pad(num, this.num)}.${this.ext}`;
-  }
-
   setListener() {
     {
       const el = document.getElementById('encode');
       el?.addEventListener('click', () => {
+        this.clearCanvas();
+        const levelel = document.getElementById('level');
         const textel = document.getElementById('enctext');
-        this.makeQr(textel.value);
+        this.makeQr(textel.value, levelel.value);
+      });
+    }
+    {
+      const el = document.getElementById('encodemqr');
+      el?.addEventListener('click', () => {
+        this.clearCanvas();
+        const levelel = document.getElementById('level');
+        const textel = document.getElementById('enctext');
+        this.makeMicroQr(textel.value, levelel.value);
       });
     }
 
@@ -471,6 +478,13 @@ class Misc {
     this.times.push(nowts);
   }
 
+  clearCanvas() {
+    const qs = document.querySelectorAll('canvas');
+    for (const q of qs) {
+      q.remove();
+    }
+  }
+
   /**
    * 
    * @param {ImageData} img 
@@ -484,28 +498,28 @@ class Misc {
     const c = off.getContext('2d');
     const data = c.getImageData(0, 0, w, h);
     data.data.set(img.data);
-    c.putImageData(data, 0, 0);  
+    c.putImageData(data, 0, 0);
 
     const canvas = document.createElement('canvas');
     canvas.width = w * scale;
     canvas.height = h * scale;
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(data,
+    ctx.drawImage(off,
       0, 0, w, h,
-      canvas.width, canvas.height,
+      0, 0, canvas.width, canvas.height,
     );
     return canvas;
   }
 
-  async makeMicroQr(text) {
+  async makeMicroQr(text, level) {
     // keyof ってオブジェクトのキーの方だったか
     const opts = {
       //codeType: Qrean.CODE_TYPES.mQR,
       codeType: Qrean.CODE_TYPE_MQR,
 
       //qrErrorLevel: 'L',
-      qrErrorLevel: 'Q',
+      qrErrorLevel: level,
       scale: 1,
     };
     const img = await Qrean.encode(text, opts);
@@ -521,14 +535,12 @@ class Misc {
    * 
    * @param {string} text 
    */
-  async makeQr(text) {
+  async makeQr(text, level) {
     // keyof ってオブジェクトのキーの方だったか
     const opts = {
-      //codeType: Qrean.CODE_TYPES.mQR,
-      codeType: Qrean.CODE_TYPE_MQR,
-
+      codeType: Qrean.CODE_TYPE_QR,
       //qrErrorLevel: 'L',
-      qrErrorLevel: 'H',
+      qrErrorLevel: level,
       scale: 1,
     };
     const img = await Qrean.encode(text, opts);
