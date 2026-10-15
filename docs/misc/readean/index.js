@@ -112,7 +112,10 @@ class Misc {
    * 初回用
    */
   async first() {
-    const opt = {audio: false, video: true};
+    const opt = {audio: false, video: {
+      aspectRatio: {ideal: 1.0 / 1.0},
+      facingMode: {ideal: 'environment'}
+    }};
     const stream = await navigator.mediaDevices.getUserMedia(opt);
     for (const track of stream.getTracks()) {
       let text = `${track.kind},${track.label},${track.id}`;
@@ -161,13 +164,16 @@ class Misc {
             deviceId: {exact: dev.deviceId},
           },
         };
-        if (true) {
+        if (false) {
           opt.video.width = {exact: 1024};
           opt.video.height = {exact: 1024};
         }
-        if (true) {
+        if (flase) {
           opt.video.width = {exact: 640};
           opt.video.height = {exact: 480};
+        }
+        {
+          opt.video.aspectRatio = {ideal: 1.0 / 1.0};
         }
 
         const stream = await navigator.mediaDevices.getUserMedia(opt);

@@ -471,17 +471,50 @@ class Misc {
     this.times.push(nowts);
   }
 
-  makeCanvas(img) {
+  /**
+   * 
+   * @param {ImageData} img 
+   * @param {number} scale 
+   * @returns 
+   */
+  makeCanvas(img, scale) {
     const w = img.width;
     const h = img.height;
+    const off = new OffscreenCanvas(w, h);
+    const c = off.getContext('2d');
+    const data = c.getImageData(0, 0, w, h);
+    data.data.set(img.data);
+    c.putImageData(data, 0, 0);  
+
     const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
+    canvas.width = w * scale;
+    canvas.height = h * scale;
     const ctx = canvas.getContext('2d');
-    const imgdata = ctx.getImageData(0, 0, w, h);
-    imgdata.data.set(img.data);
-    ctx.putImageData(imgdata, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(data,
+      0, 0, w, h,
+      canvas.width, canvas.height,
+    );
     return canvas;
+  }
+
+  async makeMicroQr(text) {
+    // keyof ってオブジェクトのキーの方だったか
+    const opts = {
+      //codeType: Qrean.CODE_TYPES.mQR,
+      codeType: Qrean.CODE_TYPE_MQR,
+
+      //qrErrorLevel: 'L',
+      qrErrorLevel: 'Q',
+      scale: 1,
+    };
+    const img = await Qrean.encode(text, opts);
+    if (img) {
+      const canvas = this.makeCanvas(img, 10);
+      document.body.appendChild(canvas);
+    } else {
+      this.log('micro encode failure');
+    }
   }
 
   /**
@@ -494,12 +527,13 @@ class Misc {
       //codeType: Qrean.CODE_TYPES.mQR,
       codeType: Qrean.CODE_TYPE_MQR,
 
-      //qrErrorLevel: Qrean.QR_ERRORLEVEL_L,
-      qrErrorLevel: Qrean.QR_ERRORLEVEL_H,
+      //qrErrorLevel: 'L',
+      qrErrorLevel: 'H',
+      scale: 1,
     };
     const img = await Qrean.encode(text, opts);
     if (img) {
-      const canvas = this.makeCanvas(img);
+      const canvas = this.makeCanvas(img, 10);
       document.body.appendChild(canvas);
     } else {
       this.log('encode failure');
