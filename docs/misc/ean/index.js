@@ -29,6 +29,8 @@ class Misc {
   constructor() {
     this.consoles = [];
 
+    this.scale = 20;
+
     /** @type {MediaStreamVideoTrack} */
     this.track = null;
 
@@ -41,6 +43,20 @@ class Misc {
   }
 
   async initialize() {
+    const sp = new URLSearchParams(location.search);
+    for (const k of ['scale']) {
+      if (!sp.has(k)) {
+        continue;
+      }
+      let val = sp.get(k) || true;
+      try {
+        val = JSON.parse(val);
+      } catch (e) {
+        // 何もしない
+      }
+      this[k] = val;
+    }
+
     this.setListener();
 
     {
@@ -524,7 +540,7 @@ class Misc {
     };
     const img = await Qrean.encode(text, opts);
     if (img) {
-      const canvas = this.makeCanvas(img, 10);
+      const canvas = this.makeCanvas(img, this.scale);
       document.body.appendChild(canvas);
     } else {
       this.log('micro encode failure');
@@ -545,7 +561,7 @@ class Misc {
     };
     const img = await Qrean.encode(text, opts);
     if (img) {
-      const canvas = this.makeCanvas(img, 10);
+      const canvas = this.makeCanvas(img, this.scale);
       document.body.appendChild(canvas);
     } else {
       this.log('encode failure');
