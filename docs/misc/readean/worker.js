@@ -12,6 +12,7 @@ class Barcode {
       }
 
       globalThis.Qrean = module.Qrean;
+      this.qr = new globalThis.Qrean();
       globalThis.postMessage({type: 'ready'});
 
       console.log('%cinitialize', this.c, globalThis.Qrean, module);
@@ -25,8 +26,10 @@ class Barcode {
    */
   async detect(data) {
     try {
-      const opt = {};
-      const result = await globalThis.Qrean.detect(data, opt);
+      const opt = {
+        //outbufSize: 0
+      };
+      const result = await this.qr.detect(data);
       globalThis.postMessage({type: 'detectresult', result});
     } catch (e) {
       globalThis.postMessage({type: 'detectresult',

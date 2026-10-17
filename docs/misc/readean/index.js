@@ -93,13 +93,56 @@ class Misc {
   }
 
   applyResult(data) {
-    console.log('applyResult', data);
-    if (!data.result) {
+    const result = data.result;
+    if (!result) {
       // 検知無し
+      this.setText('#resultview', `,-2`);
       return;
     }
 
+    const detected = result.detected;
+    /** おそらくグレースケール */
+    const digitized = result.digitized;
+    if (!Array.isArray(detected)) {
+      this.setText('#resultview', `,-1`);
+      return;
+    }
 
+    this.setText('#resultview', `,${detected.length}`);
+    if (detected.length >= 1) {
+      console.log('detected', detected.length);
+    }
+
+    {
+      const canvas = document.getElementById('resultcanvas');
+      canvas.width = digitized.width;
+      canvas.height = digitized.height;
+      const c = canvas.getContext('2d');
+      c.font = `bold 24px consolas`;
+      const imageData = c.getImageData(0, 0, canvas.width, canvas.height);
+      imageData.data.set(digitized.data);
+      c.putImageData(imageData, 0, 0);
+      for (const one of detected) {
+        c.strokeStyle = `red`;
+        c.beginPath();
+        let first = true;
+        for (const xy of one.points) {
+          let x = xy[0];
+          let y = xy[1];
+          if (first) {
+            first = false;
+            c.moveTo(x, y);
+            continue;
+          }
+          c.lineTo(x, y);
+        }
+        c.closePath();
+        c.stroke();
+
+        c.fillStyle = 'green';
+        c.fillText(`${one.text}`, one.points[0][0], one.points[0][1]);
+      }
+    }
   }
 
   /**
@@ -482,7 +525,6 @@ class Misc {
     try {
       const el = document.getElementById('enableloop');
       if (el?.checked) {
-        //await this.detectInMain();
 
         if (this.status === Misc.STATUS_READY) {
           /** @type {HTMLVideoElement} */
@@ -527,7 +569,7 @@ class Misc {
     {
       const el = document.getElementById('fpsview');
       if (el) {
-        el.textContent = `${fps.toFixed(1)} fps, ${fpsdetect} fps`;
+        el.textContent = `${fps.toFixed(1)} fps, ${fpsdetect.toFixed(1)} fps`;
       }
     }
     this.times.push(nowts);
@@ -588,8 +630,8 @@ class Misc {
       //codeType: Qrean.CODE_TYPES.mQR,
       codeType: Qrean.CODE_TYPE_MQR,
 
-      //qrErrorLevel: Qrean.QR_ERRORLEVEL_L,
-      qrErrorLevel: Qrean.QR_ERRORLEVEL_H,
+      //'Q',
+      qrErrorLevel: 'L',
     };
     const img = await Qrean.encode(text, opts);
     if (img) {
