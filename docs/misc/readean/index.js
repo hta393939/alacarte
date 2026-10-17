@@ -26,6 +26,10 @@
 import { Qrean } from '../../third_party/libqrean/Qrean.js';
 
 class Misc {
+  static STATUS_NONE = 'none';
+  static STATUS_READY = 'ready';
+  static STATUS_RUNNING = 'running';
+
   constructor() {
     this.consoles = [];
 
@@ -34,6 +38,9 @@ class Misc {
 
     /** @type {number[]} */
     this.times = [];
+    this.timesdetect = [];
+
+    this.status = Misc.STATUS_NONE;
   }
 
   _pad(v, n = 2) {
@@ -41,6 +48,7 @@ class Misc {
   }
 
   async initialize() {
+    this.setStatus(Misc.STATUS_NONE);
     this.setListener();
 
     {
@@ -86,6 +94,12 @@ class Misc {
 
   applyResult(data) {
     console.log('applyResult', data);
+    if (!data.result) {
+      // 検知無し
+      return;
+    }
+
+
   }
 
   /**
@@ -99,6 +113,8 @@ class Misc {
       console.log('receive', ev.data);
       switch (ev.data.type) {
         case 'detectresult':
+          this.timesdetect.push(Date.now());
+          this.setStatus(Misc.STATUS_READY);
           this.applyResult(ev.data);
           break;
         case 'ready':
@@ -108,10 +124,29 @@ class Misc {
               this.log('worker Barcode error');
               return;
             }
+            this.setStatus(Misc.STATUS_READY);
           }
           break;
       }
     });
+  }
+
+  /**
+   * 
+   * @param {string} status 
+   */
+  setStatus(status) {
+    this.status = status;
+    const icons = {
+      [Misc.STATUS_NONE]: '⌛',
+      [Misc.STATUS_READY]: '⏸️',
+      [Misc.STATUS_RUNNING]: '🤔',
+    };
+    const el = document.getElementById('statusview');
+    if (!el) {
+      return;
+    }
+    el.textContent = `${icons[status]}, ${status}, ${new Date().toLocaleTimeString()}`;
   }
 
   /**
@@ -174,7 +209,7 @@ class Misc {
           opt.video.width = {exact: 1024};
           opt.video.height = {exact: 1024};
         }
-        if (flase) {
+        if (false) {
           opt.video.width = {exact: 640};
           opt.video.height = {exact: 480};
         }
@@ -198,12 +233,8 @@ class Misc {
             this.track = track;
             /** @type {HTMLVideoElement} */
             const video = document.getElementById('video');
-            /** @type {HTMLVideoElement} */
-            const subvideo = document.getElementById('subvideo');
             if (video && !video.srcObject) {
               video.srcObject = stream;
-            } else {
-              subvideo.srcObject = stream;
             }
           }
         }
@@ -453,16 +484,20 @@ class Misc {
       if (el?.checked) {
         //await this.detectInMain();
 
-        {
+        if (this.status === Misc.STATUS_READY) {
           /** @type {HTMLVideoElement} */
           const video = document.getElementById('video');
           const w = video.videoWidth;
           const h = video.videoHeight;
-          const off = new OffscreenCanvas(w, h);
-          const c = off.getContext('2d');
+          const canvas = document.getElementById('subcanvas');
+          canvas.width = w;
+          canvas.height = h;
+          const c = canvas.getContext('2d');
           c.drawImage(video, 0, 0);
           const imageData = c.getImageData(0, 0, w, h);
-          this.send(imageData);
+          await this.send(imageData);
+
+          this.setStatus(Misc.STATUS_RUNNING);
         }
       }
     } catch (e) {
@@ -476,16 +511,23 @@ class Misc {
 
     // フレームレートのカウント
     const nowts = Date.now();
-    this.times = this.times.filter(v => nowts - v < 2000);
+    this.times = this.times.filter(ts => nowts - ts < 2000);
+    this.timesdetect = this.timesdetect.filter(ts => nowts - ts < 2000);
     const n = this.times.length;
     let fps = 0;
     if (n >= 1) {
       fps = n / 2;
     }
+
+    let fpsdetect = 0;
+    if (this.timesdetect.length >= 1) {
+      fpsdetect = this.timesdetect.length / 2;
+    }
+
     {
       const el = document.getElementById('fpsview');
       if (el) {
-        el.textContent = `${fps.toFixed(1)} fps`;
+        el.textContent = `${fps.toFixed(1)} fps, ${fpsdetect} fps`;
       }
     }
     this.times.push(nowts);
@@ -503,7 +545,24 @@ class Misc {
       height: imageData.height,
       data: imageData.data,
     }
-    this.worker.postMessage(obj, [obj.data]);
+    try {
+      this.worker.postMessage(obj);
+    } catch (e) {
+      this.setText('#warnview', `${new Date().toLocaleTimeString()}, ${e.message}`);
+    }
+  }
+
+  /**
+   * 
+   * @param {string} qtext 
+   * @param {string} text 
+   */
+  setText(qtext, text) {
+    const el = document.querySelector(qtext);
+    if (!el) {
+      return;
+    }
+    el.textContent = text;
   }
 
   makeCanvas(img) {

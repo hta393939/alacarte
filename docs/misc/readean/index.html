@@ -31,12 +31,16 @@
 
       <div>
         <div>
-          <div id="fpsview"></div>
+          <div class="toright">
+            <div id="fpsview"></div>
+            <div id="statusview"></div>
+            <div id="warnview"></div>
+          </div>
           <video id="video" autoplay controls muted></video>
           <label class="pointer"><input type="checkbox" class="pointer" id="enableloop" />ループ</label>
         </div>
         <div>
-          <video id="subvideo" controls muted></video>
+          <canvas id="subcanvas"></canvas>
         </div>
         <!--
         <div>

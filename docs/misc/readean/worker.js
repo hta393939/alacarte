@@ -1,6 +1,7 @@
 
 class Barcode {
   constructor() {
+    this.c = 'color:green;';
   }
 
   async initialize() {
@@ -12,8 +13,10 @@ class Barcode {
 
       globalThis.Qrean = module.Qrean;
       globalThis.postMessage({type: 'ready'});
+
+      console.log('%cinitialize', this.c, globalThis.Qrean, module);
     } catch (e) {
-      console.warn('%cinitialize', 'color:green;', e.message);
+      console.warn('%cinitialize', this.c, e.message);
     }
   }
 
@@ -23,10 +26,12 @@ class Barcode {
   async detect(data) {
     try {
       const opt = {};
-      const result = await Qrean.decode(data.image, opt);
+      const result = await globalThis.Qrean.detect(data, opt);
       globalThis.postMessage({type: 'detectresult', result});
     } catch (e) {
-      globalThis.postMessage({type: 'detectresult', result: null});
+      globalThis.postMessage({type: 'detectresult',
+        message: e.message,
+        result: null});
     }
   }
 

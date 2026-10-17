@@ -15,7 +15,7 @@
   #video {
     max-height: 40vh;
   }
-  #subvideo {
+  #subcanvas {
     max-height: 40vh;
   }
   #copied {
@@ -30,7 +30,7 @@
   #video {
     max-width: 80vw;
   }
-  #subvideo {
+  #subcanvas {
     max-width: 80vw;
   }
   #copied {
