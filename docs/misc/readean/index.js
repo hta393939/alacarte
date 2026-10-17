@@ -65,7 +65,7 @@ class Misc {
     {
       const el = document.getElementById('innerview');
       if (el) {
-        el.textContent = `2026-10-11T14:50`;
+        el.textContent = `2026-10-17T15:00`;
       }
     }
   }
@@ -84,6 +84,10 @@ class Misc {
     el.insertBefore(node, el.firstChild);
   }
 
+  applyResult(data) {
+    console.log('applyResult', data);
+  }
+
   /**
    * ワーカー検知器を用意する
    */
@@ -95,8 +99,7 @@ class Misc {
       console.log('receive', ev.data);
       switch (ev.data.type) {
         case 'detectresult':
-          // [ ] TODO: 結果を見る
-
+          this.applyResult(ev.data);
           break;
         case 'ready':
           {
@@ -448,7 +451,19 @@ class Misc {
     try {
       const el = document.getElementById('enableloop');
       if (el?.checked) {
-        await this.detectInMain();
+        //await this.detectInMain();
+
+        {
+          /** @type {HTMLVideoElement} */
+          const video = document.getElementById('video');
+          const w = video.videoWidth;
+          const h = video.videoHeight;
+          const off = new OffscreenCanvas(w, h);
+          const c = off.getContext('2d');
+          c.drawImage(video, 0, 0);
+          const imageData = c.getImageData(0, 0, w, h);
+          this.send(imageData);
+        }
       }
     } catch (e) {
       // catch
@@ -474,6 +489,21 @@ class Misc {
       }
     }
     this.times.push(nowts);
+  }
+
+
+  /**
+   * 
+   * @param {ImageData} imageData 
+   */
+  async send(imageData) {
+    const obj = {
+      type: 'detect',
+      width: imageData.width,
+      height: imageData.height,
+      data: imageData.data,
+    }
+    this.worker.postMessage(obj, [obj.data]);
   }
 
   makeCanvas(img) {
