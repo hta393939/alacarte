@@ -26,6 +26,7 @@ class Barcode {
    */
   async detect(data) {
     try {
+      this.qr = new globalThis.Qrean();
       const opt = {
         //outbufSize: 0
       };
