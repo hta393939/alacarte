@@ -22,7 +22,8 @@ class Barcode {
    */
   async detect(data) {
     try {
-      const result = await Qrean.decode(data.image, {});
+      const opt = {};
+      const result = await Qrean.decode(data.image, opt);
       globalThis.postMessage({type: 'detectresult', result});
     } catch (e) {
       globalThis.postMessage({type: 'detectresult', result: null});

@@ -84,6 +84,9 @@ class Misc {
     el.insertBefore(node, el.firstChild);
   }
 
+  /**
+   * ワーカー検知器を用意する
+   */
   initializeWorker() {
     const worker = new Worker('./worker.js');
     this.worker = worker;
