@@ -5,7 +5,7 @@ class Barcode {
   }
 
   async initialize() {
-    console.log('%cinitialize', this.c, location.href, ',', location.search);
+    console.log('%cinitialize, 987', this.c, location.href, ',', location.search);
 
     const sp = new URLSearchParams(location.search);
     for (const k of ['barcode']) {
@@ -53,7 +53,8 @@ class Barcode {
   async detect(data) {
     if (this.detector) {
       try {
-        const result = await this.detector.detect(data);
+        const imageData = new ImageData(data.data, data.width, data.height);
+        const result = await this.detector.detect(imageData);
         globalThis.postMessage({type: 'detectresult', result});
       } catch (e) {
         globalThis.postMessage({type: 'detectresult',
