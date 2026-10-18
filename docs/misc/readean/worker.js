@@ -48,8 +48,21 @@ class Barcode {
 
   /**
    * width, data を持っていること
+   * @param {ImageData} data
    */
   async detect(data) {
+    if (this.detector) {
+      try {
+        const result = await this.detector.detect(data);
+        globalThis.postMessage({type: 'detectresult', result});
+      } catch (e) {
+        globalThis.postMessage({type: 'detectresult',
+          message: e.message,
+          result: null});
+      }
+      return;
+    }
+
     try {
       this.qr = new globalThis.Qrean();
       const opt = {
