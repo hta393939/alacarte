@@ -100,13 +100,18 @@ class Misc {
       return;
     }
 
+    if (Array.isArray(result)) {
+      this.applyBarcode(result);
+      return;
+    }
+
+    this.applyLib(result);
+  }
+
+  applyLib(result) {
     const detected = result.detected;
     /** おそらくグレースケール */
     const digitized = result.digitized;
-    if (!Array.isArray(detected)) {
-      this.setText('#resultview', `,-1`);
-      return;
-    }
 
     this.setText('#resultview', `,${detected.length}`);
     if (detected.length >= 1) {
@@ -139,10 +144,71 @@ class Misc {
         c.closePath();
         c.stroke();
 
+        c.fillStyle = 'rgb(160, 160, 0)';
+        c.beginPath();
+        const rr = 1;
+        c.ellipse(one.points[1][0], one.points[1][1],
+          rr, rr, 0,
+          0, Math.PI * 2
+        );
+        c.closePath();
+        c.fill();
+
         c.fillStyle = 'green';
         c.fillText(`${one.text}`, one.points[0][0], one.points[0][1]);
       }
     }
+  }
+
+  /**
+   * 
+   * @param {DetectedBarcode[]} result 
+   */
+  async applyBarcode(result) {
+    {
+      /** @type {HTMLCanvasElement} */
+      const src = document.getElementById('subcanvas');
+
+      const canvas = document.getElementById('resultcanvas');
+      canvas.width = src.width;
+      canvas.height = src.height;
+      const c = canvas.getContext('2d');
+      c.font = `bold 24px consolas`;
+
+      c.drawImage(src, 0, 0);
+
+      for (const one of result) {
+        c.strokeStyle = `red`;
+        c.beginPath();
+        let first = true;
+        for (const xy of one.cornerPoints) {
+          let x = xy.x;
+          let y = xy.y;
+          if (first) {
+            first = false;
+            c.moveTo(x, y);
+            continue;
+          }
+          c.lineTo(x, y);
+        }
+        c.closePath();
+        c.stroke();
+
+        c.fillStyle = 'rgb(0, 192, 192)';
+        c.beginPath();
+        const rr = 4;
+        c.ellipse(one.cornerPoints[1].x, one.cornerPoints[1].y,
+          rr, rr, 0,
+          0, Math.PI * 2
+        );
+        c.closePath();
+        c.fill();
+
+        c.fillStyle = 'green';
+        c.fillText(`${one.rawValue}`, one.cornerPoints[0].x, one.cornerPoints[0].y);
+      }
+    }
+
   }
 
   /**
