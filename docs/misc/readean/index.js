@@ -149,7 +149,7 @@ class Misc {
    * ワーカー検知器を用意する
    */
   initializeWorker() {
-    const worker = new Worker('./worker.js');
+    const worker = new Worker('./worker.js' + location.search);
     this.worker = worker;
 
     worker.addEventListener('message', ev => {
