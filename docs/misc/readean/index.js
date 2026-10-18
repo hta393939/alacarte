@@ -559,34 +559,6 @@ class Misc {
     }
   }
 
-  /**
-   * リーダーを用意する
-   * @returns 
-   */
-  async detectInMain() {
-    const el = document.getElementById('scanview');
-
-    try {
-      const ctx = this.makeContext();
-      const canvas = ctx.canvas;
-      const imgdata = ctx.getImageData(0, 0, w, h);
-
-      const opts = {
-        //gamma: 2.2,
-      };
-      /** @type {{detected: Detected[], digitized: Image}} */
-      const result = await Qrean.detect(imgdata, opt);
-
-      for (const detected of result.detected) {
-        //this.makeView(canvas, result);
-        console.log('detected', detected);
-      }
-    } catch (e) {
-      this.log('detect', e.message);
-    }
-    //this.log('detectInMain end');
-  }
-
   async update() {
     try {
       const el = document.getElementById('enableloop');
