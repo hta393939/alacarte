@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>two cam</title>
+    <link rel="stylesheet" href="./index.css" />
+    <!-- docs only -->
+  </head>
+  <body>
+
+    <div>
+      <div>
+        <div id="innerview"></div>
+        <div id="element"></div>
+        <button class="largebutton pointer" id="startbutton">全開始</button>
+      </div>
+      <div>
+        <button class="largebutton pointer" id="enumbutton">列挙ボタン</button>
+        <input class="pointer" id="zoomnumber" type="range" min="1" max="10" value="1" />
+        <span id="zoomnumberview"></span>
+        <div id="devices"></div>
+      </div>
+
+      <div>
+        <label>
+        <input id="running" type="checkbox" />キャプチャする
+        </label>
+        <div id="fpsview"></div>
+      </div>
+
+      <div>
+        <video id="environmentvideo" controls muted autoplay playsinline></video>
+      </div>
+      <div>
+        <video id="uservideo" controls muted autoplay playsinline></video>
+      </div>
+
+      <div>
+        <div id="console"></div>
+      </div>
+
+    </div>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
+
