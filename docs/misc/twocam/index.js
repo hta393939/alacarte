@@ -13,6 +13,10 @@ class Misc {
 
   async initialize() {
     this.setListener();
+    {
+      const el = document.getElementById('innerview');
+      el.textContent = `2026-10-22 1`;
+    }
 
     {
       const dpr = window.devicePixelRatio;
@@ -26,6 +30,8 @@ class Misc {
       const sah = window.screen.availHeight;
       this.log(`dpr,i,dc,sc,sca,${dpr}, ${iw}x${ih}, ${dcw}x${dch}, ${sw}x${sh}, ${saw}x${sah}`);
     }
+
+    await this.update();
   }
 
   async log(...args) {
@@ -168,6 +174,13 @@ class Misc {
     }
 
     {
+      const el = document.getElementById('running');
+      el?.addEventListener('change', () => {
+        this.status = (el.checked) ? 'running' : 'no';
+      });
+    }
+
+    {
       const el = document.getElementById('zoomnumber');
       const viewel = document.getElementById('zoomnumberview');
       const _update = ev => {
@@ -233,7 +246,7 @@ class Misc {
    * 
    * @param {Date} d 
    */
-  timeText(d) {
+  timeText(d = new Date()) {
     let s = ``;
     s += `${this.pad(d.getFullYear(), 4)}${this.pad(d.getMonth() + 1)}${this.pad(d.getDate())}`;
     s += `_${this.pad(d.getHours())}${this.pad(d.getMinutes())}${this.pad(d.getSeconds())}`;
