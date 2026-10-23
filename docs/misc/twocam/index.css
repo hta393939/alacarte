@@ -3,6 +3,7 @@
   cursor: pointer;
 }
 
+/* 横 */
 @media (orientation: landscape) {
   .largebutton {
     width: 40vh;
@@ -15,15 +16,16 @@
   }
 }
 
+/* 縦 */
 @media (orientation: portrait) {
   .largebutton {
     width: 40vw;
   }
   #video {
-    max-width: 80vw;
+    max-width: 40vw;
   }
   #subvideo {
-    max-width: 80vw;
+    max-width: 40vw;
   }
 }
 

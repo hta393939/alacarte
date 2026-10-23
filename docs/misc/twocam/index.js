@@ -15,7 +15,7 @@ class Misc {
     this.setListener();
     {
       const el = document.getElementById('innerview');
-      el.textContent = `2026-10-23 1`;
+      el.textContent = `2026-10-23 2`;
     }
 
     {
@@ -176,7 +176,8 @@ class Misc {
     {
       const el = document.getElementById('running');
       el?.addEventListener('change', () => {
-        this.status = (el.checked) ? 'running' : 'no';
+        this.status = (el.checked) ? 'capture' : 'no';
+        this.log('change', this.status);
       });
     }
 
