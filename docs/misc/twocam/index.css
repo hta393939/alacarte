@@ -8,10 +8,10 @@
   .largebutton {
     width: 40vh;
   }
-  #video {
+  #environmentvideo {
     max-height: 40vh;
   }
-  #subvideo {
+  #uservideo {
     max-height: 40vh;
   }
 }
@@ -21,10 +21,10 @@
   .largebutton {
     width: 40vw;
   }
-  #video {
+  #environmentvideo {
     max-width: 40vw;
   }
-  #subvideo {
+  #uservideo {
     max-width: 40vw;
   }
 }
