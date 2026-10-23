@@ -15,7 +15,7 @@ class Misc {
     this.setListener();
     {
       const el = document.getElementById('innerview');
-      el.textContent = `2026-10-22 1`;
+      el.textContent = `2026-10-23 1`;
     }
 
     {
@@ -270,9 +270,12 @@ class Misc {
       c.drawImage(video, 0, 0);
       const blob = await off.convertToBlob({type: 'image/jpeg'});
       const name = `t${prefix}_${k}.jpg`;
-      const fh = await this.subdh.getFileHandle(name);
-      const ws = await fh.createWritable({});
-      await ws.write(blob);
+      const fh = await this.subdh.getFileHandle(
+        name, {create: true});
+      const ws = await fh.createWritable({
+        keepExistingData: false,
+      });
+      await ws.write({type: 'write', data: blob});
       await ws.close();
     }
   }
@@ -300,7 +303,10 @@ class Misc {
     };
     const rootdh = await window.showDirectoryPicker(opt);
     this.rootdh = rootdh;
-    const subdh = await rootdh.getDirectoryHandle(`t${this.timeText()}`);
+    const subdh = await rootdh.getDirectoryHandle(
+      `t${this.timeText()}`,
+      {create: true}
+    );
     this.subdh = subdh;
 
     await this.readyTwoCam();
