@@ -3,6 +3,7 @@ class Misc {
   constructor() {
     this.consoles = [];
 
+    this.count = 0;
     this.status = 'no';
     this.ts = [];
   }
@@ -15,7 +16,7 @@ class Misc {
     this.setListener();
     {
       const el = document.getElementById('innerview');
-      el.textContent = `2026-10-23 2`;
+      el.textContent = `2026-10-23 20:05 3`;
     }
 
     {
@@ -31,7 +32,7 @@ class Misc {
       this.log(`dpr,i,dc,sc,sca,${dpr}, ${iw}x${ih}, ${dcw}x${dch}, ${sw}x${sh}, ${saw}x${sah}`);
     }
 
-    await this.update();
+    this.update();
   }
 
   async log(...args) {
@@ -219,9 +220,22 @@ class Misc {
 
   }
 
+  setText(id, text) {
+    const el = document.getElementById(id);
+    if (!el) {
+      return;
+    }
+    el.textContent = text;
+  }
+
   async update() {
     if (this.status === 'capture') {
+      this.setText('countview', this.count);
+
       await this.captureTwo();
+
+      this.count += 1;
+      this.setText('countview', this.count);
     }
 
     window.requestAnimationFrame(() => {
