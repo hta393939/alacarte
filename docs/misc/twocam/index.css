@@ -20,6 +20,7 @@
 @media (orientation: portrait) {
   .largebutton {
     width: 40vw;
+    height: 2em;
   }
   #environmentvideo {
     max-width: 40vw;

@@ -16,7 +16,7 @@ class Misc {
     this.setListener();
     {
       const el = document.getElementById('innerview');
-      el.textContent = `2026-10-23 20:05 3`;
+      el.textContent = `2026-10-24 10:24 1`;
     }
 
     {
@@ -129,6 +129,43 @@ class Misc {
     a.click();
   }
 
+  async makeSubFolder() {
+    const opt = {
+      mode: 'readwrite',
+      startIn: 'pictures'
+    };
+    const dh = await window.showDirectoryPicker(opt);
+    this.rootdh = dh;
+    const subdh = await dh.getDirectoryHandle(
+      `t${this.timeText()}`, {create: true});
+    this.subdh = subdh;
+  }
+
+  /**
+   * 
+   * @param {boolean} clear 
+   */
+  async selectFolder(clear) {
+    this.log('selectFolder', clear);
+    const opt = {
+      mode: 'readwrite',
+      startIn: 'pictures',
+    };
+    const dh = await window.showDirectoryPicker(opt);
+    this.subdh = dh;
+
+    if (!clear) {
+      return;
+    }
+
+    let count = 0;
+    for await (const [k, v] of dh.entries()) {
+      await dh.removeEntry(k, {recursive: true});
+      count += 1;
+    }
+    this.log('selectFolder', count);
+  }
+
   setListener() {
     {
       const el = document.body;
@@ -154,6 +191,19 @@ class Misc {
         ev.stopPropagation();
         ev.preventDefault();
         //this.analyzeText(ev.dataTransfer.files[0]);
+      });
+    }
+
+    {
+      const el = document.getElementById('selectfolder');
+      el?.addEventListener('click', async () => {
+        await this.selectFolder(true);
+      });
+    }
+    {
+      const el = document.getElementById('act');
+      el?.addEventListener('click', () => {
+        // 
       });
     }
 
@@ -280,10 +330,13 @@ class Misc {
       if (w <= 0 || h <= 0) {
         continue;
       }
+      const p0 = performance.now();
       const off = new OffscreenCanvas(w, h);
       const c = off.getContext('2d');
       c.drawImage(video, 0, 0);
+      const p1 = performance.now();
       const blob = await off.convertToBlob({type: 'image/jpeg'});
+      const p2 = performance.now();
       const name = `t${prefix}_${k}.jpg`;
       const fh = await this.subdh.getFileHandle(
         name, {create: true});
@@ -291,7 +344,12 @@ class Misc {
         keepExistingData: false,
       });
       await ws.write({type: 'write', data: blob});
+      const p3 = performance.now();
       await ws.close();
+      const p4 = performance.now();
+
+      this.log('performance',
+        `${[p0, p1, p2, p3, p4].map(p => Math.floor((p - p0) / 1000))}`);
     }
   }
 
@@ -312,18 +370,7 @@ class Misc {
   }
 
   async start() {
-    const opt = {
-      mode: 'readwrite',
-      startIn: 'pictures',
-    };
-    const rootdh = await window.showDirectoryPicker(opt);
-    this.rootdh = rootdh;
-    const subdh = await rootdh.getDirectoryHandle(
-      `t${this.timeText()}`,
-      {create: true}
-    );
-    this.subdh = subdh;
-
+    await this.makeSubFolder();
     await this.readyTwoCam();
   }
 
