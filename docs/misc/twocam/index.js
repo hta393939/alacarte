@@ -16,7 +16,7 @@ class Misc {
     this.setListener();
     {
       const el = document.getElementById('innerview');
-      el.textContent = `2026-10-24 17:52 1`;
+      el.textContent = `2026-10-24 19:00 1`;
     }
 
     {
@@ -204,8 +204,10 @@ class Misc {
 
     {
       const el = document.getElementById('oneshot');
-      el?.addEventListener('click', async () => { // 1回撮影
-        await this.captureTwo();
+      el?.addEventListener('click', () => {
+        setTimeout(async () => { // 1秒後1回撮影
+          await this.captureTwo();
+        }, 1000);
       });
     }
 

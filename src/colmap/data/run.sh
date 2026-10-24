@@ -1,7 +1,7 @@
 
 colmap --help
 
-ROOTDIR=/data/_proj1
+ROOTDIR=/gs/_proj1
 NAME=_proj2
 
 IMAGES=$ROOTDIR/$NAME/images
