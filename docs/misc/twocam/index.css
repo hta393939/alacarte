@@ -50,3 +50,9 @@
 .largelabel {
   font-size: 3em;
 }
+
+.hugebutton {
+  width: 90vw;
+  height: 6em;
+  font-size: 3em;
+}
