@@ -1,5 +1,10 @@
 
+cd /d %~dp0
+@rem cd /d G:/foo/bar/baz
 
-wslc run -d -it -v ./data:/data colmap/colmap:20260929.8466
 
-wslc exec -it 123 /bin/bash
+set NAME=colmap/colmap:20260929.8466
+
+@rem ホストフォルダは違い位置も指定できるか??
+wslc run -v ./data:/data -it %NAME%
+
