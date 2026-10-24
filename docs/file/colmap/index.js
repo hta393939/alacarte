@@ -1,13 +1,15 @@
 
-const _pad = (v, n = 2) => {
-  return new String(v).padStart(n, '0');
-};
+import {BinParser} from '../../lib/colmap/colmapbin.js';
 
 class Misc {
   constructor() {
     this.consoles = [];
     /** カーソル */
     this.c = 0;
+  }
+
+  pad(v, n = 2) {
+    return new String(v).padStart(n, '0');
   }
 
   /**
@@ -52,7 +54,7 @@ class Misc {
   }
 
   makeFilename(num) {
-    return `${this.prefix}${_pad(num, this.num)}.${this.ext}`;
+    return `${this.prefix}${this.pad(num, this.num)}.${this.ext}`;
   }
 
   update() {
@@ -88,7 +90,9 @@ class Misc {
       el?.addEventListener('drop', ev => {
         ev.stopPropagation();
         ev.preventDefault();
-        this.onDrop(ev.dataTransfer.files[0]);
+        //this.onDrop(ev.dataTransfer.files[0]);
+
+        this.parseFile(ev.dataTransfer.files[0]);
       });
     }
 
@@ -372,6 +376,29 @@ class Misc {
       val -= (2 ** 32);
     }
     return val;
+  }
+
+  /**
+   * 
+   * @param {File} file 
+   */
+  async parseFile(file) {
+    const parser = new BinParser();
+    const ab = await file.arrayBuffer();
+    let result = null;
+    switch (file.name) {
+    case 'cameras.bin':
+      result = parser.parseCamera(ab);
+      break;
+    case 'images.bin':
+      result = parser.parseImage(ab);
+      break;
+    case 'points3D.bin':
+      result = parser.parsePoint(ab);
+      break;
+    }
+    console.log('parse', file.name, result);
+    this.log('parse', file.name, result);
   }
 
 }
