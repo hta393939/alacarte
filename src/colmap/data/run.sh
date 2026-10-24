@@ -1,8 +1,11 @@
 
 colmap --help
 
-ROOTDIR=/gs/_proj1
-NAME=_proj2
+#ROOTDIR=/gs/e500
+#NAME=_e500
+
+ROOTDIR=/gs/twocam
+NAME=_twocam
 
 IMAGES=$ROOTDIR/$NAME/images
 SPARSE=$ROOTDIR/$NAME/sparse
@@ -18,6 +21,7 @@ fi
 
 if true; then
 colmap feature_extractor \
+  --ImageReader.camera_model PINHOLE \
   --image_path $IMAGES \
   --database_path $DATABASE \
   --FeatureExtraction.use_gpu 0
