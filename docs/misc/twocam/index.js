@@ -16,7 +16,7 @@ class Misc {
     this.setListener();
     {
       const el = document.getElementById('innerview');
-      el.textContent = `2026-10-24 10:24 1`;
+      el.textContent = `2026-10-24 17:36 1`;
     }
 
     {
@@ -195,6 +195,21 @@ class Misc {
     }
 
     {
+      const el = document.getElementById('readytwocam');
+      el?.addEventListener('click', async () => {
+        await this.readyTwoCam();
+        el.disabled = true;
+      });
+    }
+
+    {
+      const el = document.getElementById('oneshot');
+      el?.addEventListener('click', async () => { // 1回撮影
+        await this.captureTwo();
+      });
+    }
+
+    {
       const el = document.getElementById('selectfolder');
       el?.addEventListener('click', async () => {
         await this.selectFolder(true);
@@ -252,7 +267,7 @@ class Misc {
       _update();
     }
 
-    for (const k of ['startcount', 'addcount', 'outcount']) {
+    for (const k of ['startcount']) {
       const el = document.getElementById(k);
       if (!el) {
         continue;
@@ -280,12 +295,9 @@ class Misc {
 
   async update() {
     if (this.status === 'capture') {
-      this.setText('countview', this.count);
+      this.setText('countview', `⌛ ${this.count}, ${new Date().toLocaleTimeString()}`);
 
       await this.captureTwo();
-
-      this.count += 1;
-      this.setText('countview', this.count);
     }
 
     window.requestAnimationFrame(() => {
@@ -349,8 +361,10 @@ class Misc {
       const p4 = performance.now();
 
       this.log('performance',
-        `${[p0, p1, p2, p3, p4].map(p => Math.floor((p - p0) / 1000))}`);
+        `${[p0, p1, p2, p3, p4].map(p => (p - p0).toFixed(1))}`);
     }
+    this.count += 1;
+    this.setText('countview', `${this.count}, ${new Date().toLocaleTimeString()}`);
   }
 
   async readyTwoCam() {

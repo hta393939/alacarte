@@ -7,6 +7,8 @@
 @media (orientation: landscape) {
   .largebutton {
     width: 40vh;
+    height: 3em;
+    font-size: 2em;
   }
   #environmentvideo {
     max-height: 40vh;
@@ -20,7 +22,8 @@
 @media (orientation: portrait) {
   .largebutton {
     width: 40vw;
-    height: 2em;
+    height: 3em;
+    font-size: 2em;
   }
   #environmentvideo {
     max-width: 40vw;
@@ -44,3 +47,6 @@
   font-weight: bold;
 }
 
+.largelabel {
+  font-size: 3em;
+}
