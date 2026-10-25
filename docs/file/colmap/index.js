@@ -37,6 +37,8 @@ class Misc {
     this.setListener();
 
     this.update();
+
+    this.initBabylon();
   }
 
   async log(...args) {
@@ -379,19 +381,108 @@ class Misc {
   }
 
   /**
-   * 
+   * 前後判定
    * @param {BinParser} parser 
    */
   async frontback(images) {
-    const re = /(?<fw>.+)_(?<bw>[^_]+)\.(?<ext>[^.]+)/;
+    const re = /^(?<fw>.+)_(?<bw>[^_]+)\.(?<ext>[^.]+)$/;
+
+    const en = {};
+    const user = {};
+
     for (const image of images) {
       const m = re.exec(image.name);
       if (m) {
-        const {fw, bw, ext} = m.groups['fw'];
-        console.log('', fw, bw, ext, image);
+        const {fw, bw, ext} = m.groups;
+        image.tb = BABYLON.Vector3.FromArray(image.t);
+        image.rb = BABYLON.Quaternion.FromArray([
+          image.wtop[1], image.wtop[2], image.wtop[3], image.wtop[0]]);
 
+        image.qb = image.rb.invert();
+        image.pb = image.tb.scale(-1).applyRotationQuaternion(image.qb);
+
+        console.log('', fw, bw, ext, image);
+        if (bw === 'environment') {
+          en[fw] = image;
+        }
+        if (bw === 'user') {
+          user[fw] = image;
+        }
       }
     }
+
+    const _pyramid = (scene, m) => {
+      const lines = [];
+      const d = 0.4;
+      const h2 = d * 0.5;
+      const pairs = [
+        [[0, 0, 0], [-d, h2, -d]],
+        [[0, 0, 0], [ d, h2, -d]],
+        [[0, 0, 0], [ d,-h2, -d]],
+        [[0, 0, 0], [-d,-h2, -d]],
+      ];
+      for (const pair of pairs) {
+        lines.push([
+          BABYLON.Vector3.FromArray(pair[0]),
+          BABYLON.Vector3.FromArray(pair[1]),
+        ]);
+      }
+      const ls = BABYLON.MeshBuilder.CreateLineSystem(
+        `${Date.now()}`,
+        {lines, updatable: false},
+        scene,
+      );
+      ls.parent = m;
+    };
+
+    const _comp = (a, b) => {
+      const ret = {
+        anegb: a.qb.multiply(b.qb.invert()),
+        distance: BABYLON.Vector3.Distance(a.pb, b.pb),
+      };
+      return ret;
+    };
+
+    for (const k in en) {
+      const userOne = user[k];
+      if (!userOne) {
+        continue;
+      }
+      const enOne = en[k];
+
+      userOne.col = new BABYLON.Color3(1, 0, 0);
+      enOne.col = new BABYLON.Color3(0, 1, 0);
+
+      const result = _comp(enOne, userOne);
+      console.log('comp', result);
+
+      const scene = this.scene;
+      for (const one of [enOne, userOne]) {
+        const m = BABYLON.MeshBuilder.CreateBox(`${Date.now()}`,
+          {width: 0.1, height: 0.1, depth: 0.1},
+          scene);
+        m.position = one.pb;
+        m.rotationQuaternion = one.qb;
+        const mtl = new BABYLON.StandardMaterial(`${Date.now()}`, scene);
+        mtl.diffuseColor = one.col;
+        m.material = mtl;
+
+        _pyramid(scene, m);
+      }
+
+      {
+        const lines = [
+          [enOne.pb, userOne.pb],
+        ];
+        const ls = BABYLON.MeshBuilder.CreateLineSystem(
+          `${Date.now()}`,
+          {lines, updatable: false},
+          scene,
+        );
+        ls.color = new BABYLON.Color3(0.2, 0.2, 1);
+      }
+    }
+
   }
 
   /**
@@ -425,6 +516,42 @@ class Misc {
     }
     console.log('parse', file.name, result);
     this.log('parse', file.name, result);
+  }
+
+  initBabylon() {
+    const canvas = document.getElementById('maincanvas');
+    canvas.width = 384;
+    canvas.height = 384;
+    const engine = new BABYLON.Engine(canvas, true);
+    const scene = new BABYLON.Scene(engine);
+    this.scene = scene;
+    {
+      const camera = new BABYLON.ArcRotateCamera(
+        'maincamera',
+        0, 0, 10,
+        new BABYLON.Vector3(0, 0, 0),
+        scene,
+      );
+      camera.position = new BABYLON.Vector3(1, 0, -10)
+      //camera.lookAt(new BABYLON.Vector3(0, 0, 0));
+      camera.attachControl();
+    }
+    {
+      const light = new BABYLON.HemisphericLight('mainlight',
+        new BABYLON.Vector3(0.6, 0.8, 1),
+      );
+    }
+    {
+      const axes = new BABYLON.Debug.AxesViewer(scene, 5);
+    }
+
+    window.addEventListener('resize', () => {
+      engine.resize();
+    });
+
+    engine.runRenderLoop(() => {
+      scene.render();
+    });
   }
 
 }
