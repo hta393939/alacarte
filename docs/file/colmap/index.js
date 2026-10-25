@@ -380,6 +380,22 @@ class Misc {
 
   /**
    * 
+   * @param {BinParser} parser 
+   */
+  async frontback(images) {
+    const re = /(?<fw>.+)_(?<bw>[^_]+)\.(?<ext>[^.]+)/;
+    for (const image of images) {
+      const m = re.exec(image.name);
+      if (m) {
+        const {fw, bw, ext} = m.groups['fw'];
+        console.log('', fw, bw, ext, image);
+
+      }
+    }
+  }
+
+  /**
+   * 
    * @param {File} file 
    */
   async parseFile(file) {
@@ -387,13 +403,23 @@ class Misc {
     const ab = await file.arrayBuffer();
     let result = null;
     switch (file.name) {
-    case 'cameras.bin':
+    case BinParser.CAM_NAME:
       result = parser.parseCamera(ab);
       break;
-    case 'images.bin':
-      result = parser.parseImage(ab);
+    case BinParser.IMG_NAME:
+      {
+        result = parser.parseImage(ab);
+        const el = document.getElementById('imagemode');
+        switch (el?.value) {
+        case 'normal':
+          break;
+        case 'frontback':
+          await this.frontback(result.images);
+          break;
+        }
+      }
       break;
-    case 'points3D.bin':
+    case BinParser.PT_NAME:
       result = parser.parsePoint(ab);
       break;
     }
