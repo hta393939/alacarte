@@ -57,10 +57,14 @@ async function loadModel(url) {
 async function handle(m) {
   try {
     if (m.type === 'init') {
-      importScripts(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${m.ortVersion}/dist/ort.webgpu.min.js`);
-      ort.env.wasm.wasmPaths = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${m.ortVersion}/dist/`;
+      //importScripts(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${m.ortVersion}/dist/ort.webgpu.min.js`);
+      importScripts(`./ort.webgpu.min.js`);
+      ort.env.wasm.wasmPaths = `.`;
+      //ort.env.wasm.wasmPaths = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${m.ortVersion}/dist/`;
       mb = await import(`./mb_runtime.js${self.location.search}`);  // same build query as the worker itself
+
       const rt = await fetch(m.runtimeUrl).then((r) => r.json());
+
       sk = new mb.Skeleton(rt.joint_names, rt.parents, rt.reference);
       session = await ort.InferenceSession.create(await loadModel(m.modelUrl), { executionProviders: [m.ep] });
       // warm up the shaders with a standing pose
