@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>hf trial</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+
+    <button id="startlive" class="pointer">開始</button>
+    <div class="drop">ドロップ</div>
+    <button class="pointer" id="replay">再生</button>
+
+    <div>
+      <input type="text" id="textvalue" value="左です" />
+    </div>
+
+    <div class="toright">
+      <button class="pointer" id="opendir">フォルダを開く</button>
+      <button class="but" id="reaccess">*</button>
+      <button class="but" id="speaktext">テキストスピーク</button>
+    </div>
+
+    <div>
+      <div>
+        <button class="but" id="but01">01</button>
+        <label class="pointer"><input checked type="checkbox" class="pointer" id="exceptsame" />重複除外</label>
+      </div>
+      <div id="processinfo"></div>
+    </div>
+
+    <div id="consoleview"></div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
