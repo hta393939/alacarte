@@ -99,7 +99,7 @@ class Misc {
         console.log('progress...', data, data.total);
         break;
       case 'cached':
-        console.log('cached');
+        console.log('cached', 'この後に再構築するらしい');
         break;
       case 'gen':
         // 作成した
@@ -110,11 +110,19 @@ class Misc {
 
     worker.postMessage({
       type: 'init',
-      runtimeUrl: `./ort-wasm-simd-threaded.asyncify.mjs`,
+      runtimeUrl: `../hf/soma_runtime.json`,
+      modelUrl: `../hf/mmm_v6_soma_q8h.onnx`,
     });
     console.log('initWorkerFoo');
   }
 
+
+  /**
+   * 
+   */
+  foo() {
+    const meta = {total: 242732481, parts: 8};
+  }
 
 }
 

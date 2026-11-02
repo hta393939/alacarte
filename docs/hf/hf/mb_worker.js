@@ -66,9 +66,15 @@ async function handle(m) {
       const rt = await fetch(m.runtimeUrl).then((r) => r.json());
 
       sk = new mb.Skeleton(rt.joint_names, rt.parents, rt.reference);
+
+      console.log('create');
+
       session = await ort.InferenceSession.create(await loadModel(m.modelUrl), { executionProviders: [m.ep] });
       // warm up the shaders with a standing pose
       const idle = rt.styles.find((s) => s.id === 'idle').window.map((p) => Float32Array.from(p.flat()));
+
+      console.log('handle idle', idle);
+
       await mb.generate(ort, session, sk, new mb.Recorder(idle[3]), idle);
       self.postMessage({ type: 'ready' });
     } else if (m.type === 'gen') {
