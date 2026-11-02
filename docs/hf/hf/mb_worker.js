@@ -67,7 +67,7 @@ async function handle(m) {
 
       sk = new mb.Skeleton(rt.joint_names, rt.parents, rt.reference);
 
-      console.log('create');
+      console.log('create calling...');
 
       session = await ort.InferenceSession.create(await loadModel(m.modelUrl), { executionProviders: [m.ep] });
       // warm up the shaders with a standing pose

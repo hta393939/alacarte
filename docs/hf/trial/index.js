@@ -56,7 +56,12 @@ class Misc {
         this.initWorkerFoo();
       });
     }
-
+    {
+      const el = document.getElementById('inferbar');
+      el?.addEventListener('click', () => {
+        this.infer();
+      });
+    }
 
     {
 
@@ -103,7 +108,8 @@ class Misc {
         break;
       case 'gen':
         // 作成した
-        console.log('gen');
+        console.log('gen', data);
+        // id: 32, frames: (14014), n: 26, tokens: 8, ms: obj 所要時間
         break;
       }
     });
@@ -112,10 +118,22 @@ class Misc {
       type: 'init',
       runtimeUrl: `../hf/soma_runtime.json`,
       modelUrl: `../hf/mmm_v6_soma_q8h.onnx`,
+      //ep: null,
     });
     console.log('initWorkerFoo');
   }
 
+  async infer() {
+    const obj = {
+      type: 'gen',
+//      context: [0, 1, 2, 3],
+      //id: 32,
+      opts: {smooth: 2},
+      //target: [new Float32Array(539), 1, 2, 3],
+    };
+    // 77 * 7
+    this.worker.postMessage(obj);
+  }
 
   /**
    * 
