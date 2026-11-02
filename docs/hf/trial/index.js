@@ -89,6 +89,38 @@ class Misc {
 
   }
 
+  async ready() {
+    let genId = 0;
+
+    const BUILD = Date.now();
+    /** ユーティリティ関数を含むモジュール */
+    const mb = await import(`../hf/mb_runtime.js?v=${BUILD}`);
+
+    const _makeTarget = (from) => {
+
+    };
+
+    const context = [3, 2, 1, 0].map(k => {
+      mb.sampleFrames(clip,
+        T - k / mb.fps,
+        new Float32Array(pose.length))
+    });
+    const target = makeTarget(context[3]); // [new Float32Array(539), 1, 2, 3],
+    genId += 1;
+    const id = genId;
+
+    const obj = {
+      type: 'gen',
+      context,
+      id, // 32,
+      opts: {smooth: 2},
+      target,
+    };
+    // 77 * 7
+    this.worker.postMessage(obj);
+
+  }
+
   async initWorkerFoo() {
     const worker = new Worker(`../hf/mb_worker.js`);
     this.worker = worker;
@@ -118,25 +150,20 @@ class Misc {
       type: 'init',
       runtimeUrl: `../hf/soma_runtime.json`,
       modelUrl: `../hf/mmm_v6_soma_q8h.onnx`,
-      //ep: null,
+      ep: 'webgpu',
+      //:'1.30.0',
     });
     console.log('initWorkerFoo');
   }
 
   async infer() {
-    const obj = {
-      type: 'gen',
-//      context: [0, 1, 2, 3],
-      //id: 32,
-      opts: {smooth: 2},
-      //target: [new Float32Array(539), 1, 2, 3],
-    };
-    // 77 * 7
-    this.worker.postMessage(obj);
+
   }
 
   /**
-   * 
+   * ardy, kimodo
+   * kimodo
+   * run,pickup
    */
   foo() {
     const meta = {total: 242732481, parts: 8};

@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="ja">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"63867675e7857b3e19c7d18e"}};</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotionBricks Live</title>
+<style>
+  :root { --bg: #10171e; --panel: rgba(16, 23, 30, 0.78); --fg: #e8ecf3; --muted: #8fa3ad; --accent: #ff9d4d; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; }
+  #hud { position: fixed; left: 16px; top: 14px; background: var(--panel); border-radius: 10px; padding: 10px 14px;
+         font-size: 13px; line-height: 1.6; max-width: 300px; }
+  #hud h1 { font-size: 17px; margin: 0 0 4px; }
+  #hud .k { color: var(--muted); }
+  #stat { color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 6px; }
+  #hud .credit { color: var(--muted); font-size: 11px; line-height: 1.5; margin-top: 6px; }
+  #hud .vrm { margin-top: 6px; }
+  #hud .vrm label { color: var(--accent); cursor: pointer; text-decoration: underline; }
+  #hud .vrm a { color: var(--muted); }
+  #hud .credit a { color: var(--muted); }
+  #load { position: fixed; inset: 0; display: grid; place-items: center; font-size: 16px; background: var(--bg); }
+</style>
+<meta property="og:title" content="MotionBricks Live"><meta property="og:description" content="Real-time AI motion for a VRM character, in the browser"><meta property="og:image" content="https://cdn-thumbnails.huggingface.co/social-thumbnails/spaces/monoradio/motionbricks-live.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://cdn-thumbnails.huggingface.co/social-thumbnails/spaces/monoradio/motionbricks-live.png"></head>
+<body>
+<div id="load">読み込み中…（初回は動きの生成モデル 約240MB をダウンロードします。WebGPU 対応のブラウザが必要です）</div>
+<div id="hud" hidden>
+  <h1>MotionBricks ライブ</h1>
+  <div><span class="k">矢印 / WASD</span>　ダッシュ（カメラ基準）</div>
+  <div><span class="k">C</span>　しゃがむ／立つ　<span class="k">H</span>　この表示を隠す</div>
+  <div>箱や低い壁は自動で飛び越え、星は拾って掲げ、ボールは蹴る・押す、椅子には座ります（座ったら、矢印キーを押し直すと立ちます）。黄黒の高い壁にぶつかると尻もち、黄黒の段差ではつまずきます</div>
+  <div class="vrm">VRM をドラッグ＆ドロップ、または <label>ファイルを選ぶ<input type="file" id="vrmFile" accept=".vrm" hidden></label> で差し替え（このブラウザの中だけで使います）　<a href="#" id="vrmReset">元に戻す</a></div>
+  <div id="stat"></div>
+  <div class="credit">動きの生成：NVIDIA MotionBricks（ブラウザの WebGPU で実行）。目標の姿勢は NVIDIA Kimodo と ARDY で生成。<a href="../NOTICE.txt" target="_blank">ライセンス表示</a></div>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
+  "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.1.0/lib/three-vrm.module.min.js"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+// a fresh query on every load, so edits to the runtime and the worker are never served from the browser cache
+const BUILD = Date.now();
+const mb = await import(`./mb_runtime.js?v=${BUILD}`);
+
+const params = new URLSearchParams(location.search);
+// The character: ?vrm=<url>, or ?vrm=local for a VRM dropped on the page (or picked with the button), which is kept only
+// in this browser (IndexedDB) and loaded on the reload that follows the drop, so everything set up from the character
+// (bone mapping, her scale, the obstacles drawn at it) starts over from it. Nothing is sent anywhere.
+const DEFAULT_VRM = '../mecha_girl02_v2.vrm';
+const vrmStore = {
+  db: () => new Promise((ok, ng) => {
+    const r = indexedDB.open('motionbricks-live', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('vrm');
+    r.onsuccess = () => ok(r.result); r.onerror = () => ng(r.error);
+  }),
+  async get() { const db = await this.db(); return new Promise((ok, ng) => { const q = db.transaction('vrm').objectStore('vrm').get('file'); q.onsuccess = () => ok(q.result); q.onerror = () => ng(q.error); }); },
+  async put(file) { const db = await this.db(); return new Promise((ok, ng) => { const t = db.transaction('vrm', 'readwrite'); t.objectStore('vrm').put(file, 'file'); t.oncomplete = ok; t.onerror = () => ng(t.error); }); },
+};
+let VRM_URL = params.get('vrm') || DEFAULT_VRM;
+if (VRM_URL === 'local') {
+  try { const f = await vrmStore.get(); VRM_URL = f ? URL.createObjectURL(f) : DEFAULT_VRM; } catch { VRM_URL = DEFAULT_VRM; }
+}
+async function useVrmFile(file) {
+  if (!file || !/\.vrm$/i.test(file.name)) return;
+  try { await vrmStore.put(file); } catch (e) { alert('このブラウザでは VRM を保存できませんでした: ' + e.message); return; }
+  const q = new URLSearchParams(location.search); q.set('vrm', 'local'); location.search = q.toString();
+}
+addEventListener('dragover', (e) => { e.preventDefault(); });
+addEventListener('drop', (e) => { e.preventDefault(); useVrmFile(e.dataTransfer.files[0]); });
+document.getElementById('vrmFile').addEventListener('change', (e) => useVrmFile(e.target.files[0]));
+document.getElementById('vrmReset').addEventListener('click', (e) => { e.preventDefault(); const q = new URLSearchParams(location.search); q.delete('vrm'); location.search = q.toString(); });
+const MODEL_URL = params.get('model') || 'https://pub-360a7e233de942c5bfcb52d8623e38f2.r2.dev/mmm_v6_soma_q8h.onnx';
+// passes of the [1,2,1] time filter against fp16 trembling (0 = off). Measured while standing: hand/arm jitter
+// 0.27/0.20 deg per frame with none, 0.12/0.07 with 2 passes, about what the fp32 model gives (0.15/0.08).
+const SMOOTH = +(params.get('smooth') ?? 2);
+const EP = params.get('ep') || 'webgpu';
+// 1.22 returned a frozen root on WebGPU (root path off by up to 1.4 m); 1.30 matches the official output.
+const ORT_VERSION = params.get('ort') || '1.30.0';
+const LEAD_SECONDS = 1.0;          // the target sits this many seconds of travel ahead (as in locomotion_loop.py)
+const TURN_THRESHOLD = 15;         // degrees of steering change that trigger a new generation
+const SHORTEST_GEN_SECONDS = (mb.MIN_TOKENS * mb.POSES_PER_TOKEN - 2 * mb.BOUNDARY) / mb.FPS;  // the shortest generation's length
+const TRANSITION_EARLY_BY = 4;     // frames before the end of a generation where the next one takes over
+const CROSSFADE_SECONDS = 0.15;    // blend from the old motion into a new one (only matters when a result is late)
+
+// style ids from soma_runtime.json: dash while moving, C toggles crouching
+const MOVE_STYLE = params.get('style') || 'run';
+const RUNUP = params.has('runup');
+// arrow keys move like WASD
+const ARROWS = { arrowup: 'w', arrowdown: 's', arrowleft: 'a', arrowright: 'd' };
+
+const loadEl = document.getElementById('load');
+const status = (s) => { loadEl.textContent = s; };
+
+// ---------- scene ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: params.has('snap') });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x10171e);  // as gltf-studio.lab.monoradio.jp
+const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.05, 300);
+camera.position.set(0, 1.2, 3.6);  // straight in front of her, so W walks toward the first obstacle
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.6, 0);
+// Shadowless and flat: every material is unlit (see below), so no lights are needed. Grid colors as gltf-studio.
+scene.add(new THREE.GridHelper(300, 600, 0x47616d, 0x283b45));
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
+});
+
+// ---------- load ----------
+status('VRM と動きのデータを読み込み中…');
+const loader = new GLTFLoader();
+loader.register(p => new VRMLoaderPlugin(p));
+const [gltf, rt] = await Promise.all([
+  loader.loadAsync(VRM_URL).catch((e) => { status(`VRM を読み込めませんでした（${e.message}）。別のファイルをドロップするか、元のキャラクターに戻してください。`); document.getElementById('hud').hidden = false; throw e; }),
+  fetch('../runtime_data/soma_runtime.json').then(r => r.json())]);
+if (!gltf.userData.vrm) { status('VRM ではないファイルでした。VRM（.vrm）をドロップしてください。'); document.getElementById('hud').hidden = false; throw new Error('not a VRM'); }
+const vrm = gltf.userData.vrm;
+VRMUtils.removeUnnecessaryVertices(gltf.scene);
+VRMUtils.rotateVRM0(vrm);
+scene.add(vrm.scene);
+vrm.scene.traverse(o => { o.frustumCulled = false; });
+// 無影・フラット, the way gltf-studio does it: each material becomes a MeshBasicMaterial with its color and texture.
+const unlit = (src) => new THREE.MeshBasicMaterial({
+  color: src.color?.clone() ?? new THREE.Color(0xffffff), map: src.map ?? null, alphaMap: src.alphaMap ?? null,
+  transparent: src.transparent ?? false, opacity: src.opacity ?? 1, alphaTest: src.alphaTest ?? 0, side: src.side ?? THREE.FrontSide,
+});
+vrm.scene.traverse(o => { if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map(unlit) : unlit(o.material); });
+vrm.humanoid.resetNormalizedPose();
+vrm.scene.updateMatrixWorld(true);
+
+const sk = new mb.Skeleton(rt.joint_names, rt.parents, rt.reference);
+const styles = Object.fromEntries(rt.styles.map(s => [s.id, { ...s, window: s.window.map(p => Float32Array.from(p.flat())) }]));
+// Official Smart Primitives: jumps (soma_jumps.json) and sit / avoidance (soma_actions.json), all exported by
+// mbh_export_jump.py with their targets already placed around the primitive origin.
+// (the official primitives come from the evaluation-only sample clips; the public build leaves them out)
+const optionalJson = (url) => fetch(url).then(r => (r.ok ? r.json() : [])).catch(() => []);
+const jumpPrims = [...await optionalJson('../runtime_data/soma_jumps.json'), ...await optionalJson('../runtime_data/soma_actions.json')];
+// ARDY data (ardy_runtime.json, from ardy_gen.py + ardy_extract.py): target poses generated from text with NVIDIA ARDY,
+// replacing the evaluation-only sample clips. ?data=samples goes back to the samples.
+const DATA = params.get('data') || 'ardy';
+const ardy = DATA === 'ardy' ? await fetch('../runtime_data/ardy_runtime.json').then(r => (r.ok ? r.json() : null)).catch(() => null) : null;
+const toPoses = (w) => w.map(p => Float32Array.from(p.flat()));
+let ACTIONS = {};
+// ARDY's raw fall flails around the impact: for about 0.6 s some joints turn 50-170 degrees from one frame to the next,
+// far beyond any limb. Each such stretch of a joint is replaced by a slerp between its nearest frames on either side
+// that move at a human rate (under maxDeg per frame, 1200 deg/s at 30 fps).
+function despike(frames, maxDeg = 40) {
+  const J = frames[0].length / 7, cosHalf = Math.cos(maxDeg * Math.PI / 360);
+  for (let j = 1; j < J; j++) {
+    const q = (f) => mb.tget(frames[f], j).q;
+    const jump = (f) => { const a = q(f - 1), b = q(f); return Math.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]) < cosHalf; };
+    for (let f = 1; f < frames.length; f++) {
+      if (!jump(f)) continue;
+      const a = f - 1;
+      let b = f;  // the stretch ends where the joint has moved at a human rate for 3 frames in a row
+      while (b < frames.length - 1 && [1, 2, 3].some(k => b + k < frames.length && jump(b + k))) b++;
+      b = Math.min(frames.length - 1, b + 1);
+      const qa = q(a), qb = q(b);
+      for (let k = a + 1; k < b; k++) {
+        const t = mb.tget(frames[k], j);
+        mb.tset(frames[k], j, mb.T(t.p, mb.qslerp(qa, qb, (k - a) / (b - a))));
+      }
+      f = b;
+    }
+  }
+  return frames;
+}
+if (ardy) {
+  for (const s of ardy.styles) styles[s.id] = { ...styles[s.id], ...s, window: toPoses(s.window) };
+  jumpPrims.push(...ardy.prims);
+  // (push_walk carries only its contact point and speed; its window is a style)
+  // (the fall on the bottom also carries a clip that is played as it is, see bumpToStart)
+  for (const [k, a] of Object.entries(ardy.actions)) if (a) ACTIONS[k] = { ...a, steps: (a.steps || []).map(st => ({ ...st, window: toPoses(st.window) })),
+                                                                          clip: a.clip && { frames: despike(toPoses(a.clip.frames)), hit: a.clip.hit } };
+}
+// Arm edits on a pose (local rotations): small vector helpers (the scene's own come further down) and aimArm, which
+// swings an upper arm and then its forearm onto a world direction, elbow straight, by weight w.
+const a3sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], a3add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const a3norm = (a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+const ARMS = [['LeftArm', 'LeftForeArm', 'LeftHand', 1], ['RightArm', 'RightForeArm', 'RightHand', -1]].map(([a, b, c, s]) => [sk.index(a), sk.index(b), sk.index(c), s]);
+// the shortest turn from a to b; an arm hanging straight down the body turns over the front (about `axis`)
+function turnBetween(a, b, axis) {
+  const w = 1 + a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  return w < 1e-4 ? [...axis, 0] : mb.qnorm([a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], w]);
+}
+function aimArm(pose, [a, b, c], target, w, axis) {
+  for (const [j, child] of [[a, b], [b, c]]) {
+    const W = sk.world(pose);
+    const swing = mb.qslerp([0, 0, 0, 1], turnBetween(a3norm(a3sub(W[child].p, W[j].p)), target, axis), w);
+    const local = mb.tget(pose, j);
+    mb.tset(pose, j, mb.T(local.p, mb.qnorm(mb.qmul(mb.qinv(W[sk.parents[j]].q), mb.qmul(swing, W[j].q)))));
+  }
+}
+// ARDY never threw the arms up over the head when asked (15 samples over two wordings), so the trip's arms are turned
+// that way here: from the trip on, each upper arm and then forearm swings, over 0.25 s, onto the line from the hips
+// toward the head, opened into a V (45 degrees out each side, so the arms show past her big hood), elbows straight,
+// and stays so while she lies there.
+function raiseArms(frames, from) {
+  const hips = sk.index('Hips'), head = sk.index('Head');
+  // Both the line and the V lie level with the floor (slightly up): she lands half on her side, and a V across her
+  // shoulders then put one hand into the floor. Which way is her left is taken once, at the trip, while she is upright.
+  const level = (f) => { const W = sk.world(frames[f]), d = a3sub(W[head].p, W[hips].p); return a3norm([d[0], 0, d[2]]); };
+  const across = (d) => [d[2], 0, -d[0]];  // level, square to d
+  const W0 = sk.world(frames[from]), left = a3sub(W0[ARMS[0][0]].p, W0[ARMS[1][0]].p);
+  const sign = Math.sign(left[0] * across(level(from))[0] + left[2] * across(level(from))[2]) || 1;
+  for (let f = from; f < frames.length; f++) {
+    const u = Math.min(1, (f - from) / (0.25 * mb.FPS)), w = u * u * (3 - 2 * u);
+    if (w <= 0) continue;
+    const ahead = level(f), up = a3norm(a3add(ahead, [0, 0.15, 0])), side = across(ahead).map(v => v * sign);  // toward her left
+    for (const arm of ARMS) aimArm(frames[f], arm, a3norm(a3add(up, side.map(v => v * arm[3]))), w, side);
+  }
+  return frames;
+}
+// Holding something up (after picking up a star): the poses of a window with the right arm raised high, ~30 degrees
+// out to her right and a little forward, elbow straight. Straight up, both hands stayed hidden behind her big hood.
+function armsUp(window) {
+  const right = ARMS[1];
+  return window.map(p0 => {
+    const p = Float32Array.from(p0), W = sk.world(p);
+    const l = a3sub(W[ARMS[0][0]].p, W[right[0]].p), left = a3norm([l[0], 0, l[2]]), fwd = [-left[2], 0, left[0]];
+    aimArm(p, right, a3norm(a3add(a3add([0, 1, 0], fwd.map(v => v * 0.15)), left.map(v => -0.6 * v))), 1, left);
+    return p;
+  });
+}
+// Where the trip catches her foot. ARDY's head already starts going down ~0.6 s before the hips drop (the clip's "hit"),
+// and the first foot to swing after that is the one that catches: 0.1 s into its swing (still low, moving forward)
+// its toe is at the step's near edge. Placing the hips at the edge instead had her fall 1.5 m short of the step.
+function tripCatch(c) {
+  const W = c.frames.map(f => sk.world(f)), head = sk.index('Head'), toes = ['LeftToeBase', 'RightToeBase'].map(n => sk.index(n));
+  const ground = Math.min(...W.flatMap(w => toes.map(t => w[t].p[1]))) + 0.03;  // a toe on the floor
+  const drop = Math.max(1, W.findIndex(w => w[head].p[1] < W[0][head].p[1] - 0.05));
+  for (let f = drop; f < c.hit; f++) for (const t of toes) {
+    if (W[f - 1][t].p[1] < ground && W[f][t].p[1] >= ground) {
+      const k = Math.min(c.hit, f + Math.round(0.1 * mb.FPS));
+      return { frame: k, z: W[k][t].p[2] };
+    }
+  }
+  return { frame: c.hit, z: 0.1 };  // as before: the hips at the hit 0.1 m short of the edge
+}
+if (ACTIONS.trip?.clip) { ACTIONS.trip.clip.catch = tripCatch(ACTIONS.trip.clip); raiseArms(ACTIONS.trip.clip.frames, ACTIONS.trip.clip.hit); }
+const RAISE_WINDOW = armsUp(styles.idle.window);  // standing, the star held up in her right hand
+// Kimodo data (kimodo_runtime.json, from kimodo_run.py + kimodo_extract.py; Kimodo-SOMA-SEED, NVIDIA Open Model License):
+// a vault with a hand on the wall and hurdle jumps (see VAULT), and a sprint and a pick-up that replace ARDY's
+// (?kimodo=none keeps ARDY's, ?kimodo=run or =pickup takes one of them).
+const kimodo = await fetch('../runtime_data/kimodo_runtime.json').then(r => (r.ok ? r.json() : null)).catch(() => null);
+if (kimodo) {
+  jumpPrims.push(...kimodo.prims);
+  const use = (params.get('kimodo') ?? 'run,pickup').split(',');
+  if (use.includes('run')) for (const s of kimodo.styles) styles[s.id] = { ...styles[s.id], ...s, window: toPoses(s.window) };
+  if (use.includes('pickup') && kimodo.actions.pickup) ACTIONS.pickup = { ...kimodo.actions.pickup, steps: kimodo.actions.pickup.steps.map(st => ({ ...st, window: toPoses(st.window) })) };
+}
+const primIndex = (name) => jumpPrims.findIndex(p => p.name === name);
+// which primitive a scene object uses: the ARDY one when there is one
+// boxes: stepping over (a foot on the box) when there is one; walls: the climb vault (a hand on the wall)
+const firstPrim = (...names) => names.find(n => primIndex(n) >= 0);
+// Boxes and walls use Kimodo's vault (hands on the wall) and hurdle jumps by default (ARDY never made a vault that touches
+// the obstacle); ?vault=ardy gives the ARDY sprint jumps, ?vault=samples NVIDIA's own vaults from the sample clips, which
+// are for evaluation only and so never in anything shown publicly.
+const VAULT = params.get('vault') || (kimodo ? 'kimodo' : 'ardy');
+const PRIM_FOR = (name) => (ardy ? { ...(VAULT === 'ardy' ? { jump_0_5m: firstPrim('ardy_stepover', 'ardy_jump'), jump_0_75m: firstPrim('ardy_climbvault', 'ardy_vault', 'ardy_jump') } : {}),
+                                     ...(VAULT === 'kimodo' ? { jump_0_5m: firstPrim('kimodo_boxhop', 'kimodo_hurdle', 'ardy_jump'), jump_0_75m: firstPrim('kimodo_vault', 'ardy_vault') } : {}),
+                                     sit: 'ardy_sit' }[name] : null) ?? name;
+// cone limits of each pivot, read from the official authoring files (the exports carry the rest)
+for (const prim of jumpPrims) {
+  if (prim.name.startsWith('ardy_') || prim.name.startsWith('kimodo_')) continue;  // ARDY / Kimodo primitives carry their pivot rules themselves
+  const doc = await fetch(`../runtime_data/${prim.name}.smart_primitive.json`).then(r => r.json());
+  const walk = (n) => {
+    for (const c of n.components || []) if (c.type === 'pivot' && prim.pivots[n.id]) {
+      Object.assign(prim.pivots[n.id], { cone_half_angle_degrees: c.cone_half_angle_degrees, cone_side: c.cone_side });
+    }
+    (n.children || []).forEach(walk);
+  };
+  walk(doc.root);
+}
+// Obstacles in SOMA model space (meters), each using the jump primitive of its kind. The character starts at the
+// origin facing +Z; the first key press runs her away from the camera, toward -Z, where the first two stand straight
+// ahead. The rest are scattered around with a fixed seed: boxes and walls at random turns, kept apart so there is
+// room to land and run up between them.
+// Kinds: 'jump' (box or low wall, vaulted), 'sit' (a stool), 'crashwall' (a wall too tall to get over; running into
+// it bumps her back)
+// and 'item' (picked up from the ground).
+// 'ball' (small, kicked) and 'bigball' (large, pushed) need the ARDY kick / push motions.
+// 'step': a low ledge on the floor that trips her (the ARDY forward fall), needs ACTIONS.trip
+const COUNTS = { jump: +(params.get('obstacles') || 60), sit: +(params.get('stools') ?? 10), crashwall: +(params.get('walls') ?? 14), item: +(params.get('items') ?? 30),
+                 step: ACTIONS.trip ? +(params.get('steps') ?? 12) : 0,
+                 ball: ACTIONS.kick ? +(params.get('balls') ?? 12) : 0, bigball: ACTIONS.push_walk ? +(params.get('bigballs') ?? 10) : 0 };
+// The big ball is as tall as she is (the top of the head in the skeleton's reference pose) and heavy: it only moves
+// while she pushes it.
+const HEIGHT = sk.world(sk.reference)[sk.index('HeadEnd')].p[1];
+const BALL_RADIUS = { ball: 0.2, bigball: HEIGHT / 2 };  // the kicked ball is a soccer ball, drawn a bit big to read at her size
+function makeScene(radius, seed) {
+  let s = seed >>> 0;
+  const rand = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const list = [{ kind: 'jump', name: 'jump_0_5m', x: 0, z: -6, yaw: 0 }, { kind: 'jump', name: 'jump_0_75m', x: 0, z: -14, yaw: 0 },
+                { kind: 'item', x: 0, z: -20 }, { kind: 'sit', name: 'sit', x: 0, z: -26 }];
+  if (COUNTS.ball) list.push({ kind: 'ball', x: 0, z: -33 });
+  if (COUNTS.step) list.push({ kind: 'step', x: 0, z: -47, yaw: 0 });
+  if (COUNTS.bigball) list.push({ kind: 'bigball', x: 0, z: -40 });
+  const want = Object.entries(COUNTS).flatMap(([kind, n]) => Array(n).fill(kind));
+  for (let i = want.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [want[i], want[j]] = [want[j], want[i]]; }
+  for (const kind of want) {
+    for (let tries = 0; tries < 60; tries++) {
+      const x = (rand() * 2 - 1) * radius, z = (rand() * 2 - 1) * radius;
+      if (Math.hypot(x, z) < 4 || Math.abs(x) < 2.5 && z < 0 && z > -52) continue;   // start area and the first lane
+      const small = (k) => k === 'item' || k === 'ball';
+      if (list.some(o => Math.hypot(o.x - x, o.z - z) < (small(kind) || small(o.kind) ? 3 : 6))) continue;
+      const name = kind === 'jump' ? (rand() < 0.55 ? 'jump_0_5m' : 'jump_0_75m') : kind === 'sit' ? 'sit' : null;
+      list.push({ kind, name, x, z, yaw: rand() * Math.PI });
+      break;
+    }
+  }
+  return list;
+}
+const sceneObjects = makeScene(50, 7).map((o) => {
+  const ob = { kind: o.kind, pos: [o.x, 0, o.z], yaw: o.yaw || 0 };
+  if (o.name) {
+    ob.prim = primIndex(PRIM_FOR(o.name));
+    const [w, d, h] = jumpPrims[ob.prim].boxes[0].size_runtime_wdh;  // runtime width (x), depth (y), height (z)
+    ob.size = [w, h, d];                                             // model space: x, y (up), z; turned yaw about +Y
+  } else if (o.kind === 'crashwall') ob.size = [2.0, 2.4, 0.3];
+  else if (o.kind === 'step') ob.size = [1.6, 0.12, 0.5];
+  else if (BALL_RADIUS[o.kind]) { const r = BALL_RADIUS[o.kind]; ob.size = [2 * r, 2 * r, 2 * r]; ob.vel = [0, 0]; }
+  else ob.size = [0.3, 0.3, 0.3];
+  return ob;
+});
+const obstacles = sceneObjects.filter(o => o.kind === 'jump' || o.kind === 'sit');  // the ones with a primitive
+const bumpers = sceneObjects.filter(o => o.kind === 'crashwall' || o.kind === 'step');  // things she runs into
+const items = sceneObjects.filter(o => o.kind === 'item');
+const balls = sceneObjects.filter(o => BALL_RADIUS[o.kind]);
+let picked = 0;
+
+status(`動きの生成モデル（約240MB）を読み込んで準備中…（${EP}。初回のダウンロードは回線しだいで1分ほど）`);
+// The generation runs in a worker so decoding never stalls rendering.
+// without WebGPU (or if the model cannot load) say so instead of staying on the loading message
+if (EP === 'webgpu' && !navigator.gpu) {
+  status('このブラウザは WebGPU に対応していないため動かせません。パソコンの Chrome / Edge の最新版などで開いてください。');
+  throw new Error('WebGPU is not available');
+}
+const worker = new Worker(`./mb_worker.js?v=${BUILD}`);
+let modelFromCache = false;
+const waiting = new Map();
+let nextId = 0;
+await new Promise((ready, fail) => {
+  worker.onmessage = (e) => {
+    const m = e.data;
+    if (m.type === 'ready') ready();
+    else if (m.type === 'cached') { modelFromCache = true; status('このブラウザに保存した動きの生成モデルを読み込み中…'); }
+    else if (m.type === 'progress') status(`動きの生成モデルをダウンロード中… ${Math.round(m.loaded / 1e6)} / ${m.total ? Math.round(m.total / 1e6) : '約240'} MB（2回目からはこのブラウザに保存したものを使います）`);
+    else if (m.type === 'gen') { waiting.get(m.id)?.resolve(m); waiting.delete(m.id); }
+    else if (m.type === 'error') { console.error(m.message); if (m.id === undefined) fail(new Error(m.message)); else { waiting.get(m.id)?.reject(new Error(m.message)); waiting.delete(m.id); } }
+  };
+  worker.postMessage({ type: 'init', ortVersion: ORT_VERSION, modelUrl: MODEL_URL, ep: EP, runtimeUrl: '../runtime_data/soma_runtime.json' });
+}).catch((e) => { status(`動きの生成モデルを準備できませんでした（${e.message.split('\n')[0]}）`); throw e; });
+function generateInWorker(context, target, opts = {}) {
+  const id = nextId++;
+  return new Promise((resolve, reject) => {
+    waiting.set(id, { resolve, reject });
+    worker.postMessage({ type: 'gen', id, context, target, opts });
+  }).then((m) => {
+    const size = sk.J * 7;
+    const frames = Array.from({ length: m.n }, (_, i) => m.frames.subarray(i * size, (i + 1) * size));
+    return { frames, tokens: m.tokens, ms: m.ms };
+  });
+}
+
+// ---------- retarget SOMA -> VRM (same method as index.html) ----------
+const MAP = [
+  ['hips', 'Hips', 'spine'], ['spine', 'Spine1', 'chest'], ['chest', 'Spine2', 'upperChest'], ['upperChest', 'Chest', 'neck'],
+  ['neck', 'Neck1', 'head'], ['head', 'Head', null],
+  ...['left', 'right'].flatMap(s => {
+    const S = s === 'left' ? 'Left' : 'Right';
+    return [[`${s}Shoulder`, `${S}Shoulder`, `${s}UpperArm`], [`${s}UpperArm`, `${S}Arm`, `${s}LowerArm`],
+            [`${s}LowerArm`, `${S}ForeArm`, `${s}Hand`], [`${s}Hand`, `${S}Hand`, null],
+            [`${s}UpperLeg`, `${S}Leg`, `${s}LowerLeg`], [`${s}LowerLeg`, `${S}Shin`, `${s}Foot`],
+            [`${s}Foot`, `${S}Foot`, `${s}Toes`], [`${s}Toes`, `${S}ToeBase`, null]];
+  }),
+];
+const V3 = (a) => new THREE.Vector3(a[0], a[1], a[2]);
+const Q4 = (a) => new THREE.Quaternion(a[0], a[1], a[2], a[3]);
+const up = new THREE.Vector3(0, 1, 0);
+const node = (b) => vrm.humanoid.getNormalizedBoneNode(b);
+const wpos = (b) => node(b).getWorldPosition(new THREE.Vector3());
+const facing = (l, r) => { const f = l.clone().sub(r).cross(up); f.y = 0; return f.normalize(); };
+const restW = sk.world(sk.reference);
+const fS = facing(V3(restW[sk.index('LeftLeg')].p), V3(restW[sk.index('RightLeg')].p));
+const fT = facing(wpos('leftUpperLeg'), wpos('rightUpperLeg'));
+const G = new THREE.Quaternion().setFromUnitVectors(fS, fT), Ginv = G.clone().invert();
+const restPos = restW.map(t => V3(t.p).applyQuaternion(G));
+const restQinv = restW.map(t => G.clone().multiply(Q4(t.q)).invert());
+const bones = MAP.filter(([b]) => node(b)).map(([b, s, child]) => ({ b, n: node(b), s: sk.index(s), child,
+  Trest: node(b).getWorldQuaternion(new THREE.Quaternion()) }));
+const byName = Object.fromEntries(bones.map(x => [x.b, x]));
+for (const x of bones) {
+  const c = x.child && byName[x.child];
+  if (c) x.C = new THREE.Quaternion().setFromUnitVectors(wpos(c.b).sub(wpos(x.b)).normalize(), restPos[c.s].clone().sub(restPos[x.s]).normalize());
+}
+for (const x of bones) if (!x.C) {
+  let p = x.n.parent; while (p && !bones.find(y => y.n === p)) p = p.parent;
+  x.C = p ? bones.find(y => y.n === p).C.clone() : new THREE.Quaternion();
+}
+const scale = wpos('hips').y / restPos[0].y;
+// Obstacles drawn at her scale, flat like her: unlit, with a lighter top, two side tones and a thin outline so their
+// shape still reads without shading.
+const faceMats = [0x5d7f8c, 0x5d7f8c, 0x9fc3cf, 0x3c5662, 0x4a6a77, 0x4a6a77].map(c => new THREE.MeshBasicMaterial({ color: c }));
+const edgeMat = new THREE.LineBasicMaterial({ color: 0xc9e3ea, transparent: true, opacity: 0.55 });
+// What she trips over or crashes into: yellow and black hazard stripes, 0.3 m (model space) per stripe pair on every
+// face, each face its own texture repeat; side faces a little darker as on the other boxes.
+const hazardImage = (() => {
+  const n = 64, c = document.createElement('canvas'); c.width = c.height = n;
+  const g = c.getContext('2d'), img = g.createImageData(n, n);
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const yellow = (x + y) % n < n / 2, i = (y * n + x) * 4;
+    img.data.set(yellow ? [245, 197, 24, 255] : [26, 26, 26, 255], i);
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+})();
+function hazardMats(size) {
+  const [w, h, d] = size, PERIOD = 0.3;
+  const faces = [[d, h, 0.78], [d, h, 0.78], [w, d, 1.0], [w, d, 0.6], [w, h, 0.9], [w, h, 0.9]];  // +x -x +y -y +z -z
+  return faces.map(([u, v, shade]) => {
+    const tex = new THREE.CanvasTexture(hazardImage);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = THREE.SRGBColorSpace;
+    tex.repeat.set(Math.max(1, Math.round(u / PERIOD)), Math.max(1, Math.round(v / PERIOD)));
+    return new THREE.MeshBasicMaterial({ map: tex, color: new THREE.Color(shade, shade, shade) });
+  });
+}
+const stoolMats = [0xa38a5e, 0xe2c98f, 0x7d6845].map(c => new THREE.MeshBasicMaterial({ color: c }));  // side, top, bottom
+// items: a five-pointed star, yellow faces and darker sides
+const itemMats = [new THREE.MeshBasicMaterial({ color: 0xffd34d }), new THREE.MeshBasicMaterial({ color: 0xd9a521 })];
+function starGeometry(outer) {
+  const shape = new THREE.Shape();
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 ? outer * 0.45 : outer, a = Math.PI / 2 + i * Math.PI / 5;
+    i ? shape.lineTo(r * Math.cos(a), r * Math.sin(a)) : shape.moveTo(r * Math.cos(a), r * Math.sin(a));
+  }
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: outer * 0.3, bevelEnabled: true, bevelThickness: outer * 0.12, bevelSize: outer * 0.08, bevelSegments: 1 });
+  return geo.center();
+}
+// the kicked ball: a truncated icosahedron (a soccer ball's 12 black pentagons and 20 white hexagons), left faceted to
+// suit the flat look, with its seams drawn
+function soccerBall(radius) {
+  const t = (1 + Math.sqrt(5)) / 2;
+  const ico = [[-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0], [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t], [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1]]
+    .map(v => new THREE.Vector3(...v));
+  const edge = ico[0].distanceTo(ico[1]), pts = [];
+  for (let i = 0; i < 12; i++) for (let j = i + 1; j < 12; j++) {
+    if (Math.abs(ico[i].distanceTo(ico[j]) - edge) > 1e-6) continue;
+    pts.push(ico[i].clone().lerp(ico[j], 1 / 3), ico[i].clone().lerp(ico[j], 2 / 3));
+  }
+  const r0 = pts[0].length();
+  const geo = new ConvexGeometry(pts.map(p => p.multiplyScalar(radius / r0)));
+  const dirs = ico.map(v => v.clone().normalize()), nrm = geo.getAttribute('normal'), col = [];
+  for (let i = 0; i < nrm.count; i++) {
+    const n = new THREE.Vector3().fromBufferAttribute(nrm, i);
+    const pent = dirs.some(v => v.dot(n) > 0.99);
+    col.push(...(pent ? [0.008, 0.008, 0.008] : [0.92, 0.92, 0.92]));  // linear values: ~#171717 and ~#f5f5f5 on screen
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  return geo;
+}
+const soccerMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+const seamMat = new THREE.LineBasicMaterial({ color: 0x555555 });
+// balls: two-tone stripes (a vertex-colored band) so their rolling shows without shading
+function stripedBall(c1, c2) {
+  const tex = new THREE.DataTexture(new Uint8Array([...c1, 255, ...c2, 255, ...c1, 255, ...c2, 255]), 4, 1);
+  tex.needsUpdate = true; tex.magFilter = THREE.NearestFilter; tex.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.MeshBasicMaterial({ map: tex });
+}
+const ballMats = { small: stripedBall([255, 120, 80], [255, 236, 214]), big: stripedBall([96, 170, 255], [228, 240, 255]) };
+for (const ob of sceneObjects) {
+  let geo, mats;
+  if (ob.kind === 'sit') { geo = new THREE.CylinderGeometry(0.2 * scale, 0.2 * scale, ob.size[1] * scale, 24); mats = stoolMats; }
+  else if (ob.kind === 'item') { geo = starGeometry(0.16 * scale); mats = itemMats; }
+  else if (ob.kind === 'ball') { geo = soccerBall(BALL_RADIUS.ball * scale); mats = soccerMat; }
+  else if (BALL_RADIUS[ob.kind]) { geo = new THREE.SphereGeometry(BALL_RADIUS[ob.kind] * scale, 24, 16); mats = ballMats.big; }
+  else { geo = new THREE.BoxGeometry(ob.size[0] * scale, ob.size[1] * scale, ob.size[2] * scale); mats = ob.kind === 'crashwall' || ob.kind === 'step' ? hazardMats(ob.size) : faceMats; }
+  const m = new THREE.Mesh(geo, mats);
+  if (ob.kind === 'ball') m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 10), seamMat));
+  else if (ob.kind !== 'item' && !BALL_RADIUS[ob.kind]) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), edgeMat));
+  // items float where the hands reach in the pick-up motion (ARDY), else a little above the ground
+  const lift = ob.kind === 'item' ? (ACTIONS.pickup?.contact?.[1] ?? 0.25) : ob.size[1] / 2;
+  m.position.copy(V3([ob.pos[0], lift, ob.pos[2]]).applyQuaternion(G).multiplyScalar(scale));
+  m.quaternion.copy(G).multiply(new THREE.Quaternion().setFromAxisAngle(up, ob.yaw));
+  scene.add(m);
+  ob.mesh = m;
+}
+const worldQ = new THREE.Quaternion(), parentQ = new THREE.Quaternion();
+function applyPose(pose) {
+  const w = sk.world(pose);
+  for (const x of bones) {
+    worldQ.copy(G).multiply(Q4(w[x.s].q)).multiply(restQinv[x.s]).multiply(x.C).multiply(x.Trest);
+    x.n.parent.getWorldQuaternion(parentQ);
+    x.n.quaternion.copy(parentQ.invert().multiply(worldQ));
+    x.n.updateMatrixWorld(true);
+  }
+  // the hips' world position into their parent's frame: a VRM 0.x is turned 180 degrees on load (rotateVRM0), and
+  // writing the world position straight in made such a character run the wrong way
+  const hips = node('hips');
+  hips.position.copy(hips.parent.worldToLocal(V3(w[0].p).applyQuaternion(G).multiplyScalar(scale)));
+  return w;
+}
+
+// ---------- character state ----------
+let pose = Float32Array.from(styles.idle.window[3]);
+const recorder = new mb.Recorder(pose);
+let clip = [Float32Array.from(pose)], playTime = 0;
+let pending = null, latency = 0.15, genMs = 0, tokens = 0, generations = 0;
+let fadeFrom = null, fadeT = 0;
+const fadePose = new Float32Array(pose.length);
+let lastStyle = null, lastDir = null;
+const keys = new Set();
+let crouch = false, selected = MOVE_STYLE;
+const keyName = (e) => { const k = e.key.toLowerCase(); return ARROWS[k] ?? k; };
+addEventListener('keydown', (e) => {
+  const k = keyName(e);
+  if (e.key.startsWith('Arrow')) e.preventDefault();
+  if (k === 'c' && !e.repeat) crouch = !crouch;
+  if (k === 'h' && !e.repeat) document.getElementById('hud').hidden = !document.getElementById('hud').hidden;
+  keys.add(k);
+});
+addEventListener('keyup', (e) => { keys.delete(keyName(e)); });
+addEventListener('blur', () => keys.clear());
+
+// movement direction in model space from WASD relative to the camera
+function inputDirection() {
+  const f = new THREE.Vector3().subVectors(controls.target, camera.position); f.y = 0; f.normalize();
+  const r = new THREE.Vector3().crossVectors(f, up);
+  const d = new THREE.Vector3();
+  if (keys.has('w')) d.add(f); if (keys.has('s')) d.sub(f);
+  if (keys.has('d')) d.add(r); if (keys.has('a')) d.sub(r);
+  if (d.lengthSq() < 1e-6) return null;
+  return d.normalize().applyQuaternion(Ginv);
+}
+const currentStyle = (moving) => moving ? (crouch ? 'crouch' : selected) : (crouch ? 'crouch_idle' : 'idle');
+
+// Generation takes ~0.15-0.25 s here, against ~8 ms on a data-center GPU. So plan ahead: the context is the old motion
+// as it will be `lookahead` seconds from now (time T in the old motion), and the new motion is swapped in exactly when
+// the old one reaches T. The new motion starts at that context pose, so the swap is seamless, as in the official loop.
+// The lookahead covers the slowest of the recent generations plus a margin, so results are rarely late.
+const recentLatency = [];
+const lookahead = () => Math.min(0.6, Math.max(0.15, Math.max(latency, ...recentLatency) + 0.05));
+
+// Ask for motion toward a target. makeTarget gets the context's last pose (where the new motion will start) and returns
+// one to four target poses. early: transition point in frames before the end. opts: encode options (allowed tokens).
+let genId = 0;
+// Forget the generation in flight (its result is ignored when it comes): a played clip takes over at once.
+function dropPending() { genId++; pending = null; ready = null; arrived = null; }
+function requestTarget(makeTarget, early = TRANSITION_EARLY_BY, opts = {}, onStart = null) {
+  // (idealSwap, for measuring only: no lookahead, swapped in at once, as if generation took no time)
+  const T = idealSwap ? playTime : Math.min(playTime + lookahead(), (clip.length - 1) / mb.FPS);
+  const context = [3, 2, 1, 0].map(k => mb.sampleFrames(clip, T - k / mb.FPS, new Float32Array(pose.length)));
+  const target = makeTarget(context[3]);
+  const t0 = performance.now(), v0 = vclock;
+  const id = ++genId;
+  pending = generateInWorker(context, target, { smooth: SMOOTH, ...opts }).then((g) => {
+    if (id !== genId) return;  // dropped by dropPending()
+    const elapsed = (performance.now() - t0) / 1000;
+    genMs = elapsed * 1000; latency = 0.8 * latency + 0.2 * elapsed;
+    recentLatency.push(elapsed); if (recentLatency.length > 8) recentLatency.shift();
+    tokens = g.tokens; generations++;
+    const result = { g, T, elapsed, early, onStart };
+    if (vclock === null) arrived = result;
+    else ready = { ...result, at: v0 + (idealSwap ? 0 : elapsed) };  // virtual clock: usable once that much time passed
+  }).catch((e) => { console.error(e); if (id === genId) pending = null; });
+}
+
+function requestGeneration(styleId, dir) {
+  const s = styles[styleId];
+  requestTarget((from) => {
+    const w = sk.world(from);
+    const pos = w[0].p;
+    let yaw, ground;
+    if (dir) {
+      yaw = Math.atan2(dir.x, dir.z);
+      ground = [pos[0] + dir.x * s.speed * LEAD_SECONDS, 0, pos[2] + dir.z * s.speed * LEAD_SECONDS];
+    } else {
+      yaw = mb.headingFromHips(w[sk.rightLeg].p, w[sk.leftLeg].p);
+      ground = [pos[0], 0, pos[2]];
+    }
+    return mb.placeTarget(s.window, ground, yaw);
+  });
+  lastStyle = styleId; lastDir = dir ? dir.clone() : null;
+}
+
+// ---------- obstacles: the official jump Smart Primitives (soma_jumps.json, exported by mbh_export_jump.py) ----------
+// Everything here is in SOMA model space (Y up). A primitive's box sits at its origin; its target windows are placed
+// around it. To use one at an obstacle, move the primitive onto the obstacle, then align its pivot to the approach as
+// motionbricks/runtime/pivot.py does (turn its motion direction onto the desired velocity, then slide along its line
+// to the point closest to the character's probe segment).
+const PROBE = { width: 1.0, minDepth: 0.75, near: 0.15, lookahead: 1.0, extraMinSpeed: 2.3, extraTime: 0.25 };  // soma presets.py
+const vsub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], vadd = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const vdot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], vmul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const vcross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const vlen = (a) => Math.hypot(a[0], a[1], a[2]);
+
+function probeSegment(pos, dir, speed) {
+  const reach = speed * PROBE.lookahead + Math.max(0, speed - PROBE.extraMinSpeed) * PROBE.extraTime;
+  const far = Math.max(PROBE.near + PROBE.minDepth, reach);
+  return [[pos[0] + dir[0] * PROBE.near, 0, pos[2] + dir[2] * PROBE.near], [pos[0] + dir[0] * far, 0, pos[2] + dir[2] * far]];
+}
+// 2D separating-axis test on the ground (x, z) between the probe rectangle and an obstacle rectangle
+function rectsOverlap(a, b) {
+  const corners = (r) => [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([s, t]) =>
+    [r.c[0] + r.u[0] * r.h[0] * s + r.v[0] * r.h[1] * t, r.c[1] + r.u[1] * r.h[0] * s + r.v[1] * r.h[1] * t]);
+  const ca = corners(a), cb = corners(b);
+  for (const ax of [a.u, a.v, b.u, b.v]) {
+    const pa = ca.map(p => p[0] * ax[0] + p[1] * ax[1]), pb = cb.map(p => p[0] * ax[0] + p[1] * ax[1]);
+    if (Math.max(...pa) < Math.min(...pb) || Math.max(...pb) < Math.min(...pa)) return false;
+  }
+  return true;
+}
+function closestPointOnSegment(s, e, p) {
+  const seg = vsub(e, s), t = Math.min(1, Math.max(0, vdot(vsub(p, s), seg) / (vdot(seg, seg) + 1e-6)));
+  return vadd(s, vmul(seg, t));
+}
+// port of pivot._closest_point_to_segment: the point between s and e closest to the segment os-oe
+function closestPointToSegment(s, e, os, oe) {
+  const half = (a, b) => { const v = vsub(b, a), l = vlen(v); return [0.5 * l, l > 0 ? vmul(v, 1 / l) : v]; };
+  const [h, d] = half(s, e), [oh, od] = half(os, oe);
+  const c = vadd(s, vmul(d, h)), oc = vadd(os, vmul(od, oh)), off = vsub(c, oc);
+  const cos = vdot(d, od), along = vdot(d, off), oalong = vdot(od, off);
+  const t = (cos * oalong - along) / (1 - cos * cos + 1e-6), ot = oalong + cos * t;
+  const p = vadd(c, vmul(d, Math.min(Math.max(t, -h), h))), op = vadd(oc, vmul(od, Math.min(Math.max(ot, -oh), oh)));
+  const proj = closestPointOnSegment(s, e, op), oproj = closestPointOnSegment(os, oe, p);
+  const d1 = vsub(op, proj), d2 = vsub(p, oproj);
+  return vdot(d1, d1) < vdot(d2, d2) ? proj : p;
+}
+const qAxis = (axis, ang) => { const s = Math.sin(ang / 2); return [axis[0] * s, axis[1] * s, axis[2] * s, Math.cos(ang / 2)]; };
+
+// Build the placed target steps of a primitive at an obstacle for a character at pos moving along dir at speed.
+// Without names (jumps), pick the sequence whose first target moves closest to the character's speed, as
+// VelocityMatchingSequenceBehavior does. With names (sit: ['Sit', 'Stand']), the first one sets the pivot alignment and
+// every named sequence is placed with it, so standing up starts from where she sat down.
+function buildJump(ob, pos, dir, speed, names = null) {
+  const prim = jumpPrims[ob.prim];
+  const winSpeed = (w) => Math.hypot(w[w.length - 1][0][0] - w[0][0][0], w[w.length - 1][0][2] - w[0][0][2]) * mb.FPS / Math.max(1, w.length - 1);
+  const seq = names ? prim.sequences.find(s => s.name === names[0]) : prim.sequences.reduce((best, s) =>
+    Math.abs(winSpeed(s.steps[0].window) - speed) < Math.abs(winSpeed(best.steps[0].window) - speed) ? s : best);
+  const pv = prim.pivots[seq.pivot];
+  const box = prim.boxes[0].center;
+  // primitive -> world: its box center onto the obstacle, turned by the obstacle's yaw
+  const W = mb.tmul(mb.T([ob.pos[0], 0, ob.pos[2]], mb.qAxisY(ob.yaw)), mb.T([-box[0], 0, -box[2]], [0, 0, 0, 1]));
+  const turn = (v) => v && mb.qrot(W.q, v);
+  const p0 = mb.tmul(W, mb.T(pv.position, [0, 0, 0, 1])).p;
+  let place = T0;
+  let limitsAxis = turn(pv.translation_axis);
+  if (pv.rotation_axis) {
+    const ax = turn(pv.rotation_axis);
+    const flat = (v) => vsub(v, vmul(ax, vdot(v, ax)));
+    const m = flat(turn(pv.motion_direction)), d = flat(dir);
+    if (vlen(m) > 1e-6 && vlen(d) > 1e-6) {
+      let angle = Math.atan2(vdot(ax, vcross(m, d)), vdot(m, d));
+      if (pv.rotation_constraint === 'cone') {
+        // the nearest allowed heading, checking both cones when enabled (pivot.py)
+        const half = pv.cone_half_angle_degrees * Math.PI / 180;
+        const centers = pv.cone_side === 'both' ? [0, Math.PI] : pv.cone_side === 'mirrored' ? [Math.PI] : [0];
+        const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+        angle = centers.map(c => { const dl = wrap(angle - c), cl = Math.max(-half, Math.min(half, dl)); return [Math.abs(dl - cl), c + cl]; })
+                       .reduce((a, b) => (b[0] < a[0] ? b : a))[1];
+      }
+      const q = qAxis(ax, angle);
+      place = mb.T(vsub(p0, mb.qrot(q, p0)), q);  // turn about the pivot
+      if (limitsAxis) limitsAxis = mb.qrot(q, limitsAxis);
+    }
+  }
+  let p1 = p0;
+  if (limitsAxis && pv.translation_constraint === 'line_projection') {
+    const [ps, pe] = probeSegment(pos, dir, speed);
+    p1 = closestPointToSegment(vadd(p0, vmul(limitsAxis, pv.line_min_offset)), vadd(p0, vmul(limitsAxis, pv.line_max_offset)), ps, pe);
+    p1 = [p1[0], p0[1], p1[2]];
+  }
+  place = mb.tmul(mb.T(vsub(p1, p0), [0, 0, 0, 1]), place);
+  place = mb.tmul(place, W);
+  const stepsOf = (s) => s.steps.map(st => ({
+    name: st.node, early: st.transition_early_by_frames,
+    allowedTokens: Array.from({ length: st.max_tokens - st.min_tokens + 1 }, (_, i) => st.min_tokens + i),
+    window: st.window.slice(0, st.num_poses_to_use).map(p => { const o = Float32Array.from(p.flat()); mb.tset(o, 0, mb.tmul(place, mb.tget(o, 0))); return o; }),
+  }));
+  const others = Object.fromEntries((names || []).slice(1).map(n => [n, stepsOf(prim.sequences.find(s => s.name === n))]));
+  return { name: `${prim.name}/${seq.name}`, steps: stepsOf(seq), others };
+}
+const T0 = mb.T([0, 0, 0], [0, 0, 0, 1]);
+let seq = null, simTime = 0, lastJump = '';
+// Sitting down, standing up and picking up: MotionBricks mostly takes the longest gap it is allowed (14 tokens) and
+// dawdles (standing up hardly moved for 0.6 s). These keep the shorter part of each target's token range: the first
+// QUICK of it (?quick=1 gives the whole range back).
+const QUICK = +(params.get('quick') ?? 0.35);
+const quicken = (steps) => steps && steps.map(st => ({ ...st, allowedTokens: st.allowedTokens.slice(0, Math.round((st.allowedTokens.length - 1) * QUICK) + 1) }));
+
+// A jump to start now, or null. The probe works from where the character will be when the next motion starts (the
+// lookahead point), reaching far enough to see the jump's first target a full LEAD_SECONDS of travel ahead. The jump
+// starts once that first target is no more than LEAD_SECONDS of travel ahead, like any locomotion target. If the
+// character is already past it, the jump starts at the next target that is still ahead.
+// her ground speed in the playing motion at time t (over the 0.2 s before it)
+function speedAt(t) {
+  const a = mb.tget(mb.sampleFrames(clip, Math.max(0, t - 0.2), new Float32Array(pose.length)), 0).p;
+  const b = mb.tget(mb.sampleFrames(clip, t, new Float32Array(pose.length)), 0).p;
+  return Math.hypot(b[0] - a[0], b[2] - a[2]) / 0.2;
+}
+function jumpToStart(dir, speed) {
+  const T = Math.min(playTime + lookahead(), (clip.length - 1) / mb.FPS);
+  const from = mb.tget(mb.sampleFrames(clip, T, new Float32Array(pose.length)), 0).p;
+  const d = [dir.x, 0, dir.z];
+  const ahead = (p) => (p[0] - from[0]) * d[0] + (p[2] - from[2]) * d[2];
+  const [ps] = probeSegment(from, d, speed);
+  const reach = speed * (LEAD_SECONDS + lookahead()) + 3;  // 3 m covers the first targets, about 2 m before a box
+  const pe = [from[0] + d[0] * reach, 0, from[2] + d[2] * reach];
+  const probe = { c: [(ps[0] + pe[0]) / 2, (ps[2] + pe[2]) / 2], u: [d[2], -d[0]], v: [d[0], d[2]],
+                  h: [PROBE.width / 2, vlen(vsub(pe, ps)) / 2] };
+  for (const ob of obstacles) {
+    if (simTime < (ob.cooldownUntil || 0)) continue;
+    if (!rectsOverlap(probe, obRect(ob)) || ahead(ob.pos) <= 0) continue;
+    const sit = ob.kind === 'sit';
+    const plan = buildJump(ob, from, d, speed, sit ? ['Sit', 'Stand'] : null);
+    const dist = plan.steps.map(st => ahead(mb.tget(st.window[0], 0).p));
+    // not yet. Sitting waits until its first target is as close as the shortest generation covers (6 tokens, ~0.6 s)
+    // at the speed she really has (at least a walk): a full LEAD_SECONDS at the style's speed (5 m at a dash, even
+    // while still slow after picking something up) began the sit far too early.
+    if (dist[0] > (sit ? Math.max(speedAt(T), styles.walk.speed) * SHORTEST_GEN_SECONDS : speed * LEAD_SECONDS)) continue;
+    const first = dist.findIndex(x => x > 0.2);
+    if (first < 0 || (!sit && first === plan.steps.length - 1)) continue;  // already over it
+    // sitting holds its last target (seated) until a fresh key press, then plays Stand
+    return { ...plan, steps: sit ? quicken(plan.steps) : plan.steps, next: sit ? 0 : first, obstacle: ob, label: sit ? '座る' : '飛び越え',
+             hold: sit, exit: sit ? quicken(plan.others.Stand) : null };
+  }
+  // A big ball ahead in the lane: slow down into the pushing walk with the hands arriving on the ball (the push itself
+  // then starts in pushTarget), instead of running into it at full speed.
+  if (ACTIONS.push_walk) for (const b of balls) {
+    if (b.kind !== 'bigball' || simTime < (b.cooldownUntil || 0)) continue;
+    const rel = [b.pos[0] - from[0], b.pos[2] - from[2]];
+    const a = rel[0] * d[0] + rel[1] * d[2], side = Math.abs(rel[0] * d[2] - rel[1] * d[0]);
+    const contactAt = a - pushReach(b);
+    if (side > BALL_RADIUS[b.kind] || contactAt < 0.3 || contactAt > speed * LEAD_SECONDS) continue;
+    const ground = [from[0] + d[0] * contactAt, 0, from[2] + d[2] * contactAt];
+    return { name: 'approach', label: '押す', next: 0, obstacle: b,
+             steps: [{ name: 'Reach', early: TRANSITION_EARLY_BY, allowedTokens: [6, 7, 8, 9, 10, 11, 12, 13, 14],
+                       window: mb.placeTarget(styles.push_walk.window, ground, Math.atan2(d[0], d[2])) }] };
+  }
+  // An item ahead in the probe's lane: pick it up, then carry on. With ARDY, its pick-up motion's bend and rise are
+  // placed so that the hands meet the item; without it, the sample crouching idle stands in.
+  const yaw = Math.atan2(d[0], d[2]);
+  const inLane = (o, half = PROBE.width / 2) => Math.abs((o.pos[0] - from[0]) * d[2] - (o.pos[2] - from[2]) * d[0]) <= half;
+  // (items reach a little wider: the vaults land her up to ~0.75 m off to the side of where she ran in)
+  for (const it of items) {
+    if (it.taken || !inLane(it, 0.8)) continue;
+    const a = ahead(it.pos);
+    if (a < 0.6 || a - 0.3 > speed * LEAD_SECONDS) continue;
+    const take = (dur) => { it.takeAt = simTime + dur * 0.85; };
+    if (ACTIONS.pickup) {
+      // after standing up, hold the star up over her head where she stands, a moment (the same target twice), then on
+      const steps = quicken(placeAction(ACTIONS.pickup, it.pos, yaw, take));
+      const end = mb.tget(steps[steps.length - 1].window.at(-1), 0).p, raised = mb.placeTarget(RAISE_WINDOW, [end[0], 0, end[2]], yaw);
+      steps.push({ name: 'Raise', early: TRANSITION_EARLY_BY, allowedTokens: [6, 7, 8], window: raised },
+                 { name: 'Hold', early: TRANSITION_EARLY_BY, allowedTokens: [6], window: raised });
+      return { name: 'pickup', label: '拾う', next: 0, obstacle: it, steps };
+    }
+    const ground = [it.pos[0] - d[0] * 0.3, 0, it.pos[2] - d[2] * 0.3];  // hips a little before the item
+    const st = { name: 'Pickup', early: TRANSITION_EARLY_BY, allowedTokens: [6, 7, 8, 9, 10, 11, 12, 13, 14],
+                 window: mb.placeTarget(PICKUP_WINDOW, ground, yaw), onStart: take };
+    return { name: 'pickup', label: '拾う', steps: [st], next: 0, obstacle: it };
+  }
+  // A resting ball in the lane: kick the small ones, push the big ones (ARDY motions). The foot or hands meet the ball
+  // at the end of the first step; then the ball gets rolling along her direction.
+  for (const b of balls) {
+    if (b.kind !== 'ball') continue;  // big balls are pushed while walking (see pushTarget), not hit once
+    if (simTime < (b.cooldownUntil || 0) || Math.hypot(b.vel[0], b.vel[1]) > 0.05 || !inLane(b)) continue;
+    const act = ACTIONS.kick;
+    const a = ahead(b.pos);
+    if (!act || a < 0.8 || a - 0.5 > speed * LEAD_SECONDS) continue;
+    const roll = b.kind === 'ball' ? 7 : 2.5;  // m/s just after the hit
+    const hit = (dur) => { b.hitAt = simTime + Math.max(0, dur - act.steps[0].transition_early_by_frames / mb.FPS); b.hitVel = [d[0] * roll, d[2] * roll]; };
+    const r = BALL_RADIUS[b.kind];  // the foot or hands meet the back of the ball, not its center
+    return { name: b.kind === 'ball' ? 'kick' : 'push', label: b.kind === 'ball' ? '蹴る' : '押す', next: 0, obstacle: b,
+             steps: placeAction(act, [b.pos[0] - d[0] * r, 0, b.pos[2] - d[2] * r], yaw, hit) };
+  }
+  return null;
+}
+
+// Place an ARDY action (canonical: contact root at the origin facing +Z, contact point given relative to it) so that its
+// contact point lands on target, facing yaw. onFirst runs when the first step's motion starts playing.
+function placeAction(act, target, yaw, onFirst) {
+  const c = act.contact || [0, 0, 0];
+  const q = mb.qAxisY(yaw), off = mb.qrot(q, [c[0], 0, c[2]]);
+  const ground = [target[0] - off[0], 0, target[2] - off[2]];
+  return act.steps.map((st, i) => ({
+    name: st.node, early: st.transition_early_by_frames,
+    allowedTokens: Array.from({ length: st.max_tokens - st.min_tokens + 1 }, (_, k) => st.min_tokens + k),
+    window: mb.placeTarget(st.window, ground, yaw), onStart: i === 0 ? onFirst : undefined,
+  }));
+}
+
+// Balls roll on their own: friction slows them, obstacles bounce them back.
+// The big ball she is pushing right now, or null: she is moving toward a big ball and it is within reach of her hands
+// (the ARDY push's hand position plus the distance from the ball's center to its surface at that height).
+let pushing = null;
+function pushReach(b) {
+  const c = ACTIONS.push_walk.contact, r = BALL_RADIUS[b.kind];
+  const dy = Math.min(r, Math.abs(c[1] - r));
+  return c[2] + Math.sqrt(r * r - dy * dy);  // hips to ball center, along her facing
+}
+function pushTarget(dir) {
+  if (!ACTIONS.push_walk || !dir) return null;
+  const me = mb.tget(pose, 0).p;
+  for (const b of balls) {
+    if (b.kind !== 'bigball') continue;
+    const to = [b.pos[0] - me[0], b.pos[2] - me[2]], dist = Math.hypot(...to);
+    const cos = (to[0] * dir.x + to[1] * dir.z) / (dist || 1);
+    if (dist < pushReach(b) + 0.4 && cos > Math.cos(70 * Math.PI / 180)) return b;
+  }
+  return null;
+}
+// While pushing, the ball stays where her hands are: in front of her along her facing, never pulled back toward her.
+function carryPushedBall() {
+  if (!pushing) return;
+  const w = sk.world(pose), me = w[0].p, h = mb.headingFromHips(w[sk.rightLeg].p, w[sk.leftLeg].p);
+  const f = [Math.sin(h), Math.cos(h)], k = pushReach(pushing);
+  const want = [me[0] + f[0] * k, me[2] + f[1] * k];
+  const step = [want[0] - pushing.pos[0], want[1] - pushing.pos[2]];
+  const fwd = step[0] * f[0] + step[1] * f[1];
+  if (fwd <= 0) return;
+  // eased toward her hands, but never faster than a little over her pushing walk: heavy, it cannot be shoved away
+  const vmax = 1.3 * styles.push_walk.speed;
+  let v = [step[0] * 0.5 * 60, step[1] * 0.5 * 60];
+  const s = Math.hypot(...v); if (s > vmax) v = [v[0] / s * vmax, v[1] / s * vmax];
+  pushing.vel = v;  // integrated (and rolled) in updateBalls
+}
+
+function updateBalls(dt) {
+  const me = mb.tget(pose, 0).p;
+  carryPushedBall();
+  for (const b of balls) {
+    if (b.hitAt && simTime >= b.hitAt) { b.vel = b.hitVel; b.hitAt = 0; b.cooldownUntil = simTime + 1; }
+    if (b.kind === 'bigball' && b !== pushing) { b.vel = [0, 0]; continue; }  // heavy: it does not roll on its own
+    if (b.kind === 'bigball') { moveBall(b, dt); b.vel = [0, 0]; continue; }  // only as far as she pushed it
+    // running into a small ball without an action nudges it away (no walking through balls)
+    const away = [b.pos[0] - me[0], b.pos[2] - me[2]], dist = Math.hypot(...away), reach = BALL_RADIUS[b.kind] + 0.25;
+    if (dist < reach && dist > 1e-6) {
+      const n = [away[0] / dist, away[1] / dist], push = (reach - dist) / dt;
+      const vn = b.vel[0] * n[0] + b.vel[1] * n[1];
+      if (vn < push) b.vel = [b.vel[0] + n[0] * (push - vn), b.vel[1] + n[1] * (push - vn)];
+    }
+    const v = Math.hypot(b.vel[0], b.vel[1]);
+    if (v < 0.02) { b.vel = [0, 0]; continue; }
+    const k = Math.max(0, v - 2.0 * dt) / v;  // rolling friction, m/s^2
+    b.vel = [b.vel[0] * k, b.vel[1] * k];
+    moveBall(b, dt);
+  }
+}
+
+// Move a ball by its velocity for dt, bouncing off obstacles, and roll its mesh.
+function moveBall(b, dt) {
+  {
+    const r = BALL_RADIUS[b.kind];
+    const next = [b.pos[0] + b.vel[0] * dt, 0, b.pos[2] + b.vel[1] * dt];
+    for (const o of sceneObjects) {
+      if (o === b || o.kind === 'item' || BALL_RADIUS[o.kind]) continue;
+      const rc = obRect(o, r);
+      const rel = [next[0] - rc.c[0], next[2] - rc.c[1]];
+      const lu = rel[0] * rc.u[0] + rel[1] * rc.u[1], lv = rel[0] * rc.v[0] + rel[1] * rc.v[1];
+      if (Math.abs(lu) < rc.h[0] && Math.abs(lv) < rc.h[1]) {
+        // reflect off the face it came through (the axis with the smaller penetration)
+        const n = (rc.h[0] - Math.abs(lu) < rc.h[1] - Math.abs(lv)) ? [rc.u[0] * Math.sign(lu), rc.u[1] * Math.sign(lu)] : [rc.v[0] * Math.sign(lv), rc.v[1] * Math.sign(lv)];
+        const vn = b.vel[0] * n[0] + b.vel[1] * n[1];
+        if (vn < 0) b.vel = [(b.vel[0] - 2 * vn * n[0]) * 0.6, (b.vel[1] - 2 * vn * n[1]) * 0.6];
+        next[0] = b.pos[0]; next[2] = b.pos[2];
+      }
+    }
+    const moved = Math.hypot(next[0] - b.pos[0], next[2] - b.pos[2]);
+    b.pos = next;
+    // roll: turn about the horizontal axis across the motion, by distance / radius
+    const axis = V3([b.vel[1], 0, -b.vel[0]]).normalize().applyQuaternion(G);
+    b.mesh.position.copy(V3([b.pos[0], r, b.pos[2]]).applyQuaternion(G).multiplyScalar(scale));
+    if (moved > 0) b.mesh.rotateOnWorldAxis(axis, moved / r);
+  }
+}
+// A jump obstacle in the lane ahead, close enough that slowing to its run-up speed takes no more than about 2 s
+// (plus the ~2 m between its first target and the box), or null.
+function jumpAhead(dir, speed) {
+  const root = mb.tget(pose, 0).p, d = [dir.x, 0, dir.z];
+  const range = speed * 2 + 3;
+  const pe = [root[0] + d[0] * range, 0, root[2] + d[2] * range];
+  const probe = { c: [(root[0] + pe[0]) / 2, (root[2] + pe[2]) / 2], u: [d[2], -d[0]], v: [d[0], d[2]], h: [PROBE.width / 2, range / 2] };
+  return obstacles.find(ob => ob.kind === 'jump' && simTime >= (ob.cooldownUntil || 0) && rectsOverlap(probe, obRect(ob))
+    && (ob.pos[0] - root[0]) * d[0] + (ob.pos[2] - root[2]) * d[2] > 0) || null;
+}
+// The moving style whose speed is closest to the slowest run-up among the obstacle's jump sequences.
+function runUpStyle(ob) {
+  const prim = jumpPrims[ob.prim];
+  prim.runUp ??= Math.min(...prim.sequences.map(s => {
+    const w = s.steps[0].window;
+    return Math.hypot(w[w.length - 1][0][0] - w[0][0][0], w[w.length - 1][0][2] - w[0][0][2]) * mb.FPS / Math.max(1, w.length - 1);
+  }));
+  return ['walk', 'jog', 'run'].reduce((a, b) => Math.abs(styles[b].speed - prim.runUp) < Math.abs(styles[a].speed - prim.runUp) ? b : a);
+}
+
+// ground rectangle of an object: its local x and z axes turned by yaw about +Y
+const obRect = (ob, pad = 0) => ({ c: [ob.pos[0], ob.pos[2]], u: [Math.cos(ob.yaw), -Math.sin(ob.yaw)], v: [Math.sin(ob.yaw), Math.cos(ob.yaw)],
+                                   h: [ob.size[0] / 2 + pad, ob.size[2] / 2 + pad] });
+const PICKUP_WINDOW = styles.crouch_idle.window;
+const STOP_WINDOW = styles.idle.window;
+
+// Running into something she cannot get over (a tall wall; any obstacle while crouching). Like the jumps, it starts once
+// the stopping point is no more than LEAD_SECONDS of travel ahead of the lookahead point: run up to the surface and stop
+// facing it, then recoil a step back. A stand-in for stumbling or falling on her bottom until those poses are
+// generated with ARDY: both targets are just the standing pose, placed at the surface and a step back from it.
+// Where to start a played clip, with the hit `dist` ahead of her: among the frames of its run-up from which the hit is
+// up to 0.5 m short of that (the check only runs between generations, so it can come late), the one whose joint
+// rotations are closest to the pose she will be in; the hit itself when she is already that close. null while the hit
+// is further than the whole run-up.
+// (`last`: the latest frame it may start from)
+const clipLead = (c, f) => -mb.tget(c.frames[f], 0).p[2];
+function clipStart(c, cur, dist, last = c.hit) {
+  if (dist > clipLead(c, 0)) return null;
+  let start = last, best = Infinity;
+  for (let f = 0; f <= last; f++) {
+    const lead = clipLead(c, f);
+    if (lead > dist + 0.05 || (lead < dist - 0.5 && best < Infinity)) continue;
+    let e = 0;
+    for (let j = 1; j < sk.J; j++) {
+      const a = mb.tget(c.frames[f], j).q, b = mb.tget(cur, j).q;
+      e += 1 - Math.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]);
+    }
+    if (e < best) { best = e; start = f; }
+  }
+  return start;
+}
+function bumpToStart(dir, speed) {
+  const T = Math.min(playTime + lookahead(), (clip.length - 1) / mb.FPS);
+  const from = mb.tget(mb.sampleFrames(clip, T, new Float32Array(pose.length)), 0).p;
+  const d = [dir.x, 0, dir.z], yaw = Math.atan2(d[0], d[2]);
+  const blockers = crouch ? sceneObjects.filter(o => o.kind !== 'item' && !BALL_RADIUS[o.kind]) : bumpers;
+  for (const ob of blockers) {
+    if (simTime < (ob.cooldownUntil || 0)) continue;
+    const r = obRect(ob);
+    // how far the surface is along d and whether the lane (her width ~0.3 m each side) hits it
+    const rel = [ob.pos[0] - from[0], ob.pos[2] - from[2]];
+    const along = rel[0] * d[0] + rel[1] * d[2], side = Math.abs(rel[0] * d[2] - rel[1] * d[0]);
+    const half = Math.abs(r.h[0] * (r.u[0] * d[0] + r.u[1] * d[2])) + Math.abs(r.h[1] * (r.v[0] * d[0] + r.v[1] * d[2]));  // extent along d
+    const halfSide = Math.abs(r.h[0] * (r.u[0] * d[2] - r.u[1] * d[0])) + Math.abs(r.h[1] * (r.v[0] * d[2] - r.v[1] * d[0]));
+    if (side > halfSide + 0.3 || along < 0) continue;
+    // a floor step trips her where her foot catches its near edge; a wall stops her just short of it
+    const trip = ob.kind === 'step' && ACTIONS.trip;
+    const fall = !trip && speed > styles.jog.speed && ACTIONS.fall;
+    // hips this far from the near edge at the hit; the ARDY fall knows how far her body reaches ahead of the hips there
+    // (the trip clip: where its toe catches, see tripCatch, so the hips at the hit are that far past the edge)
+    const stopAt = along - half - (trip ? (ACTIONS.trip.clip?.catch.z ?? 0.1) : fall?.reach != null ? fall.reach + 0.05 : 0.35);
+    // ARDY: trip over a step (the forward fall); against a wall stagger back at a jog or walk, fall on her bottom when
+    // dashing (anything faster than the jog)
+    const act = trip ? ACTIONS.trip : fall || (speed > styles.jog.speed ? null : ACTIONS.stumble);
+    if (act?.clip) {
+      // played as ARDY made it (as targets, MotionBricks turned it into a dive), from a frame of its run-up that fits
+      const start = clipStart(act.clip, mb.sampleFrames(clip, T, new Float32Array(pose.length)), stopAt, act.clip.catch ? act.clip.catch.frame - 3 : act.clip.hit);
+      if (start === null) continue;  // not yet
+      // The clip's run-up is slower than her dash (ARDY ran into the wall at 3.5 m/s), so it is played faster up to the
+      // hit to keep her speed (at most twice as fast). The hit (the clip's origin) goes exactly to the stop point; the few
+      // cm between where the clip starts and where she is are blended away by the crossfade.
+      const c = act.clip, runUp = (c.hit - start) / mb.FPS;
+      const rate = runUp > 0 ? Math.min(2, Math.max(1, speed / (clipLead(c, start) / runUp))) : 1;
+      const pre = c.frames.slice(start, c.hit + 1), sped = [];
+      for (let t = 0; t < runUp; t += rate / mb.FPS) sped.push(mb.sampleFrames(pre, t, new Float32Array(pose.length)));
+      const frames = mb.placeTarget([...sped, ...c.frames.slice(c.hit)], [from[0] + d[0] * stopAt, 0, from[2] + d[2] * stopAt], yaw);
+      return { name: 'bump', label: trip ? 'つまずく' : '尻もち', obstacle: ob, next: 0, steps: [{ name: 'Fall', clip: frames, T, early: 2 }] };
+    }
+    if (stopAt > speed * LEAD_SECONDS) continue;        // not yet
+    const at = (k) => [from[0] + d[0] * k, 0, from[2] + d[2] * k];
+    if (act) {
+      const steps = placeAction(act, at(Math.max(0.2, stopAt)), yaw);
+      const label = act === ACTIONS.trip ? 'つまずく' : act === ACTIONS.fall ? '尻もち' : 'よろける';
+      return { name: 'bump', label, obstacle: ob, next: 0, steps };
+    }
+    if (ob.kind === 'step') continue;  // without a trip motion a step is just walked over
+    const step = (name, k, early) => ({ name, early, allowedTokens: [6, 7, 8, 9, 10, 11], window: mb.placeTarget(STOP_WINDOW, at(k), yaw) });
+    return { name: 'bump', label: 'ぶつかる', obstacle: ob, next: 0,
+             steps: [step('Hit', Math.max(0.2, stopAt), 2), step('Recoil', Math.max(0.2, stopAt) - 0.7, TRANSITION_EARLY_BY)] };
+  }
+  return null;
+}
+
+// Swap when the old motion reaches T. If the result came late, the new motion starts (playTime - T) in, and a short
+// crossfade hides the difference.
+function swapTo(a) {
+  const late = Math.max(0, playTime - a.T);
+  if (debug) {
+    const p = mb.tget(mb.sampleFrames(clip, playTime, new Float32Array(pose.length)), 0).p;
+    const q = mb.tget(mb.sampleFrames(a.g.frames, late, new Float32Array(pose.length)), 0).p;
+    debug.swaps.push({ rootJump: Math.hypot(p[0] - q[0], p[2] - q[2]), elapsed: a.elapsed, late, tokens: a.g.tokens });
+  }
+  if (late > 0.5 / mb.FPS || a.fade) { fadeFrom = { clip, time: playTime }; fadeT = 0; }  // a played clip: its legs only roughly match
+  clip = a.g.frames;
+  clipEarly = a.early;
+  playTime = late;
+  pending = null;
+  a.onStart?.(clip.length / mb.FPS);
+}
+let clipEarly = TRANSITION_EARLY_BY;
+let vclock = null, ready = null, arrived = null, idealSwap = false;  // virtual clock (seconds) used by __live.trace
+
+function update(dt) {
+  simTime += dt;
+  const dir = inputDirection();
+  let styleId = currentStyle(!!dir);
+  const endFrame = Math.max(0, clip.length - 1 - clipEarly);
+  const timeToTransition = Math.max(0, endFrame / mb.FPS - playTime);
+  const due = timeToTransition <= lookahead() + dt;
+  if (seq) {
+    pushing = null;
+    // an action: its targets in order, each taking over at the previous one's transition point; input waits until the
+    // end, except while seated (hold), where a fresh key press stands her up (the exit steps)
+    const finished = seq.next >= seq.steps.length && !arrived && !ready;
+    if (seq.hold && seq.next >= seq.steps.length) {
+      if (!dir) seq.released = true;
+      // standing up drops a stay-seated generation still in flight or waiting to play, so it starts that much sooner
+      if (dir && seq.released) { if (pending || ready || arrived) dropPending(); seq.steps = seq.exit; seq.next = 0; seq.started = false; seq.hold = false; seq.label = '立つ'; }
+    }
+    if (!pending && seq.next < seq.steps.length && (!seq.started || due)) {
+      const st = seq.steps[seq.next++];
+      seq.started = true;
+      if (st.clip) arrived = { g: { frames: st.clip, tokens: 0 }, T: Math.max(st.T, playTime), elapsed: 0, early: st.early, fade: true };
+      else requestTarget(() => st.window, st.early, { allowedTokens: st.allowedTokens }, st.onStart);
+    } else if (!pending && seq.hold && finished && due) {
+      const st = seq.steps[seq.steps.length - 1];  // stay seated: aim at the seated pose again
+      requestTarget(() => st.window, st.early, { allowedTokens: st.allowedTokens });
+    } else if (!pending && !seq.hold && finished && due) {
+      seq.obstacle.cooldownUntil = simTime + (seq.name === 'bump' ? 2 : 1.5);
+      if (seq.name === 'pickup') for (const it of items) if (it.held) { it.held = false; it.mesh.visible = false; picked++; }  // put away
+      seq = null; lastStyle = null;  // back to locomotion
+    }
+  } else {
+    // Run-up: the jump samples were captured at a jog. Dashing straight into them makes the model leap early to make up
+    // the speed difference, so with a jump ahead she changes to the locomotion style whose speed is closest to the
+    // jump's run-up speed, as people shorten their stride before a vault.
+    // Off by default: dropping from a dash to a jog made her sink to 0.57 m hips height while braking. The fix in use is
+    // a fast run-up jump generated with ARDY; ?runup turns this back on for comparison.
+    if (RUNUP && dir && !crouch) {
+      const ob = jumpAhead(dir, styles[styleId].speed);
+      if (ob) styleId = runUpStyle(ob);
+    }
+    // Against a big ball, walk while pushing it (the ARDY heavy-push walk); the ball follows her hands.
+    pushing = pushTarget(dir);
+    if (pushing) styleId = 'push_walk';
+    const turned = (dir && lastDir) ? THREE.MathUtils.radToDeg(dir.angleTo(lastDir)) > TURN_THRESHOLD : !!dir !== !!lastDir;
+    // A played clip (the falls) is checked every frame, even while a generation is in flight, which it then replaces:
+    // waiting for the next free moment let her run up to 0.5 m past where she should hit.
+    let action = null;
+    if (dir && !pushing) {
+      const bump = bumpToStart(dir, styles[styleId].speed);
+      if (bump && (!pending || bump.steps[0].clip)) action = bump;
+      else if (!pending && !crouch) action = jumpToStart(dir, styles[styleId].speed);
+    }
+    if (action && pending) dropPending();
+    if (action) {
+      seq = action;
+      seq.obstacle.cooldownUntil = simTime + 30;  // until the action ends, which sets the real cooldown
+      if (seq.name === 'pickup') seq.obstacle.taken = true;
+      lastJump = `${seq.name} from ${seq.steps[seq.next].name}`;
+    } else if (!pending && (styleId !== lastStyle || turned || due)) requestGeneration(styleId, dir);
+  }
+  for (const it of items) if (it.takeAt && simTime >= it.takeAt) { it.takeAt = 0; it.held = true; }  // in her hands until the pick-up ends
+  playTime += dt;
+  if (arrived && playTime >= arrived.T) { swapTo(arrived); arrived = null; }
+  mb.sampleFrames(clip, playTime, pose);
+  if (fadeFrom) {
+    // sample the old motion at this frame's time first, then advance it for the next frame
+    const u = Math.min(1, fadeT / CROSSFADE_SECONDS), w = u * u * (3 - 2 * u);  // smoothstep
+    mb.sampleFrames(fadeFrom.clip, fadeFrom.time, fadePose);
+    for (let j = 0; j < sk.J; j++) mb.tset(pose, j, mb.blendT(mb.tget(fadePose, j), mb.tget(pose, j), w));
+    fadeFrom.time += dt; fadeT += dt;
+    if (u >= 1) fadeFrom = null;
+  }
+  recorder.record(dt, pose);
+  if (debug) {
+    const p = mb.tget(pose, 0).p;
+    let rotDeg = 0;  // largest local rotation change of any model joint since the previous frame
+    if (debug.prev) for (const j of sk.modelToPose) {
+      const a = mb.tget(pose, j).q, b = mb.tget(debug.prev, j).q;
+      rotDeg = Math.max(rotDeg, 2 * Math.acos(Math.min(1, Math.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]))) * 180 / Math.PI);
+    }
+    // per joint: angular velocity (rotation vector of prev^-1 * now, deg/frame) and its change (jitter)
+    if (debug.prev) {
+      debug.jit ||= {};
+      for (const j of sk.modelToPose) {
+        const a = mb.tget(debug.prev, j).q, b = mb.tget(pose, j).q;
+        let d = mb.qmul(mb.qinv(a), b); if (d[3] < 0) d = d.map(v => -v);
+        const s = Math.hypot(d[0], d[1], d[2]), ang = 2 * Math.atan2(s, d[3]) * 180 / Math.PI;
+        const w = s > 1e-9 ? [d[0] / s * ang, d[1] / s * ang, d[2] / s * ang] : [0, 0, 0];
+        const e = (debug.jit[j] ||= { vel: 0, jerk: 0, n: 0, last: null });
+        if (e.last) e.jerk += Math.hypot(w[0] - e.last[0], w[1] - e.last[1], w[2] - e.last[2]);
+        e.vel += ang; e.n++; e.last = w;
+      }
+    }
+    debug.prev = Float32Array.from(pose);
+    const w = sk.world(pose);
+    const foot = Math.min(w[sk.index('LeftToeBase')].p[1], w[sk.index('RightToeBase')].p[1], w[sk.index('LeftFoot')].p[1], w[sk.index('RightFoot')].p[1]);
+    debug.frames.push({ dt, x: p[0], y: p[1], z: p[2], rotDeg, foot });
+  }
+}
+let debug = null;  // set by __live.trace()
+
+// ---------- HUD ----------
+const statEl = document.getElementById('stat');
+function hud() {
+  const now = (seq ? seq.label : styles[lastStyle]?.label ?? '-') + `　拾った ${picked}/${items.length}`;
+  statEl.textContent = `今：${now}　生成 ${genMs.toFixed(0)} ms（${tokens}トークン）　回数 ${generations}`;
+}
+
+// ---------- loop ----------
+const follow = new THREE.Vector3(), handR = new THREE.Vector3();
+let snapCam = true;
+function frame(dt) {
+  update(dt);
+  updateBalls(dt);
+  for (const it of items) if (it.mesh.visible) it.mesh.rotateY(dt * 2);  // items spin so they catch the eye
+  const w = applyPose(pose);
+  vrm.update(dt);
+  // a star she has picked up sits just above her right hand (held up high once she raises it)
+  for (const it of items) if (it.held) it.mesh.position.copy(node('rightHand').getWorldPosition(handR)).addScaledVector(up, 0.2 * scale);
+  const hp = node('hips').getWorldPosition(new THREE.Vector3());
+  const target = new THREE.Vector3(hp.x, 0.6, hp.z);
+  const delta = target.sub(follow).multiplyScalar(snapCam ? 1 : Math.min(1, dt * 4)); snapCam = false;
+  follow.add(delta); camera.position.add(delta); controls.target.copy(follow); controls.update();
+  renderer.render(scene, camera);
+  hud();
+}
+loadEl.remove(); document.getElementById('hud').hidden = false;
+const clock = new THREE.Clock();
+const loop = () => frame(Math.min(clock.getDelta(), 0.1));
+renderer.setAnimationLoop(loop);
+
+// Debug hook: simulate with fixed steps and the given keys, waiting for each generation (for checks without rAF).
+window.__live = {
+  actions: ACTIONS, sk, raise: RAISE_WINDOW, pose: () => pose, modelFromCache: () => modelFromCache, vrm, G, THREE,  // for inspection
+  async sim(seconds, keyList = [], opts = {}) {
+    keys.clear(); keyList.forEach(k => keys.add(k));
+    if (opts.style) selected = opts.style;
+    if (opts.crouch !== undefined) crouch = opts.crouch;
+    const dt = 1 / 30;
+    for (let i = 0; i < seconds * 30; i++) { frame(dt); if (pending) await pending; }
+    keys.clear();
+    return { style: lastStyle, genMs, tokens, generations, lastJump, inJump: !!seq, root: sk.world(pose)[0].p.map(v => +v.toFixed(2)) };
+  },
+  // Run on a virtual 60 Hz clock: each generation is swapped in after as much play time as it really took, as in
+  // real-time play, but without depending on the page's timers (which the browser may throttle).
+  async trace(seconds, keyList = ['w'], opts = {}) {
+    keys.clear(); keyList.forEach(k => keys.add(k));
+    if (opts.style) selected = opts.style;
+    debug = { frames: [], swaps: [] };
+    idealSwap = !!opts.ideal;
+    renderer.setAnimationLoop(null);
+    const dt = 1 / 60;
+    vclock = 0;
+    const marks = [];
+    for (let i = 0; i < seconds * 60; i++) {
+      vclock += dt;
+      if (opts.lockCam) snapCam = true;  // the camera sits on her instead of trailing (for snapshots)
+      frame(dt);
+      if (opts.snapEvery && i % opts.snapEvery === 0) {
+        const p = mb.tget(pose, 0).p;
+        marks.push(`${(i / 60).toFixed(2)}s z=${p[2].toFixed(2)} y=${p[1].toFixed(2)} ${seq ? 'JUMP:' + seq.steps[Math.max(0, seq.next - 1)].name : ''}`);
+        await this.snap(`${opts.prefix || 't'}_${String(i).padStart(4, '0')}.jpg`);
+      }
+      if (pending && !ready && !arrived) await pending;   // know when it arrives before going on
+      if (ready && vclock >= ready.at) { arrived = ready; ready = null; }
+    }
+    vclock = null; idealSwap = false;
+    if (ready) { arrived = ready; ready = null; }
+    keys.clear();
+    clock.getDelta(); renderer.setAnimationLoop(loop);
+    const d = debug; debug = null;
+    // per-frame ground speed and the largest joint rotation change; a twitch shows up as a spike in either
+    const sp = d.frames.slice(1).map((f, i) => Math.hypot(f.x - d.frames[i].x, f.z - d.frames[i].z) / f.dt);
+    const rot = d.frames.map(f => f.rotDeg);
+    const stats = (a) => { const s = [...a].sort((x, y) => x - y); return { median: +s[s.length >> 1].toFixed(2), p99: +s[Math.floor(s.length * 0.99)].toFixed(2), max: +s[s.length - 1].toFixed(2) }; };
+    const jumps = sp.slice(1).map((v, i) => Math.abs(v - sp[i]));
+    const jitter = Object.entries(d.jit || {}).map(([j, e]) => [sk.names[j], +(e.vel / e.n).toFixed(2), +(e.jerk / Math.max(1, e.n - 1)).toFixed(2)])
+      .sort((a, b) => b[2] - a[2]).slice(0, 6);
+    // airborne: both feet (toes and ankles) above 12 cm; report the longest stretch and the highest lowest-foot
+    let run = 0, longest = 0;
+    for (const f of d.frames) { run = f.foot > 0.12 ? run + f.dt : 0; longest = Math.max(longest, run); }
+    const air = { longestSec: +longest.toFixed(2), maxLowestFoot: +Math.max(...d.frames.map(f => f.foot)).toFixed(2),
+                  hipsMax: +Math.max(...d.frames.map(f => f.y)).toFixed(2), footSeries: d.frames.filter((_, i) => i % 6 === 0).map(f => +f.foot.toFixed(2)).join(' ') };
+    return { air, jitter, marks, lastJump, frames: d.frames.length, speed: stats(sp), speedStepMax: +Math.max(...jumps).toFixed(2), jointDegPerFrame: stats(rot),
+             swaps: d.swaps.map(s => `${Math.round(s.elapsed * 1000)}ms late${Math.round(s.late * 1000)}ms tok${s.tokens} jump${(s.rootJump * 100).toFixed(1)}cm`).join(', '),
+             speedSeries: sp.map(v => +v.toFixed(2)) };
+  },
+  // turn the camera so that W heads for the nearest object of a kind (side: look from the side, A then heads there)
+  aimAt(kind, side = false, minDist = 0, dist = 2.4) {
+    const root = mb.tget(pose, 0).p;
+    const ob = sceneObjects.filter(o => o.kind === kind && !o.taken && Math.hypot(o.pos[0] - root[0], o.pos[2] - root[2]) >= minDist)
+      .sort((a, b) => Math.hypot(a.pos[0] - root[0], a.pos[2] - root[2]) - Math.hypot(b.pos[0] - root[0], b.pos[2] - root[2]))[0];
+    const d = V3([ob.pos[0] - root[0], 0, ob.pos[2] - root[2]]).normalize().applyQuaternion(G);
+    const off = side ? new THREE.Vector3().crossVectors(up, d).multiplyScalar(-dist).add(new THREE.Vector3(0, 0.4, 0))
+                     : d.clone().multiplyScalar(-3).add(new THREE.Vector3(0, 0.7, 0));
+    camera.position.copy(controls.target).add(off); controls.update();
+    return { target: ob.pos, dist: +Math.hypot(ob.pos[0] - root[0], ob.pos[2] - root[2]).toFixed(1) };
+  },
+  // render the nearest object of a kind from an offset (display units) and save it as snaps/<name> (the camera returns)
+  async view(kind, offset, name) {
+    const root = mb.tget(pose, 0).p;
+    const ob = sceneObjects.filter(o => o.kind === kind).sort((a, b) => Math.hypot(a.pos[0] - root[0], a.pos[2] - root[2]) - Math.hypot(b.pos[0] - root[0], b.pos[2] - root[2]))[0];
+    const keep = camera.position.clone(), at = ob.mesh.position.clone();
+    camera.position.copy(at).add(new THREE.Vector3(...offset)); camera.lookAt(at);
+    renderer.render(scene, camera);
+    await this.snap(name);
+    camera.position.copy(keep); controls.update();
+  },
+  // put the camera at an offset (display units) from where it looks
+  setCamera(dx, dy, dz) { camera.position.copy(controls.target).add(new THREE.Vector3(dx, dy, dz)); controls.update(); },
+  probe(keyList = ['w']) {
+    keys.clear(); keyList.forEach(k => keys.add(k));
+    const dir = inputDirection(); keys.clear();
+    const root = mb.tget(pose, 0).p;
+    return { root, dir: dir && dir.toArray(), obstacles: obstacles.map(o => ({ pos: o.pos, size: o.size, cd: o.cooldownUntil })),
+             jump: dir ? jumpToStart(dir, styles.walk.speed)?.name ?? null : null, bump: dir ? bumpToStart(dir, styles.run.speed)?.name ?? null : null,
+             near: sceneObjects.map(o => ({ kind: o.kind, pos: o.pos.map(v => +v.toFixed(1)), dist: +Math.hypot(o.pos[0] - root[0], o.pos[2] - root[2]).toFixed(1) }))
+               .sort((a, b) => a.dist - b.dist).slice(0, 4), seq: seq && seq.name, pending: !!pending, crouch };
+  },
+  // time the worker alone, nothing rendering
+  async bench(n = 10) {
+    renderer.setAnimationLoop(null);
+    const target = mb.placeTarget(styles.walk.window, [0, 0, 1.4], 0), ctx = recorder.context(), ms = [];
+    for (let i = 0; i < n; i++) { const t0 = performance.now(); const g = await generateInWorker(ctx, target); ms.push({ wall: Math.round(performance.now() - t0), run: Math.round(g.ms.run) }); }
+    clock.getDelta(); renderer.setAnimationLoop(loop);
+    return ms;
+  },
+  snap: (name) => fetch(`/snap?name=${name}`, { method: 'POST', body: renderer.domElement.toDataURL('image/jpeg', 0.85) }),
+};
+</script>
+</body>
+</html>
