@@ -34,9 +34,9 @@
 </div>
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
-  "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.1.0/lib/three-vrm.module.min.js"
+  "three": "./build/three.module.js",
+  "three/addons/": "./examples/jsm/",
+  "@pixiv/three-vrm": "./lib/three-vrm.module.min.js"
 } }
 </script>
 <script type="module">
@@ -53,7 +53,10 @@ const params = new URLSearchParams(location.search);
 // The character: ?vrm=<url>, or ?vrm=local for a VRM dropped on the page (or picked with the button), which is kept only
 // in this browser (IndexedDB) and loaded on the reload that follows the drop, so everything set up from the character
 // (bone mapping, her scale, the obstacles drawn at it) starts over from it. Nothing is sent anywhere.
-const DEFAULT_VRM = '../mecha_girl02_v2.vrm';
+// NOTE: 
+const DEFAULT_VRM = 'Zundamon_2025_VRM10A.vrm';
+//const DEFAULT_VRM = '../mecha_girl02_v2.vrm';
+
 const vrmStore = {
   db: () => new Promise((ok, ng) => {
     const r = indexedDB.open('motionbricks-live', 1);
@@ -76,7 +79,9 @@ addEventListener('dragover', (e) => { e.preventDefault(); });
 addEventListener('drop', (e) => { e.preventDefault(); useVrmFile(e.dataTransfer.files[0]); });
 document.getElementById('vrmFile').addEventListener('change', (e) => useVrmFile(e.target.files[0]));
 document.getElementById('vrmReset').addEventListener('click', (e) => { e.preventDefault(); const q = new URLSearchParams(location.search); q.delete('vrm'); location.search = q.toString(); });
-const MODEL_URL = params.get('model') || 'https://pub-360a7e233de942c5bfcb52d8623e38f2.r2.dev/mmm_v6_soma_q8h.onnx';
+// NOTE: 
+const MODEL_URL = params.get('model') || './mmm_v6_soma_q8h.onnx';
+//const MODEL_URL = params.get('model') || 'https://pub-360a7e233de942c5bfcb52d8623e38f2.r2.dev/mmm_v6_soma_q8h.onnx';
 // passes of the [1,2,1] time filter against fp16 trembling (0 = off). Measured while standing: hand/arm jitter
 // 0.27/0.20 deg per frame with none, 0.12/0.07 with 2 passes, about what the fp32 model gives (0.15/0.08).
 const SMOOTH = +(params.get('smooth') ?? 2);
