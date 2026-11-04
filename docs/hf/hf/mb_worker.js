@@ -59,7 +59,7 @@ async function handle(m) {
     if (m.type === 'init') {
       //importScripts(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${m.ortVersion}/dist/ort.webgpu.min.js`);
       importScripts(`./ort.webgpu.min.js`);
-      ort.env.wasm.wasmPaths = `.`;
+      ort.env.wasm.wasmPaths = `./`;
       //ort.env.wasm.wasmPaths = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${m.ortVersion}/dist/`;
       mb = await import(`./mb_runtime.js${self.location.search}`);  // same build query as the worker itself
 
